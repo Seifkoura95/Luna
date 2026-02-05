@@ -207,12 +207,40 @@ class PhotoPurchase(BaseModel):
 
 # ==================== Auth Helpers ====================
 
-async def get_session_token(request: Request) -> Optional[str]:
-    """Extract session token from cookie or Authorization header"""
+def hash_password(password: str) -> str:
+    """Hash a password using bcrypt"""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify a password against a hash"""
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+def create_jwt_token(user_id: str, email: str) -> str:
+    """Create a JWT token for a user"""
+    payload = {
+        'user_id': user_id,
+        'email': email,
+        'exp': datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRY_DAYS),
+        'iat': datetime.now(timezone.utc)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def decode_jwt_token(token: str) -> dict:
+    """Decode and verify a JWT token"""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+async def get_token(request: Request) -> Optional[str]:
+    """Extract JWT token from cookie or Authorization header"""
     # Try cookie first
-    session_token = request.cookies.get("session_token")
-    if session_token:
-        return session_token
+    token = request.cookies.get("auth_token")
+    if token:
+        return token
     
     # Try Authorization header
     auth_header = request.headers.get("Authorization")
@@ -222,29 +250,15 @@ async def get_session_token(request: Request) -> Optional[str]:
     return None
 
 async def get_current_user(request: Request) -> User:
-    """Get current authenticated user"""
-    session_token = await get_session_token(request)
-    if not session_token:
+    """Get current authenticated user from JWT"""
+    token = await get_token(request)
+    if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
-    session = await db.user_sessions.find_one(
-        {"session_token": session_token},
-        {"_id": 0}
-    )
-    
-    if not session:
-        raise HTTPException(status_code=401, detail="Invalid session")
-    
-    # Check expiry with timezone awareness
-    expires_at = session["expires_at"]
-    if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    
-    if expires_at < datetime.now(timezone.utc):
-        raise HTTPException(status_code=401, detail="Session expired")
+    payload = decode_jwt_token(token)
     
     user_doc = await db.users.find_one(
-        {"user_id": session["user_id"]},
+        {"user_id": payload["user_id"]},
         {"_id": 0}
     )
     
@@ -262,99 +276,117 @@ async def get_optional_user(request: Request) -> Optional[User]:
 
 # ==================== Auth Endpoints ====================
 
-class SessionExchangeRequest(BaseModel):
-    session_id: str
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    name: str
 
-class SessionDataResponse(BaseModel):
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class AuthResponse(BaseModel):
     user_id: str
     email: str
     name: str
-    picture: Optional[str] = None
-    session_token: str
+    tier: str
+    points_balance: int
+    token: str
 
-@api_router.post("/auth/session", response_model=SessionDataResponse)
-async def exchange_session(request: SessionExchangeRequest, response: Response):
-    """Exchange Emergent session_id for session data and create local session"""
-    try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(
-                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
-                headers={"X-Session-ID": request.session_id}
-            )
-            
-            if resp.status_code != 200:
-                raise HTTPException(status_code=401, detail="Invalid session ID")
-            
-            user_data = resp.json()
-    except httpx.RequestError as e:
-        logger.error(f"Auth request failed: {e}")
-        raise HTTPException(status_code=500, detail="Authentication service unavailable")
-    
-    # Check if user exists
-    existing_user = await db.users.find_one(
-        {"email": user_data["email"]},
-        {"_id": 0}
-    )
-    
+@api_router.post("/auth/register", response_model=AuthResponse)
+async def register(request: RegisterRequest, response: Response):
+    """Register a new user with email and password"""
+    # Check if email already exists
+    existing_user = await db.users.find_one({"email": request.email.lower()})
     if existing_user:
-        user_id = existing_user["user_id"]
-    else:
-        # Create new user
-        user_id = f"user_{uuid.uuid4().hex[:12]}"
-        new_user = {
-            "user_id": user_id,
-            "email": user_data["email"],
-            "name": user_data["name"],
-            "picture": user_data.get("picture"),
-            "tier": "bronze",
-            "points_balance": 0,
-            "created_at": datetime.now(timezone.utc)
-        }
-        await db.users.insert_one(new_user)
-        
-        # Award welcome bonus
-        await db.points_transactions.insert_one({
-            "id": str(uuid.uuid4()),
-            "user_id": user_id,
-            "amount": 100,
-            "transaction_type": "bonus",
-            "source": "welcome",
-            "description": "Welcome bonus",
-            "created_at": datetime.now(timezone.utc)
-        })
-        await db.users.update_one(
-            {"user_id": user_id},
-            {"$inc": {"points_balance": 100}}
-        )
+        raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Create session
-    session_token = user_data.get("session_token", secrets.token_hex(32))
-    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    # Validate password
+    if len(request.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
     
-    await db.user_sessions.insert_one({
+    # Create user
+    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    hashed_password = hash_password(request.password)
+    
+    new_user = {
         "user_id": user_id,
-        "session_token": session_token,
-        "expires_at": expires_at,
+        "email": request.email.lower(),
+        "name": request.name,
+        "password_hash": hashed_password,
+        "tier": "bronze",
+        "points_balance": 100,  # Welcome bonus
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.users.insert_one(new_user)
+    
+    # Award welcome bonus
+    await db.points_transactions.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "amount": 100,
+        "transaction_type": "bonus",
+        "source": "welcome",
+        "description": "Welcome bonus",
         "created_at": datetime.now(timezone.utc)
     })
     
+    # Create JWT token
+    token = create_jwt_token(user_id, request.email.lower())
+    
     # Set cookie
     response.set_cookie(
-        key="session_token",
-        value=session_token,
+        key="auth_token",
+        value=token,
         httponly=True,
         secure=True,
         samesite="none",
         path="/",
-        max_age=7 * 24 * 60 * 60
+        max_age=JWT_EXPIRY_DAYS * 24 * 60 * 60
     )
     
-    return SessionDataResponse(
+    return AuthResponse(
         user_id=user_id,
-        email=user_data["email"],
-        name=user_data["name"],
-        picture=user_data.get("picture"),
-        session_token=session_token
+        email=request.email.lower(),
+        name=request.name,
+        tier="bronze",
+        points_balance=100,
+        token=token
+    )
+
+@api_router.post("/auth/login", response_model=AuthResponse)
+async def login(request: LoginRequest, response: Response):
+    """Login with email and password"""
+    # Find user
+    user = await db.users.find_one({"email": request.email.lower()}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Verify password
+    if not user.get("password_hash") or not verify_password(request.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Create JWT token
+    token = create_jwt_token(user["user_id"], user["email"])
+    
+    # Set cookie
+    response.set_cookie(
+        key="auth_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=JWT_EXPIRY_DAYS * 24 * 60 * 60
+    )
+    
+    return AuthResponse(
+        user_id=user["user_id"],
+        email=user["email"],
+        name=user["name"],
+        tier=user.get("tier", "bronze"),
+        points_balance=user.get("points_balance", 0),
+        token=token
     )
 
 @api_router.get("/auth/me")
