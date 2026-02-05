@@ -14,12 +14,12 @@ interface User {
 
 interface AuthState {
   user: User | null;
-  sessionToken: string | null;
+  token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   
   setUser: (user: User | null) => void;
-  setSessionToken: (token: string | null) => void;
+  setToken: (token: string | null) => void;
   setLoading: (loading: boolean) => void;
   login: (user: User, token: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -51,43 +51,43 @@ const storage = {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  sessionToken: null,
+  token: null,
   isLoading: true,
   isAuthenticated: false,
   
   setUser: (user) => set({ user, isAuthenticated: !!user }),
-  setSessionToken: (token) => set({ sessionToken: token }),
+  setToken: (token) => set({ token }),
   setLoading: (loading) => set({ isLoading: loading }),
   
   login: async (user, token) => {
-    await storage.setItem('session_token', token);
+    await storage.setItem('auth_token', token);
     await storage.setItem('user', JSON.stringify(user));
-    set({ user, sessionToken: token, isAuthenticated: true, isLoading: false });
+    set({ user, token, isAuthenticated: true, isLoading: false });
   },
   
   logout: async () => {
-    const { sessionToken } = get();
+    const { token } = get();
     const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
     
     try {
       await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${sessionToken}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
     } catch (e) {
       console.error('Logout API error:', e);
     }
     
-    await storage.removeItem('session_token');
+    await storage.removeItem('auth_token');
     await storage.removeItem('user');
-    set({ user: null, sessionToken: null, isAuthenticated: false });
+    set({ user: null, token: null, isAuthenticated: false });
   },
   
   loadStoredAuth: async () => {
     try {
-      const token = await storage.getItem('session_token');
+      const token = await storage.getItem('auth_token');
       const userStr = await storage.getItem('user');
       
       if (token && userStr) {
@@ -102,7 +102,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         
         if (response.ok) {
           const user = await response.json();
-          set({ user, sessionToken: token, isAuthenticated: true, isLoading: false });
+          set({ user, token, isAuthenticated: true, isLoading: false });
           return;
         }
       }
@@ -110,9 +110,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error('Load auth error:', e);
     }
     
-    await storage.removeItem('session_token');
+    await storage.removeItem('auth_token');
     await storage.removeItem('user');
-    set({ user: null, sessionToken: null, isAuthenticated: false, isLoading: false });
+    set({ user: null, token: null, isAuthenticated: false, isLoading: false });
   },
   
   updatePoints: (points) => {
