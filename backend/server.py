@@ -396,12 +396,8 @@ async def get_me(current_user: User = Depends(get_current_user)):
 
 @api_router.post("/auth/logout")
 async def logout(request: Request, response: Response):
-    """Logout user and clear session"""
-    session_token = await get_session_token(request)
-    if session_token:
-        await db.user_sessions.delete_one({"session_token": session_token})
-    
-    response.delete_cookie("session_token", path="/")
+    """Logout user and clear token"""
+    response.delete_cookie("auth_token", path="/")
     return {"message": "Logged out successfully"}
 
 # ==================== QR Code & Check-In ====================
