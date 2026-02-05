@@ -5,14 +5,15 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
-import httpx
 import hmac
 import hashlib
 import secrets
+import bcrypt
+import jwt
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -24,6 +25,11 @@ db = client[os.environ['DB_NAME']]
 
 # QR Code secret for HMAC
 QR_SECRET = os.environ.get('QR_SECRET', 'eclipse-vip-secret-2024')
+
+# JWT Configuration
+JWT_SECRET = os.environ.get('JWT_SECRET', 'eclipse-jwt-secret-key-2024-super-secure')
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRY_DAYS = 7
 
 # Create the main app
 app = FastAPI(title="Eclipse VIP API")
