@@ -14,7 +14,7 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
   };
   
   if (auth) {
-    const token = useAuthStore.getState().sessionToken;
+    const token = useAuthStore.getState().token;
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -35,10 +35,16 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
 
 export const api = {
   // Auth
-  exchangeSession: (sessionId: string) =>
-    apiFetch<{ user_id: string; email: string; name: string; picture?: string; session_token: string }>(
-      '/api/auth/session',
-      { method: 'POST', body: JSON.stringify({ session_id: sessionId }), auth: false }
+  register: (email: string, password: string, name: string) =>
+    apiFetch<{ user_id: string; email: string; name: string; tier: string; points_balance: number; token: string }>(
+      '/api/auth/register',
+      { method: 'POST', body: JSON.stringify({ email, password, name }), auth: false }
+    ),
+  
+  login: (email: string, password: string) =>
+    apiFetch<{ user_id: string; email: string; name: string; tier: string; points_balance: number; token: string }>(
+      '/api/auth/login',
+      { method: 'POST', body: JSON.stringify({ email, password }), auth: false }
     ),
   
   getMe: () => apiFetch<any>('/api/auth/me'),
