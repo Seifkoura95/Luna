@@ -128,6 +128,77 @@ class PointsTransaction(BaseModel):
     description: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# ==================== Auction Models ====================
+
+class Auction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    description: str
+    auction_type: str  # booth_upgrade, fast_lane, bottle_service, vip_experience
+    reserve_price: float
+    current_bid: float = 0
+    bid_increment: float = 5.0
+    winner_id: Optional[str] = None
+    winner_name: Optional[str] = None
+    start_time: datetime
+    end_time: datetime
+    venue_room: str = "eclipse"
+    status: str = "upcoming"  # upcoming, active, ended, claimed
+    image_url: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AuctionBid(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    auction_id: str
+    user_id: str
+    user_name: str
+    bid_amount: float
+    bid_time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    is_winning: bool = False
+
+class AuctionClaim(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    auction_id: str
+    user_id: str
+    claim_code: str = Field(default_factory=lambda: secrets.token_hex(4).upper())
+    status: str = "pending"  # pending, claimed
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ==================== Photo Models ====================
+
+class VenuePhoto(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    photo_url: str
+    thumbnail_url: Optional[str] = None
+    event_id: Optional[str] = None
+    event_name: Optional[str] = None
+    taken_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    photographer_id: Optional[str] = None
+    venue_room: str = "eclipse"
+    is_active: bool = True
+
+class PhotoTag(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    photo_id: str
+    user_id: str
+    status: str = "pending"  # pending, approved, declined, purchased
+    purchase_price: float = 5.0
+    ai_enhanced: bool = False
+    ai_enhance_price: float = 2.0
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    approved_at: Optional[datetime] = None
+    purchased_at: Optional[datetime] = None
+
+class PhotoPurchase(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    photo_ids: List[str]
+    total_amount: float
+    is_bundle: bool = False
+    bundle_discount: float = 0
+    payment_status: str = "completed"  # pending, completed, failed
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # ==================== Auth Helpers ====================
 
 async def get_session_token(request: Request) -> Optional[str]:
