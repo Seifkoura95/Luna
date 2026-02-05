@@ -1329,7 +1329,122 @@ async def seed_data():
     ]
     await db.events.insert_many(events)
     
-    return {"message": "Data seeded successfully", "rewards": len(rewards), "missions": len(missions), "boosts": len(boosts), "events": len(events)}
+    # Seed Auctions
+    await db.auctions.delete_many({})
+    auctions = [
+        {
+            "id": "a1",
+            "title": "Premium Booth Upgrade",
+            "description": "Upgrade to VIP booth #1 with bottle service included",
+            "auction_type": "booth_upgrade",
+            "reserve_price": 50.0,
+            "current_bid": 0,
+            "bid_increment": 5.0,
+            "winner_id": None,
+            "winner_name": None,
+            "start_time": now + timedelta(minutes=5),
+            "end_time": now + timedelta(minutes=12),
+            "venue_room": "eclipse",
+            "status": "upcoming",
+            "image_url": None,
+            "created_at": now
+        },
+        {
+            "id": "a2",
+            "title": "Fast Lane Bundle",
+            "description": "Skip the queue - you + 3 friends",
+            "auction_type": "fast_lane",
+            "reserve_price": 30.0,
+            "current_bid": 35.0,
+            "bid_increment": 5.0,
+            "winner_id": None,
+            "winner_name": None,
+            "start_time": now - timedelta(minutes=2),
+            "end_time": now + timedelta(minutes=5),
+            "venue_room": "eclipse",
+            "status": "active",
+            "image_url": None,
+            "created_at": now
+        },
+        {
+            "id": "a3",
+            "title": "Meet the DJ Experience",
+            "description": "Backstage meet & greet with tonight's headliner",
+            "auction_type": "vip_experience",
+            "reserve_price": 100.0,
+            "current_bid": 0,
+            "bid_increment": 10.0,
+            "winner_id": None,
+            "winner_name": None,
+            "start_time": now + timedelta(hours=1),
+            "end_time": now + timedelta(hours=1, minutes=7),
+            "venue_room": "eclipse",
+            "status": "upcoming",
+            "image_url": None,
+            "created_at": now
+        },
+        {
+            "id": "a4",
+            "title": "Champagne Tower",
+            "description": "Spectacular champagne tower for your booth",
+            "auction_type": "bottle_service",
+            "reserve_price": 200.0,
+            "current_bid": 0,
+            "bid_increment": 20.0,
+            "winner_id": None,
+            "winner_name": None,
+            "start_time": now + timedelta(minutes=30),
+            "end_time": now + timedelta(minutes=37),
+            "venue_room": "eclipse",
+            "status": "upcoming",
+            "image_url": None,
+            "created_at": now
+        }
+    ]
+    await db.auctions.insert_many(auctions)
+    
+    # Seed Sample Photos (for demo)
+    await db.venue_photos.delete_many({})
+    sample_photos = [
+        {
+            "id": "p1",
+            "photo_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=800",
+            "thumbnail_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=200",
+            "event_name": "Saturday Night Live",
+            "taken_at": now - timedelta(hours=2),
+            "venue_room": "eclipse",
+            "is_active": True
+        },
+        {
+            "id": "p2",
+            "photo_url": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800",
+            "thumbnail_url": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=200",
+            "event_name": "Saturday Night Live",
+            "taken_at": now - timedelta(hours=1),
+            "venue_room": "eclipse",
+            "is_active": True
+        },
+        {
+            "id": "p3",
+            "photo_url": "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=800",
+            "thumbnail_url": "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=200",
+            "event_name": "Friday Vibes",
+            "taken_at": now - timedelta(days=1),
+            "venue_room": "eclipse",
+            "is_active": True
+        }
+    ]
+    await db.venue_photos.insert_many(sample_photos)
+    
+    return {
+        "message": "Data seeded successfully", 
+        "rewards": len(rewards), 
+        "missions": len(missions), 
+        "boosts": len(boosts), 
+        "events": len(events),
+        "auctions": len(auctions),
+        "photos": len(sample_photos)
+    }
 
 # Include the router
 app.include_router(api_router)
