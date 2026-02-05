@@ -1,37 +1,32 @@
 #!/usr/bin/env python3
 """
-Eclipse VIP App Backend API Testing Suite
-Tests all backend APIs according to test_result.md requirements
+Backend API Testing for Eclipse VIP App - Auction and Photo APIs
+Tests the new auction and photo management features
 """
 
 import requests
 import json
-import os
-from datetime import datetime
 import sys
+from datetime import datetime
 
-# Get backend URL from frontend environment
+# Configuration
 BACKEND_URL = "https://eclipse-vip-1.preview.emergentagent.com/api"
+AUTH_TOKEN = "auction_test_token_123"
+TEST_USER_ID = "user_auction_test"
 
-class EclipseAPITester:
-    def __init__(self):
-        self.base_url = BACKEND_URL
-        self.session_token = None
-        self.user_id = None
-        self.test_results = {}
-        
-    def log_result(self, test_name, success, message, details=None):
-        """Log test result"""
-        status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status} {test_name}: {message}")
-        if details:
-            print(f"   Details: {details}")
-        
-        self.test_results[test_name] = {
-            "success": success,
-            "message": message,
-            "details": details
-        }
+# Headers for authenticated requests
+AUTH_HEADERS = {
+    "Authorization": f"Bearer {AUTH_TOKEN}",
+    "Content-Type": "application/json"
+}
+
+def log_test(test_name, success, details=""):
+    """Log test results"""
+    status = "✅ PASS" if success else "❌ FAIL"
+    print(f"{status} {test_name}")
+    if details:
+        print(f"   {details}")
+    print()
     
     def setup_test_user(self):
         """Create test user and session in MongoDB directly"""
