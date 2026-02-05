@@ -805,6 +805,8 @@ async def get_admin_stats():
     today_checkins = await db.check_ins.count_documents({"check_in_time": {"$gte": today_start}})
     total_checkins = await db.check_ins.count_documents({})
     total_redemptions = await db.redemptions.count_documents({})
+    active_auctions = await db.auctions.count_documents({"status": "active"})
+    total_photos = await db.venue_photos.count_documents({})
     
     # Tier distribution
     tier_pipeline = [
@@ -818,7 +820,421 @@ async def get_admin_stats():
         "today_checkins": today_checkins,
         "total_checkins": total_checkins,
         "total_redemptions": total_redemptions,
+        "active_auctions": active_auctions,
+        "total_photos": total_photos,
         "tier_distribution": tier_distribution
+    }
+
+# ==================== Live Auctions ====================
+
+@api_router.get("/auctions")
+async def get_auctions(status: Optional[str] = None):
+    """Get auctions - filter by status (upcoming, active, ended)"""
+    now = datetime.now(timezone.utc)
+    
+    # Auto-update auction statuses
+    await db.auctions.update_many(
+        {"status": "upcoming", "start_time": {"$lte": now}},
+        {"$set": {"status": "active"}}
+    )
+    await db.auctions.update_many(
+        {"status": "active", "end_time": {"$lte": now}},
+        {"$set": {"status": "ended"}}
+    )
+    
+    query = {}
+    if status:
+        query["status"] = status
+    else:
+        query["status"] = {"$in": ["active", "upcoming"]}
+    
+    auctions = await db.auctions.find(query, {"_id": 0}).sort("start_time", 1).to_list(50)
+    return auctions
+
+@api_router.get("/auctions/{auction_id}")
+async def get_auction_detail(auction_id: str):
+    """Get single auction with bid history"""
+    auction = await db.auctions.find_one({"id": auction_id}, {"_id": 0})
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    
+    # Get recent bids
+    bids = await db.auction_bids.find(
+        {"auction_id": auction_id},
+        {"_id": 0}
+    ).sort("bid_time", -1).to_list(20)
+    
+    return {**auction, "recent_bids": bids}
+
+class PlaceBidRequest(BaseModel):
+    auction_id: str
+    bid_amount: float
+
+@api_router.post("/auctions/bid")
+async def place_bid(request: PlaceBidRequest, current_user: User = Depends(get_current_user)):
+    """Place a bid on an auction"""
+    now = datetime.now(timezone.utc)
+    
+    # Get auction
+    auction = await db.auctions.find_one({"id": request.auction_id}, {"_id": 0})
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    
+    # Check auction is active
+    if auction["status"] != "active":
+        # Check if it should be active
+        start_time = auction["start_time"]
+        end_time = auction["end_time"]
+        if start_time.tzinfo is None:
+            start_time = start_time.replace(tzinfo=timezone.utc)
+        if end_time.tzinfo is None:
+            end_time = end_time.replace(tzinfo=timezone.utc)
+        
+        if now < start_time:
+            raise HTTPException(status_code=400, detail="Auction hasn't started yet")
+        if now > end_time:
+            raise HTTPException(status_code=400, detail="Auction has ended")
+        
+        # Update status to active
+        await db.auctions.update_one({"id": request.auction_id}, {"$set": {"status": "active"}})
+    
+    # Check bid amount
+    min_bid = max(auction["reserve_price"], auction["current_bid"] + auction["bid_increment"])
+    if request.bid_amount < min_bid:
+        raise HTTPException(status_code=400, detail=f"Minimum bid is ${min_bid:.2f}")
+    
+    # Mark previous winning bid as not winning
+    await db.auction_bids.update_many(
+        {"auction_id": request.auction_id, "is_winning": True},
+        {"$set": {"is_winning": False}}
+    )
+    
+    # Create new bid
+    bid = AuctionBid(
+        auction_id=request.auction_id,
+        user_id=current_user.user_id,
+        user_name=current_user.name,
+        bid_amount=request.bid_amount,
+        is_winning=True
+    )
+    await db.auction_bids.insert_one(bid.dict())
+    
+    # Update auction
+    await db.auctions.update_one(
+        {"id": request.auction_id},
+        {"$set": {
+            "current_bid": request.bid_amount,
+            "winner_id": current_user.user_id,
+            "winner_name": current_user.name
+        }}
+    )
+    
+    # Get updated auction
+    updated_auction = await db.auctions.find_one({"id": request.auction_id}, {"_id": 0})
+    
+    return {
+        "success": True,
+        "message": "Bid placed successfully!",
+        "bid_amount": request.bid_amount,
+        "auction": updated_auction
+    }
+
+@api_router.get("/auctions/user/won")
+async def get_user_won_auctions(current_user: User = Depends(get_current_user)):
+    """Get auctions won by current user"""
+    auctions = await db.auctions.find(
+        {"winner_id": current_user.user_id, "status": {"$in": ["ended", "claimed"]}},
+        {"_id": 0}
+    ).sort("end_time", -1).to_list(20)
+    return auctions
+
+@api_router.post("/auctions/{auction_id}/claim")
+async def claim_auction_prize(auction_id: str, current_user: User = Depends(get_current_user)):
+    """Claim an auction prize - generates claim code"""
+    auction = await db.auctions.find_one({"id": auction_id}, {"_id": 0})
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    
+    if auction["winner_id"] != current_user.user_id:
+        raise HTTPException(status_code=403, detail="You didn't win this auction")
+    
+    if auction["status"] == "claimed":
+        # Return existing claim
+        claim = await db.auction_claims.find_one({"auction_id": auction_id}, {"_id": 0})
+        return {"success": True, "claim": claim, "already_claimed": True}
+    
+    if auction["status"] != "ended":
+        raise HTTPException(status_code=400, detail="Auction hasn't ended yet")
+    
+    # Create claim
+    claim = AuctionClaim(
+        auction_id=auction_id,
+        user_id=current_user.user_id
+    )
+    await db.auction_claims.insert_one(claim.dict())
+    
+    # Update auction status
+    await db.auctions.update_one(
+        {"id": auction_id},
+        {"$set": {"status": "claimed"}}
+    )
+    
+    return {
+        "success": True,
+        "claim": claim.dict(),
+        "message": "Show this code to staff to claim your prize!"
+    }
+
+# ==================== Photo System ====================
+
+@api_router.get("/photos")
+async def get_user_photos(current_user: User = Depends(get_current_user)):
+    """Get photos where user is tagged"""
+    # Get user's photo tags
+    tags = await db.photo_tags.find(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    # Get photo details
+    photo_ids = [tag["photo_id"] for tag in tags]
+    photos = await db.venue_photos.find(
+        {"id": {"$in": photo_ids}},
+        {"_id": 0}
+    ).to_list(100)
+    
+    # Merge tag info with photos
+    photo_map = {p["id"]: p for p in photos}
+    result = []
+    for tag in tags:
+        photo = photo_map.get(tag["photo_id"])
+        if photo:
+            result.append({
+                **photo,
+                "tag_id": tag["id"],
+                "tag_status": tag["status"],
+                "purchase_price": tag["purchase_price"],
+                "ai_enhanced": tag["ai_enhanced"],
+                "approved_at": tag.get("approved_at"),
+                "purchased_at": tag.get("purchased_at")
+            })
+    
+    return result
+
+@api_router.get("/photos/pending")
+async def get_pending_photos(current_user: User = Depends(get_current_user)):
+    """Get photos pending user approval"""
+    tags = await db.photo_tags.find(
+        {"user_id": current_user.user_id, "status": "pending"},
+        {"_id": 0}
+    ).to_list(50)
+    
+    photo_ids = [tag["photo_id"] for tag in tags]
+    photos = await db.venue_photos.find(
+        {"id": {"$in": photo_ids}},
+        {"_id": 0}
+    ).to_list(50)
+    
+    photo_map = {p["id"]: p for p in photos}
+    result = []
+    for tag in tags:
+        photo = photo_map.get(tag["photo_id"])
+        if photo:
+            result.append({**photo, "tag_id": tag["id"]})
+    
+    return result
+
+class PhotoApprovalRequest(BaseModel):
+    tag_id: str
+    approved: bool
+
+@api_router.post("/photos/approve")
+async def approve_photo(request: PhotoApprovalRequest, current_user: User = Depends(get_current_user)):
+    """Approve or decline a photo tag"""
+    tag = await db.photo_tags.find_one({"id": request.tag_id}, {"_id": 0})
+    if not tag:
+        raise HTTPException(status_code=404, detail="Photo tag not found")
+    
+    if tag["user_id"] != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Not your photo")
+    
+    new_status = "approved" if request.approved else "declined"
+    update_data = {"status": new_status}
+    if request.approved:
+        update_data["approved_at"] = datetime.now(timezone.utc)
+    
+    await db.photo_tags.update_one(
+        {"id": request.tag_id},
+        {"$set": update_data}
+    )
+    
+    return {"success": True, "status": new_status}
+
+class PhotoPurchaseRequest(BaseModel):
+    photo_ids: List[str]
+    ai_enhance: bool = False
+
+@api_router.post("/photos/purchase")
+async def purchase_photos(request: PhotoPurchaseRequest, current_user: User = Depends(get_current_user)):
+    """Purchase photos (mock payment)"""
+    # Get tags for these photos
+    tags = await db.photo_tags.find(
+        {
+            "photo_id": {"$in": request.photo_ids},
+            "user_id": current_user.user_id,
+            "status": "approved"
+        },
+        {"_id": 0}
+    ).to_list(50)
+    
+    if len(tags) == 0:
+        raise HTTPException(status_code=400, detail="No approved photos to purchase")
+    
+    # Calculate price
+    base_price = len(tags) * 5.0  # $5 per photo
+    ai_price = len(tags) * 2.0 if request.ai_enhance else 0
+    
+    # Bundle discount: $25 for all if 5+ photos
+    is_bundle = len(tags) >= 5
+    if is_bundle:
+        bundle_price = 25.0
+        discount = base_price - bundle_price
+        total = bundle_price + ai_price
+    else:
+        discount = 0
+        total = base_price + ai_price
+    
+    # Create purchase record
+    purchase = PhotoPurchase(
+        user_id=current_user.user_id,
+        photo_ids=request.photo_ids,
+        total_amount=total,
+        is_bundle=is_bundle,
+        bundle_discount=discount
+    )
+    await db.photo_purchases.insert_one(purchase.dict())
+    
+    # Update tags to purchased
+    await db.photo_tags.update_many(
+        {"photo_id": {"$in": request.photo_ids}, "user_id": current_user.user_id},
+        {"$set": {
+            "status": "purchased",
+            "purchased_at": datetime.now(timezone.utc),
+            "ai_enhanced": request.ai_enhance
+        }}
+    )
+    
+    return {
+        "success": True,
+        "purchase_id": purchase.id,
+        "photos_purchased": len(tags),
+        "base_price": base_price,
+        "ai_enhancement": ai_price,
+        "bundle_discount": discount,
+        "total_charged": total,
+        "message": "Photos purchased! Check your gallery."
+    }
+
+@api_router.get("/photos/purchased")
+async def get_purchased_photos(current_user: User = Depends(get_current_user)):
+    """Get user's purchased photos"""
+    tags = await db.photo_tags.find(
+        {"user_id": current_user.user_id, "status": "purchased"},
+        {"_id": 0}
+    ).to_list(100)
+    
+    photo_ids = [tag["photo_id"] for tag in tags]
+    photos = await db.venue_photos.find(
+        {"id": {"$in": photo_ids}},
+        {"_id": 0}
+    ).to_list(100)
+    
+    photo_map = {p["id"]: p for p in photos}
+    result = []
+    for tag in tags:
+        photo = photo_map.get(tag["photo_id"])
+        if photo:
+            result.append({
+                **photo,
+                "ai_enhanced": tag["ai_enhanced"],
+                "purchased_at": tag["purchased_at"]
+            })
+    
+    return result
+
+@api_router.get("/photos/recap")
+async def get_night_recap(current_user: User = Depends(get_current_user)):
+    """Get night recap with stats and photos"""
+    now = datetime.now(timezone.utc)
+    last_24h = now - timedelta(hours=24)
+    
+    # Get recent check-ins
+    checkins = await db.check_ins.find(
+        {"user_id": current_user.user_id, "check_in_time": {"$gte": last_24h}},
+        {"_id": 0}
+    ).to_list(10)
+    
+    # Get recent points earned
+    points_earned = await db.points_transactions.find(
+        {
+            "user_id": current_user.user_id,
+            "created_at": {"$gte": last_24h},
+            "transaction_type": {"$in": ["earned", "bonus"]}
+        },
+        {"_id": 0}
+    ).to_list(50)
+    total_points = sum(p["amount"] for p in points_earned)
+    
+    # Get recent photos
+    photos = await get_user_photos(current_user)
+    recent_photos = [p for p in photos if p.get("taken_at") and 
+                     (datetime.fromisoformat(str(p["taken_at"]).replace("Z", "+00:00")) if isinstance(p["taken_at"], str) 
+                      else p["taken_at"]) >= last_24h][:10]
+    
+    return {
+        "date": now.date().isoformat(),
+        "checkins": len(checkins),
+        "points_earned": total_points,
+        "photos_count": len(recent_photos),
+        "photos": recent_photos[:5],
+        "message": f"You earned {total_points} points last night!" if total_points > 0 else "No activity in the last 24 hours"
+    }
+
+# Admin endpoints for photos (for photographers)
+class TagPhotoRequest(BaseModel):
+    photo_url: str
+    user_id: str  # From QR scan
+    event_id: Optional[str] = None
+    event_name: Optional[str] = None
+
+@api_router.post("/admin/photos/tag")
+async def tag_photo_to_user(request: TagPhotoRequest):
+    """Photographer tags a photo to a user (via QR scan)"""
+    # Verify user exists
+    user = await db.users.find_one({"user_id": request.user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Create photo
+    photo = VenuePhoto(
+        photo_url=request.photo_url,
+        event_id=request.event_id,
+        event_name=request.event_name
+    )
+    await db.venue_photos.insert_one(photo.dict())
+    
+    # Create tag
+    tag = PhotoTag(
+        photo_id=photo.id,
+        user_id=request.user_id
+    )
+    await db.photo_tags.insert_one(tag.dict())
+    
+    return {
+        "success": True,
+        "photo_id": photo.id,
+        "tag_id": tag.id,
+        "user_name": user["name"]
     }
 
 # ==================== Seed Data ====================
