@@ -1,136 +1,222 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  Dimensions,
+  TextInput,
+  KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
 import { colors } from '../src/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../src/utils/api';
 import { useAuthStore } from '../src/store/authStore';
 
-const { width } = Dimensions.get('window');
-const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+type AuthMode = 'login' | 'register';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, setLoading } = useAuthStore();
+  const { login } = useAuthStore();
+  const [mode, setMode] = useState<AuthMode>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleGoogleLogin = async () => {
-    try {
-      // Platform-specific redirect URL
-      const redirectUrl = Platform.OS === 'web'
-        ? `${API_URL}/`
-        : Linking.createURL('/');
-
-      const authUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
-
-      if (Platform.OS === 'web') {
-        // Web: Direct navigation
-        window.location.href = authUrl;
-      } else {
-        // Mobile: Use WebBrowser
-        const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
-        
-        if (result.type === 'success' && result.url) {
-          // Parse session_id from result URL
-          const url = new URL(result.url);
-          let sessionId = url.searchParams.get('session_id');
-          if (!sessionId && url.hash) {
-            sessionId = url.hash.split('session_id=')[1]?.split('&')[0];
-          }
-
-          if (sessionId) {
-            setLoading(true);
-            const data = await api.exchangeSession(sessionId);
-            await login(
-              {
-                user_id: data.user_id,
-                email: data.email,
-                name: data.name,
-                picture: data.picture,
-                tier: 'bronze',
-                points_balance: 0,
-              },
-              data.session_token
-            );
-            
-            // Fetch fresh user data
-            const user = await api.getMe();
-            useAuthStore.getState().setUser(user);
-            
-            router.replace('/(tabs)');
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Login error:', error);
+  const handleSubmit = async () => {
+    // Validation
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Error', 'Please enter email and password');
+      return;
     }
+
+    if (mode === 'register' && !name.trim()) {
+      Alert.alert('Error', 'Please enter your name');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let result;
+      if (mode === 'register') {
+        result = await api.register(email.trim(), password, name.trim());
+      } else {
+        result = await api.login(email.trim(), password);
+      }
+
+      await login(
+        {
+          user_id: result.user_id,
+          email: result.email,
+          name: result.name,
+          tier: result.tier,
+          points_balance: result.points_balance,
+        },
+        result.token
+      );
+
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleMode = () => {
+    setMode(mode === 'login' ? 'register' : 'login');
+    setPassword('');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Logo */}
-        <View style={styles.logoSection}>
-          <Text style={styles.logo}>ECLIPSE</Text>
-          <Text style={styles.location}>BRISBANE</Text>
-          <View style={styles.divider} />
-          <Text style={styles.tagline}>Premium VIP Experience</Text>
-        </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Logo */}
+          <View style={styles.logoSection}>
+            <Text style={styles.logo}>ECLIPSE</Text>
+            <Text style={styles.location}>BRISBANE</Text>
+            <View style={styles.divider} />
+            <Text style={styles.tagline}>Premium VIP Experience</Text>
+          </View>
 
-        {/* Features */}
-        <View style={styles.featuresSection}>
-          <View style={styles.feature}>
-            <View style={styles.featureIcon}>
-              <Ionicons name="qr-code" size={24} color={colors.accent} />
-            </View>
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>Tonight Pass</Text>
-              <Text style={styles.featureDesc}>Skip the queue with your digital pass</Text>
-            </View>
-          </View>
-          
-          <View style={styles.feature}>
-            <View style={styles.featureIcon}>
-              <Ionicons name="star" size={24} color={colors.premiumGold} />
-            </View>
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>Earn Rewards</Text>
-              <Text style={styles.featureDesc}>Get points for every visit</Text>
-            </View>
-          </View>
-          
-          <View style={styles.feature}>
-            <View style={styles.featureIcon}>
-              <Ionicons name="diamond" size={24} color={colors.platinum} />
-            </View>
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>VIP Benefits</Text>
-              <Text style={styles.featureDesc}>Exclusive perks and experiences</Text>
-            </View>
-          </View>
-        </View>
+          {/* Auth Form */}
+          <View style={styles.formSection}>
+            <Text style={styles.formTitle}>
+              {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+            </Text>
+            <Text style={styles.formSubtitle}>
+              {mode === 'login'
+                ? 'Sign in to access your VIP benefits'
+                : 'Join Eclipse VIP for exclusive rewards'}
+            </Text>
 
-        {/* Login Button */}
-        <View style={styles.buttonSection}>
-          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-            <Ionicons name="logo-google" size={20} color={colors.textPrimary} />
-            <Text style={styles.googleButtonText}>Continue with Google</Text>
-          </TouchableOpacity>
-          
+            {mode === 'register' && (
+              <View style={styles.inputContainer}>
+                <Ionicons name="person-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Full Name"
+                  placeholderTextColor={colors.textMuted}
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                />
+              </View>
+            )}
+
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Email Address"
+                placeholderTextColor={colors.textMuted}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, styles.passwordInput]}
+                placeholder="Password"
+                placeholderTextColor={colors.textMuted}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity
+                style={styles.showPasswordBtn}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={colors.textMuted}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={colors.textPrimary} />
+              ) : (
+                <>
+                  <Text style={styles.submitButtonText}>
+                    {mode === 'login' ? 'Sign In' : 'Create Account'}
+                  </Text>
+                  <Ionicons name="arrow-forward" size={20} color={colors.textPrimary} />
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.toggleButton} onPress={toggleMode}>
+              <Text style={styles.toggleText}>
+                {mode === 'login'
+                  ? "Don't have an account? "
+                  : 'Already have an account? '}
+                <Text style={styles.toggleTextBold}>
+                  {mode === 'login' ? 'Sign Up' : 'Sign In'}
+                </Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Features */}
+          <View style={styles.featuresSection}>
+            <View style={styles.feature}>
+              <View style={styles.featureIcon}>
+                <Ionicons name="qr-code" size={20} color={colors.accent} />
+              </View>
+              <Text style={styles.featureText}>VIP Check-in</Text>
+            </View>
+            <View style={styles.feature}>
+              <View style={styles.featureIcon}>
+                <Ionicons name="star" size={20} color={colors.premiumGold} />
+              </View>
+              <Text style={styles.featureText}>Earn Rewards</Text>
+            </View>
+            <View style={styles.feature}>
+              <View style={styles.featureIcon}>
+                <Ionicons name="flash" size={20} color={colors.warning} />
+              </View>
+              <Text style={styles.featureText}>Live Auctions</Text>
+            </View>
+          </View>
+
           <Text style={styles.termsText}>
             By continuing, you agree to our Terms of Service and Privacy Policy
           </Text>
-        </View>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -140,24 +226,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
+  keyboardView: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 24,
-    justifyContent: 'space-between',
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingTop: 40,
+    paddingBottom: 24,
   },
   logoSection: {
     alignItems: 'center',
+    marginBottom: 40,
   },
   logo: {
-    fontSize: 48,
+    fontSize: 42,
     fontWeight: '800',
     color: colors.textPrimary,
     letterSpacing: 8,
   },
   location: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.accent,
     letterSpacing: 6,
@@ -167,65 +256,109 @@ const styles = StyleSheet.create({
     width: 60,
     height: 2,
     backgroundColor: colors.accent,
-    marginVertical: 20,
+    marginVertical: 16,
   },
   tagline: {
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
-  featuresSection: {
-    paddingVertical: 40,
-  },
-  feature: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  featureIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  featureText: {
-    flex: 1,
-  },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  featureDesc: {
     fontSize: 14,
     color: colors.textSecondary,
   },
-  buttonSection: {
-    alignItems: 'center',
+  formSection: {
+    marginBottom: 32,
   },
-  googleButton: {
+  formTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 8,
+  },
+  formSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 24,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  inputIcon: {
+    paddingLeft: 16,
+  },
+  input: {
+    flex: 1,
+    padding: 16,
+    fontSize: 16,
+    color: colors.textPrimary,
+  },
+  passwordInput: {
+    paddingRight: 50,
+  },
+  showPasswordBtn: {
+    position: 'absolute',
+    right: 16,
+    padding: 4,
+  },
+  submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.accent,
-    width: '100%',
     paddingVertical: 16,
     borderRadius: 12,
-    marginBottom: 16,
+    marginTop: 8,
   },
-  googleButtonText: {
+  submitButtonDisabled: {
+    opacity: 0.7,
+  },
+  submitButtonText: {
     color: colors.textPrimary,
     fontSize: 16,
     fontWeight: '600',
-    marginLeft: 12,
+    marginRight: 8,
+  },
+  toggleButton: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  toggleText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  toggleTextBold: {
+    color: colors.accent,
+    fontWeight: '600',
+  },
+  featuresSection: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 24,
+    gap: 24,
+  },
+  feature: {
+    alignItems: 'center',
+  },
+  featureIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  featureText: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '500',
   },
   termsText: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textMuted,
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 16,
   },
 });
