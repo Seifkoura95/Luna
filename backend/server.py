@@ -1156,8 +1156,8 @@ async def get_purchased_photos(current_user: User = Depends(get_current_user)):
         if photo:
             result.append({
                 **photo,
-                "ai_enhanced": tag["ai_enhanced"],
-                "purchased_at": tag["purchased_at"]
+                "ai_enhanced": tag.get("ai_enhanced", False),
+                "purchased_at": tag.get("purchased_at")
             })
     
     return result
