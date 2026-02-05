@@ -1014,7 +1014,7 @@ async def get_user_photos(current_user: User = Depends(get_current_user)):
                 "tag_id": tag["id"],
                 "tag_status": tag["status"],
                 "purchase_price": tag["purchase_price"],
-                "ai_enhanced": tag["ai_enhanced"],
+                "ai_enhanced": tag.get("ai_enhanced", False),
                 "approved_at": tag.get("approved_at"),
                 "purchased_at": tag.get("purchased_at")
             })
