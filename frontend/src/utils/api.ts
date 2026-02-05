@@ -79,4 +79,34 @@ export const api = {
   // Admin
   seedData: () => apiFetch<any>('/api/admin/seed', { method: 'POST', auth: false }),
   getAdminStats: () => apiFetch<any>('/api/admin/stats', { auth: false }),
+  
+  // Auctions
+  getAuctions: (status?: string) =>
+    apiFetch<any[]>(`/api/auctions${status ? `?status=${status}` : ''}`, { auth: false }),
+  getAuctionDetail: (auctionId: string) =>
+    apiFetch<any>(`/api/auctions/${auctionId}`, { auth: false }),
+  placeBid: (auctionId: string, bidAmount: number) =>
+    apiFetch<any>('/api/auctions/bid', { 
+      method: 'POST', 
+      body: JSON.stringify({ auction_id: auctionId, bid_amount: bidAmount }) 
+    }),
+  getUserWonAuctions: () => apiFetch<any[]>('/api/auctions/user/won'),
+  claimAuctionPrize: (auctionId: string) =>
+    apiFetch<any>(`/api/auctions/${auctionId}/claim`, { method: 'POST' }),
+  
+  // Photos
+  getUserPhotos: () => apiFetch<any[]>('/api/photos'),
+  getPendingPhotos: () => apiFetch<any[]>('/api/photos/pending'),
+  approvePhoto: (tagId: string, approved: boolean) =>
+    apiFetch<any>('/api/photos/approve', { 
+      method: 'POST', 
+      body: JSON.stringify({ tag_id: tagId, approved }) 
+    }),
+  purchasePhotos: (photoIds: string[], aiEnhance: boolean = false) =>
+    apiFetch<any>('/api/photos/purchase', { 
+      method: 'POST', 
+      body: JSON.stringify({ photo_ids: photoIds, ai_enhance: aiEnhance }) 
+    }),
+  getPurchasedPhotos: () => apiFetch<any[]>('/api/photos/purchased'),
+  getNightRecap: () => apiFetch<any>('/api/photos/recap'),
 };
