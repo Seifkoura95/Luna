@@ -69,7 +69,7 @@ def test_auction_apis():
     try:
         bid_data = {
             "auction_id": "a2",
-            "bid_amount": 45.0
+            "bid_amount": 55.0  # Increased bid amount
         }
         response = requests.post(
             f"{BACKEND_URL}/auctions/bid", 
