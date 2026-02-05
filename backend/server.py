@@ -1187,9 +1187,22 @@ async def get_night_recap(current_user: User = Depends(get_current_user)):
     
     # Get recent photos
     photos = await get_user_photos(current_user)
-    recent_photos = [p for p in photos if p.get("taken_at") and 
-                     (datetime.fromisoformat(str(p["taken_at"]).replace("Z", "+00:00")) if isinstance(p["taken_at"], str) 
-                      else p["taken_at"]) >= last_24h][:10]
+    recent_photos = []
+    for p in photos:
+        if p.get("taken_at"):
+            taken_at = p["taken_at"]
+            if isinstance(taken_at, str):
+                try:
+                    taken_at = datetime.fromisoformat(str(taken_at).replace("Z", "+00:00"))
+                except:
+                    continue
+            elif taken_at.tzinfo is None:
+                taken_at = taken_at.replace(tzinfo=timezone.utc)
+            
+            if taken_at >= last_24h:
+                recent_photos.append(p)
+                if len(recent_photos) >= 10:
+                    break
     
     return {
         "date": now.date().isoformat(),
