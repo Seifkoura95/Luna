@@ -116,7 +116,7 @@ def get_seed_data():
         },
     ]
     
-    # Live auctions
+    # Live auctions - with extended end times for testing
     now = datetime.now(timezone.utc)
     auctions = [
         {
@@ -135,7 +135,7 @@ def get_seed_data():
             "winner_id": None,
             "winner_name": None,
             "start_time": now - timedelta(minutes=15),
-            "end_time": now + timedelta(minutes=45),
+            "end_time": now + timedelta(hours=3, minutes=45),
             "status": "active",
             "image_url": "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=600",
             "features": ["Premium Booth", "Bottle Service", "Dedicated Host", "VIP Entry"]
@@ -156,7 +156,7 @@ def get_seed_data():
             "winner_id": None,
             "winner_name": None,
             "start_time": now - timedelta(minutes=5),
-            "end_time": now + timedelta(hours=1, minutes=20),
+            "end_time": now + timedelta(hours=4, minutes=20),
             "status": "active",
             "image_url": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600",
             "features": ["Backstage Access", "Photo Op", "2 Guest Passes", "Exclusive"]
@@ -177,7 +177,7 @@ def get_seed_data():
             "winner_id": None,
             "winner_name": None,
             "start_time": now - timedelta(minutes=25),
-            "end_time": now + timedelta(minutes=35),
+            "end_time": now + timedelta(hours=2, minutes=35),
             "status": "active",
             "image_url": "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=600",
             "features": ["Fast Lane Entry", "Premium Bottle", "VIP Area", "4 Guests"]
@@ -190,16 +190,16 @@ def get_seed_data():
             "description": "Exclusive rooftop VIP section with premium bottle selection and city views for you and 7 guests.",
             "auction_type": "vip_section",
             "starting_bid": 200,
-            "current_bid": 0,
+            "current_bid": 225,
             "min_increment": 15,
             "deposit_required": 75,
             "deposit_rules": "75% deposit required. Cancellation fee applies within 24 hours.",
             "max_bid_limit": 800,
             "winner_id": None,
             "winner_name": None,
-            "start_time": now + timedelta(minutes=5),
-            "end_time": now + timedelta(hours=2),
-            "status": "upcoming",
+            "start_time": now - timedelta(minutes=10),
+            "end_time": now + timedelta(hours=5),
+            "status": "active",
             "image_url": "https://images.unsplash.com/photo-1613066697301-d7dccfc86bb5?w=600",
             "features": ["Rooftop Access", "8 Guests", "Premium Bottles", "City Views"]
         },
@@ -219,10 +219,31 @@ def get_seed_data():
             "winner_id": None,
             "winner_name": None,
             "start_time": now - timedelta(minutes=10),
-            "end_time": now + timedelta(minutes=50),
+            "end_time": now + timedelta(hours=1, minutes=50),
             "status": "active",
             "image_url": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600",
             "features": ["DJ Shout-Out", "Premium Bottle", "Photo Op", "VIP Treatment"]
+        },
+        {
+            "id": "auction_" + str(uuid.uuid4())[:8],
+            "venue_id": "juju",
+            "venue_name": "Juju Mermaid Beach",
+            "title": "Sunset Booth Experience",
+            "description": "Premium rooftop booth for Sundown Social. Includes a bottle of Veuve Clicquot and seafood platter.",
+            "auction_type": "booth_upgrade",
+            "starting_bid": 180,
+            "current_bid": 210,
+            "min_increment": 15,
+            "deposit_required": 60,
+            "deposit_rules": "Full deposit required. Includes $100 F&B credit.",
+            "max_bid_limit": 700,
+            "winner_id": None,
+            "winner_name": None,
+            "start_time": now - timedelta(minutes=20),
+            "end_time": now + timedelta(hours=6),
+            "status": "active",
+            "image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600",
+            "features": ["Sunset Views", "Champagne", "Seafood Platter", "6 Guests"]
         },
     ]
     
