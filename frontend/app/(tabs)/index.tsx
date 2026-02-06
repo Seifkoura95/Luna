@@ -676,9 +676,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   eventListLogo: {
-    width: 24,
-    height: 16,
-    opacity: 0.8,
+    width: 32,
+    height: 14,
+    opacity: 0.9,
   },
   eventListVenue: {
     fontSize: 13,
