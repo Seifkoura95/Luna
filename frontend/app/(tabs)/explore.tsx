@@ -257,21 +257,10 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     opacity: 0.4,
   },
-  logoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.backgroundCard,
-    borderWidth: 2,
-    borderColor: colors.accent + '40',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: colors.textPrimary,
-    letterSpacing: 1,
+  logoImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
   },
   headerTextContainer: {
     alignItems: 'center',
