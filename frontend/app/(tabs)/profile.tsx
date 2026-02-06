@@ -98,8 +98,15 @@ export default function ProfileScreen() {
         text: 'Logout',
         style: 'destructive',
         onPress: async () => {
-          await logout();
-          router.replace('/login');
+          try {
+            await logout();
+            // Force navigation to login
+            router.replace('/login');
+          } catch (e) {
+            console.error('Logout error:', e);
+            // Even if logout fails, clear local state and navigate
+            router.replace('/login');
+          }
         },
       },
     ]);
