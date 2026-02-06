@@ -703,6 +703,28 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Safety Alert Component */}
+      <SafetyAlert
+        visible={showSafety}
+        onClose={() => setShowSafety(false)}
+        crews={crews}
+        venues={venues}
+      />
+
+      {/* Crew Map Modal */}
+      {showCrewMap && selectedCrewForMap && (
+        <Modal visible={showCrewMap} animationType="slide">
+          <CrewMap
+            crewId={selectedCrewForMap.id}
+            crewName={selectedCrewForMap.name}
+            onClose={() => {
+              setShowCrewMap(false);
+              setSelectedCrewForMap(null);
+            }}
+          />
+        </Modal>
+      )}
     </View>
   );
 }
