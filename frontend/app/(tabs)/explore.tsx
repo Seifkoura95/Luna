@@ -61,8 +61,12 @@ export default function ExploreScreen() {
           colors={[colors.background, colors.backgroundElevated]}
           style={styles.headerGradient}
         >
-          <Text style={styles.headerTitle}>Explore Luna Group</Text>
-          <Text style={styles.headerSubtitle}>7 Premium Venues Across Queensland</Text>
+          <View style={styles.headerIconContainer}>
+            <View style={styles.headerGlow} />
+            <Ionicons name="moon" size={24} color={colors.accent} />
+          </View>
+          <Text style={styles.headerTitle}>LUNA GROUP</Text>
+          <Text style={styles.headerSubtitle}>7 Premier Venues • Brisbane & Gold Coast</Text>
         </LinearGradient>
       </View>
 
