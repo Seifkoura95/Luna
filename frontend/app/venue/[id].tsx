@@ -887,6 +887,50 @@ const styles = StyleSheet.create({
     color: colors.gold,
     fontWeight: '500',
   },
+  // Event card styles
+  eventCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundCard,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  eventImage: {
+    width: 70,
+    height: 70,
+    borderRadius: radius.sm,
+  },
+  eventContent: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  eventDate: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  eventTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  eventPrice: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  eventTicketBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   addressCard: {
     flexDirection: 'row',
     alignItems: 'center',
