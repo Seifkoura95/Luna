@@ -256,20 +256,20 @@ export default function ProfileScreen() {
       onPress: handleGetQR,
     },
     {
+      id: 'vip_tables',
+      icon: 'diamond',
+      title: 'VIP Tables',
+      subtitle: 'Book your booth',
+      color: colors.gold,
+      onPress: () => router.push('/table-booking?venue_id=eclipse&venue_name=Eclipse'),
+    },
+    {
       id: 'crew',
       icon: 'people',
       title: 'Crew Plan',
       subtitle: `${crews.length} crews`,
       color: '#8B00FF',
       onPress: () => setShowCrewPlan(true),
-    },
-    {
-      id: 'safety',
-      icon: 'shield-checkmark',
-      title: 'Get Help',
-      subtitle: 'Safety Alert',
-      color: colors.success,
-      onPress: () => setShowSafety(true),
     },
     {
       id: 'wallet',
