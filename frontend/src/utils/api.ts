@@ -34,15 +34,22 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
 }
 
 export const api = {
+  // Venues
+  getVenues: (region?: string) => 
+    apiFetch<any[]>(`/api/venues${region ? `?region=${region}` : ''}`, { auth: false }),
+  
+  getVenue: (venueId: string) => 
+    apiFetch<any>(`/api/venues/${venueId}`, { auth: false }),
+  
   // Auth
   register: (email: string, password: string, name: string) =>
-    apiFetch<{ user_id: string; email: string; name: string; tier: string; points_balance: number; token: string }>(
+    apiFetch<{ user: any; token: string }>(
       '/api/auth/register',
       { method: 'POST', body: JSON.stringify({ email, password, name }), auth: false }
     ),
   
   login: (email: string, password: string) =>
-    apiFetch<{ user_id: string; email: string; name: string; tier: string; points_balance: number; token: string }>(
+    apiFetch<{ user: any; token: string }>(
       '/api/auth/login',
       { method: 'POST', body: JSON.stringify({ email, password }), auth: false }
     ),
