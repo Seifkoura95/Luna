@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useMemo } from 'react';
-import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,7 +9,6 @@ import Animated, {
   withSequence,
   Easing,
   interpolate,
-  runOnJS,
 } from 'react-native-reanimated';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -72,38 +71,31 @@ const ShootingStar: React.FC<ShootingStarProps> = ({ delay, startX, startY }) =>
   const opacity = useSharedValue(0);
 
   useEffect(() => {
-    const animate = () => {
-      progress.value = 0;
-      opacity.value = 0;
-      
-      progress.value = withDelay(
-        delay,
-        withRepeat(
-          withSequence(
-            withTiming(1, { duration: 1500, easing: Easing.out(Easing.cubic) }),
-            withTiming(1, { duration: 8000 + Math.random() * 12000 }) // Wait before next
-          ),
-          -1,
-          false
-        )
-      );
-      
-      opacity.value = withDelay(
-        delay,
-        withRepeat(
-          withSequence(
-            withTiming(1, { duration: 200 }),
-            withTiming(1, { duration: 800 }),
-            withTiming(0, { duration: 500 }),
-            withTiming(0, { duration: 8000 + Math.random() * 12000 }) // Wait synced
-          ),
-          -1,
-          false
-        )
-      );
-    };
+    progress.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1500, easing: Easing.out(Easing.cubic) }),
+          withTiming(1, { duration: 8000 + Math.random() * 12000 })
+        ),
+        -1,
+        false
+      )
+    );
     
-    animate();
+    opacity.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 200 }),
+          withTiming(1, { duration: 800 }),
+          withTiming(0, { duration: 500 }),
+          withTiming(0, { duration: 8000 + Math.random() * 12000 })
+        ),
+        -1,
+        false
+      )
+    );
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -152,10 +144,10 @@ export const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
       id: i,
       x: Math.random() * SCREEN_WIDTH,
       y: Math.random() * SCREEN_HEIGHT,
-      size: Math.random() * 2 + 0.5, // 0.5 to 2.5px
+      size: Math.random() * 2.5 + 1, // 1 to 3.5px - slightly bigger
       delay: Math.random() * 3000,
-      duration: 2000 + Math.random() * 4000, // 2-6 seconds
-      maxOpacity: 0.3 + Math.random() * 0.5, // 0.3 to 0.8
+      duration: 2000 + Math.random() * 4000,
+      maxOpacity: 0.5 + Math.random() * 0.5, // 0.5 to 1.0 - brighter
     }));
   }, [starCount]);
 
@@ -163,7 +155,7 @@ export const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
   const shootingStars = useMemo(() => {
     return Array.from({ length: shootingStarCount }, (_, i) => ({
       id: i,
-      delay: i * 5000 + Math.random() * 3000, // Stagger them
+      delay: i * 5000 + Math.random() * 3000,
       startX: Math.random() * (SCREEN_WIDTH - 300),
       startY: Math.random() * (SCREEN_HEIGHT * 0.4),
     }));
@@ -171,7 +163,7 @@ export const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
 
   return (
     <View style={styles.container} pointerEvents="none">
-      {/* Static background stars layer (very dim, many) */}
+      {/* Stars */}
       {stars.map((star) => (
         <Star
           key={star.id}
@@ -197,7 +189,6 @@ export const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
       {/* Subtle nebula glow spots */}
       <View style={[styles.nebula, styles.nebulaOne]} />
       <View style={[styles.nebula, styles.nebulaTwo]} />
-      <View style={[styles.nebula, styles.nebulaThree]} />
     </View>
   );
 };
@@ -206,14 +197,11 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     overflow: 'hidden',
+    backgroundColor: '#000000',
   },
   star: {
     position: 'absolute',
     backgroundColor: '#FFFFFF',
-    shadowColor: '#FFFFFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 2,
   },
   shootingStar: {
     position: 'absolute',
@@ -225,31 +213,18 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: '#FFFFFF',
-    shadowColor: '#FFFFFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
   },
   shootingStarTail: {
     width: 60,
     height: 2,
     marginLeft: -2,
     borderRadius: 1,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    // Gradient simulation using multiple layers would be better, but this works
-    ...(Platform.OS === 'web'
-      ? {
-          background: 'linear-gradient(90deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%)',
-        }
-      : {
-          backgroundColor: 'rgba(255,255,255,0.3)',
-        }),
+    backgroundColor: 'rgba(255,255,255,0.4)',
   },
   nebula: {
     position: 'absolute',
     borderRadius: 500,
-    opacity: 0.03,
+    opacity: 0.05,
   },
   nebulaOne: {
     width: 400,
@@ -264,13 +239,6 @@ const styles = StyleSheet.create({
     bottom: 100,
     left: -80,
     backgroundColor: '#8B00FF',
-  },
-  nebulaThree: {
-    width: 350,
-    height: 350,
-    top: '40%',
-    left: '30%',
-    backgroundColor: '#FFB800',
   },
 });
 
