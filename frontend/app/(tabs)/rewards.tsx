@@ -144,6 +144,21 @@ export default function RewardsScreen() {
           ))}
         </ScrollView>
 
+        {/* Venue Filter Button */}
+        <View style={styles.venueFilterContainer}>
+          <TouchableOpacity
+            style={styles.venueFilterButton}
+            onPress={() => setShowVenueFilter(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="location-outline" size={20} color={colors.accent} />
+            <Text style={styles.venueFilterText}>
+              {selectedVenueId ? 'Venue Selected' : 'Filter by Venue'}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+
         {/* Section Header */}
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
