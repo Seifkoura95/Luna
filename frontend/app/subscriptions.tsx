@@ -50,13 +50,19 @@ export default function SubscriptionsScreen() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const [tiersRes, subRes] = await Promise.all([
-        api.getSubscriptionTiers(),
-        api.getMySubscription(),
-      ]);
+      // Get tiers first (no auth required)
+      const tiersRes = await api.getSubscriptionTiers();
       setTiers(tiersRes.tiers || []);
-      setCurrentSubscription(subRes.subscription);
-      setCurrentTier(subRes.tier);
+      
+      // Try to get subscription (requires auth)
+      try {
+        const subRes = await api.getMySubscription();
+        setCurrentSubscription(subRes.subscription);
+        setCurrentTier(subRes.tier);
+      } catch (subError) {
+        // User not logged in, default to lunar
+        setCurrentTier(tiersRes.tiers?.find((t: any) => t.id === 'lunar') || null);
+      }
     } catch (error) {
       console.error('Failed to fetch subscription data:', error);
     } finally {
