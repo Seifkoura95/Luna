@@ -5,6 +5,7 @@ import { colors, spacing } from '../theme/colors';
 import { RotatingMoon } from './RotatingMoon';
 import { FierySun } from './FierySun';
 import { useAuthStore } from '../store/authStore';
+import { useFonts, fonts } from '../hooks/useFonts';
 
 interface PageHeaderProps {
   title: string;
@@ -19,20 +20,23 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
+  const fontsLoaded = useFonts();
 
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
       <RotatingMoon size={80} rotationDuration={30000} />
-      <Text style={styles.headerTitle}>{title}</Text>
+      <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.black }]}>{title}</Text>
       <View style={styles.headerUnderline} />
       {description && (
-        <Text style={styles.headerDescription}>{description}</Text>
+        <Text style={[styles.headerDescription, fontsLoaded && { fontFamily: fonts.regular }]}>{description}</Text>
       )}
       
       {showPoints && (
         <View style={styles.pointsBadge}>
           <FierySun size={22} />
-          <Text style={styles.pointsText}>{user?.points_balance?.toLocaleString() || 0} pts</Text>
+          <Text style={[styles.pointsText, fontsLoaded && { fontFamily: fonts.bold }]}>
+            {user?.points_balance?.toLocaleString() || 0} pts
+          </Text>
         </View>
       )}
     </View>
@@ -46,15 +50,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   headerTitle: {
-    fontFamily: Platform.select({
-      ios: 'Avenir-Black',
-      android: 'sans-serif-condensed',
-      default: 'system-ui',
-    }),
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '900',
     color: colors.textPrimary,
-    letterSpacing: 8,
+    letterSpacing: 12,
     marginTop: spacing.sm,
     textTransform: 'uppercase',
   },
@@ -65,16 +64,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   headerDescription: {
-    fontFamily: Platform.select({
-      ios: 'Avenir',
-      android: 'sans-serif',
-      default: 'system-ui',
-    }),
     fontSize: 12,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.sm,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
     paddingHorizontal: spacing.lg,
   },
   pointsBadge: {
@@ -88,11 +82,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   pointsText: {
-    fontFamily: Platform.select({
-      ios: 'Avenir-Heavy',
-      android: 'sans-serif-condensed',
-      default: 'system-ui',
-    }),
     color: colors.gold,
     fontWeight: '700',
     fontSize: 14,
