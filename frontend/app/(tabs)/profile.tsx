@@ -849,6 +849,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
+    alignSelf: 'center',
+    width: '100%',
   },
   settingsItem: {
     flexDirection: 'row',
