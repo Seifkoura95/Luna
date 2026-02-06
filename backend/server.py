@@ -141,7 +141,8 @@ async def get_me(request: Request):
     user = await db.users.find_one({"user_id": current_user["user_id"]})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    user_copy = {k: v for k, v in user.items() if k != "hashed_password"}
+    # Remove MongoDB _id and hashed_password
+    user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id"]}
     return user_copy
 
 # ====== TONIGHT PASS API ======
