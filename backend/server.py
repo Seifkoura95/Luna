@@ -79,18 +79,27 @@ async def get_venue(venue_id: str):
 
 # ====== AUTH API ======
 
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
 @api_router.post("/auth/register")
-async def register(email: EmailStr, password: str, name: str):
-    existing = await db.users.find_one({"email": email})
+async def register(request: RegisterRequest):
+    existing = await db.users.find_one({"email": request.email})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
-    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    hashed = bcrypt.hashpw(request.password.encode(), bcrypt.gensalt())
     user_id = str(uuid.uuid4())
     user = {
         "user_id": user_id,
-        "email": email,
+        "email": request.email,
         "hashed_password": hashed.decode(),
-        "name": name,
+        "name": request.name,
         "tier": "bronze",
         "points_balance": 500,
         "home_region": "brisbane",
