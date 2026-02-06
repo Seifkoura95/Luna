@@ -35,7 +35,7 @@ interface MemberLocation {
 }
 
 // Web version - shows list of crew members instead of map
-export const CrewMap: React.FC<CrewMapProps> = ({ crewId, crewName, onClose }) => {
+export const CrewMapWeb: React.FC<CrewMapProps> = ({ crewId, crewName, onClose }) => {
   const insets = useSafeAreaInsets();
   const [memberLocations, setMemberLocations] = useState<MemberLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
