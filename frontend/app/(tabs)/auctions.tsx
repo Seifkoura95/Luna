@@ -541,44 +541,6 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: spacing.xxl,
   },
-  header: {
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-  },
-  moonImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginBottom: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: colors.textPrimary,
-    letterSpacing: 6,
-  },
-  headerUnderline: {
-    width: 40,
-    height: 3,
-    backgroundColor: colors.accent,
-    marginTop: spacing.xs,
-    marginBottom: spacing.md,
-  },
-  pointsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.goldGlow,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
-    gap: 6,
-  },
-  pointsText: {
-    color: colors.gold,
-    fontWeight: '700',
-    fontSize: 14,
-  },
   section: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.xl,
