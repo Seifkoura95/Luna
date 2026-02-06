@@ -129,7 +129,8 @@ async def login(request: LoginRequest):
         "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRY_DAYS)
     }
     token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-    user_copy = {k: v for k, v in user.items() if k != "hashed_password"}
+    # Remove MongoDB _id and hashed_password
+    user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id"]}
     return {"user": user_copy, "token": token}
 
 @api_router.get("/auth/me")
