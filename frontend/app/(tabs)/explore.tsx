@@ -62,26 +62,8 @@ export default function ExploreScreen() {
     <View style={styles.container}>
       <StarfieldBackground starCount={60} shootingStarCount={2} />
       
-      {/* Premium Header with Custom Lunar Image */}
-      <LinearGradient
-        colors={['transparent', 'transparent']}
-        style={[styles.header, { paddingTop: insets.top + spacing.md }]}
-      >
-        <View style={styles.headerContent}>
-          <View style={styles.logoContainer}>
-            <Image
-              source={{ uri: 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG' }}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>EXPLORE</Text>
-            <View style={styles.headerUnderline} />
-          </View>
-          <Text style={styles.headerSubtitle}>7 Premier Venues • Brisbane & Gold Coast</Text>
-        </View>
-      </LinearGradient>
+      {/* Consistent Header - No Points */}
+      <PageHeader title="EXPLORE" showPoints={false} />
 
       <ScrollView
         style={styles.scrollView}
