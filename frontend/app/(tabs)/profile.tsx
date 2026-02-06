@@ -514,82 +514,13 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-      {/* Safety Modal */}
-      <Modal
+      {/* Safety Alert Component - Advanced Safety System with Confirmation */}
+      <SafetyAlert
         visible={showSafety}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowSafety(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <LinearGradient
-              colors={[colors.backgroundCard, colors.background]}
-              style={styles.modalGradient}
-            >
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Safety</Text>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setShowSafety(false)}
-                >
-                  <Ionicons name="close" size={24} color={colors.textPrimary} />
-                </TouchableOpacity>
-              </View>
-
-              {/* Emergency Button */}
-              <TouchableOpacity
-                style={styles.emergencyButton}
-                onPress={handleEmergencyCall}
-              >
-                <Ionicons name="call" size={24} color={colors.textPrimary} />
-                <Text style={styles.emergencyText}>Emergency Call (000)</Text>
-              </TouchableOpacity>
-
-              {/* Rideshare Links */}
-              <View style={styles.safetySection}>
-                <Text style={styles.safetySectionTitle}>GET A RIDE HOME</Text>
-                <View style={styles.rideshareRow}>
-                  <TouchableOpacity
-                    style={styles.rideshareButton}
-                    onPress={() => handleRideshare('uber')}
-                  >
-                    <Text style={styles.rideshareText}>Uber</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.rideshareButton}
-                    onPress={() => handleRideshare('didi')}
-                  >
-                    <Text style={styles.rideshareText}>DiDi</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Report Options */}
-              <View style={styles.safetySection}>
-                <Text style={styles.safetySectionTitle}>REPORT</Text>
-                <TouchableOpacity style={styles.reportButton}>
-                  <Ionicons name="alert-circle" size={20} color={colors.error} />
-                  <Text style={styles.reportText}>Report an Incident</Text>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.reportButton}>
-                  <Ionicons name="search" size={20} color={colors.textSecondary} />
-                  <Text style={styles.reportText}>Lost Property</Text>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-              </View>
-
-              {/* Helplines */}
-              <View style={styles.safetySection}>
-                <Text style={styles.safetySectionTitle}>HELPLINES</Text>
-                <Text style={styles.helplineText}>Lifeline: 13 11 14</Text>
-                <Text style={styles.helplineText}>Police Non-Emergency: 131 444</Text>
-              </View>
-            </LinearGradient>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowSafety(false)}
+        crews={crews}
+        venues={venues}
+      />
 
       {/* Crew Plan Modal */}
       <Modal
