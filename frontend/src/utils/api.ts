@@ -459,4 +459,77 @@ export const api = {
   
   getSafetyNotifications: () =>
     apiFetch<{ notifications: any[] }>('/api/safety/notifications'),
+
+  // ====== VIP TABLE BOOKING ======
+  getVenueTables: (venueId: string, date?: string) =>
+    apiFetch<{ tables: any[]; venue_id: string }>(`/api/venues/${venueId}/tables${date ? `?date=${date}` : ''}`),
+  
+  createTableBooking: (data: {
+    venue_id: string;
+    table_id: string;
+    date: string;
+    party_size: number;
+    special_requests?: string;
+    contact_phone?: string;
+  }) =>
+    apiFetch<{ success: boolean; booking: any; message: string }>('/api/bookings/table', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+  
+  getTableDepositIntent: (bookingId: string) =>
+    apiFetch<{
+      success: boolean;
+      client_secret: string;
+      payment_intent_id: string;
+      amount: number;
+      currency: string;
+      demo_mode?: boolean;
+    }>(`/api/bookings/table/${bookingId}/deposit`, {
+      method: 'POST'
+    }),
+  
+  confirmTableBooking: (bookingId: string, paymentIntentId: string) =>
+    apiFetch<{ success: boolean; message: string; points_earned: number }>(`/api/bookings/table/${bookingId}/confirm?payment_intent_id=${paymentIntentId}`, {
+      method: 'POST'
+    }),
+  
+  getMyTableBookings: () =>
+    apiFetch<{ bookings: any[] }>('/api/bookings/my-tables'),
+  
+  cancelTableBooking: (bookingId: string) =>
+    apiFetch<{ success: boolean; message: string }>(`/api/bookings/table/${bookingId}`, {
+      method: 'DELETE'
+    }),
+
+  // ====== SMART NOTIFICATIONS ======
+  getNotifications: (unreadOnly: boolean = false, limit: number = 50) =>
+    apiFetch<{ notifications: any[]; unread_count: number }>(`/api/notifications?unread_only=${unreadOnly}&limit=${limit}`),
+  
+  markNotificationRead: (notificationId: string) =>
+    apiFetch<{ success: boolean }>(`/api/notifications/${notificationId}/read`, {
+      method: 'POST'
+    }),
+  
+  markAllNotificationsRead: () =>
+    apiFetch<{ success: boolean; marked_read: number }>('/api/notifications/read-all', {
+      method: 'POST'
+    }),
+  
+  getNotificationPreferences: () =>
+    apiFetch<any>('/api/notifications/preferences'),
+  
+  updateNotificationPreferences: (prefs: any) =>
+    apiFetch<{ success: boolean; preferences: any }>('/api/notifications/preferences', {
+      method: 'POST',
+      body: JSON.stringify(prefs)
+    }),
+  
+  getSmartSuggestions: () =>
+    apiFetch<{ suggestions: any[]; generated_at: string }>('/api/notifications/smart-suggestions'),
+  
+  sendTestNotification: () =>
+    apiFetch<{ success: boolean; notification: any }>('/api/notifications/send-test', {
+      method: 'POST'
+    }),
 };
