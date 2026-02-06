@@ -6,9 +6,7 @@ import Animated, {
   withRepeat,
   withSequence,
   withTiming,
-  withDelay,
   Easing,
-  interpolate,
 } from 'react-native-reanimated';
 import Svg, { Defs, RadialGradient, Stop, Circle, G, Path } from 'react-native-svg';
 
