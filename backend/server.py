@@ -152,8 +152,14 @@ scheduler = AsyncIOScheduler()
 # Placeholder for the sync function - will be set later
 _megatix_sync_func = None
 
+def set_megatix_sync_func(func):
+    """Set the megatix sync function for the scheduler"""
+    global _megatix_sync_func
+    _megatix_sync_func = func
+
 async def run_scheduled_sync():
     """Wrapper to call the megatix sync function"""
+    global _megatix_sync_func
     if _megatix_sync_func:
         logging.info("Running scheduled Megatix sync...")
         try:
