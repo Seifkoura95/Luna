@@ -532,4 +532,25 @@ export const api = {
     apiFetch<{ success: boolean; notification: any }>('/api/notifications/send-test', {
       method: 'POST'
     }),
+
+  // ====== REFERRAL SYSTEM ======
+  getReferralCode: () =>
+    apiFetch<{
+      referral_code: string;
+      referral_link: string;
+      stats: {
+        successful_referrals: number;
+        pending_referrals: number;
+        total_points_earned: number;
+        points_per_referral: number;
+      }
+    }>('/api/referral/code'),
+  
+  getReferralHistory: () =>
+    apiFetch<{ referrals: any[]; total: number }>('/api/referral/history'),
+  
+  applyReferralCode: (code: string) =>
+    apiFetch<{ success: boolean; message: string; referral: any }>(`/api/referral/apply?referral_code=${code}`, {
+      method: 'POST'
+    }),
 };
