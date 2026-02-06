@@ -9,6 +9,7 @@ import Animated, {
   withRepeat,
   withTiming,
   Easing,
+  interpolate,
 } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
@@ -20,7 +21,7 @@ export default function Index() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
   
-  // Spinning animation
+  // Sideways rotation animation (like a real moon)
   const rotation = useSharedValue(0);
   
   useEffect(() => {
@@ -53,17 +54,31 @@ export default function Index() {
     }
   }, [isLoading, isAuthenticated]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
+  // Sideways rotation like a real moon - using scaleX to simulate Y-axis rotation
+  const animatedStyle = useAnimatedStyle(() => {
+    const scaleX = interpolate(
+      rotation.value % 360,
+      [0, 90, 180, 270, 360],
+      [1, 0.85, 1, 0.85, 1]
+    );
+    
+    const translateX = interpolate(
+      rotation.value % 360,
+      [0, 90, 180, 270, 360],
+      [0, -4, 0, 4, 0]
+    );
+
+    return {
+      transform: [
+        { scaleX },
+        { translateX },
+      ],
+    };
+  });
 
   return (
     <View style={styles.container}>
-      {/* Subtle glow behind moon */}
-      <View style={styles.glowOuter} />
-      <View style={styles.glowInner} />
-      
-      {/* Spinning Moon */}
+      {/* Moon without glow - clean look */}
       <Animated.View style={[styles.moonContainer, animatedStyle]}>
         <Image
           source={{ uri: LUNAR_MOON_IMAGE }}
@@ -81,20 +96,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  glowOuter: {
-    position: 'absolute',
-    width: MOON_SIZE * 1.8,
-    height: MOON_SIZE * 1.8,
-    borderRadius: MOON_SIZE * 0.9,
-    backgroundColor: 'rgba(227, 24, 55, 0.08)',
-  },
-  glowInner: {
-    position: 'absolute',
-    width: MOON_SIZE * 1.3,
-    height: MOON_SIZE * 1.3,
-    borderRadius: MOON_SIZE * 0.65,
-    backgroundColor: 'rgba(227, 24, 55, 0.12)',
   },
   moonContainer: {
     width: MOON_SIZE,
