@@ -23,7 +23,6 @@ export default function ExploreScreen() {
   const [venues, setVenues] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
-  const insets = useSafeAreaInsets();
 
   const fetchVenues = async () => {
     try {
