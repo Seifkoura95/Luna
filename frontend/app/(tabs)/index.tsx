@@ -408,46 +408,6 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: spacing.xxl,
   },
-  heroHeader: {
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-  },
-  moonImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: spacing.md,
-  },
-  brandTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: colors.textPrimary,
-    letterSpacing: 6,
-  },
-  brandUnderline: {
-    width: 50,
-    height: 3,
-    backgroundColor: colors.accent,
-    marginTop: spacing.sm,
-  },
-  pointsContainer: {
-    marginTop: spacing.md,
-  },
-  pointsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.goldGlow,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
-    gap: 6,
-  },
-  pointsText: {
-    color: colors.gold,
-    fontWeight: '700',
-    fontSize: 14,
-  },
   dropdownSection: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,
