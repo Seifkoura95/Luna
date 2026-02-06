@@ -2214,6 +2214,314 @@ async def simulate_purchase(request: Request, amount: float, description: str = 
     }
 
 
+# ====== SAFETY & LOCATION TRACKING API ======
+
+# In-memory store for live locations (in production, use Redis)
+live_locations: Dict[str, Dict] = {}
+
+class LocationUpdate(BaseModel):
+    latitude: float
+    longitude: float
+    accuracy: Optional[float] = None
+    heading: Optional[float] = None
+    speed: Optional[float] = None
+
+class SafetyAlertRequest(BaseModel):
+    alert_type: str  # "emergency", "uncomfortable", "need_help", "lost"
+    latitude: float
+    longitude: float
+    venue_id: Optional[str] = None
+    crew_id: Optional[str] = None
+    message: Optional[str] = None
+
+@api_router.post("/location/update")
+async def update_location(request: Request, location: LocationUpdate):
+    """Update user's live location"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    
+    location_data = {
+        "user_id": current_user["user_id"],
+        "name": user.get("name", "Unknown") if user else "Unknown",
+        "latitude": location.latitude,
+        "longitude": location.longitude,
+        "accuracy": location.accuracy,
+        "heading": location.heading,
+        "speed": location.speed,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Store in memory for real-time access
+    live_locations[current_user["user_id"]] = location_data
+    
+    # Also persist to database
+    await db.user_locations.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": location_data},
+        upsert=True
+    )
+    
+    return {"success": True, "message": "Location updated"}
+
+@api_router.get("/location/me")
+async def get_my_location(request: Request):
+    """Get user's last known location"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Try memory first, then database
+    if current_user["user_id"] in live_locations:
+        return {"location": live_locations[current_user["user_id"]]}
+    
+    location = await db.user_locations.find_one({"user_id": current_user["user_id"]})
+    return {"location": clean_mongo_doc(location) if location else None}
+
+@api_router.get("/location/crew/{crew_id}")
+async def get_crew_locations(request: Request, crew_id: str):
+    """Get live locations of all crew members"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Get crew members
+    crew = await db.crews.find_one({"id": crew_id})
+    if not crew:
+        raise HTTPException(status_code=404, detail="Crew not found")
+    
+    # Check if user is a member
+    member_ids = [m.get("user_id") for m in crew.get("members", [])]
+    if current_user["user_id"] not in member_ids:
+        raise HTTPException(status_code=403, detail="Not a member of this crew")
+    
+    # Get locations for all members
+    locations = []
+    for member in crew.get("members", []):
+        member_id = member.get("user_id")
+        
+        # Try live memory first
+        if member_id in live_locations:
+            loc = live_locations[member_id].copy()
+            loc["is_live"] = True
+            locations.append(loc)
+        else:
+            # Fall back to database
+            db_loc = await db.user_locations.find_one({"user_id": member_id})
+            if db_loc:
+                loc = clean_mongo_doc(db_loc)
+                loc["is_live"] = False
+                locations.append(loc)
+            else:
+                # No location data, add placeholder
+                locations.append({
+                    "user_id": member_id,
+                    "name": member.get("name", "Unknown"),
+                    "latitude": None,
+                    "longitude": None,
+                    "is_live": False,
+                    "no_location": True
+                })
+    
+    return {
+        "crew_id": crew_id,
+        "crew_name": crew.get("name", "Crew"),
+        "members": locations,
+        "count": len(locations)
+    }
+
+@api_router.post("/safety/alert")
+async def send_safety_alert(request: Request, alert: SafetyAlertRequest):
+    """Send a safety alert to venue and/or crew members"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    user_name = user.get("name", "A member") if user else "A member"
+    
+    # Create the alert record
+    alert_record = {
+        "id": str(uuid.uuid4())[:8],
+        "user_id": current_user["user_id"],
+        "user_name": user_name,
+        "alert_type": alert.alert_type,
+        "latitude": alert.latitude,
+        "longitude": alert.longitude,
+        "venue_id": alert.venue_id,
+        "crew_id": alert.crew_id,
+        "message": alert.message,
+        "status": "active",
+        "created_at": datetime.now(timezone.utc),
+        "acknowledged_by": [],
+        "resolved_at": None
+    }
+    await db.safety_alerts.insert_one(alert_record)
+    
+    # Get alert type description
+    alert_types = {
+        "emergency": "🚨 EMERGENCY - Needs immediate help",
+        "uncomfortable": "⚠️ Feeling uncomfortable",
+        "need_help": "🆘 Needs assistance",
+        "lost": "📍 Lost/separated from group"
+    }
+    alert_desc = alert_types.get(alert.alert_type, "Needs help")
+    
+    notified_users = []
+    notified_venues = []
+    
+    # Notify crew members if crew_id provided
+    if alert.crew_id:
+        crew = await db.crews.find_one({"id": alert.crew_id})
+        if crew:
+            for member in crew.get("members", []):
+                member_id = member.get("user_id")
+                if member_id and member_id != current_user["user_id"]:
+                    # Create notification for crew member
+                    notification = {
+                        "id": str(uuid.uuid4())[:8],
+                        "user_id": member_id,
+                        "type": "safety_alert",
+                        "alert_id": alert_record["id"],
+                        "title": f"🚨 {user_name} needs help!",
+                        "body": f"{alert_desc}. Tap to see their location.",
+                        "data": {
+                            "alert_id": alert_record["id"],
+                            "latitude": alert.latitude,
+                            "longitude": alert.longitude,
+                            "alert_type": alert.alert_type
+                        },
+                        "read": False,
+                        "created_at": datetime.now(timezone.utc)
+                    }
+                    await db.safety_notifications.insert_one(notification)
+                    notified_users.append(member.get("name", member_id))
+    
+    # Notify venue if venue_id provided
+    if alert.venue_id:
+        venue = await db.venues.find_one({"id": alert.venue_id})
+        if venue:
+            # Create venue alert (in production, this would alert staff devices)
+            venue_alert = {
+                "id": str(uuid.uuid4())[:8],
+                "venue_id": alert.venue_id,
+                "venue_name": venue.get("name", "Venue"),
+                "alert_id": alert_record["id"],
+                "user_name": user_name,
+                "alert_type": alert.alert_type,
+                "latitude": alert.latitude,
+                "longitude": alert.longitude,
+                "message": alert.message,
+                "status": "pending",
+                "created_at": datetime.now(timezone.utc)
+            }
+            await db.venue_alerts.insert_one(venue_alert)
+            notified_venues.append(venue.get("name", "Venue"))
+    
+    return {
+        "success": True,
+        "alert_id": alert_record["id"],
+        "message": "Safety alert sent!",
+        "notified_crew_members": notified_users,
+        "notified_venues": notified_venues,
+        "alert": clean_mongo_doc(alert_record)
+    }
+
+@api_router.get("/safety/alerts/active")
+async def get_active_safety_alerts(request: Request):
+    """Get active safety alerts for crews user is part of"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Get user's crews
+    crews = await db.crews.find({
+        "members.user_id": current_user["user_id"]
+    }).to_list(20)
+    
+    crew_ids = [c.get("id") for c in crews]
+    
+    # Get active alerts for these crews
+    alerts = await db.safety_alerts.find({
+        "status": "active",
+        "$or": [
+            {"crew_id": {"$in": crew_ids}},
+            {"user_id": current_user["user_id"]}
+        ]
+    }).sort("created_at", -1).to_list(20)
+    
+    return {"alerts": clean_mongo_docs(alerts)}
+
+@api_router.post("/safety/alerts/{alert_id}/acknowledge")
+async def acknowledge_safety_alert(request: Request, alert_id: str):
+    """Acknowledge a safety alert (mark as seen/responding)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    user_name = user.get("name", "Unknown") if user else "Unknown"
+    
+    await db.safety_alerts.update_one(
+        {"id": alert_id},
+        {"$push": {"acknowledged_by": {
+            "user_id": current_user["user_id"],
+            "name": user_name,
+            "at": datetime.now(timezone.utc)
+        }}}
+    )
+    
+    return {"success": True, "message": "Alert acknowledged"}
+
+@api_router.post("/safety/alerts/{alert_id}/resolve")
+async def resolve_safety_alert(request: Request, alert_id: str):
+    """Mark a safety alert as resolved"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.safety_alerts.update_one(
+        {"id": alert_id},
+        {"$set": {
+            "status": "resolved",
+            "resolved_at": datetime.now(timezone.utc),
+            "resolved_by": current_user["user_id"]
+        }}
+    )
+    
+    return {"success": True, "message": "Alert resolved"}
+
+@api_router.get("/safety/notifications")
+async def get_safety_notifications(request: Request):
+    """Get safety-related notifications for user"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    notifications = await db.safety_notifications.find({
+        "user_id": current_user["user_id"],
+        "read": False
+    }).sort("created_at", -1).to_list(20)
+    
+    return {"notifications": clean_mongo_docs(notifications)}
+
+@api_router.post("/location/share/{crew_id}")
+async def toggle_location_sharing(request: Request, crew_id: str, enabled: bool = True):
+    """Enable/disable location sharing with a crew"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.location_sharing.update_one(
+        {"user_id": current_user["user_id"], "crew_id": crew_id},
+        {"$set": {
+            "user_id": current_user["user_id"],
+            "crew_id": crew_id,
+            "enabled": enabled,
+            "updated_at": datetime.now(timezone.utc)
+        }},
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "message": f"Location sharing {'enabled' if enabled else 'disabled'} for this crew"
+    }
+
+
 # CORS
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
