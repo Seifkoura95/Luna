@@ -1892,6 +1892,328 @@ async def get_split_status(request: Request, crew_id: str):
     return {"split": clean_mongo_doc(master_split)}
 
 
+# ====== SUBSCRIPTION MANAGEMENT API ======
+
+@api_router.get("/subscriptions/tiers")
+async def get_subscription_tiers():
+    """Get all available subscription tiers"""
+    return {
+        "tiers": list(SUBSCRIPTION_TIERS.values()),
+        "entry_venues": ENTRY_CHARGING_VENUES
+    }
+
+@api_router.get("/subscriptions/my")
+async def get_my_subscription(request: Request):
+    """Get current user's subscription"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    subscription = await db.subscriptions.find_one({
+        "user_id": current_user["user_id"],
+        "status": "active"
+    })
+    
+    if not subscription:
+        # Return default free tier
+        return {
+            "subscription": None,
+            "tier": SUBSCRIPTION_TIERS["lunar"],
+            "is_subscribed": False
+        }
+    
+    tier_info = SUBSCRIPTION_TIERS.get(subscription.get("tier_id"), SUBSCRIPTION_TIERS["lunar"])
+    
+    return {
+        "subscription": clean_mongo_doc(subscription),
+        "tier": tier_info,
+        "is_subscribed": True
+    }
+
+class SubscribeRequest(BaseModel):
+    tier_id: str
+    payment_method_id: Optional[str] = None
+
+@api_router.post("/subscriptions/subscribe")
+async def subscribe_to_tier(request: Request, sub_req: SubscribeRequest):
+    """Subscribe to a tier (Mock for development)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    if sub_req.tier_id not in SUBSCRIPTION_TIERS:
+        raise HTTPException(status_code=400, detail="Invalid tier")
+    
+    tier = SUBSCRIPTION_TIERS[sub_req.tier_id]
+    
+    # Cancel any existing subscription
+    await db.subscriptions.update_many(
+        {"user_id": current_user["user_id"], "status": "active"},
+        {"$set": {"status": "cancelled", "cancelled_at": datetime.now(timezone.utc)}}
+    )
+    
+    # Create new subscription
+    subscription = {
+        "id": str(uuid.uuid4())[:8],
+        "user_id": current_user["user_id"],
+        "tier_id": sub_req.tier_id,
+        "tier_name": tier["name"],
+        "price": tier["price"],
+        "status": "active",
+        "billing_period": tier["billing_period"],
+        "current_period_start": datetime.now(timezone.utc),
+        "current_period_end": datetime.now(timezone.utc) + timedelta(days=30),
+        "free_entries_remaining": tier["benefits"]["free_entries_per_month"],
+        "created_at": datetime.now(timezone.utc),
+        "mock": True  # Demo mode
+    }
+    await db.subscriptions.insert_one(subscription)
+    
+    # Update user's tier
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {"subscription_tier": sub_req.tier_id}}
+    )
+    
+    return {
+        "success": True,
+        "message": f"Welcome to {tier['name']}! 🌙",
+        "subscription": clean_mongo_doc(subscription),
+        "tier": tier,
+        "mock": True
+    }
+
+@api_router.post("/subscriptions/cancel")
+async def cancel_subscription(request: Request):
+    """Cancel current subscription"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    result = await db.subscriptions.update_one(
+        {"user_id": current_user["user_id"], "status": "active"},
+        {"$set": {
+            "status": "cancelled",
+            "cancelled_at": datetime.now(timezone.utc),
+            "cancel_at_period_end": True
+        }}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="No active subscription found")
+    
+    return {"success": True, "message": "Subscription will be cancelled at end of billing period"}
+
+@api_router.post("/subscriptions/use-entry")
+async def use_free_entry(request: Request, venue_id: str):
+    """Use a free entry from subscription"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    subscription = await db.subscriptions.find_one({
+        "user_id": current_user["user_id"],
+        "status": "active"
+    })
+    
+    if not subscription:
+        raise HTTPException(status_code=400, detail="No active subscription")
+    
+    tier = SUBSCRIPTION_TIERS.get(subscription.get("tier_id"), SUBSCRIPTION_TIERS["lunar"])
+    
+    # Check if unlimited (-1) or has remaining entries
+    remaining = subscription.get("free_entries_remaining", 0)
+    if remaining == 0:
+        raise HTTPException(status_code=400, detail="No free entries remaining this month")
+    
+    # Check if venue charges entry
+    if venue_id not in ENTRY_CHARGING_VENUES:
+        raise HTTPException(status_code=400, detail="This venue doesn't charge entry")
+    
+    # Deduct entry (unless unlimited)
+    if remaining > 0:
+        await db.subscriptions.update_one(
+            {"id": subscription["id"]},
+            {"$inc": {"free_entries_remaining": -1}}
+        )
+    
+    # Log the entry usage
+    entry_log = {
+        "id": str(uuid.uuid4())[:8],
+        "user_id": current_user["user_id"],
+        "subscription_id": subscription["id"],
+        "venue_id": venue_id,
+        "type": "free_entry",
+        "used_at": datetime.now(timezone.utc)
+    }
+    await db.subscription_usage.insert_one(entry_log)
+    
+    new_remaining = remaining - 1 if remaining > 0 else -1  # -1 = unlimited
+    
+    return {
+        "success": True,
+        "message": "Free entry applied!",
+        "entries_remaining": new_remaining,
+        "unlimited": remaining == -1
+    }
+
+
+# ====== POINTS SYSTEM API ======
+
+async def award_points(user_id: str, amount_spent: float, source: str, source_id: str):
+    """Award points to a user based on spending"""
+    # Get user's subscription for multiplier
+    subscription = await db.subscriptions.find_one({
+        "user_id": user_id,
+        "status": "active"
+    })
+    
+    multiplier = 1.0
+    if subscription:
+        tier = SUBSCRIPTION_TIERS.get(subscription.get("tier_id"), SUBSCRIPTION_TIERS["lunar"])
+        multiplier = tier.get("points_multiplier", 1.0)
+    
+    # Calculate points: $1 = 1 point * multiplier
+    base_points = int(amount_spent * POINTS_PER_DOLLAR)
+    bonus_points = int(base_points * (multiplier - 1))
+    total_points = base_points + bonus_points
+    
+    # Create transaction record
+    transaction = {
+        "id": str(uuid.uuid4())[:8],
+        "user_id": user_id,
+        "type": "earn",
+        "source": source,  # "auction_bid", "booking", "subscription", "purchase"
+        "source_id": source_id,
+        "amount_spent": amount_spent,
+        "base_points": base_points,
+        "bonus_points": bonus_points,
+        "multiplier": multiplier,
+        "total_points": total_points,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.points_transactions.insert_one(transaction)
+    
+    # Update user's points balance
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$inc": {"points_balance": total_points}}
+    )
+    
+    return {
+        "base_points": base_points,
+        "bonus_points": bonus_points,
+        "total_points": total_points,
+        "multiplier": multiplier
+    }
+
+@api_router.get("/points/balance")
+async def get_points_balance(request: Request):
+    """Get current points balance and recent transactions"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    
+    # Get recent transactions
+    transactions = await db.points_transactions.find({
+        "user_id": current_user["user_id"]
+    }).sort("created_at", -1).limit(20).to_list(20)
+    
+    # Get subscription multiplier
+    subscription = await db.subscriptions.find_one({
+        "user_id": current_user["user_id"],
+        "status": "active"
+    })
+    
+    multiplier = 1.0
+    tier_name = "Lunar"
+    if subscription:
+        tier = SUBSCRIPTION_TIERS.get(subscription.get("tier_id"), SUBSCRIPTION_TIERS["lunar"])
+        multiplier = tier.get("points_multiplier", 1.0)
+        tier_name = tier.get("name", "Lunar")
+    
+    return {
+        "balance": user.get("points_balance", 0) if user else 0,
+        "multiplier": multiplier,
+        "tier": tier_name,
+        "recent_transactions": clean_mongo_docs(transactions),
+        "points_per_dollar": POINTS_PER_DOLLAR
+    }
+
+@api_router.get("/points/history")
+async def get_points_history(request: Request, limit: int = 50):
+    """Get full points history"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    transactions = await db.points_transactions.find({
+        "user_id": current_user["user_id"]
+    }).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # Calculate totals
+    total_earned = sum(t.get("total_points", 0) for t in transactions if t.get("type") == "earn")
+    total_spent = sum(abs(t.get("total_points", 0)) for t in transactions if t.get("type") == "redeem")
+    
+    return {
+        "transactions": clean_mongo_docs(transactions),
+        "total_earned": total_earned,
+        "total_spent": total_spent,
+        "net_points": total_earned - total_spent
+    }
+
+class RecordSpendingRequest(BaseModel):
+    amount: float
+    source: str  # "auction", "booking", "bar_tab", "merchandise", "subscription"
+    source_id: Optional[str] = None
+    venue_id: Optional[str] = None
+    description: Optional[str] = None
+
+@api_router.post("/points/record-spending")
+async def record_spending_and_award_points(request: Request, spend_req: RecordSpendingRequest):
+    """Record spending and award points"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    source_id = spend_req.source_id or str(uuid.uuid4())[:8]
+    
+    # Award points
+    points_result = await award_points(
+        user_id=current_user["user_id"],
+        amount_spent=spend_req.amount,
+        source=spend_req.source,
+        source_id=source_id
+    )
+    
+    return {
+        "success": True,
+        "message": f"You earned {points_result['total_points']} points!",
+        "amount_spent": spend_req.amount,
+        **points_result
+    }
+
+@api_router.post("/points/simulate-purchase")
+async def simulate_purchase(request: Request, amount: float, description: str = "Test Purchase"):
+    """Simulate a purchase for testing points earning (Demo only)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    source_id = f"demo_{str(uuid.uuid4())[:6]}"
+    
+    # Award points
+    points_result = await award_points(
+        user_id=current_user["user_id"],
+        amount_spent=amount,
+        source="demo_purchase",
+        source_id=source_id
+    )
+    
+    return {
+        "success": True,
+        "message": f"Demo: You spent ${amount:.2f} and earned {points_result['total_points']} points!",
+        "amount_spent": amount,
+        "description": description,
+        **points_result,
+        "demo": True
+    }
+
+
 # CORS
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
