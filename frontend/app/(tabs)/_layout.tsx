@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     opacity: 0.2,
   },
   header: {
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     elevation: 0,
