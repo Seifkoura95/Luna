@@ -67,9 +67,10 @@ export default function TonightScreen() {
 
   return (
     <View style={styles.container}>
+      <StarfieldBackground starCount={60} shootingStarCount={2} />
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
