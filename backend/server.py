@@ -3359,6 +3359,9 @@ async def sync_megatix_events():
     result = await scrape_megatix_events()
     return result
 
+# Register the sync function for the scheduler
+_megatix_sync_func = scrape_megatix_events
+
 @api_router.post("/admin/events/add")
 async def add_event_manually(
     venue_id: str,
