@@ -330,7 +330,11 @@ export default function WalletScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Consistent Header - No Points */}
-        <PageHeader title="WALLET" showPoints={false} />
+        <PageHeader 
+          title="WALLET" 
+          description="Your tickets, passes & event history"
+          showPoints={false} 
+        />
 
         {/* Tab Selector */}
         <View style={styles.tabContainer}>
