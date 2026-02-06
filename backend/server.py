@@ -283,7 +283,7 @@ async def place_bid(request: Request, auction_id: str, amount: float):
         raise HTTPException(status_code=400, detail="Bid must be higher than current bid")
     user = await db.users.find_one({"user_id": current_user["user_id"]})
     await db.auctions.update_one(
-        {"id": auction_id"},
+        {"id": auction_id},
         {"$set": {"current_bid": amount, "winner_id": user["user_id"], "winner_name": user["name"]}}
     )
     await db.bids.insert_one({
