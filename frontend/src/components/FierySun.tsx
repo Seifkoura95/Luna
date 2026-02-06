@@ -89,9 +89,6 @@ export const FierySun: React.FC<FierySunProps> = ({ size = 20 }) => {
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
-      {/* Outer glow */}
-      <Animated.View style={[styles.outerGlow, { width: size * 1.8, height: size * 1.8 }, glowStyle]} />
-      
       {/* Main sun container */}
       <Animated.View style={[styles.sunContainer, containerStyle]}>
         <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -153,13 +150,6 @@ export const FierySun: React.FC<FierySunProps> = ({ size = 20 }) => {
             })}
           </Svg>
         </Animated.View>
-      </Animated.View>
-      
-      {/* Extra sparkle layer */}
-      <Animated.View style={[styles.sparkleLayer, flareStyle]}>
-        <View style={[styles.sparkle, styles.sparkle1, { backgroundColor: '#FFD700' }]} />
-        <View style={[styles.sparkle, styles.sparkle2, { backgroundColor: '#FFA500' }]} />
-        <View style={[styles.sparkle, styles.sparkle3, { backgroundColor: '#FFD700' }]} />
       </Animated.View>
     </View>
   );
