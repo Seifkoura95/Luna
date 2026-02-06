@@ -8,6 +8,7 @@ import {
   Dimensions,
   TouchableOpacity,
   Image,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
@@ -16,11 +17,8 @@ import { api } from '../../src/utils/api';
 import { MissionCard } from '../../src/components/MissionCard';
 import { Ionicons } from '@expo/vector-icons';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
-import { RotatingMoon } from '../../src/components/RotatingMoon';
-import { FierySun } from '../../src/components/FierySun';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PageHeader } from '../../src/components/PageHeader';
 import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
