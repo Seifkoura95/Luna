@@ -22,9 +22,9 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   const rotation = useSharedValue(0);
 
   useEffect(() => {
-    // Rotate counter-clockwise (negative direction) - spinning left like a real planet
+    // Simple continuous spin - like a planet rotating on its axis
     rotation.value = withRepeat(
-      withTiming(-360, { 
+      withTiming(360, { 
         duration: rotationDuration, 
         easing: Easing.linear 
       }),
@@ -33,9 +33,9 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
     );
   }, [rotationDuration]);
 
-  // Simple rotation around the Y-axis visual effect (spinning left)
+  // Smooth spinning rotation
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotateY: `${rotation.value}deg` }],
+    transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
   return (
