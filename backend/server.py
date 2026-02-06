@@ -320,7 +320,7 @@ async def place_bid(request: Request, auction_id: str, amount: float):
         "timestamp": datetime.now(timezone.utc)
     })
     updated_auction = await db.auctions.find_one({"id": auction_id})
-    return {"message": "Bid placed successfully!", "auction": updated_auction}
+    return {"message": "Bid placed successfully!", "auction": clean_mongo_doc(updated_auction)}
 
 # ====== PHOTOS API ======
 
