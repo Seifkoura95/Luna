@@ -514,6 +514,9 @@ export default function ProfileScreen() {
                 ]}
                 onPress={() => {
                   if (Platform.OS !== 'web') Haptics.selectionAsync();
+                  if (item.route) {
+                    router.push(item.route as any);
+                  }
                 }}
                 activeOpacity={0.7}
               >
