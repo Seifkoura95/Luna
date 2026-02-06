@@ -323,25 +323,131 @@ def get_seed_data():
         },
     ]
     
-    # Real Events from venues - combining scraped data with mock data
+    # Real Events from venues - Using latest Eclipse Brisbane events
     events = [
-        # Eclipse Events
+        # Eclipse Events - Real upcoming events
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "eclipse",
+            "venue_name": "Eclipse",
+            "title": "SPACE 92",
+            "description": "International techno sensation SPACE 92 brings his thunderous beats to Brisbane. Expect a high-energy night of pure techno.",
+            "event_date": now + timedelta(days=14),
+            "event_end_date": now + timedelta(days=14, hours=6),
+            "ticket_url": "https://eclipsebrisbane.com.au/tickets",
+            "ticket_price": 55.00,
+            "image_url": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800",
+            "category": "concert",
+            "featured": True,
+            "featured_artist": {
+                "name": "SPACE 92",
+                "image": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400",
+                "bio": "French techno DJ & producer known for high-energy sets"
+            }
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "eclipse",
+            "venue_name": "Eclipse",
+            "title": "LEE ANN ROBERTS + JULIET FOX",
+            "description": "Two powerhouse female DJs taking over Eclipse for an unforgettable night of house and techno.",
+            "event_date": now + timedelta(days=1),
+            "event_end_date": now + timedelta(days=1, hours=6),
+            "ticket_url": "https://eclipsebrisbane.com.au/tickets",
+            "ticket_price": 40.00,
+            "image_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800",
+            "category": "concert",
+            "featured": True,
+            "featured_artist": {
+                "name": "Lee Ann Roberts & Juliet Fox",
+                "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
+                "bio": "International DJ duo"
+            }
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "eclipse",
+            "venue_name": "Eclipse",
+            "title": "S2O PRE PARTY ft. ELI OAKS",
+            "description": "Get warmed up for S2O Festival with Eli Oaks at the official pre-party. Electronic music all night.",
+            "event_date": now + timedelta(days=7),
+            "event_end_date": now + timedelta(days=7, hours=6),
+            "ticket_url": "https://eclipsebrisbane.com.au/tickets",
+            "ticket_price": 35.00,
+            "image_url": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
+            "category": "club_night",
+            "featured": True,
+            "featured_artist": {
+                "name": "Eli Oaks",
+                "image": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400",
+                "bio": "Rising electronic music producer"
+            }
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "eclipse",
+            "venue_name": "Eclipse",
+            "title": "UNI-VERSE O-WEEK PARTY",
+            "description": "Brisbane's biggest O-Week party! Student specials all night. Hip Hop, House & Electronic.",
+            "event_date": now + timedelta(days=15),
+            "event_end_date": now + timedelta(days=15, hours=6),
+            "ticket_url": "https://eclipsebrisbane.com.au/tickets",
+            "ticket_price": 15.00,
+            "image_url": "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=800",
+            "category": "club_night",
+            "featured": False,
+            "featured_artist": None
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "eclipse",
+            "venue_name": "Eclipse",
+            "title": "MPH + CASEY CLUB",
+            "description": "Local legends MPH and Casey Club take control of the decks. Underground house and techno.",
+            "event_date": now + timedelta(days=29),
+            "event_end_date": now + timedelta(days=29, hours=6),
+            "ticket_url": "https://eclipsebrisbane.com.au/tickets",
+            "ticket_price": 30.00,
+            "image_url": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
+            "category": "club_night",
+            "featured": False,
+            "featured_artist": None
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "eclipse",
+            "venue_name": "Eclipse",
+            "title": "VIKKSTAR",
+            "description": "Internet sensation and gaming legend Vikkstar makes his Brisbane DJ debut!",
+            "event_date": now + timedelta(days=35),
+            "event_end_date": now + timedelta(days=35, hours=5),
+            "ticket_url": "https://eclipsebrisbane.com.au/tickets",
+            "ticket_price": 45.00,
+            "image_url": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800",
+            "category": "concert",
+            "featured": True,
+            "featured_artist": {
+                "name": "Vikkstar",
+                "image": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400",
+                "bio": "Gaming legend turned DJ"
+            }
+        },
         {
             "id": str(uuid.uuid4()),
             "venue_id": "eclipse",
             "venue_name": "Eclipse",
             "title": "BLACK:CELL ft. BIIANCO",
-            "description": "Electronic music experience featuring international DJ BIIANCO. Immersive audiovisual production with state-of-the-art sound.",
-            "event_date": now + timedelta(days=3),
-            "event_end_date": now + timedelta(days=3, hours=6),
+            "description": "Electronic music experience featuring international DJ BIIANCO. Immersive audiovisual production.",
+            "event_date": now + timedelta(days=56),
+            "event_end_date": now + timedelta(days=56, hours=6),
             "ticket_url": "https://eclipsebrisbane.com.au/tickets",
-            "ticket_price": 35.00,
-            "image_url": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800",
-            "category": "club_night",
+            "ticket_price": 50.00,
+            "image_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800",
+            "category": "concert",
             "featured": True,
             "featured_artist": {
                 "name": "BIIANCO",
-                "image": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400",
+                "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
                 "bio": "International electronic DJ and producer"
             }
         },
@@ -349,27 +455,8 @@ def get_seed_data():
             "id": str(uuid.uuid4()),
             "venue_id": "eclipse",
             "venue_name": "Eclipse",
-            "title": "WINDOW KID",
-            "description": "UK Grime sensation Window Kid brings his high-energy performance to Brisbane. Support acts all night.",
-            "event_date": now + timedelta(days=7),
-            "event_end_date": now + timedelta(days=7, hours=5),
-            "ticket_url": "https://eclipsebrisbane.com.au/tickets",
-            "ticket_price": 45.00,
-            "image_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800",
-            "category": "concert",
-            "featured": True,
-            "featured_artist": {
-                "name": "Window Kid",
-                "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
-                "bio": "UK Grime artist with millions of streams"
-            }
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "venue_id": "eclipse",
-            "venue_name": "Eclipse",
             "title": "Saturday Night Takeover",
-            "description": "Brisbane's biggest Saturday night with resident DJs spinning Hip Hop, House & Electronic.",
+            "description": "Brisbane's biggest Saturday night with resident DJs spinning Hip Hop, RnB, Afrobeats & House.",
             "event_date": now + timedelta(days=2),
             "event_end_date": now + timedelta(days=2, hours=6),
             "ticket_url": None,
