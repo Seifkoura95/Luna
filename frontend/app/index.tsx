@@ -30,8 +30,11 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Text style={styles.logo}>ECLIPSE</Text>
-        <Text style={styles.tagline}>VIP Experience</Text>
+        <View style={styles.logoMark}>
+          <Text style={styles.logoLetter}>L</Text>
+        </View>
+        <Text style={styles.logo}>LUNA GROUP</Text>
+        <Text style={styles.tagline}>Queensland's Premier Nightlife</Text>
       </View>
       <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
     </View>
