@@ -6,12 +6,12 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  Modal,
-  Alert,
-  TextInput,
-  Dimensions,
-  Switch,
   Image,
+  Modal,
+  TextInput,
+  Alert,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
@@ -19,291 +19,282 @@ import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
-import { differenceInSeconds } from 'date-fns';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
+const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
+
+interface Auction {
+  id: string;
+  title: string;
+  description: string;
+  venue_id: string;
+  venue_name: string;
+  auction_type: string;
+  starting_bid: number;
+  current_bid: number;
+  min_increment: number;
+  max_bid_limit: number;
+  deposit_required: number;
+  deposit_rules: string;
+  winner_id: string | null;
+  winner_name: string | null;
+  start_time: string;
+  end_time: string;
+  status: string;
+  image_url: string;
+  features: string[];
+}
 
 export default function AuctionsScreen() {
   const user = useAuthStore((state) => state.user);
   const insets = useSafeAreaInsets();
-  const [auctions, setAuctions] = useState<any[]>([]);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedAuction, setSelectedAuction] = useState<any>(null);
+  const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null);
+  const [bidHistory, setBidHistory] = useState<any[]>([]);
   const [bidAmount, setBidAmount] = useState('');
-  const [bidding, setBidding] = useState(false);
-  const [timeLefts, setTimeLefts] = useState<Record<string, string>>({});
-  const [notifyOnOutbid, setNotifyOnOutbid] = useState(true);
-  const [userBids, setUserBids] = useState<Record<string, number>>({});
+  const [maxBidAmount, setMaxBidAmount] = useState('');
+  const [showMaxBid, setShowMaxBid] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<Record<string, string>>({});
+  const [isPlacingBid, setIsPlacingBid] = useState(false);
 
-  const fetchAuctions = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
       const data = await api.getAuctions();
-      setAuctions(data);
+      setAuctions(data || []);
     } catch (e) {
       console.error('Failed to fetch auctions:', e);
     }
   }, []);
 
-  useEffect(() => {
-    fetchAuctions();
-    const interval = setInterval(fetchAuctions, 3000);
-    return () => clearInterval(interval);
-  }, [fetchAuctions]);
+  const fetchAuctionDetail = async (auctionId: string) => {
+    try {
+      const data = await api.getAuctionDetail(auctionId);
+      setSelectedAuction(data);
+      setBidHistory(data.bid_history || []);
+      setBidAmount(String(data.current_bid + data.min_increment));
+    } catch (e) {
+      console.error('Failed to fetch auction detail:', e);
+    }
+  };
 
   useEffect(() => {
-    const updateTimers = () => {
-      const newTimeLefts: Record<string, string> = {};
+    fetchData();
+    
+    // Update timers every second
+    const interval = setInterval(() => {
+      const newTimeLeft: Record<string, string> = {};
       auctions.forEach((auction) => {
-        const now = new Date();
-        const endTime = new Date(auction.end_time);
-        const startTime = new Date(auction.start_time);
-
-        if (auction.status === 'upcoming') {
-          const secsToStart = differenceInSeconds(startTime, now);
-          if (secsToStart <= 0) {
-            newTimeLefts[auction.id] = 'Starting...';
-          } else {
-            const mins = Math.floor(secsToStart / 60);
-            const secs = secsToStart % 60;
-            newTimeLefts[auction.id] = `Starts in ${mins}m ${secs}s`;
-          }
-        } else if (auction.status === 'active') {
-          const secsLeft = differenceInSeconds(endTime, now);
-          if (secsLeft <= 0) {
-            newTimeLefts[auction.id] = 'Ended';
-          } else {
-            const mins = Math.floor(secsLeft / 60);
-            const secs = secsLeft % 60;
-            if (secsLeft < 60) {
-              newTimeLefts[auction.id] = `${secs}s`;
-            } else {
-              newTimeLefts[auction.id] = `${mins}:${secs.toString().padStart(2, '0')}`;
-            }
-          }
-        } else {
-          newTimeLefts[auction.id] = 'Ended';
-        }
+        newTimeLeft[auction.id] = calculateTimeLeft(auction.end_time);
       });
-      setTimeLefts(newTimeLefts);
-    };
+      setTimeLeft(newTimeLeft);
+    }, 1000);
 
-    updateTimers();
-    const timer = setInterval(updateTimers, 1000);
-    return () => clearInterval(timer);
-  }, [auctions]);
+    return () => clearInterval(interval);
+  }, [auctions.length]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const calculateTimeLeft = (endTime: string): string => {
+    const end = new Date(endTime).getTime();
+    const now = Date.now();
+    const diff = end - now;
+
+    if (diff <= 0) return 'ENDED';
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    }
+    return `${minutes}m ${seconds}s`;
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchAuctions();
+    await fetchData();
     setRefreshing(false);
   };
 
-  const placeBid = async (amount: number) => {
-    if (!selectedAuction) return;
+  const handleQuickBid = (increment: number) => {
+    const newBid = (selectedAuction?.current_bid || 0) + increment;
+    setBidAmount(String(newBid));
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+  };
 
-    setBidding(true);
+  const handlePlaceBid = async () => {
+    if (!selectedAuction || isPlacingBid) return;
+
+    const amount = parseFloat(bidAmount);
+    const minBid = selectedAuction.current_bid + selectedAuction.min_increment;
+    
+    if (isNaN(amount) || amount < minBid) {
+      Alert.alert('Invalid Bid', `Minimum bid is $${minBid}`);
+      return;
+    }
+
+    if (amount > selectedAuction.max_bid_limit) {
+      Alert.alert('Bid Too High', `Maximum bid limit is $${selectedAuction.max_bid_limit}`);
+      return;
+    }
+
+    setIsPlacingBid(true);
     try {
-      await api.placeBid(selectedAuction.id, amount);
-      
-      if (notifyOnOutbid) {
-        await api.subscribeToAuction(selectedAuction.id, true);
-      }
-
-      setUserBids((prev) => ({ ...prev, [selectedAuction.id]: amount }));
+      const maxBid = showMaxBid && maxBidAmount ? parseFloat(maxBidAmount) : undefined;
+      const result = await api.placeBid(selectedAuction.id, amount, maxBid);
       
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       
-      Alert.alert('Bid Placed!', `Your bid of $${amount} has been placed.`);
-      setSelectedAuction(null);
-      setBidAmount('');
-      fetchAuctions();
+      Alert.alert('Bid Placed!', 'You are now the highest bidder!');
+      
+      // Refresh auction data
+      await fetchAuctionDetail(selectedAuction.id);
+      await fetchData();
     } catch (e: any) {
-      Alert.alert('Bid Failed', e.message || 'Could not place bid');
+      Alert.alert('Bid Failed', e.message || 'Failed to place bid');
     } finally {
-      setBidding(false);
+      setIsPlacingBid(false);
     }
   };
 
-  const handleBid = () => {
-    const amount = parseFloat(bidAmount);
-    if (isNaN(amount) || amount <= selectedAuction.current_bid) {
-      Alert.alert('Invalid Bid', `Your bid must be higher than $${selectedAuction.current_bid}`);
-      return;
-    }
-    placeBid(amount);
-  };
-
-  const handleQuickBid = (increment: number) => {
-    const newBid = selectedAuction.current_bid + increment;
-    setBidAmount(newBid.toString());
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
-  };
-
-  const openBidModal = (auction: any) => {
+  const openAuctionDetail = (auction: Auction) => {
     setSelectedAuction(auction);
-    setBidAmount((auction.current_bid + auction.min_increment).toString());
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setBidAmount(String(auction.current_bid + auction.min_increment));
+    fetchAuctionDetail(auction.id);
+  };
+
+  const isWinning = (auction: Auction) => auction.winner_id === user?.user_id;
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return colors.success;
+      case 'upcoming': return colors.accent;
+      case 'ended': return colors.textMuted;
+      default: return colors.textMuted;
     }
   };
 
-  const isUserWinning = (auction: any) => {
-    return auction.highest_bidder_id === user?.user_id;
-  };
+  const renderAuctionCard = (auction: Auction) => (
+    <TouchableOpacity
+      key={auction.id}
+      style={styles.auctionCard}
+      onPress={() => openAuctionDetail(auction)}
+      activeOpacity={0.8}
+    >
+      <Image source={{ uri: auction.image_url }} style={styles.auctionImage} />
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.95)']}
+        style={styles.auctionOverlay}
+      >
+        {/* Status Badge */}
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(auction.status) + '30' }]}>
+          <View style={[styles.statusDot, { backgroundColor: getStatusColor(auction.status) }]} />
+          <Text style={[styles.statusText, { color: getStatusColor(auction.status) }]}>
+            {auction.status.toUpperCase()}
+          </Text>
+        </View>
 
-  const activeAuctions = auctions.filter((a) => a.status === 'active');
-  const upcomingAuctions = auctions.filter((a) => a.status === 'upcoming');
+        {/* Timer */}
+        {auction.status === 'active' && (
+          <View style={styles.timerBadge}>
+            <Ionicons name="time" size={14} color={colors.accent} />
+            <Text style={styles.timerText}>{timeLeft[auction.id] || 'Loading...'}</Text>
+          </View>
+        )}
+
+        {/* Content */}
+        <View style={styles.auctionContent}>
+          <Text style={styles.auctionVenue}>{auction.venue_name}</Text>
+          <Text style={styles.auctionTitle} numberOfLines={2}>{auction.title}</Text>
+          
+          <View style={styles.bidSection}>
+            <View style={styles.bidInfo}>
+              <Text style={styles.bidLabel}>
+                {auction.current_bid > 0 ? 'CURRENT BID' : 'STARTING BID'}
+              </Text>
+              <Text style={styles.bidAmount}>
+                ${auction.current_bid > 0 ? auction.current_bid : auction.starting_bid}
+              </Text>
+            </View>
+            
+            {isWinning(auction) && (
+              <View style={styles.winningBadge}>
+                <Ionicons name="trophy" size={14} color={colors.gold} />
+                <Text style={styles.winningText}>WINNING</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Features Preview */}
+          <View style={styles.featuresRow}>
+            {auction.features?.slice(0, 3).map((feature, index) => (
+              <View key={index} style={styles.featureChip}>
+                <Text style={styles.featureChipText}>{feature}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
-      <StarfieldBackground starCount={60} shootingStarCount={2} />
+      <StarfieldBackground starCount={50} shootingStarCount={2} />
       
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-        <View>
-          <Text style={styles.headerTitle}>LIVE AUCTIONS</Text>
-          <View style={styles.headerUnderline} />
-        </View>
-        <View style={styles.pointsBadge}>
-          <Ionicons name="star" size={14} color={colors.gold} />
-          <Text style={styles.pointsText}>{user?.points_balance || 0}</Text>
-        </View>
-      </View>
-
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Active Auctions */}
-        {activeAuctions.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.liveBadge}>
-                <View style={styles.liveIndicator} />
-                <Text style={styles.liveBadgeText}>LIVE NOW</Text>
-              </View>
-              <Text style={styles.sectionCount}>{activeAuctions.length} active</Text>
-            </View>
-
-            {activeAuctions.map((auction) => (
-              <TouchableOpacity
-                key={auction.id}
-                style={[styles.auctionCard, isUserWinning(auction) && styles.winningCard]}
-                onPress={() => openBidModal(auction)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={isUserWinning(auction) 
-                    ? [colors.success + '20', colors.backgroundCard] 
-                    : [colors.backgroundCard, colors.backgroundElevated]}
-                  style={styles.cardGradient}
-                >
-                  {/* Image */}
-                  <Image source={{ uri: auction.image_url }} style={styles.auctionImage} />
-
-                  {/* Content */}
-                  <View style={styles.auctionContent}>
-                    <View style={styles.auctionHeader}>
-                      <Text style={styles.auctionTitle} numberOfLines={1}>{auction.title}</Text>
-                      {isUserWinning(auction) && (
-                        <View style={styles.winningBadge}>
-                          <Ionicons name="trophy" size={12} color={colors.success} />
-                          <Text style={styles.winningText}>WINNING</Text>
-                        </View>
-                      )}
-                    </View>
-
-                    <Text style={styles.auctionVenue}>{auction.venue_name}</Text>
-
-                    <View style={styles.bidInfo}>
-                      <View>
-                        <Text style={styles.bidLabel}>Current Bid</Text>
-                        <Text style={styles.bidAmount}>${auction.current_bid}</Text>
-                      </View>
-                      <View style={styles.timerContainer}>
-                        <Ionicons 
-                          name="time" 
-                          size={16} 
-                          color={timeLefts[auction.id]?.includes('s') && !timeLefts[auction.id]?.includes('m') 
-                            ? colors.error 
-                            : colors.textSecondary} 
-                        />
-                        <Text style={[
-                          styles.timerText,
-                          timeLefts[auction.id]?.includes('s') && !timeLefts[auction.id]?.includes('m') 
-                            && styles.timerUrgent
-                        ]}>
-                          {timeLefts[auction.id] || '--:--'}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Bid Button */}
-                    <TouchableOpacity
-                      style={styles.bidButton}
-                      onPress={() => openBidModal(auction)}
-                    >
-                      <LinearGradient
-                        colors={[colors.accent, colors.accentDark]}
-                        style={styles.bidButtonGradient}
-                      >
-                        <Text style={styles.bidButtonText}>Place Bid</Text>
-                        <Ionicons name="arrow-forward" size={16} color={colors.textPrimary} />
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
+        {/* Header */}
+        <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+          <Image source={{ uri: LUNAR_MOON_IMAGE }} style={styles.moonImage} />
+          <Text style={styles.headerTitle}>LIVE AUCTIONS</Text>
+          <View style={styles.headerUnderline} />
+          <View style={styles.pointsBadge}>
+            <Ionicons name="star" size={14} color={colors.gold} />
+            <Text style={styles.pointsText}>{user?.points_balance?.toLocaleString() || 0} pts</Text>
           </View>
-        )}
+        </View>
+
+        {/* Active Auctions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>ACTIVE NOW</Text>
+          {auctions.filter(a => a.status === 'active').map(renderAuctionCard)}
+          
+          {auctions.filter(a => a.status === 'active').length === 0 && (
+            <View style={styles.emptyState}>
+              <Ionicons name="flash-off" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyTitle}>No active auctions</Text>
+              <Text style={styles.emptySubtitle}>Check back soon!</Text>
+            </View>
+          )}
+        </View>
 
         {/* Upcoming Auctions */}
-        {upcomingAuctions.length > 0 && (
+        {auctions.filter(a => a.status === 'upcoming').length > 0 && (
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>COMING SOON</Text>
-              <Text style={styles.sectionCount}>{upcomingAuctions.length} upcoming</Text>
-            </View>
-
-            {upcomingAuctions.map((auction) => (
-              <View key={auction.id} style={styles.upcomingCard}>
-                <Image source={{ uri: auction.image_url }} style={styles.upcomingImage} />
-                <View style={styles.upcomingContent}>
-                  <Text style={styles.upcomingTitle} numberOfLines={1}>{auction.title}</Text>
-                  <Text style={styles.upcomingVenue}>{auction.venue_name}</Text>
-                  <View style={styles.upcomingInfo}>
-                    <Text style={styles.upcomingBid}>Starting at ${auction.starting_bid}</Text>
-                    <Text style={styles.upcomingTime}>{timeLefts[auction.id]}</Text>
-                  </View>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {auctions.length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons name="trophy-outline" size={64} color={colors.textMuted} />
-            <Text style={styles.emptyTitle}>No Active Auctions</Text>
-            <Text style={styles.emptySubtitle}>Check back soon for exclusive VIP experiences</Text>
+            <Text style={styles.sectionTitle}>COMING SOON</Text>
+            {auctions.filter(a => a.status === 'upcoming').map(renderAuctionCard)}
           </View>
         )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Bid Modal */}
+      {/* Auction Detail Modal */}
       <Modal
         visible={!!selectedAuction}
         transparent
@@ -316,9 +307,9 @@ export default function AuctionsScreen() {
               colors={[colors.backgroundCard, colors.background]}
               style={styles.modalGradient}
             >
-              {/* Header */}
+              {/* Modal Header */}
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Place Your Bid</Text>
+                <Text style={styles.modalTitle}>Auction Detail</Text>
                 <TouchableOpacity
                   style={styles.closeButton}
                   onPress={() => setSelectedAuction(null)}
@@ -328,82 +319,218 @@ export default function AuctionsScreen() {
               </View>
 
               {selectedAuction && (
-                <>
-                  {/* Auction Info */}
-                  <View style={styles.modalAuctionInfo}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {/* Auction Image */}
+                  <View style={styles.modalImageContainer}>
                     <Image source={{ uri: selectedAuction.image_url }} style={styles.modalImage} />
-                    <View style={styles.modalAuctionDetails}>
-                      <Text style={styles.modalAuctionTitle}>{selectedAuction.title}</Text>
-                      <Text style={styles.modalVenue}>{selectedAuction.venue_name}</Text>
-                      <View style={styles.modalBidRow}>
-                        <Text style={styles.modalCurrentLabel}>Current Bid:</Text>
-                        <Text style={styles.modalCurrentBid}>${selectedAuction.current_bid}</Text>
+                    <LinearGradient
+                      colors={['transparent', colors.backgroundCard]}
+                      style={styles.modalImageOverlay}
+                    />
+                    {/* Timer Overlay */}
+                    <View style={styles.timerOverlay}>
+                      <Ionicons name="time" size={18} color={colors.accent} />
+                      <Text style={styles.timerOverlayText}>
+                        {selectedAuction.status === 'active' 
+                          ? timeLeft[selectedAuction.id] || 'Loading...'
+                          : selectedAuction.status.toUpperCase()
+                        }
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Auction Info */}
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalVenue}>{selectedAuction.venue_name}</Text>
+                    <Text style={styles.modalAuctionTitle}>{selectedAuction.title}</Text>
+                    <Text style={styles.modalDescription}>{selectedAuction.description}</Text>
+                  </View>
+
+                  {/* Features */}
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalSectionTitle}>INCLUDED</Text>
+                    <View style={styles.modalFeaturesRow}>
+                      {selectedAuction.features?.map((feature, index) => (
+                        <View key={index} style={styles.modalFeatureChip}>
+                          <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                          <Text style={styles.modalFeatureText}>{feature}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+
+                  {/* Current Bid Section */}
+                  <View style={styles.modalSection}>
+                    <View style={styles.currentBidCard}>
+                      <View style={styles.currentBidInfo}>
+                        <Text style={styles.currentBidLabel}>
+                          {selectedAuction.current_bid > 0 ? 'CURRENT BID' : 'STARTING BID'}
+                        </Text>
+                        <Text style={styles.currentBidValue}>
+                          ${selectedAuction.current_bid > 0 ? selectedAuction.current_bid : selectedAuction.starting_bid}
+                        </Text>
+                        {selectedAuction.winner_name && (
+                          <Text style={styles.currentBidder}>
+                            {isWinning(selectedAuction) ? '🏆 You are winning!' : `By: ${selectedAuction.winner_name}`}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={styles.bidRules}>
+                        <Text style={styles.bidRulesText}>
+                          Min increment: ${selectedAuction.min_increment}
+                        </Text>
+                        <Text style={styles.bidRulesText}>
+                          Max bid: ${selectedAuction.max_bid_limit}
+                        </Text>
                       </View>
                     </View>
                   </View>
 
-                  {/* Quick Bid Buttons */}
-                  <View style={styles.quickBidRow}>
-                    {[10, 25, 50, 100].map((inc) => (
-                      <TouchableOpacity
-                        key={inc}
-                        style={styles.quickBidButton}
-                        onPress={() => handleQuickBid(inc)}
-                      >
-                        <Text style={styles.quickBidText}>+${inc}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  {/* Bid Input */}
-                  <View style={styles.bidInputContainer}>
-                    <Text style={styles.bidInputLabel}>YOUR BID</Text>
-                    <View style={styles.bidInputWrapper}>
-                      <Text style={styles.dollarSign}>$</Text>
-                      <TextInput
-                        style={styles.bidInput}
-                        value={bidAmount}
-                        onChangeText={setBidAmount}
-                        keyboardType="numeric"
-                        placeholder="0"
-                        placeholderTextColor={colors.textMuted}
-                      />
-                    </View>
-                  </View>
-
-                  {/* Notify Toggle */}
-                  <View style={styles.notifyRow}>
-                    <View>
-                      <Text style={styles.notifyLabel}>Notify if outbid</Text>
-                      <Text style={styles.notifyDesc}>Get alerts when someone outbids you</Text>
-                    </View>
-                    <Switch
-                      value={notifyOnOutbid}
-                      onValueChange={setNotifyOnOutbid}
-                      trackColor={{ false: colors.backgroundElevated, true: colors.accent + '60' }}
-                      thumbColor={notifyOnOutbid ? colors.accent : colors.textMuted}
-                    />
-                  </View>
-
-                  {/* Action Buttons */}
-                  <View style={styles.modalActions}>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.placeBidButton]}
-                      onPress={handleBid}
-                      disabled={bidding}
-                    >
-                      <LinearGradient
-                        colors={bidding ? ['#333', '#222'] : [colors.accent, colors.accentDark]}
-                        style={styles.actionButtonGradient}
-                      >
-                        <Ionicons name="flash" size={20} color={colors.textPrimary} />
-                        <Text style={styles.actionButtonText}>
-                          {bidding ? 'Placing Bid...' : `Bid $${bidAmount}`}
+                  {/* Deposit Rules */}
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalSectionTitle}>DEPOSIT RULES</Text>
+                    <View style={styles.depositCard}>
+                      <Ionicons name="shield-checkmark" size={20} color={colors.accent} />
+                      <View style={styles.depositInfo}>
+                        <Text style={styles.depositAmount}>
+                          ${selectedAuction.deposit_required} deposit required
                         </Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
+                        <Text style={styles.depositRules}>{selectedAuction.deposit_rules}</Text>
+                      </View>
+                    </View>
                   </View>
-                </>
+
+                  {/* Bid Controls */}
+                  {selectedAuction.status === 'active' && (
+                    <View style={styles.modalSection}>
+                      <Text style={styles.modalSectionTitle}>PLACE YOUR BID</Text>
+                      
+                      {/* Quick Bid Buttons */}
+                      <View style={styles.quickBidRow}>
+                        {[10, 25, 50, 100].map((increment) => (
+                          <TouchableOpacity
+                            key={increment}
+                            style={styles.quickBidButton}
+                            onPress={() => handleQuickBid(increment)}
+                          >
+                            <Text style={styles.quickBidText}>+${increment}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+
+                      {/* Bid Input */}
+                      <View style={styles.bidInputContainer}>
+                        <Text style={styles.bidInputLabel}>YOUR BID</Text>
+                        <View style={styles.bidInputRow}>
+                          <Text style={styles.bidInputPrefix}>$</Text>
+                          <TextInput
+                            style={styles.bidInput}
+                            value={bidAmount}
+                            onChangeText={setBidAmount}
+                            keyboardType="numeric"
+                            placeholder="0"
+                            placeholderTextColor={colors.textMuted}
+                          />
+                        </View>
+                      </View>
+
+                      {/* Max Bid Toggle */}
+                      <TouchableOpacity
+                        style={styles.maxBidToggle}
+                        onPress={() => setShowMaxBid(!showMaxBid)}
+                      >
+                        <Ionicons 
+                          name={showMaxBid ? 'checkbox' : 'square-outline'} 
+                          size={20} 
+                          color={colors.accent} 
+                        />
+                        <Text style={styles.maxBidToggleText}>Set auto-bid maximum</Text>
+                      </TouchableOpacity>
+
+                      {showMaxBid && (
+                        <View style={styles.bidInputContainer}>
+                          <Text style={styles.bidInputLabel}>MAX AUTO-BID</Text>
+                          <View style={styles.bidInputRow}>
+                            <Text style={styles.bidInputPrefix}>$</Text>
+                            <TextInput
+                              style={styles.bidInput}
+                              value={maxBidAmount}
+                              onChangeText={setMaxBidAmount}
+                              keyboardType="numeric"
+                              placeholder="Auto-bid up to this amount"
+                              placeholderTextColor={colors.textMuted}
+                            />
+                          </View>
+                          <Text style={styles.maxBidHelp}>
+                            We'll automatically increase your bid to stay ahead
+                          </Text>
+                        </View>
+                      )}
+
+                      {/* Place Bid Button */}
+                      <TouchableOpacity
+                        style={[styles.placeBidButton, isPlacingBid && styles.placeBidButtonDisabled]}
+                        onPress={handlePlaceBid}
+                        disabled={isPlacingBid}
+                      >
+                        <LinearGradient
+                          colors={[colors.accent, colors.accentDark]}
+                          style={styles.placeBidGradient}
+                        >
+                          {isPlacingBid ? (
+                            <Text style={styles.placeBidText}>Placing Bid...</Text>
+                          ) : (
+                            <>
+                              <Ionicons name="flash" size={20} color={colors.textPrimary} />
+                              <Text style={styles.placeBidText}>Place Bid - ${bidAmount}</Text>
+                            </>
+                          )}
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* Won State */}
+                  {selectedAuction.status === 'ended' && isWinning(selectedAuction) && (
+                    <View style={styles.wonSection}>
+                      <LinearGradient
+                        colors={[colors.gold + '30', 'transparent']}
+                        style={styles.wonGradient}
+                      >
+                        <Ionicons name="trophy" size={48} color={colors.gold} />
+                        <Text style={styles.wonTitle}>🎉 You Won!</Text>
+                        <Text style={styles.wonSubtitle}>
+                          Winning bid: ${selectedAuction.current_bid}
+                        </Text>
+                        <TouchableOpacity style={styles.claimButton}>
+                          <Text style={styles.claimButtonText}>Claim Your Prize</Text>
+                        </TouchableOpacity>
+                      </LinearGradient>
+                    </View>
+                  )}
+
+                  {/* Bid History */}
+                  {bidHistory.length > 0 && (
+                    <View style={styles.modalSection}>
+                      <Text style={styles.modalSectionTitle}>BID HISTORY</Text>
+                      {bidHistory.slice(0, 5).map((bid, index) => (
+                        <View key={bid.id || index} style={styles.bidHistoryItem}>
+                          <View style={styles.bidHistoryInfo}>
+                            <Text style={styles.bidHistoryUser}>
+                              {bid.user_id === user?.user_id ? 'You' : bid.user_name || 'Anonymous'}
+                            </Text>
+                            <Text style={styles.bidHistoryTime}>
+                              {new Date(bid.timestamp).toLocaleTimeString()}
+                            </Text>
+                          </View>
+                          <Text style={styles.bidHistoryAmount}>${bid.amount}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  <View style={{ height: 40 }} />
+                </ScrollView>
               )}
             </LinearGradient>
           </View>
@@ -418,24 +545,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    paddingBottom: spacing.xxl,
+  },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  moonImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginBottom: spacing.sm,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '900',
     color: colors.textPrimary,
-    letterSpacing: 2,
+    letterSpacing: 6,
   },
   headerUnderline: {
     width: 40,
     height: 3,
     backgroundColor: colors.accent,
     marginTop: spacing.xs,
+    marginBottom: spacing.md,
   },
   pointsBadge: {
     flexDirection: 'row',
@@ -451,205 +589,151 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
-  scrollView: {
-    flex: 1,
-  },
   section: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.xl,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 2,
     marginBottom: spacing.md,
   },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.error + '20',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
-    gap: 8,
-  },
-  liveIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.error,
-  },
-  liveBadgeText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: colors.error,
-    letterSpacing: 1,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    letterSpacing: 2,
-  },
-  sectionCount: {
-    fontSize: 12,
-    color: colors.textMuted,
-  },
   auctionCard: {
+    height: 280,
     borderRadius: radius.lg,
     overflow: 'hidden',
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  winningCard: {
-    borderColor: colors.success + '60',
-  },
-  cardGradient: {
-    flexDirection: 'row',
-    padding: spacing.md,
-  },
   auctionImage: {
-    width: 100,
-    height: 100,
-    borderRadius: radius.md,
+    width: '100%',
+    height: '100%',
+  },
+  auctionOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: spacing.md,
+    justifyContent: 'space-between',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+    gap: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  timerBadge: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+    gap: 6,
+  },
+  timerText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.accent,
   },
   auctionContent: {
-    flex: 1,
-    marginLeft: spacing.md,
+    justifyContent: 'flex-end',
   },
-  auctionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  auctionVenue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 4,
   },
   auctionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
     color: colors.textPrimary,
-    flex: 1,
+    marginBottom: spacing.sm,
+  },
+  bidSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: spacing.sm,
+  },
+  bidInfo: {},
+  bidLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 1,
+  },
+  bidAmount: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: colors.textPrimary,
   },
   winningBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.success + '20',
+    backgroundColor: colors.goldGlow,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
+    paddingVertical: 4,
     borderRadius: radius.sm,
     gap: 4,
   },
   winningText: {
     fontSize: 10,
     fontWeight: '700',
-    color: colors.success,
-  },
-  auctionVenue: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  bidInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginTop: spacing.sm,
-  },
-  bidLabel: {
-    fontSize: 10,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
+    color: colors.gold,
     letterSpacing: 1,
   },
-  bidAmount: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.gold,
-  },
-  timerContainer: {
+  featuresRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    flexWrap: 'wrap',
+    gap: spacing.xs,
   },
-  timerText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  timerUrgent: {
-    color: colors.error,
-  },
-  bidButton: {
-    marginTop: spacing.sm,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-  },
-  bidButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.sm,
-    gap: 6,
-  },
-  bidButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  upcomingCard: {
-    flexDirection: 'row',
-    backgroundColor: colors.backgroundCard,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  upcomingImage: {
-    width: 60,
-    height: 60,
+  featureChip: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
     borderRadius: radius.sm,
   },
-  upcomingContent: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  upcomingTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  upcomingVenue: {
-    fontSize: 12,
+  featureChipText: {
+    fontSize: 11,
     color: colors.textSecondary,
-  },
-  upcomingInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: spacing.xs,
-  },
-  upcomingBid: {
-    fontSize: 12,
-    color: colors.gold,
-    fontWeight: '600',
-  },
-  upcomingTime: {
-    fontSize: 12,
-    color: colors.textMuted,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.xxl * 2,
+    paddingVertical: spacing.xxl,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
     color: colors.textPrimary,
     marginTop: spacing.md,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: colors.textMuted,
     marginTop: spacing.xs,
   },
   modalOverlay: {
@@ -658,18 +742,19 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
+    maxHeight: '95%',
     borderTopLeftRadius: radius.xxl,
     borderTopRightRadius: radius.xxl,
     overflow: 'hidden',
   },
   modalGradient: {
-    padding: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    padding: spacing.lg,
   },
   modalTitle: {
     fontSize: 20,
@@ -684,52 +769,143 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalAuctionInfo: {
-    flexDirection: 'row',
-    marginBottom: spacing.lg,
+  modalImageContainer: {
+    height: 200,
+    position: 'relative',
   },
   modalImage: {
-    width: 80,
-    height: 80,
+    width: '100%',
+    height: '100%',
+  },
+  modalImageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+  },
+  timerOverlay: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderRadius: radius.md,
+    gap: 8,
   },
-  modalAuctionDetails: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  modalAuctionTitle: {
+  timerOverlayText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    fontWeight: '800',
+    color: colors.accent,
+  },
+  modalSection: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
   modalVenue: {
     fontSize: 13,
+    fontWeight: '600',
     color: colors.textSecondary,
-    marginTop: 2,
+    marginBottom: 4,
   },
-  modalBidRow: {
+  modalAuctionTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  modalSectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 2,
+    marginBottom: spacing.md,
+  },
+  modalFeaturesRow: {
+    gap: spacing.sm,
+  },
+  modalFeatureChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.sm,
+    gap: spacing.sm,
+    paddingVertical: 6,
   },
-  modalCurrentLabel: {
-    fontSize: 12,
+  modalFeatureText: {
+    fontSize: 14,
+    color: colors.textPrimary,
+  },
+  currentBidCard: {
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  currentBidInfo: {},
+  currentBidLabel: {
+    fontSize: 10,
+    fontWeight: '700',
     color: colors.textMuted,
-    marginRight: spacing.sm,
+    letterSpacing: 1,
   },
-  modalCurrentBid: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.gold,
+  currentBidValue: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: colors.textPrimary,
+  },
+  currentBidder: {
+    fontSize: 12,
+    color: colors.success,
+    marginTop: 4,
+  },
+  bidRules: {
+    alignItems: 'flex-end',
+  },
+  bidRulesText: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginBottom: 4,
+  },
+  depositCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  depositInfo: {
+    flex: 1,
+  },
+  depositAmount: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  depositRules: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
   quickBidRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.lg,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
   quickBidButton: {
     flex: 1,
-    marginHorizontal: 4,
     backgroundColor: colors.backgroundElevated,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
@@ -740,77 +916,130 @@ const styles = StyleSheet.create({
   quickBidText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: colors.accent,
   },
   bidInputContainer: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   bidInputLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
-    color: colors.textSecondary,
-    letterSpacing: 2,
+    color: colors.textMuted,
+    letterSpacing: 1,
     marginBottom: spacing.sm,
   },
-  bidInputWrapper: {
+  bidInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.backgroundElevated,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
+    paddingHorizontal: spacing.md,
   },
-  dollarSign: {
+  bidInputPrefix: {
     fontSize: 24,
     fontWeight: '700',
     color: colors.textSecondary,
+    marginRight: spacing.xs,
   },
   bidInput: {
     flex: 1,
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '800',
     color: colors.textPrimary,
     paddingVertical: spacing.md,
-    marginLeft: spacing.sm,
   },
-  notifyRow: {
+  maxBidToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  maxBidToggleText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  maxBidHelp: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
+  },
+  placeBidButton: {
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+  },
+  placeBidButtonDisabled: {
+    opacity: 0.6,
+  },
+  placeBidGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.lg,
+    gap: spacing.sm,
+  },
+  placeBidText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  wonSection: {
+    marginHorizontal: spacing.lg,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    marginBottom: spacing.lg,
+  },
+  wonGradient: {
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  wonTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: colors.gold,
+    marginTop: spacing.md,
+  },
+  wonSubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  claimButton: {
+    backgroundColor: colors.gold,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+  },
+  claimButtonText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#000',
+  },
+  bidHistoryItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.lg,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
     backgroundColor: colors.backgroundElevated,
     borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
-  notifyLabel: {
+  bidHistoryInfo: {},
+  bidHistoryUser: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.textPrimary,
   },
-  notifyDesc: {
-    fontSize: 12,
+  bidHistoryTime: {
+    fontSize: 11,
     color: colors.textMuted,
   },
-  modalActions: {
-    gap: spacing.md,
-  },
-  actionButton: {
-    borderRadius: radius.md,
-    overflow: 'hidden',
-  },
-  placeBidButton: {},
-  actionButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
-  },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
+  bidHistoryAmount: {
+    fontSize: 18,
+    fontWeight: '800',
     color: colors.textPrimary,
   },
 });
