@@ -38,6 +38,108 @@ STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', 'whsec_demo_secr
 # Initialize Stripe with test key
 stripe.api_key = STRIPE_SECRET_KEY
 
+# ====== SUBSCRIPTION TIERS CONFIGURATION ======
+# Venues that charge entry
+ENTRY_CHARGING_VENUES = ["eclipse", "afterdark", "su-casa-brisbane", "su-casa-gold-coast"]
+
+SUBSCRIPTION_TIERS = {
+    "lunar": {
+        "id": "lunar",
+        "name": "Lunar",
+        "price": 0,  # Free tier
+        "billing_period": "monthly",
+        "color": "#C0C0C0",  # Silver
+        "points_multiplier": 1.0,
+        "benefits": {
+            "free_entries_per_month": 0,
+            "free_drinks_before_10pm": 0,
+            "priority_queue": False,
+            "skip_the_line": False,
+            "early_auction_access": False,
+            "exclusive_auctions": False,
+            "birthday_booth_upgrade": False,
+            "birthday_free_booth": False,
+            "coat_check": False,
+            "priority_booking": False,
+            "private_events_access": False,
+        },
+        "description": "Basic access to Luna Group venues",
+        "perks_list": [
+            "Earn 1 point per $1 spent",
+            "Access to all public auctions",
+            "Digital membership card",
+            "Event notifications",
+        ]
+    },
+    "eclipse": {
+        "id": "eclipse",
+        "name": "Eclipse",
+        "price": 29.99,
+        "billing_period": "monthly",
+        "color": "#E31837",  # Luna Red
+        "points_multiplier": 1.5,
+        "benefits": {
+            "free_entries_per_month": 2,
+            "free_drinks_before_10pm": 1,  # Per visit
+            "priority_queue": True,
+            "skip_the_line": False,
+            "early_auction_access": True,
+            "exclusive_auctions": False,
+            "birthday_booth_upgrade": True,
+            "birthday_free_booth": False,
+            "coat_check": False,
+            "priority_booking": False,
+            "private_events_access": False,
+        },
+        "description": "Enhanced nightlife experience",
+        "perks_list": [
+            "2 FREE entries per month (Eclipse, Afterdark, Su Casa)",
+            "1 FREE drink before 10pm per visit",
+            "1.5x points multiplier",
+            "Priority queue access",
+            "Early access to auctions (30 min head start)",
+            "Birthday month: FREE booth upgrade",
+        ]
+    },
+    "supernova": {
+        "id": "supernova",
+        "name": "Supernova",
+        "price": 79.99,
+        "billing_period": "monthly",
+        "color": "#FFD700",  # Gold
+        "points_multiplier": 2.0,
+        "benefits": {
+            "free_entries_per_month": -1,  # Unlimited (-1)
+            "free_drinks_before_10pm": 2,  # Per visit
+            "priority_queue": True,
+            "skip_the_line": True,
+            "early_auction_access": True,
+            "exclusive_auctions": True,
+            "birthday_booth_upgrade": True,
+            "birthday_free_booth": True,
+            "coat_check": True,
+            "priority_booking": True,
+            "private_events_access": True,
+        },
+        "description": "Ultimate VIP experience",
+        "perks_list": [
+            "UNLIMITED free entries to all venues",
+            "2 FREE drinks before 10pm per visit",
+            "2x points multiplier",
+            "VIP skip-the-line at ALL venues",
+            "Exclusive Supernova-only auctions",
+            "Birthday month: FREE VIP booth",
+            "Complimentary coat check",
+            "Priority booking for all events",
+            "Access to private member-only events",
+            "Dedicated concierge support",
+        ]
+    }
+}
+
+# Points configuration
+POINTS_PER_DOLLAR = 1  # Base rate: $1 = 1 point
+
 # Create app
 app = FastAPI(title="Luna Group VIP API")
 api_router = APIRouter(prefix="/api")
