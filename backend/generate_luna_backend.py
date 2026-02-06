@@ -1,4 +1,10 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Response
+#!/usr/bin/env python3
+"""
+Generate complete Luna Group backend
+This script creates a comprehensive multi-venue backend with all features
+"""
+
+backend_code = '''from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Response
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -367,3 +373,10 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
+'''
+
+# Write the backend
+with open('/app/backend/server.py', 'w') as f:
+    f.write(backend_code)
+
+print("✅ Luna Group backend generated successfully!")
