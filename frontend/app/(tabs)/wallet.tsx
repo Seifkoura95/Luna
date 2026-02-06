@@ -349,11 +349,14 @@ export default function WalletScreen() {
         {/* Points & Subscription Card */}
         <View style={styles.rewardsCard}>
           <LinearGradient
-            colors={[subscriptionData?.tier?.color || colors.gold, '#0A0A0A']}
+            colors={['#1A1A1A', '#0D0D0D']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.rewardsGradient}
           >
+            {/* Accent border glow */}
+            <View style={[styles.accentBorder, { borderColor: subscriptionData?.tier?.color || colors.gold }]} />
+            
             <View style={styles.rewardsHeader}>
               <View style={styles.pointsDisplay}>
                 <FierySun size={32} />
@@ -361,7 +364,7 @@ export default function WalletScreen() {
                   <Text style={styles.pointsValue}>
                     {(pointsData?.balance || user?.points_balance || 0).toLocaleString()}
                   </Text>
-                  <Text style={styles.pointsLabel}>POINTS</Text>
+                  <Text style={styles.pointsLabel}>LUNAR POINTS</Text>
                 </View>
               </View>
               
@@ -402,11 +405,11 @@ export default function WalletScreen() {
             </View>
 
             <TouchableOpacity 
-              style={styles.upgradeButton}
+              style={[styles.upgradeButton, { borderColor: subscriptionData?.tier?.color || colors.gold }]}
               onPress={() => router.push('/subscriptions')}
             >
-              <Ionicons name="arrow-up-circle" size={18} color={colors.textPrimary} />
-              <Text style={styles.upgradeButtonText}>
+              <Ionicons name="arrow-up-circle" size={18} color={subscriptionData?.tier?.color || colors.gold} />
+              <Text style={[styles.upgradeButtonText, { color: subscriptionData?.tier?.color || colors.gold }]}>
                 {subscriptionData?.is_subscribed ? 'MANAGE SUBSCRIPTION' : 'UPGRADE MEMBERSHIP'}
               </Text>
             </TouchableOpacity>
