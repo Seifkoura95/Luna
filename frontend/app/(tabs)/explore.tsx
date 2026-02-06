@@ -8,13 +8,14 @@ import {
   Image,
   RefreshControl,
   Linking,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function ExploreScreen() {
   const [venues, setVenues] = useState<any[]>([]);
