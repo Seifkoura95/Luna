@@ -6,7 +6,6 @@ import Animated, {
   withRepeat,
   withTiming,
   Easing,
-  interpolate,
 } from 'react-native-reanimated';
 
 const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
@@ -23,8 +22,9 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   const rotation = useSharedValue(0);
 
   useEffect(() => {
+    // Rotate counter-clockwise (negative direction) - spinning left like a real planet
     rotation.value = withRepeat(
-      withTiming(360, { 
+      withTiming(-360, { 
         duration: rotationDuration, 
         easing: Easing.linear 
       }),
@@ -33,29 +33,10 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
     );
   }, [rotationDuration]);
 
-  // Sideways rotation like a real moon - using scaleX to simulate Y-axis rotation
-  const animatedStyle = useAnimatedStyle(() => {
-    // Create a sideways "spin" effect by varying scaleX
-    const scaleX = interpolate(
-      rotation.value % 360,
-      [0, 90, 180, 270, 360],
-      [1, 0.85, 1, 0.85, 1]
-    );
-    
-    // Add slight horizontal movement for more realism
-    const translateX = interpolate(
-      rotation.value % 360,
-      [0, 90, 180, 270, 360],
-      [0, -2, 0, 2, 0]
-    );
-
-    return {
-      transform: [
-        { scaleX },
-        { translateX },
-      ],
-    };
-  });
+  // Simple rotation around the Y-axis visual effect (spinning left)
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotateY: `${rotation.value}deg` }],
+  }));
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
@@ -77,7 +58,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   moon: {
-    // No glow, clean look
+    // Clean look - no glow
   },
 });
 
