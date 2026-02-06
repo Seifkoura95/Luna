@@ -399,4 +399,64 @@ export const api = {
     }>(`/api/points/simulate-purchase?amount=${amount}&description=${encodeURIComponent(description)}`, {
       method: 'POST'
     }),
+  
+  // ====== LOCATION TRACKING ======
+  updateLocation: (latitude: number, longitude: number, accuracy?: number, heading?: number, speed?: number) =>
+    apiFetch<{ success: boolean; message: string }>('/api/location/update', {
+      method: 'POST',
+      body: JSON.stringify({ latitude, longitude, accuracy, heading, speed })
+    }),
+  
+  getMyLocation: () =>
+    apiFetch<{ location: any | null }>('/api/location/me'),
+  
+  getCrewLocations: (crewId: string) =>
+    apiFetch<{
+      crew_id: string;
+      crew_name: string;
+      members: any[];
+      count: number;
+    }>(`/api/location/crew/${crewId}`),
+  
+  toggleLocationSharing: (crewId: string, enabled: boolean) =>
+    apiFetch<{ success: boolean; message: string }>(`/api/location/share/${crewId}?enabled=${enabled}`, {
+      method: 'POST'
+    }),
+  
+  // ====== SAFETY ALERTS ======
+  sendSafetyAlert: (alertType: string, latitude: number, longitude: number, venueId?: string, crewId?: string, message?: string) =>
+    apiFetch<{
+      success: boolean;
+      alert_id: string;
+      message: string;
+      notified_crew_members: string[];
+      notified_venues: string[];
+      alert: any;
+    }>('/api/safety/alert', {
+      method: 'POST',
+      body: JSON.stringify({
+        alert_type: alertType,
+        latitude,
+        longitude,
+        venue_id: venueId,
+        crew_id: crewId,
+        message
+      })
+    }),
+  
+  getActiveSafetyAlerts: () =>
+    apiFetch<{ alerts: any[] }>('/api/safety/alerts/active'),
+  
+  acknowledgeSafetyAlert: (alertId: string) =>
+    apiFetch<{ success: boolean; message: string }>(`/api/safety/alerts/${alertId}/acknowledge`, {
+      method: 'POST'
+    }),
+  
+  resolveSafetyAlert: (alertId: string) =>
+    apiFetch<{ success: boolean; message: string }>(`/api/safety/alerts/${alertId}/resolve`, {
+      method: 'POST'
+    }),
+  
+  getSafetyNotifications: () =>
+    apiFetch<{ notifications: any[] }>('/api/safety/notifications'),
 };
