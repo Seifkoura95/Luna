@@ -162,20 +162,8 @@ export default function TonightScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero Header with Rotating Lunar Moon */}
-        <View style={[styles.heroHeader, { paddingTop: insets.top + spacing.lg }]}>
-          <RotatingMoon size={80} rotationDuration={30000} />
-          <Text style={styles.brandTitle}>LUNA GROUP</Text>
-          <View style={styles.brandUnderline} />
-          
-          {/* Points Badge with Fiery Sun */}
-          <View style={styles.pointsContainer}>
-            <View style={styles.pointsBadge}>
-              <FierySun size={22} />
-              <Text style={styles.pointsText}>{user?.points_balance?.toLocaleString() || 0} pts</Text>
-            </View>
-          </View>
-        </View>
+        {/* Consistent Header with Rotating Moon - No Points */}
+        <PageHeader title="TONIGHT" showPoints={false} />
 
         {/* Venue Dropdown Selector */}
         <View style={styles.dropdownSection}>
