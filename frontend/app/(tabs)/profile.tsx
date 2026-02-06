@@ -561,17 +561,30 @@ export default function ProfileScreen() {
               <ScrollView style={styles.crewList}>
                 {crews.length > 0 ? (
                   crews.map((crew) => (
-                    <TouchableOpacity key={crew.id} style={styles.crewCard}>
+                    <View key={crew.id} style={styles.crewCard}>
                       <View style={styles.crewInfo}>
                         <Text style={styles.crewName}>{crew.name}</Text>
                         <Text style={styles.crewMembers}>
                           {crew.members?.length || 1} members
                         </Text>
                       </View>
-                      <View style={styles.crewCode}>
-                        <Text style={styles.crewCodeText}>{crew.invite_code}</Text>
+                      <View style={styles.crewActions}>
+                        <TouchableOpacity 
+                          style={styles.trackButton}
+                          onPress={() => {
+                            setShowCrewPlan(false);
+                            setSelectedCrewForMap(crew);
+                            setShowCrewMap(true);
+                          }}
+                        >
+                          <Ionicons name="location" size={16} color={colors.accent} />
+                          <Text style={styles.trackButtonText}>Track</Text>
+                        </TouchableOpacity>
+                        <View style={styles.crewCode}>
+                          <Text style={styles.crewCodeText}>{crew.invite_code}</Text>
+                        </View>
                       </View>
-                    </TouchableOpacity>
+                    </View>
                   ))
                 ) : (
                   <Text style={styles.noCrews}>No crews yet. Create one to start planning!</Text>
