@@ -356,6 +356,74 @@ export default function ProfileScreen() {
           </View>
         )}
 
+        {/* Subscription Management */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>MEMBERSHIP</Text>
+          <TouchableOpacity
+            style={styles.subscriptionCard}
+            onPress={() => navRouter.push('/subscriptions')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={[subscriptionData?.tier?.color || colors.gold, '#0A0A0A']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.subscriptionGradient}
+            >
+              <View style={styles.subscriptionHeader}>
+                <View style={[styles.subscriptionIcon, { backgroundColor: (subscriptionData?.tier?.color || colors.gold) + '30' }]}>
+                  <Ionicons 
+                    name={subscriptionData?.tier?.id === 'supernova' ? 'star' : subscriptionData?.tier?.id === 'eclipse' ? 'flash' : 'moon'} 
+                    size={24} 
+                    color={subscriptionData?.tier?.color || colors.gold} 
+                  />
+                </View>
+                <View style={styles.subscriptionInfo}>
+                  <Text style={[styles.subscriptionTier, { color: subscriptionData?.tier?.color || colors.gold }]}>
+                    {subscriptionData?.tier?.name?.toUpperCase() || 'LUNAR'}
+                  </Text>
+                  <Text style={styles.subscriptionPrice}>
+                    {subscriptionData?.tier?.price > 0 
+                      ? `$${subscriptionData?.tier?.price}/month` 
+                      : 'Free Plan'}
+                  </Text>
+                </View>
+                <View style={styles.subscriptionArrow}>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </View>
+              </View>
+              
+              <View style={styles.subscriptionPerks}>
+                <View style={styles.subscriptionPerk}>
+                  <Text style={styles.subscriptionPerkValue}>{subscriptionData?.tier?.points_multiplier || 1}x</Text>
+                  <Text style={styles.subscriptionPerkLabel}>Points</Text>
+                </View>
+                <View style={styles.subscriptionPerk}>
+                  <Text style={styles.subscriptionPerkValue}>
+                    {subscriptionData?.subscription?.free_entries_remaining === -1 ? '∞' : subscriptionData?.subscription?.free_entries_remaining || 0}
+                  </Text>
+                  <Text style={styles.subscriptionPerkLabel}>Free Entry</Text>
+                </View>
+                <View style={styles.subscriptionPerk}>
+                  <Text style={styles.subscriptionPerkValue}>
+                    {subscriptionData?.tier?.benefits?.free_drinks_before_10pm || 0}
+                  </Text>
+                  <Text style={styles.subscriptionPerkLabel}>Free Drinks</Text>
+                </View>
+              </View>
+              
+              {!subscriptionData?.is_subscribed && (
+                <View style={[styles.upgradePrompt, { backgroundColor: colors.accent + '20' }]}>
+                  <Ionicons name="arrow-up-circle" size={16} color={colors.accent} />
+                  <Text style={[styles.upgradePromptText, { color: colors.accent }]}>
+                    Upgrade for more perks!
+                  </Text>
+                </View>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+
         {/* Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>SETTINGS</Text>
