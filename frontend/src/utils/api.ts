@@ -84,17 +84,8 @@ export const api = {
   getEvents: (venueId?: string) => 
     apiFetch<any[]>(`/api/events${venueId ? `?venue_id=${venueId}` : ''}`, { auth: false }),
   
-  // Points
-  getPointsHistory: (venueId?: string, limit?: number) => {
-    const params = new URLSearchParams();
-    if (venueId) params.append('venue_id', venueId);
-    if (limit) params.append('limit', limit.toString());
-    return apiFetch<any[]>(`/api/points/history${params.toString() ? `?${params.toString()}` : ''}`);
-  },
-  getPointsStats: () => apiFetch<any>('/api/points/stats'),
-  
-  // Venue Status (removed queue)
-  getVenueStatus: (venueId: string) => apiFetch<any>(`/api/venues/${venueId}`, { auth: false }),
+  // User Stats
+  getUserStats: () => apiFetch<any>('/api/users/stats'),
   
   // Membership
   getMembershipTiers: () => apiFetch<any>('/api/membership/tiers', { auth: false }),
@@ -103,9 +94,8 @@ export const api = {
   
   // Admin
   seedData: () => apiFetch<any>('/api/admin/seed', { method: 'POST', auth: false }),
-  getAdminStats: () => apiFetch<any>('/api/admin/stats', { auth: false }),
   
-  // Auctions
+  // ====== ENHANCED AUCTIONS ======
   getAuctions: (venueId?: string, status?: string) => {
     const params = new URLSearchParams();
     if (venueId) params.append('venue_id', venueId);
@@ -114,14 +104,79 @@ export const api = {
   },
   getAuctionDetail: (auctionId: string) =>
     apiFetch<any>(`/api/auctions/${auctionId}`, { auth: false }),
-  placeBid: (auctionId: string, bidAmount: number) =>
+  getAuctionBids: (auctionId: string) =>
+    apiFetch<any[]>(`/api/auctions/${auctionId}/bids`, { auth: false }),
+  placeBid: (auctionId: string, amount: number, maxBid?: number) =>
     apiFetch<any>('/api/auctions/bid', { 
       method: 'POST', 
-      body: JSON.stringify({ auction_id: auctionId, amount: bidAmount }) 
+      body: JSON.stringify({ auction_id: auctionId, amount, max_bid: maxBid }) 
     }),
   getUserWonAuctions: () => apiFetch<any[]>('/api/auctions/user/won'),
   claimAuctionPrize: (auctionId: string) =>
     apiFetch<any>(`/api/auctions/${auctionId}/claim`, { method: 'POST' }),
+  
+  // Auction Notifications
+  subscribeToAuction: (auctionId: string, notifyOutbid: boolean = true) =>
+    apiFetch<any>('/api/auctions/subscribe', { 
+      method: 'POST', 
+      body: JSON.stringify({ auction_id: auctionId, notify_outbid: notifyOutbid }) 
+    }),
+  getAuctionNotifications: () => apiFetch<any>('/api/auctions/notifications'),
+  markNotificationsRead: () =>
+    apiFetch<any>('/api/auctions/notifications/mark-read', { method: 'POST' }),
+  
+  // ====== TICKETS WALLET ======
+  getTickets: (status?: string) => 
+    apiFetch<any>(`/api/tickets${status ? `?status=${status}` : ''}`),
+  purchaseTicket: (eventId: string, quantity: number = 1, ticketType: string = 'general') =>
+    apiFetch<any>('/api/tickets/purchase', {
+      method: 'POST',
+      body: JSON.stringify({ event_id: eventId, quantity, ticket_type: ticketType })
+    }),
+  addGuestToTicket: (ticketId: string, guestName: string, guestEmail?: string) =>
+    apiFetch<any>('/api/tickets/add-guest', {
+      method: 'POST',
+      body: JSON.stringify({ ticket_id: ticketId, guest_name: guestName, guest_email: guestEmail })
+    }),
+  removeGuestFromTicket: (ticketId: string, guestId: string) =>
+    apiFetch<any>(`/api/tickets/${ticketId}/guest/${guestId}`, { method: 'DELETE' }),
+  
+  // ====== CREW PLAN ======
+  getCrews: () => apiFetch<any[]>('/api/crews'),
+  getCrewDetail: (crewId: string) => apiFetch<any>(`/api/crews/${crewId}`),
+  createCrew: (name: string, eventId?: string) =>
+    apiFetch<any>('/api/crews/create', {
+      method: 'POST',
+      body: JSON.stringify({ name, event_id: eventId })
+    }),
+  inviteToCrew: (crewId: string, email?: string, userId?: string) =>
+    apiFetch<any>('/api/crews/invite', {
+      method: 'POST',
+      body: JSON.stringify({ crew_id: crewId, email, user_id: userId })
+    }),
+  joinCrew: (crewId: string) =>
+    apiFetch<any>(`/api/crews/${crewId}/join`, { method: 'POST' }),
+  placeCrewBoothBid: (crewId: string, auctionId: string, totalAmount: number, contributions: any[]) =>
+    apiFetch<any>('/api/crews/booth-bid', {
+      method: 'POST',
+      body: JSON.stringify({ crew_id: crewId, auction_id: auctionId, total_amount: totalAmount, contributions })
+    }),
+  
+  // ====== SAFETY ======
+  reportIncident: (venueId: string, incidentType: string, description: string, locationDetails?: string) =>
+    apiFetch<any>('/api/safety/report-incident', {
+      method: 'POST',
+      body: JSON.stringify({ venue_id: venueId, incident_type: incidentType, description, location_details: locationDetails })
+    }),
+  reportLostProperty: (venueId: string, itemDescription: string, dateLost: string, contactPhone?: string) =>
+    apiFetch<any>('/api/safety/lost-property', {
+      method: 'POST',
+      body: JSON.stringify({ venue_id: venueId, item_description: itemDescription, date_lost: dateLost, contact_phone: contactPhone })
+    }),
+  getRideshareLinks: (venueId: string) =>
+    apiFetch<any>(`/api/safety/rideshare-links?venue_id=${venueId}`, { auth: false }),
+  getEmergencyContacts: (venueId?: string) =>
+    apiFetch<any>(`/api/safety/emergency-contacts${venueId ? `?venue_id=${venueId}` : ''}`, { auth: false }),
   
   // Photos
   getUserPhotos: (venueId?: string) => 
@@ -156,14 +211,4 @@ export const api = {
   getMyReservations: () => apiFetch<any>('/api/bookings/my-reservations'),
   cancelBooking: (bookingId: string) =>
     apiFetch<any>(`/api/bookings/${bookingId}`, { method: 'DELETE' }),
-  
-  // Auction Notifications
-  subscribeToAuction: (auctionId: string, notifyOutbid: boolean = true) =>
-    apiFetch<any>('/api/auctions/subscribe', { 
-      method: 'POST', 
-      body: JSON.stringify({ auction_id: auctionId, notify_outbid: notifyOutbid }) 
-    }),
-  getAuctionNotifications: () => apiFetch<any>('/api/auctions/notifications'),
-  markNotificationsRead: () =>
-    apiFetch<any>('/api/auctions/notifications/mark-read', { method: 'POST' }),
 };
