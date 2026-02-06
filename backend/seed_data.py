@@ -467,13 +467,13 @@ def get_seed_data():
             "featured_artist": None
         },
         
-        # After Dark Events
+        # After Dark Events - Real recurring events
         {
             "id": str(uuid.uuid4()),
             "venue_id": "after_dark",
             "venue_name": "After Dark",
             "title": "R&B & Hip-Hop Fridays",
-            "description": "The best in R&B, Hip-Hop, and Afrobeats every Friday. Premium sound, premium vibes.",
+            "description": "The best in R&B, Hip-Hop, and Afrobeats every Friday from 9PM. Premium sound, VIP booths, bottle service available.",
             "event_date": now + timedelta(days=1),
             "event_end_date": now + timedelta(days=1, hours=6),
             "ticket_url": "https://eclipsebrisbane.com.au/after-dark",
@@ -487,30 +487,94 @@ def get_seed_data():
             "id": str(uuid.uuid4()),
             "venue_id": "after_dark",
             "venue_name": "After Dark",
-            "title": "Afrobeats Saturdays",
-            "description": "Global sounds featuring the best Afrobeats, Amapiano, and African diaspora music.",
+            "title": "RESON8 Saturdays",
+            "description": "Every Saturday night featuring RESON8 spinning Afrobeats, Amapiano & global sounds. 9PM-3AM.",
             "event_date": now + timedelta(days=2),
             "event_end_date": now + timedelta(days=2, hours=6),
-            "ticket_url": None,
+            "ticket_url": "https://eclipsebrisbane.com.au/after-dark",
             "ticket_price": 15.00,
             "image_url": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
+            "category": "club_night",
+            "featured": True,
+            "featured_artist": {
+                "name": "RESON8",
+                "image": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400",
+                "bio": "Resident DJ - Afrobeats & Global Sounds"
+            }
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "after_dark",
+            "venue_name": "After Dark",
+            "title": "Slow Jams & Throwbacks",
+            "description": "R&B classics and slow jams all night. Perfect for those late night vibes. VIP sections available.",
+            "event_date": now + timedelta(days=8),
+            "event_end_date": now + timedelta(days=8, hours=6),
+            "ticket_url": "https://eclipsebrisbane.com.au/after-dark",
+            "ticket_price": 10.00,
+            "image_url": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
             "category": "club_night",
             "featured": False,
             "featured_artist": None
         },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "after_dark",
+            "venue_name": "After Dark",
+            "title": "Amapiano Nights",
+            "description": "South African house music takeover. Amapiano, Deep House & Afro Tech all night.",
+            "event_date": now + timedelta(days=16),
+            "event_end_date": now + timedelta(days=16, hours=6),
+            "ticket_url": "https://eclipsebrisbane.com.au/after-dark",
+            "ticket_price": 20.00,
+            "image_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800",
+            "category": "special_event",
+            "featured": True,
+            "featured_artist": None
+        },
         
-        # Su Casa Brisbane Events
+        # Su Casa Brisbane Events - Real recurring events
         {
             "id": str(uuid.uuid4()),
             "venue_id": "su_casa_brisbane",
             "venue_name": "Su Casa Brisbane",
-            "title": "Rooftop Fridays",
-            "description": "Start your weekend early with sunset cocktails, live DJs, and city views. House & Disco vibes.",
-            "event_date": now + timedelta(days=1),
-            "event_end_date": now + timedelta(days=1, hours=8),
-            "ticket_url": "https://sucasabrisbane.com",
+            "title": "Trivia Thursdays",
+            "description": "High-stakes trivia on the rooftop! Food & drink specials, chance to win a free booth. Brisbane skyline views.",
+            "event_date": now + timedelta(days=5),
+            "event_end_date": now + timedelta(days=5, hours=4),
+            "ticket_url": "https://sucasabrisbane.com/whats-on-rooftop",
             "ticket_price": 0,
             "image_url": "https://images.unsplash.com/photo-1613066697301-d7dccfc86bb5?w=800",
+            "category": "rooftop",
+            "featured": False,
+            "featured_artist": None
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "su_casa_brisbane",
+            "venue_name": "Su Casa Brisbane",
+            "title": "Bao & Sip Thursdays",
+            "description": "$25 deal - Three premium Bao Buns + Margarita or beer. 6-9PM with sunset vibes and RnB beats.",
+            "event_date": now + timedelta(days=5),
+            "event_end_date": now + timedelta(days=5, hours=3),
+            "ticket_url": "https://sucasabrisbane.com/whats-on-rooftop",
+            "ticket_price": 25.00,
+            "image_url": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
+            "category": "dining",
+            "featured": True,
+            "featured_artist": None
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "su_casa_brisbane",
+            "venue_name": "Su Casa Brisbane",
+            "title": "Sunset Session",
+            "description": "$49/person 2-hour rooftop package with curated cocktails and skyline views. Friday-Sunday 5-7PM.",
+            "event_date": now + timedelta(days=1),
+            "event_end_date": now + timedelta(days=1, hours=2),
+            "ticket_url": "https://sucasabrisbane.com/whats-on-rooftop",
+            "ticket_price": 49.00,
+            "image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
             "category": "rooftop",
             "featured": True,
             "featured_artist": None
@@ -519,8 +583,38 @@ def get_seed_data():
             "id": str(uuid.uuid4()),
             "venue_id": "su_casa_brisbane",
             "venue_name": "Su Casa Brisbane",
+            "title": "Afrobeats Fridays",
+            "description": "Rooftop transitions to nightclub from 9PM. Afrobeats, RnB, and slow jams all night.",
+            "event_date": now + timedelta(days=1),
+            "event_end_date": now + timedelta(days=1, hours=6),
+            "ticket_url": "https://sucasabrisbane.com/whats-on-nightclub",
+            "ticket_price": 15.00,
+            "image_url": "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=800",
+            "category": "club_night",
+            "featured": True,
+            "featured_artist": None
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "su_casa_brisbane",
+            "venue_name": "Su Casa Brisbane",
+            "title": "New Age RnB Saturdays",
+            "description": "New-age RnB and classic Hip-Hop. Guest list and booth bookings essential. Brisbane's premium Saturday.",
+            "event_date": now + timedelta(days=2),
+            "event_end_date": now + timedelta(days=2, hours=6),
+            "ticket_url": "https://sucasabrisbane.com/whats-on-nightclub",
+            "ticket_price": 20.00,
+            "image_url": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
+            "category": "club_night",
+            "featured": True,
+            "featured_artist": None
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "su_casa_brisbane",
+            "venue_name": "Su Casa Brisbane",
             "title": "Sunday Sesh & Hospo Night",
-            "description": "Industry night with golden wristbands for hospitality workers. Hip-Hop, R&B, Afrobeats from 9PM.",
+            "description": "Industry night with golden wristbands for hospitality workers. Rooftop from 4PM, nightclub from 9PM.",
             "event_date": now + timedelta(days=4),
             "event_end_date": now + timedelta(days=4, hours=6),
             "ticket_url": None,
@@ -548,13 +642,13 @@ def get_seed_data():
             "featured_artist": None
         },
         
-        # Juju Mermaid Beach Events
+        # Juju Mermaid Beach Events - Real events from website
         {
             "id": str(uuid.uuid4()),
             "venue_id": "juju",
             "venue_name": "Juju Mermaid Beach",
             "title": "Sundown Social",
-            "description": "Every Sunday on the rooftop. Live DJs, sultry saxophone, sunset views, and booth packages with cocktails.",
+            "description": "Every Sunday from golden hour. Live DJs, sultry saxophone performances, sunset views. Luxe booth packages available.",
             "event_date": now + timedelta(days=4),
             "event_end_date": now + timedelta(days=4, hours=5),
             "ticket_url": "https://jujumermaidbeach.com.au/whats-on",
@@ -562,17 +656,21 @@ def get_seed_data():
             "image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
             "category": "rooftop",
             "featured": True,
-            "featured_artist": None
+            "featured_artist": {
+                "name": "Live Saxophone & DJs",
+                "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
+                "bio": "Rooftop sundowner vibes"
+            }
         },
         {
             "id": str(uuid.uuid4()),
             "venue_id": "juju",
             "venue_name": "Juju Mermaid Beach",
             "title": "Acoustic Thursdays",
-            "description": "Weekly from 6PM - live soloists, chilled cocktails, coastal views, and nibbles like steak tartare and oysters.",
+            "description": "Live soloists from 6PM. Chilled cocktails, coastal views, and nibbles like steak tartare, fresh oysters & fish tacos.",
             "event_date": now + timedelta(days=5),
             "event_end_date": now + timedelta(days=5, hours=4),
-            "ticket_url": None,
+            "ticket_url": "https://jujumermaidbeach.com.au/whats-on",
             "ticket_price": 0,
             "image_url": "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800",
             "category": "live_music",
@@ -584,19 +682,49 @@ def get_seed_data():
             "venue_id": "juju",
             "venue_name": "Juju Mermaid Beach",
             "title": "ETHEREAL SUNDAYS Vol 10",
-            "description": "Global house, deep melodic & afro grooves, live percussion. A rooftop music journey with ocean views.",
+            "description": "Global house, deep melodic & afro grooves, live percussion by Ethereal Groove Music. Ocean views rooftop experience.",
             "event_date": now + timedelta(days=11),
             "event_end_date": now + timedelta(days=11, hours=7),
             "ticket_url": "https://eventbrite.com.au",
-            "ticket_price": 0,
+            "ticket_price": 35.00,
             "image_url": "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800",
             "category": "special_event",
             "featured": True,
             "featured_artist": {
-                "name": "Various Artists",
+                "name": "Ethereal Groove Music",
                 "image": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=400",
                 "bio": "Global house DJs and live percussionists"
             }
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "juju",
+            "venue_name": "Juju Mermaid Beach",
+            "title": "Friday Sunset Sessions",
+            "description": "Start the weekend with ocean sunset views, signature cocktails, and resident DJs on the rooftop.",
+            "event_date": now + timedelta(days=1),
+            "event_end_date": now + timedelta(days=1, hours=5),
+            "ticket_url": "https://jujumermaidbeach.com.au/whats-on",
+            "ticket_price": 0,
+            "image_url": "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800",
+            "category": "rooftop",
+            "featured": False,
+            "featured_artist": None
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "juju",
+            "venue_name": "Juju Mermaid Beach",
+            "title": "New Year's Eve 2025",
+            "description": "Rooftop party 7-11PM. General admission $49, Rooftop Package $229 (premium drinks & canapes), VIP booths available.",
+            "event_date": now + timedelta(days=328),
+            "event_end_date": now + timedelta(days=328, hours=5),
+            "ticket_url": "https://jujumermaidbeach.com.au",
+            "ticket_price": 49.00,
+            "image_url": "https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=800",
+            "category": "special_event",
+            "featured": True,
+            "featured_artist": None
         },
         
         # Night Market Events
