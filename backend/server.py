@@ -185,6 +185,15 @@ async def lifespan(app_instance: FastAPI):
         replace_existing=True
     )
     
+    # Schedule notification generation every 6 hours
+    scheduler.add_job(
+        run_notification_generation,
+        IntervalTrigger(hours=6),
+        id="notification_generation",
+        name="Notification Generation",
+        replace_existing=True
+    )
+    
     # Also run a sync on startup (after 90 seconds to let everything initialize)
     scheduler.add_job(
         run_scheduled_sync,
@@ -195,7 +204,7 @@ async def lifespan(app_instance: FastAPI):
     )
     
     scheduler.start()
-    logging.info("Event scheduler started - Megatix sync every 12 hours")
+    logging.info("Event scheduler started - Megatix sync every 12 hours, notifications every 6 hours")
     
     yield
     
