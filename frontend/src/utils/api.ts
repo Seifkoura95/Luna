@@ -211,4 +211,57 @@ export const api = {
   getMyReservations: () => apiFetch<any>('/api/bookings/my-reservations'),
   cancelBooking: (bookingId: string) =>
     apiFetch<any>(`/api/bookings/${bookingId}`, { method: 'DELETE' }),
+  
+  // ====== STRIPE PAYMENTS ======
+  getStripePublishableKey: () => 
+    apiFetch<{ publishableKey: string; testMode: boolean }>('/api/payments/publishable-key', { auth: false }),
+  
+  createPaymentIntent: (auctionId: string, bidAmount: number) =>
+    apiFetch<{
+      clientSecret: string;
+      paymentIntentId: string;
+      depositAmount: number;
+      currency: string;
+      bidId: string;
+      testMode: boolean;
+      message?: string;
+    }>('/api/payments/create-payment-intent', {
+      method: 'POST',
+      body: JSON.stringify({ auction_id: auctionId, bid_amount: bidAmount })
+    }),
+  
+  confirmBidPayment: (bidId: string, paymentIntentId: string) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      bidAmount?: number;
+      depositPaid?: number;
+    }>(`/api/payments/confirm-bid?bid_id=${bidId}&payment_intent_id=${paymentIntentId}`, {
+      method: 'POST'
+    }),
+  
+  // ====== PUSH NOTIFICATIONS ======
+  registerPushToken: (pushToken: string, deviceType: string = 'expo') =>
+    apiFetch<{ success: boolean; message: string }>('/api/notifications/register-push-token', {
+      method: 'POST',
+      body: JSON.stringify({ push_token: pushToken, device_type: deviceType })
+    }),
+  
+  removePushToken: () =>
+    apiFetch<{ success: boolean; message: string }>('/api/notifications/push-token', {
+      method: 'DELETE'
+    }),
+  
+  getPendingNotifications: () =>
+    apiFetch<{ notifications: any[]; count: number }>('/api/notifications/pending'),
+  
+  markNotificationRead: (notificationId: string) =>
+    apiFetch<{ success: boolean }>(`/api/notifications/mark-read/${notificationId}`, {
+      method: 'POST'
+    }),
+  
+  sendTestNotification: () =>
+    apiFetch<{ success: boolean; notification: any }>('/api/notifications/test', {
+      method: 'POST'
+    }),
 };
