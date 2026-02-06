@@ -57,32 +57,44 @@ export const api = {
   getMe: () => apiFetch<any>('/api/auth/me'),
   
   // QR & Check-in
-  getQRData: () => apiFetch<{ qr_data: string; expires_in: number }>('/api/checkin/qr'),
+  getQRData: (venueId: string) => apiFetch<{ qr_data: string; expires_at: number }>(`/api/checkin/qr?venue_id=${venueId}`),
   
   // Rewards
-  getRewards: (category?: string) =>
-    apiFetch<any[]>(`/api/rewards${category ? `?category=${category}` : ''}`),
-  redeemReward: (rewardId: string) =>
-    apiFetch<any>('/api/rewards/redeem', { method: 'POST', body: JSON.stringify({ reward_id: rewardId }) }),
+  getRewards: (category?: string, venueId?: string) => {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (venueId) params.append('venue_id', venueId);
+    return apiFetch<any[]>(`/api/rewards${params.toString() ? `?${params.toString()}` : ''}`);
+  },
+  redeemReward: (rewardId: string, venueId?: string) =>
+    apiFetch<any>('/api/rewards/redeem', { method: 'POST', body: JSON.stringify({ reward_id: rewardId, venue_id: venueId }) }),
   getRedemptions: () => apiFetch<any[]>('/api/rewards/redemptions'),
   
   // Missions
-  getMissions: () => apiFetch<any[]>('/api/missions'),
+  getMissions: (venueId?: string) =>
+    apiFetch<any[]>(`/api/missions${venueId ? `?venue_id=${venueId}` : ''}`),
   
   // Boosts
-  getActiveBoosts: () => apiFetch<any[]>('/api/boosts', { auth: false }),
-  getUpcomingBoosts: () => apiFetch<any[]>('/api/boosts/upcoming', { auth: false }),
+  getActiveBoosts: (venueId?: string) => 
+    apiFetch<any[]>(`/api/boosts${venueId ? `?venue_id=${venueId}` : ''}`, { auth: false }),
+  getUpcomingBoosts: (venueId?: string) => 
+    apiFetch<any[]>(`/api/boosts/upcoming${venueId ? `?venue_id=${venueId}` : ''}`, { auth: false }),
   
   // Events
-  getEvents: () => apiFetch<any[]>('/api/events', { auth: false }),
+  getEvents: (venueId?: string) => 
+    apiFetch<any[]>(`/api/events${venueId ? `?venue_id=${venueId}` : ''}`, { auth: false }),
   
   // Points
-  getPointsHistory: (limit?: number) =>
-    apiFetch<any[]>(`/api/points/history${limit ? `?limit=${limit}` : ''}`),
+  getPointsHistory: (venueId?: string, limit?: number) => {
+    const params = new URLSearchParams();
+    if (venueId) params.append('venue_id', venueId);
+    if (limit) params.append('limit', limit.toString());
+    return apiFetch<any[]>(`/api/points/history${params.toString() ? `?${params.toString()}` : ''}`);
+  },
   getPointsStats: () => apiFetch<any>('/api/points/stats'),
   
-  // Queue
-  getQueueStatus: () => apiFetch<any>('/api/queue/status', { auth: false }),
+  // Venue Status (removed queue)
+  getVenueStatus: (venueId: string) => apiFetch<any>(`/api/venues/${venueId}`, { auth: false }),
   
   // Membership
   getMembershipTiers: () => apiFetch<any>('/api/membership/tiers', { auth: false }),
@@ -94,21 +106,26 @@ export const api = {
   getAdminStats: () => apiFetch<any>('/api/admin/stats', { auth: false }),
   
   // Auctions
-  getAuctions: (status?: string) =>
-    apiFetch<any[]>(`/api/auctions${status ? `?status=${status}` : ''}`, { auth: false }),
+  getAuctions: (venueId?: string, status?: string) => {
+    const params = new URLSearchParams();
+    if (venueId) params.append('venue_id', venueId);
+    if (status) params.append('status', status);
+    return apiFetch<any[]>(`/api/auctions${params.toString() ? `?${params.toString()}` : ''}`, { auth: false });
+  },
   getAuctionDetail: (auctionId: string) =>
     apiFetch<any>(`/api/auctions/${auctionId}`, { auth: false }),
   placeBid: (auctionId: string, bidAmount: number) =>
     apiFetch<any>('/api/auctions/bid', { 
       method: 'POST', 
-      body: JSON.stringify({ auction_id: auctionId, bid_amount: bidAmount }) 
+      body: JSON.stringify({ auction_id: auctionId, amount: bidAmount }) 
     }),
   getUserWonAuctions: () => apiFetch<any[]>('/api/auctions/user/won'),
   claimAuctionPrize: (auctionId: string) =>
     apiFetch<any>(`/api/auctions/${auctionId}/claim`, { method: 'POST' }),
   
   // Photos
-  getUserPhotos: () => apiFetch<any[]>('/api/photos'),
+  getUserPhotos: (venueId?: string) => 
+    apiFetch<any[]>(`/api/photos${venueId ? `?venue_id=${venueId}` : ''}`),
   getPendingPhotos: () => apiFetch<any[]>('/api/photos/pending'),
   approvePhoto: (tagId: string, approved: boolean) =>
     apiFetch<any>('/api/photos/approve', { 
