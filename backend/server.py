@@ -2522,6 +2522,604 @@ async def toggle_location_sharing(request: Request, crew_id: str, enabled: bool 
     }
 
 
+# ====== VIP TABLE BOOKING API ======
+
+class TableBookingRequest(BaseModel):
+    venue_id: str
+    table_id: str
+    date: str  # YYYY-MM-DD
+    party_size: int
+    special_requests: Optional[str] = None
+    contact_phone: Optional[str] = None
+
+class TableDepositRequest(BaseModel):
+    booking_id: str
+    payment_method_id: Optional[str] = None
+
+# Table configurations per venue
+VIP_TABLES = {
+    "eclipse": [
+        {
+            "id": "eclipse_vip_1",
+            "name": "VIP Booth 1",
+            "location": "Main Room - Elevated",
+            "capacity": 6,
+            "min_spend": 500,
+            "deposit_amount": 200,
+            "features": ["Premium Sound", "Bottle Service", "Dedicated Host", "City Views"],
+            "image_url": "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=600"
+        },
+        {
+            "id": "eclipse_vip_2",
+            "name": "VIP Booth 2",
+            "location": "Main Room - Stage View",
+            "capacity": 8,
+            "min_spend": 800,
+            "deposit_amount": 300,
+            "features": ["Best DJ View", "Bottle Service", "Dedicated Host", "VIP Entry"],
+            "image_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600"
+        },
+        {
+            "id": "eclipse_skybox",
+            "name": "The Skybox",
+            "location": "Upper Level - Private",
+            "capacity": 12,
+            "min_spend": 2000,
+            "deposit_amount": 800,
+            "features": ["Private Area", "Dedicated Bar", "2 Hosts", "Exclusive Entry", "Premium Spirits"],
+            "image_url": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600"
+        },
+        {
+            "id": "eclipse_owners",
+            "name": "Owner's Suite",
+            "location": "Exclusive Level",
+            "capacity": 20,
+            "min_spend": 5000,
+            "deposit_amount": 2000,
+            "features": ["Ultra-Private", "Personal Chef", "Unlimited Premium", "Helicopter Transfer Option", "Concierge"],
+            "image_url": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600"
+        }
+    ],
+    "after_dark": [
+        {
+            "id": "afterdark_booth_1",
+            "name": "R&B Lounge Booth",
+            "location": "Main Floor",
+            "capacity": 6,
+            "min_spend": 400,
+            "deposit_amount": 150,
+            "features": ["Bottle Service", "Dedicated Host", "Dance Floor Access"],
+            "image_url": "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=600"
+        },
+        {
+            "id": "afterdark_vip",
+            "name": "VIP Section",
+            "location": "Elevated Platform",
+            "capacity": 10,
+            "min_spend": 1000,
+            "deposit_amount": 400,
+            "features": ["Private Area", "Premium Bottles", "VIP Entry", "Dedicated Server"],
+            "image_url": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600"
+        }
+    ],
+    "su_casa_brisbane": [
+        {
+            "id": "sucasa_rooftop_1",
+            "name": "Rooftop Cabana",
+            "location": "Rooftop - Poolside",
+            "capacity": 8,
+            "min_spend": 600,
+            "deposit_amount": 250,
+            "features": ["City Views", "Pool Access", "Bottle Service", "Daybed Seating"],
+            "image_url": "https://images.unsplash.com/photo-1613066697301-d7dccfc86bb5?w=600"
+        },
+        {
+            "id": "sucasa_penthouse",
+            "name": "Penthouse Lounge",
+            "location": "Top Floor",
+            "capacity": 15,
+            "min_spend": 2500,
+            "deposit_amount": 1000,
+            "features": ["360° Views", "Private Bar", "Chef's Table Option", "VIP Elevator"],
+            "image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600"
+        }
+    ],
+    "juju": [
+        {
+            "id": "juju_sunset",
+            "name": "Sunset Booth",
+            "location": "Ocean View Terrace",
+            "capacity": 6,
+            "min_spend": 500,
+            "deposit_amount": 200,
+            "features": ["Ocean Views", "Sunset Hours", "Seafood Platter Included", "Champagne Service"],
+            "image_url": "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600"
+        },
+        {
+            "id": "juju_beach",
+            "name": "Beachfront Private",
+            "location": "Ground Level - Beach Access",
+            "capacity": 10,
+            "min_spend": 1500,
+            "deposit_amount": 600,
+            "features": ["Direct Beach Access", "Private Area", "Full Menu Access", "Dedicated Staff"],
+            "image_url": "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=600"
+        }
+    ]
+}
+
+@api_router.get("/venues/{venue_id}/tables")
+async def get_venue_tables(venue_id: str, date: Optional[str] = None):
+    """Get available VIP tables for a venue"""
+    if venue_id not in VIP_TABLES:
+        # Return empty list for venues without table service
+        return {"tables": [], "message": "This venue doesn't offer table booking"}
+    
+    tables = VIP_TABLES[venue_id]
+    
+    # Check availability for specific date
+    if date:
+        # Get existing bookings for this date
+        bookings = await db.table_bookings.find({
+            "venue_id": venue_id,
+            "date": date,
+            "status": {"$in": ["confirmed", "pending"]}
+        }).to_list(100)
+        
+        booked_table_ids = {b["table_id"] for b in bookings}
+        
+        # Mark availability
+        for table in tables:
+            table["available"] = table["id"] not in booked_table_ids
+    else:
+        for table in tables:
+            table["available"] = True
+    
+    return {"tables": tables, "venue_id": venue_id}
+
+@api_router.post("/bookings/table")
+async def create_table_booking(request: Request, booking: TableBookingRequest):
+    """Create a VIP table booking"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Validate venue and table
+    if booking.venue_id not in VIP_TABLES:
+        raise HTTPException(status_code=400, detail="Venue doesn't offer table service")
+    
+    table = next((t for t in VIP_TABLES[booking.venue_id] if t["id"] == booking.table_id), None)
+    if not table:
+        raise HTTPException(status_code=400, detail="Table not found")
+    
+    # Check capacity
+    if booking.party_size > table["capacity"]:
+        raise HTTPException(status_code=400, detail=f"Party size exceeds table capacity of {table['capacity']}")
+    
+    # Check availability
+    existing = await db.table_bookings.find_one({
+        "venue_id": booking.venue_id,
+        "table_id": booking.table_id,
+        "date": booking.date,
+        "status": {"$in": ["confirmed", "pending"]}
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Table not available for this date")
+    
+    booking_id = f"TBL-{str(uuid.uuid4())[:8].upper()}"
+    
+    booking_doc = {
+        "booking_id": booking_id,
+        "user_id": current_user["user_id"],
+        "user_name": current_user.get("name", current_user["email"]),
+        "user_email": current_user["email"],
+        "venue_id": booking.venue_id,
+        "venue_name": LUNA_VENUES.get(booking.venue_id, {}).get("name", booking.venue_id),
+        "table_id": booking.table_id,
+        "table_name": table["name"],
+        "table_location": table["location"],
+        "date": booking.date,
+        "party_size": booking.party_size,
+        "min_spend": table["min_spend"],
+        "deposit_amount": table["deposit_amount"],
+        "deposit_paid": False,
+        "deposit_payment_id": None,
+        "special_requests": booking.special_requests,
+        "contact_phone": booking.contact_phone,
+        "status": "pending",  # pending -> confirmed (after deposit) -> completed/cancelled
+        "features": table["features"],
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=24)  # Must pay deposit within 24h
+    }
+    
+    await db.table_bookings.insert_one(booking_doc)
+    
+    # Create notification
+    await db.notifications.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": current_user["user_id"],
+        "type": "table_booking",
+        "title": "Table Booking Created! 🎉",
+        "message": f"Your {table['name']} at {booking_doc['venue_name']} is reserved for {booking.date}. Pay your ${table['deposit_amount']} deposit within 24 hours to confirm.",
+        "data": {"booking_id": booking_id},
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    return {
+        "success": True,
+        "booking": {k: v for k, v in booking_doc.items() if k != "_id"},
+        "message": f"Table reserved! Pay ${table['deposit_amount']} deposit to confirm."
+    }
+
+@api_router.post("/bookings/table/{booking_id}/deposit")
+async def pay_table_deposit(request: Request, booking_id: str):
+    """Create payment intent for table deposit"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    booking = await db.table_bookings.find_one({
+        "booking_id": booking_id,
+        "user_id": current_user["user_id"]
+    })
+    
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    if booking["deposit_paid"]:
+        raise HTTPException(status_code=400, detail="Deposit already paid")
+    
+    if booking["status"] == "cancelled":
+        raise HTTPException(status_code=400, detail="Booking was cancelled")
+    
+    # Create Stripe Payment Intent
+    try:
+        if STRIPE_SECRET_KEY.startswith('sk_test_demo'):
+            # Demo mode - simulate payment
+            payment_intent_id = f"pi_demo_{uuid.uuid4().hex[:16]}"
+            client_secret = f"demo_secret_{uuid.uuid4().hex[:24]}"
+            
+            return {
+                "success": True,
+                "client_secret": client_secret,
+                "payment_intent_id": payment_intent_id,
+                "amount": booking["deposit_amount"],
+                "currency": "aud",
+                "demo_mode": True,
+                "message": "Demo mode - use test card 4242424242424242"
+            }
+        else:
+            # Real Stripe
+            payment_intent = stripe.PaymentIntent.create(
+                amount=int(booking["deposit_amount"] * 100),  # cents
+                currency="aud",
+                metadata={
+                    "booking_id": booking_id,
+                    "user_id": current_user["user_id"],
+                    "type": "table_deposit"
+                }
+            )
+            
+            return {
+                "success": True,
+                "client_secret": payment_intent.client_secret,
+                "payment_intent_id": payment_intent.id,
+                "amount": booking["deposit_amount"],
+                "currency": "aud"
+            }
+    except Exception as e:
+        logging.error(f"Stripe error: {e}")
+        raise HTTPException(status_code=500, detail="Payment processing error")
+
+@api_router.post("/bookings/table/{booking_id}/confirm")
+async def confirm_table_booking(request: Request, booking_id: str, payment_intent_id: str):
+    """Confirm table booking after successful payment"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    booking = await db.table_bookings.find_one({
+        "booking_id": booking_id,
+        "user_id": current_user["user_id"]
+    })
+    
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Update booking
+    await db.table_bookings.update_one(
+        {"booking_id": booking_id},
+        {"$set": {
+            "deposit_paid": True,
+            "deposit_payment_id": payment_intent_id,
+            "status": "confirmed",
+            "confirmed_at": datetime.now(timezone.utc)
+        }}
+    )
+    
+    # Award points for booking
+    points_earned = int(booking["deposit_amount"] * 2)  # 2 points per dollar on deposits
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$inc": {"points_balance": points_earned}}
+    )
+    
+    # Create confirmation notification
+    await db.notifications.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": current_user["user_id"],
+        "type": "table_confirmed",
+        "title": "Table Confirmed! ✅",
+        "message": f"Your {booking['table_name']} is confirmed for {booking['date']}. You earned {points_earned} points!",
+        "data": {"booking_id": booking_id, "points_earned": points_earned},
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    return {
+        "success": True,
+        "message": "Table booking confirmed!",
+        "points_earned": points_earned,
+        "booking_id": booking_id
+    }
+
+@api_router.get("/bookings/my-tables")
+async def get_my_table_bookings(request: Request):
+    """Get user's table bookings"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    bookings = await db.table_bookings.find({
+        "user_id": current_user["user_id"]
+    }).sort("created_at", -1).to_list(50)
+    
+    return {"bookings": clean_mongo_docs(bookings)}
+
+@api_router.delete("/bookings/table/{booking_id}")
+async def cancel_table_booking(request: Request, booking_id: str):
+    """Cancel a table booking"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    booking = await db.table_bookings.find_one({
+        "booking_id": booking_id,
+        "user_id": current_user["user_id"]
+    })
+    
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    if booking["status"] == "completed":
+        raise HTTPException(status_code=400, detail="Cannot cancel completed booking")
+    
+    # Check cancellation policy (24h before)
+    booking_date = datetime.strptime(booking["date"], "%Y-%m-%d")
+    if booking["deposit_paid"] and datetime.now() > booking_date - timedelta(hours=24):
+        raise HTTPException(status_code=400, detail="Cannot cancel within 24 hours - deposit is non-refundable")
+    
+    await db.table_bookings.update_one(
+        {"booking_id": booking_id},
+        {"$set": {
+            "status": "cancelled",
+            "cancelled_at": datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {"success": True, "message": "Booking cancelled"}
+
+
+# ====== SMART NOTIFICATIONS API ======
+
+class NotificationPreferences(BaseModel):
+    events_nearby: bool = True
+    favorite_venues: bool = True
+    price_drops: bool = True
+    friends_attending: bool = True
+    auction_alerts: bool = True
+    points_expiring: bool = False
+    new_rewards: bool = True
+    weekly_digest: bool = True
+    push_enabled: bool = True
+    email_enabled: bool = False
+    quiet_hours_start: Optional[str] = "23:00"  # HH:MM
+    quiet_hours_end: Optional[str] = "09:00"
+
+@api_router.get("/notifications")
+async def get_notifications(request: Request, unread_only: bool = False, limit: int = 50):
+    """Get user notifications"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    query = {"user_id": current_user["user_id"]}
+    if unread_only:
+        query["read"] = False
+    
+    notifications = await db.notifications.find(query).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # Count unread
+    unread_count = await db.notifications.count_documents({
+        "user_id": current_user["user_id"],
+        "read": False
+    })
+    
+    return {
+        "notifications": clean_mongo_docs(notifications),
+        "unread_count": unread_count
+    }
+
+@api_router.post("/notifications/{notification_id}/read")
+async def mark_notification_read(request: Request, notification_id: str):
+    """Mark a notification as read"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.notifications.update_one(
+        {"id": notification_id, "user_id": current_user["user_id"]},
+        {"$set": {"read": True, "read_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"success": True}
+
+@api_router.post("/notifications/read-all")
+async def mark_all_notifications_read(request: Request):
+    """Mark all notifications as read"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    result = await db.notifications.update_many(
+        {"user_id": current_user["user_id"], "read": False},
+        {"$set": {"read": True, "read_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"success": True, "marked_read": result.modified_count}
+
+@api_router.get("/notifications/preferences")
+async def get_notification_preferences(request: Request):
+    """Get user's notification preferences"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    prefs = await db.notification_preferences.find_one({"user_id": current_user["user_id"]})
+    
+    if not prefs:
+        # Return defaults
+        return NotificationPreferences().dict()
+    
+    return {k: v for k, v in prefs.items() if k not in ["_id", "user_id"]}
+
+@api_router.post("/notifications/preferences")
+async def update_notification_preferences(request: Request, prefs: NotificationPreferences):
+    """Update user's notification preferences"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    prefs_doc = prefs.dict()
+    prefs_doc["user_id"] = current_user["user_id"]
+    prefs_doc["updated_at"] = datetime.now(timezone.utc)
+    
+    await db.notification_preferences.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": prefs_doc},
+        upsert=True
+    )
+    
+    return {"success": True, "preferences": prefs.dict()}
+
+@api_router.get("/notifications/smart-suggestions")
+async def get_smart_suggestions(request: Request):
+    """Get personalized event/venue suggestions based on user behavior"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    suggestions = []
+    now = datetime.now(timezone.utc)
+    
+    # Get user's check-in history
+    checkins = await db.checkins.find({"user_id": current_user["user_id"]}).to_list(100)
+    venue_visits = {}
+    for c in checkins:
+        venue_visits[c.get("venue_id", "")] = venue_visits.get(c.get("venue_id", ""), 0) + 1
+    
+    # Get upcoming events
+    events = await db.events.find({
+        "event_date": {"$gte": now}
+    }).sort("event_date", 1).to_list(20)
+    
+    # Smart suggestion logic
+    favorite_venues = user.get("favorite_venues", [])
+    top_visited = sorted(venue_visits.items(), key=lambda x: x[1], reverse=True)[:3]
+    top_venue_ids = [v[0] for v in top_visited]
+    
+    for event in events:
+        score = 0
+        reasons = []
+        
+        # Favorite venue
+        if event.get("venue_id") in favorite_venues:
+            score += 30
+            reasons.append("At your favorite venue")
+        
+        # Frequently visited
+        if event.get("venue_id") in top_venue_ids:
+            score += 20
+            reasons.append("You visit here often")
+        
+        # Featured event
+        if event.get("featured"):
+            score += 15
+            reasons.append("Featured event")
+        
+        # This weekend
+        event_date = event.get("event_date")
+        if event_date and (event_date - now).days <= 3:
+            score += 10
+            reasons.append("Happening soon")
+        
+        # Has featured artist
+        if event.get("featured_artist"):
+            score += 10
+            reasons.append(f"Featuring {event['featured_artist'].get('name', 'special guest')}")
+        
+        if score > 0:
+            suggestions.append({
+                "type": "event",
+                "event": {k: v for k, v in event.items() if k != "_id"},
+                "score": score,
+                "reasons": reasons
+            })
+    
+    # Sort by score
+    suggestions.sort(key=lambda x: x["score"], reverse=True)
+    
+    # Also add venue suggestions for venues they haven't tried
+    all_venue_ids = set(LUNA_VENUES.keys())
+    unvisited = all_venue_ids - set(venue_visits.keys())
+    
+    for venue_id in list(unvisited)[:2]:
+        venue = LUNA_VENUES.get(venue_id, {})
+        if venue:
+            suggestions.append({
+                "type": "venue_discovery",
+                "venue": {
+                    "id": venue_id,
+                    "name": venue.get("name"),
+                    "location": venue.get("location"),
+                    "description": venue.get("description"),
+                    "image_url": venue.get("image_url")
+                },
+                "score": 5,
+                "reasons": ["Discover something new", "You haven't visited yet"]
+            })
+    
+    return {
+        "suggestions": suggestions[:10],
+        "generated_at": now.isoformat()
+    }
+
+@api_router.post("/notifications/send-test")
+async def send_test_notification(request: Request):
+    """Send a test notification to the user"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    notification = {
+        "id": str(uuid.uuid4()),
+        "user_id": current_user["user_id"],
+        "type": "test",
+        "title": "Test Notification 🔔",
+        "message": "This is a test notification from Luna Group. If you see this, notifications are working!",
+        "data": {},
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    await db.notifications.insert_one(notification)
+    
+    return {"success": True, "notification": {k: v for k, v in notification.items() if k != "_id"}}
+
+
 # CORS
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
