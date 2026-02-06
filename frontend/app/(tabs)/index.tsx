@@ -413,16 +413,6 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: spacing.xxl,
   },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    marginBottom: spacing.lg,
-    marginHorizontal: spacing.md,
-  },
   dropdownSection: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,
