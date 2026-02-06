@@ -129,7 +129,7 @@ export default function LoginScreen() {
               <View style={styles.dividerDiamond} />
               <View style={styles.dividerLine} />
             </View>
-            <Text style={styles.tagline}>Premium VIP Experience</Text>
+            <Text style={styles.tagline}>Access 7 Premium Venues Across Queensland</Text>
           </View>
 
           {/* Auth Card */}
