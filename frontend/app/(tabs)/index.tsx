@@ -471,6 +471,32 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: spacing.xxl,
   },
+  quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    marginBottom: spacing.lg,
+    marginHorizontal: spacing.md,
+  },
+  quickActionButton: {
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  quickActionGradient: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quickActionLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
   dropdownSection: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,
