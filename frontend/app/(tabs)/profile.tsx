@@ -53,7 +53,6 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     fetchData();
-    refreshUser();
   }, []);
 
   const onRefresh = async () => {
