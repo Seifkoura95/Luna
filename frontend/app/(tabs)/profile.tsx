@@ -310,9 +310,9 @@ export default function ProfileScreen() {
 
         {/* Membership Tier Card */}
         <View style={styles.tierCardContainer}>
-          <View style={styles.tierCard}>
+          <View style={[styles.tierCard, { borderColor: tierConfig.color + '40' }]}>
             <LinearGradient
-              colors={['#1A1A1A', '#0D0D0D']}
+              colors={['#1E1E1E', '#121212']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.tierCardGradient}
@@ -327,21 +327,24 @@ export default function ProfileScreen() {
                     {(user?.tier || 'bronze').toUpperCase()}
                   </Text>
                 </View>
-                <View style={styles.pointsDisplay}>
+                <View style={[styles.pointsDisplay, { backgroundColor: tierConfig.color + '20', borderColor: tierConfig.color + '40' }]}>
                   <FierySun size={24} />
-                  <Text style={styles.pointsValue}>{currentPoints.toLocaleString()}</Text>
+                  <Text style={[styles.pointsValue, { color: tierConfig.color }]}>{currentPoints.toLocaleString()}</Text>
                 </View>
               </View>
 
               {/* Progress Bar */}
               <View style={styles.progressSection}>
-                <View style={styles.progressBar}>
-                  <LinearGradient
-                    colors={[tierConfig.color, tierConfig.color + '80']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={[styles.progressFill, { width: `${progressToNext}%` }]}
-                  />
+                <View style={styles.progressBarContainer}>
+                  <View style={styles.progressBar}>
+                    <LinearGradient
+                      colors={[tierConfig.color, tierConfig.color + '80']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[styles.progressFill, { width: `${Math.max(progressToNext, 5)}%` }]}
+                    />
+                  </View>
+                  <Text style={[styles.progressPercent, { color: tierConfig.color }]}>{progressToNext}%</Text>
                 </View>
                 <Text style={styles.progressText}>
                   {tierConfig.next !== 'Max' 
@@ -354,15 +357,21 @@ export default function ProfileScreen() {
               {/* Tier Benefits */}
               <View style={styles.benefitsRow}>
                 <View style={styles.benefitItem}>
-                  <Ionicons name="flash" size={16} color={tierConfig.color} />
-                  <Text style={styles.benefitText}>Priority Entry</Text>
+                  <View style={[styles.benefitIcon, { backgroundColor: tierConfig.color + '20' }]}>
+                    <Ionicons name="flash" size={14} color={tierConfig.color} />
+                  </View>
+                  <Text style={styles.benefitText}>Priority</Text>
                 </View>
                 <View style={styles.benefitItem}>
-                  <Ionicons name="gift" size={16} color={tierConfig.color} />
-                  <Text style={styles.benefitText}>Exclusive Rewards</Text>
+                  <View style={[styles.benefitIcon, { backgroundColor: tierConfig.color + '20' }]}>
+                    <Ionicons name="gift" size={14} color={tierConfig.color} />
+                  </View>
+                  <Text style={styles.benefitText}>Rewards</Text>
                 </View>
                 <View style={styles.benefitItem}>
-                  <Ionicons name="star" size={16} color={tierConfig.color} />
+                  <View style={[styles.benefitIcon, { backgroundColor: tierConfig.color + '20' }]}>
+                    <Ionicons name="star" size={14} color={tierConfig.color} />
+                  </View>
                   <Text style={styles.benefitText}>2x Points</Text>
                 </View>
               </View>
