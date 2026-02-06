@@ -235,6 +235,7 @@ export default function ProfileScreen() {
 
         {/* Membership Tier Card */}
         <View style={styles.tierCardContainer}>
+          <View style={styles.tierCard}>
             <LinearGradient
               colors={[tierConfig.color + '20', '#0A0A0A']}
               start={{ x: 0, y: 0 }}
