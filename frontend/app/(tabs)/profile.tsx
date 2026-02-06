@@ -308,76 +308,64 @@ export default function ProfileScreen() {
           <Text style={styles.userName}>{formatName(user?.name)}</Text>
         </View>
 
-        {/* Membership Tier Card */}
+        {/* Membership Tier Card - Same design as Wallet */}
         <View style={styles.tierCardContainer}>
-          <View style={[styles.tierCard, { borderColor: tierConfig.color + '40' }]}>
+          <View style={styles.tierCard}>
             <LinearGradient
-              colors={['#1E1E1E', '#121212']}
+              colors={['#1A1A1A', '#0D0D0D']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.tierCardGradient}
             >
               {/* Accent top border */}
-              <View style={[styles.tierAccentBorder, { backgroundColor: tierConfig.color }]} />
+              <View style={[styles.tierAccentBorder, { borderColor: tierConfig.color }]} />
               
               <View style={styles.tierHeader}>
-                <View>
-                  <Text style={styles.tierLabel}>MEMBERSHIP TIER</Text>
-                  <Text style={[styles.tierName, { color: tierConfig.color }]}>
-                    {(user?.tier || 'bronze').toUpperCase()}
-                  </Text>
+                <View style={styles.tierPointsDisplay}>
+                  <FierySun size={32} />
+                  <View>
+                    <Text style={styles.tierPointsValue}>{currentPoints.toLocaleString()}</Text>
+                    <Text style={styles.tierPointsLabel}>LUNAR POINTS</Text>
+                  </View>
                 </View>
-                <View style={[styles.pointsDisplay, { backgroundColor: tierConfig.color + '20', borderColor: tierConfig.color + '40' }]}>
-                  <FierySun size={24} />
-                  <Text style={[styles.pointsValue, { color: tierConfig.color }]}>{currentPoints.toLocaleString()}</Text>
+                
+                <View style={[styles.tierBadge, { backgroundColor: tierConfig.color }]}>
+                  <Ionicons name="moon" size={14} color="#000" />
+                  <Text style={styles.tierBadgeText}>{(user?.tier || 'bronze').toUpperCase()}</Text>
                 </View>
               </View>
 
-              {/* Progress Bar */}
-              <View style={styles.progressSection}>
-                <View style={styles.progressBarContainer}>
-                  <View style={styles.progressBar}>
-                    <LinearGradient
-                      colors={[tierConfig.color, tierConfig.color + '80']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={[styles.progressFill, { width: `${Math.max(progressToNext, 5)}%` }]}
-                    />
-                  </View>
-                  <Text style={[styles.progressPercent, { color: tierConfig.color }]}>{progressToNext}%</Text>
+              {/* Stats Row */}
+              <View style={styles.tierStatsRow}>
+                <View style={styles.tierStat}>
+                  <Text style={styles.tierStatValue}>{progressToNext}%</Text>
+                  <Text style={styles.tierStatLabel}>To {tierConfig.next}</Text>
                 </View>
-                <Text style={styles.progressText}>
-                  {tierConfig.next !== 'Max' 
-                    ? `${tierConfig.pointsNeeded - currentPoints} points to ${tierConfig.next}`
-                    : 'Maximum tier reached!'
-                  }
+                <View style={styles.tierStatDivider} />
+                <View style={styles.tierStat}>
+                  <Text style={styles.tierStatValue}>2x</Text>
+                  <Text style={styles.tierStatLabel}>Points</Text>
+                </View>
+                <View style={styles.tierStatDivider} />
+                <View style={styles.tierStat}>
+                  <Text style={styles.tierStatValue}>VIP</Text>
+                  <Text style={styles.tierStatLabel}>Access</Text>
+                </View>
+              </View>
+
+              {/* Progress to next tier */}
+              <TouchableOpacity 
+                style={[styles.tierUpgradeButton, { borderColor: tierConfig.color }]}
+                onPress={() => router.push('/subscriptions')}
+              >
+                <Ionicons name="arrow-up-circle" size={18} color={tierConfig.color} />
+                <Text style={[styles.tierUpgradeText, { color: tierConfig.color }]}>
+                  {tierConfig.pointsNeeded - currentPoints} POINTS TO {tierConfig.next?.toUpperCase()}
                 </Text>
-              </View>
-
-              {/* Tier Benefits */}
-              <View style={styles.benefitsRow}>
-                <View style={styles.benefitItem}>
-                  <View style={[styles.benefitIcon, { backgroundColor: tierConfig.color + '20' }]}>
-                    <Ionicons name="flash" size={14} color={tierConfig.color} />
-                  </View>
-                  <Text style={styles.benefitText}>Priority</Text>
-                </View>
-                <View style={styles.benefitItem}>
-                  <View style={[styles.benefitIcon, { backgroundColor: tierConfig.color + '20' }]}>
-                    <Ionicons name="gift" size={14} color={tierConfig.color} />
-                  </View>
-                  <Text style={styles.benefitText}>Rewards</Text>
-                </View>
-                <View style={styles.benefitItem}>
-                  <View style={[styles.benefitIcon, { backgroundColor: tierConfig.color + '20' }]}>
-                    <Ionicons name="star" size={14} color={tierConfig.color} />
-                  </View>
-                  <Text style={styles.benefitText}>2x Points</Text>
-                </View>
-              </View>
+              </TouchableOpacity>
             </LinearGradient>
           </View>
-          </View>
+        </View>
 
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
