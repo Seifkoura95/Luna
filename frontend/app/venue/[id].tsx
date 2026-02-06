@@ -105,6 +105,14 @@ export default function VenueDetailScreen() {
     }
   };
 
+  const handleBooking = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    setBookingType(venue?.type === 'restaurant' ? 'reservation' : 'guestlist');
+    setShowBookingModal(true);
+  };
+
   // Animated header opacity
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, HEADER_HEIGHT - 100],
