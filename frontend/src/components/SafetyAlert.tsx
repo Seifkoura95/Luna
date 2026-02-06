@@ -390,7 +390,7 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
                 styles.sendButton,
                 (!selectedAlertType || !location) && styles.sendButtonDisabled,
               ]}
-              onPress={handleSendAlert}
+              onPress={confirmAndSendAlert}
               disabled={isSending || !selectedAlertType || !location}
             >
               {isSending ? (
