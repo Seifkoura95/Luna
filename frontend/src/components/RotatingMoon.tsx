@@ -6,6 +6,7 @@ import Animated, {
   withRepeat,
   withTiming,
   Easing,
+  interpolate,
 } from 'react-native-reanimated';
 
 const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
@@ -32,19 +33,32 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
     );
   }, [rotationDuration]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
+  // Sideways rotation like a real moon - using scaleX to simulate Y-axis rotation
+  const animatedStyle = useAnimatedStyle(() => {
+    // Create a sideways "spin" effect by varying scaleX
+    const scaleX = interpolate(
+      rotation.value % 360,
+      [0, 90, 180, 270, 360],
+      [1, 0.85, 1, 0.85, 1]
+    );
+    
+    // Add slight horizontal movement for more realism
+    const translateX = interpolate(
+      rotation.value % 360,
+      [0, 90, 180, 270, 360],
+      [0, -2, 0, 2, 0]
+    );
+
+    return {
+      transform: [
+        { scaleX },
+        { translateX },
+      ],
+    };
+  });
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
-      {/* Subtle glow behind moon */}
-      <View style={[styles.glow, { 
-        width: size * 1.3, 
-        height: size * 1.3,
-        borderRadius: size * 0.65,
-      }]} />
-      
       <Animated.View style={animatedStyle}>
         <Image
           source={{ uri: LUNAR_MOON_IMAGE }}
@@ -62,17 +76,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-  glow: {
-    position: 'absolute',
-    backgroundColor: 'rgba(227, 24, 55, 0.1)',
-  },
   moon: {
-    // Shadow for depth
-    shadowColor: '#E31837',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    elevation: 10,
+    // No glow, clean look
   },
 });
 
