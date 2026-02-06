@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
-  TouchableOpacity,
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,26 +12,32 @@ import { colors, spacing, radius, tierColors, tierGlows } from '../../src/theme/
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { QRCode } from '../../src/components/QRCode';
-import { QueueStatus } from '../../src/components/QueueStatus';
 import { MissionCard } from '../../src/components/MissionCard';
+import { VenueSelector } from '../../src/components/VenueSelector';
+import { FeaturedContent } from '../../src/components/FeaturedContent';
+import { VenueStatusCard } from '../../src/components/VenueStatusCard';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
 export default function TonightScreen() {
   const user = useAuthStore((state) => state.user);
+  const [selectedVenueId, setSelectedVenueId] = useState('eclipse');
   const [missions, setMissions] = useState<any[]>([]);
   const [boosts, setBoosts] = useState<any[]>([]);
+  const [venue, setVenue] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [missionsData, boostsData] = await Promise.all([
-        api.getMissions(),
-        api.getActiveBoosts(),
+      const [missionsData, boostsData, venueData] = await Promise.all([
+        api.getMissions(selectedVenueId),
+        api.getActiveBoosts(selectedVenueId),
+        api.getVenue(selectedVenueId),
       ]);
       setMissions(missionsData);
       setBoosts(boostsData);
+      setVenue(venueData);
     } catch (e) {
       console.error('Failed to fetch data:', e);
     }
@@ -40,7 +45,7 @@ export default function TonightScreen() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [selectedVenueId]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -71,6 +76,14 @@ export default function TonightScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
+        {/* Venue Selector */}
+        <View style={styles.section}>
+          <VenueSelector
+            selectedVenueId={selectedVenueId}
+            onSelectVenue={setSelectedVenueId}
+          />
+        </View>
+
         {/* Active Boost Banner */}
         {boosts.length > 0 && (
           <View style={styles.boostBanner}>
@@ -92,7 +105,7 @@ export default function TonightScreen() {
           </View>
         )}
 
-        {/* Premium Hero Card */}
+        {/* Premium Hero Card - Tonight Pass */}
         <View style={styles.heroSection}>
           <LinearGradient
             colors={['#1A1A1A', '#111111', '#0A0A0A']}
@@ -101,8 +114,8 @@ export default function TonightScreen() {
             {/* Top Info */}
             <View style={styles.heroHeader}>
               <View>
-                <Text style={styles.heroGreeting}>Welcome back,</Text>
-                <Text style={styles.heroName}>{user?.name?.split(' ')[0]}</Text>
+                <Text style={styles.heroGreeting}>Tonight Pass</Text>
+                <Text style={styles.heroName}>{venue?.name || 'Luna Group'}</Text>
               </View>
               <View style={styles.tierContainer}>
                 <View style={[styles.tierGlow, { backgroundColor: tierGlow }]} />
@@ -117,11 +130,11 @@ export default function TonightScreen() {
 
             {/* QR Code Section */}
             <View style={styles.qrSection}>
-              <Text style={styles.qrLabel}>TONIGHT PASS</Text>
+              <Text style={styles.qrLabel}>ENTRY QR CODE</Text>
               <Text style={styles.qrSubtitle}>Show this at the door for instant entry</Text>
               <View style={styles.qrWrapper}>
                 <View style={styles.qrGlow} />
-                <QRCode size={200} />
+                <QRCode size={200} venueId={selectedVenueId} />
               </View>
             </View>
 
@@ -158,9 +171,64 @@ export default function TonightScreen() {
           </LinearGradient>
         </View>
 
-        {/* Queue Status */}
+        {/* Featured Content - Artist/DJ/Promo */}
         <View style={styles.section}>
-          <QueueStatus />
+          <FeaturedContent
+            type="artist"
+            title="DJ SODA"
+            subtitle="Tonight's Headliner"
+            description="International sensation bringing K-Pop and EDM vibes to the venue"
+            image="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800"
+            cta="View Event"
+          />
+        </View>
+
+        {/* Venue Status */}
+        {venue?.type === 'nightclub' && (
+          <View style={styles.section}>
+            <VenueStatusCard
+              venueName={venue.name}
+              status={venue.status || 'open'}
+              capacity={venue.status === 'busy' ? 75 : 45}
+              estimatedWait={venue.status === 'busy' ? '15 min' : '5 min'}
+            />
+          </View>
+        )}
+
+        {/* VIP Perks Spotlight */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <View style={styles.sectionAccent} />
+              <Text style={styles.sectionTitle}>YOUR VIP PERKS</Text>
+            </View>
+          </View>
+          <View style={styles.perksCard}>
+            <LinearGradient
+              colors={[colors.backgroundCard, colors.backgroundElevated]}
+              style={styles.perksGradient}
+            >
+              <View style={styles.perkItem}>
+                <Ionicons name="flash" size={20} color={colors.accent} />
+                <Text style={styles.perkText}>Fast Lane Access</Text>
+                <View style={styles.perkBadge}>
+                  <Text style={styles.perkBadgeText}>2 left</Text>
+                </View>
+              </View>
+              <View style={styles.perkDivider} />
+              <View style={styles.perkItem}>
+                <Ionicons name="people" size={20} color={colors.accent} />
+                <Text style={styles.perkText}>Guest List Priority</Text>
+                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+              </View>
+              <View style={styles.perkDivider} />
+              <View style={styles.perkItem}>
+                <Ionicons name="gift" size={20} color={colors.accent} />
+                <Text style={styles.perkText}>Birthday Perks Active</Text>
+                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+              </View>
+            </LinearGradient>
+          </View>
         </View>
 
         {/* Active Missions */}
@@ -171,10 +239,6 @@ export default function TonightScreen() {
                 <View style={styles.sectionAccent} />
                 <Text style={styles.sectionTitle}>ACTIVE MISSIONS</Text>
               </View>
-              <TouchableOpacity style={styles.seeAllBtn}>
-                <Text style={styles.seeAllText}>See All</Text>
-                <Ionicons name="chevron-forward" size={14} color={colors.accent} />
-              </TouchableOpacity>
             </View>
             <ScrollView
               horizontal
@@ -202,6 +266,10 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: spacing.xxl,
+  },
+  section: {
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.md,
   },
   boostBanner: {
     marginHorizontal: spacing.md,
@@ -268,7 +336,7 @@ const styles = StyleSheet.create({
   },
   heroName: {
     color: colors.textPrimary,
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '700',
     marginTop: 2,
   },
@@ -365,10 +433,6 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: colors.border,
   },
-  section: {
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.lg,
-  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -392,14 +456,42 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     letterSpacing: 2,
   },
-  seeAllBtn: {
+  perksCard: {
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  perksGradient: {
+    padding: spacing.md,
+  },
+  perkItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: spacing.sm,
   },
-  seeAllText: {
-    color: colors.accent,
-    fontSize: 13,
+  perkText: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: 14,
     fontWeight: '600',
+    marginLeft: spacing.md,
+  },
+  perkBadge: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+  },
+  perkBadgeText: {
+    color: colors.textPrimary,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  perkDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.xs,
   },
   missionsScroll: {
     paddingRight: spacing.md,
