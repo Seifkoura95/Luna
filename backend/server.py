@@ -3233,6 +3233,112 @@ VIP_TABLES = {
             "deposit_amount": 600,
             "features": ["Direct Beach Access", "Private Area", "Full Menu Access", "Dedicated Staff"],
             "image_url": "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=600"
+        },
+        {
+            "id": "juju_rooftop_private",
+            "name": "Rooftop Private Dining",
+            "location": "Rooftop Level",
+            "capacity": 12,
+            "min_spend": 2000,
+            "deposit_amount": 800,
+            "features": ["360° Views", "Private Chef", "Wine Pairing", "Dedicated Wait Staff"],
+            "image_url": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600"
+        }
+    ],
+    "su_casa_gold_coast": [
+        {
+            "id": "sucasa_gc_booth_1",
+            "name": "VIP Booth",
+            "location": "Main Floor - Elevated",
+            "capacity": 6,
+            "min_spend": 500,
+            "deposit_amount": 200,
+            "features": ["Bottle Service", "Dance Floor View", "Dedicated Host"],
+            "image_url": "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=600"
+        },
+        {
+            "id": "sucasa_gc_lounge",
+            "name": "Surfers Lounge",
+            "location": "Mezzanine Level",
+            "capacity": 10,
+            "min_spend": 1000,
+            "deposit_amount": 400,
+            "features": ["Private Seating", "Premium Bottles", "VIP Entry", "Ocean Glimpses"],
+            "image_url": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=600"
+        },
+        {
+            "id": "sucasa_gc_penthouse",
+            "name": "Gold Coast Penthouse",
+            "location": "Top Floor - Private",
+            "capacity": 15,
+            "min_spend": 2500,
+            "deposit_amount": 1000,
+            "features": ["Panoramic Views", "Private Bar", "Concierge Service", "Helicopter Transfer Option"],
+            "image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600"
+        }
+    ],
+    "night_market": [
+        {
+            "id": "nm_dragon_room",
+            "name": "Dragon Room",
+            "location": "Private Dining - Ground Floor",
+            "capacity": 8,
+            "min_spend": 400,
+            "deposit_amount": 150,
+            "features": ["Private Dining", "Sharing Menu", "Sake Selection", "Authentic Decor"],
+            "image_url": "https://images.unsplash.com/photo-1504544750208-dc0358e63f7f?w=600"
+        },
+        {
+            "id": "nm_lantern_lounge",
+            "name": "Lantern Lounge",
+            "location": "Mezzanine - Neon Views",
+            "capacity": 12,
+            "min_spend": 800,
+            "deposit_amount": 300,
+            "features": ["Group Seating", "Cocktail Table Service", "Chef's Selection", "Photo Backdrop"],
+            "image_url": "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=600"
+        },
+        {
+            "id": "nm_emperor_suite",
+            "name": "Emperor's Suite",
+            "location": "Top Floor - Exclusive",
+            "capacity": 20,
+            "min_spend": 2000,
+            "deposit_amount": 800,
+            "features": ["Private Kitchen Access", "Tasting Menu", "Sake Sommelier", "Karaoke Option"],
+            "image_url": "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600"
+        }
+    ],
+    "ember_and_ash": [
+        {
+            "id": "ea_fireside_booth",
+            "name": "Fireside Booth",
+            "location": "Main Dining - Window",
+            "capacity": 4,
+            "min_spend": 200,
+            "deposit_amount": 50,
+            "features": ["Window Seating", "Fireplace View", "Wine Selection", "Intimate Setting"],
+            "image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600"
+        },
+        {
+            "id": "ea_chef_table",
+            "name": "Chef's Table",
+            "location": "Kitchen View",
+            "capacity": 8,
+            "min_spend": 600,
+            "deposit_amount": 200,
+            "features": ["Kitchen Experience", "Tasting Menu", "Chef Interaction", "Wine Pairing"],
+            "image_url": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600"
+        },
+        {
+            "id": "ea_private_dining",
+            "name": "Private Dining Room",
+            "location": "Separate Room - Back",
+            "capacity": 16,
+            "min_spend": 1500,
+            "deposit_amount": 500,
+            "features": ["Complete Privacy", "Custom Menu", "AV Equipment", "Private Bar"],
+            "image_url": "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=600"
         }
     ]
 }
