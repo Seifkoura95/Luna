@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, StyleSheet, Dimensions, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -8,14 +8,16 @@ import Animated, {
   withTiming,
   withDelay,
   Easing,
-  runOnJS,
+  interpolate,
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
 interface StarfieldBackgroundProps {
   starCount?: number;
   shootingStarCount?: number;
+  showAurora?: boolean;
 }
 
 interface Star {
@@ -24,6 +26,7 @@ interface Star {
   size: number;
   opacity: number;
   delay: number;
+  color: string;
 }
 
 interface ShootingStar {
@@ -32,10 +35,23 @@ interface ShootingStar {
   startY: number;
   delay: number;
   duration: number;
+  angle: number;
 }
 
+// Star colors for variety
+const STAR_COLORS = [
+  '#FFFFFF',
+  '#FFFFFF',
+  '#FFFFFF',
+  '#E8E8FF', // Slightly blue
+  '#FFF8E8', // Slightly warm
+  '#FFE8E8', // Slightly pink
+  '#00D4AA', // Accent color occasional
+];
+
 const StarComponent = ({ star }: { star: Star }) => {
-  const opacity = useSharedValue(star.opacity * 0.3);
+  const opacity = useSharedValue(star.opacity * 0.2);
+  const scale = useSharedValue(0.8);
 
   useEffect(() => {
     opacity.value = withDelay(
@@ -43,13 +59,25 @@ const StarComponent = ({ star }: { star: Star }) => {
       withRepeat(
         withSequence(
           withTiming(star.opacity, {
-            duration: 1500 + Math.random() * 2000,
+            duration: 2000 + Math.random() * 3000,
             easing: Easing.inOut(Easing.ease),
           }),
-          withTiming(star.opacity * 0.3, {
-            duration: 1500 + Math.random() * 2000,
+          withTiming(star.opacity * 0.2, {
+            duration: 2000 + Math.random() * 3000,
             easing: Easing.inOut(Easing.ease),
           })
+        ),
+        -1,
+        true
+      )
+    );
+
+    scale.value = withDelay(
+      star.delay,
+      withRepeat(
+        withSequence(
+          withTiming(1.2, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.8, { duration: 3000, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
         true
@@ -59,6 +87,7 @@ const StarComponent = ({ star }: { star: Star }) => {
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
+    transform: [{ scale: scale.value }],
   }));
 
   return (
@@ -71,6 +100,8 @@ const StarComponent = ({ star }: { star: Star }) => {
           width: star.size,
           height: star.size,
           borderRadius: star.size / 2,
+          backgroundColor: star.color,
+          shadowColor: star.color,
         },
         animatedStyle,
       ]}
@@ -79,56 +110,39 @@ const StarComponent = ({ star }: { star: Star }) => {
 };
 
 const ShootingStarComponent = ({ shootingStar }: { shootingStar: ShootingStar }) => {
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
+  const progress = useSharedValue(0);
   const opacity = useSharedValue(0);
 
-  const animate = () => {
-    // Random starting position in upper portion of screen
-    const startX = Math.random() * width;
-    const startY = Math.random() * (height * 0.4);
-    
-    // Direction and distance
-    const angle = (Math.PI / 6) + (Math.random() * Math.PI / 6); // 30-60 degrees
-    const distance = 200 + Math.random() * 300;
-    const endX = startX + distance * Math.cos(angle);
-    const endY = startY + distance * Math.sin(angle);
+  const angle = shootingStar.angle;
+  const distance = 250 + Math.random() * 200;
 
-    // Reset position
-    translateX.value = 0;
-    translateY.value = 0;
+  const animate = () => {
+    progress.value = 0;
     opacity.value = 0;
 
-    // Animate
+    // Fade in quickly, stay visible, fade out at end
     opacity.value = withSequence(
-      withTiming(1, { duration: 100 }),
+      withTiming(1, { duration: 100, easing: Easing.out(Easing.ease) }),
       withDelay(
-        shootingStar.duration - 200,
-        withTiming(0, { duration: 100 })
+        shootingStar.duration - 300,
+        withTiming(0, { duration: 200, easing: Easing.in(Easing.ease) })
       )
     );
 
-    translateX.value = withTiming(endX - startX, {
+    progress.value = withTiming(1, {
       duration: shootingStar.duration,
-      easing: Easing.out(Easing.quad),
-    });
-
-    translateY.value = withTiming(endY - startY, {
-      duration: shootingStar.duration,
-      easing: Easing.out(Easing.quad),
+      easing: Easing.out(Easing.cubic),
     });
   };
 
   useEffect(() => {
-    // Initial animation after delay
     const initialTimeout = setTimeout(() => {
       animate();
     }, shootingStar.delay);
 
-    // Repeat at random intervals
     const intervalId = setInterval(() => {
       animate();
-    }, 4000 + Math.random() * 8000); // Every 4-12 seconds
+    }, 6000 + Math.random() * 10000);
 
     return () => {
       clearTimeout(initialTimeout);
@@ -136,14 +150,21 @@ const ShootingStarComponent = ({ shootingStar }: { shootingStar: ShootingStar })
     };
   }, []);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-      { rotate: '30deg' },
-    ],
-    opacity: opacity.value,
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    const translateX = interpolate(progress.value, [0, 1], [0, distance * Math.cos(angle)]);
+    const translateY = interpolate(progress.value, [0, 1], [0, distance * Math.sin(angle)]);
+    const scaleX = interpolate(progress.value, [0, 0.3, 1], [0.3, 1, 0.5]);
+
+    return {
+      transform: [
+        { translateX },
+        { translateY },
+        { rotate: `${(angle * 180) / Math.PI}deg` },
+        { scaleX },
+      ],
+      opacity: opacity.value,
+    };
+  });
 
   return (
     <Animated.View
@@ -156,58 +177,131 @@ const ShootingStarComponent = ({ shootingStar }: { shootingStar: ShootingStar })
         animatedStyle,
       ]}
     >
-      {/* Shooting star head */}
-      <View style={styles.shootingStarHead} />
-      {/* Shooting star tail */}
-      <View style={styles.shootingStarTail} />
+      {/* Single rounded streak - no arrow shape */}
+      <View style={styles.shootingStarStreak} />
+    </Animated.View>
+  );
+};
+
+// Aurora wave component
+const AuroraWave = ({ index }: { index: number }) => {
+  const opacity = useSharedValue(0.03);
+  const translateY = useSharedValue(0);
+
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.08, { duration: 4000 + index * 1000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.02, { duration: 4000 + index * 1000, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+
+    translateY.value = withRepeat(
+      withSequence(
+        withTiming(-20, { duration: 6000 + index * 500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(20, { duration: 6000 + index * 500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const colors = [
+    ['transparent', '#00D4AA20', '#00D4AA40', '#00D4AA20', 'transparent'],
+    ['transparent', '#8B00FF15', '#8B00FF30', '#8B00FF15', 'transparent'],
+    ['transparent', '#E3183710', '#E3183720', '#E3183710', 'transparent'],
+  ];
+
+  return (
+    <Animated.View
+      style={[
+        styles.auroraWave,
+        {
+          top: 50 + index * 80,
+          height: 200 + index * 50,
+        },
+        animatedStyle,
+      ]}
+    >
+      <LinearGradient
+        colors={colors[index % colors.length] as any}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
     </Animated.View>
   );
 };
 
 export const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
-  starCount = 60,
-  shootingStarCount = 2,
+  starCount = 100,
+  shootingStarCount = 3,
+  showAurora = true,
 }) => {
-  // Generate stars once
+  // Generate more stars with variety
   const stars = useMemo<Star[]>(() => {
     return Array.from({ length: starCount }, (_, i) => ({
       x: Math.random() * width,
       y: Math.random() * height * 1.5,
-      size: 1 + Math.random() * 2,
-      opacity: 0.3 + Math.random() * 0.7,
-      delay: Math.random() * 3000,
+      size: 0.5 + Math.random() * 2.5,
+      opacity: 0.2 + Math.random() * 0.8,
+      delay: Math.random() * 4000,
+      color: STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)],
     }));
   }, [starCount]);
 
-  // Generate shooting stars data
+  // Generate shooting stars with proper angles
   const shootingStars = useMemo<ShootingStar[]>(() => {
     return Array.from({ length: shootingStarCount }, (_, i) => ({
       id: i,
-      startX: Math.random() * width * 0.8,
-      startY: Math.random() * height * 0.3,
-      delay: 2000 + Math.random() * 5000, // Initial delay 2-7 seconds
-      duration: 800 + Math.random() * 400, // Duration 0.8-1.2 seconds
+      startX: Math.random() * width * 0.7,
+      startY: Math.random() * height * 0.25,
+      delay: 3000 + Math.random() * 6000,
+      duration: 600 + Math.random() * 400,
+      angle: (Math.PI / 5) + (Math.random() * Math.PI / 6), // 36-66 degrees downward
     }));
   }, [shootingStarCount]);
 
   return (
     <View style={styles.container} pointerEvents="none">
-      {/* Gradient background */}
-      <View style={styles.gradientOverlay} />
-      
+      {/* Deep space background gradient */}
+      <LinearGradient
+        colors={['#000000', '#050510', '#0A0A15', '#050510', '#000000']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Aurora waves */}
+      {showAurora && (
+        <>
+          <AuroraWave index={0} />
+          <AuroraWave index={1} />
+          <AuroraWave index={2} />
+        </>
+      )}
+
       {/* Stars */}
       {stars.map((star, index) => (
         <StarComponent key={`star-${index}`} star={star} />
       ))}
 
-      {/* Shooting Stars */}
+      {/* Shooting Stars - smooth streaks */}
       {shootingStars.map((shootingStar) => (
         <ShootingStarComponent key={`shooting-${shootingStar.id}`} shootingStar={shootingStar} />
       ))}
 
-      {/* Subtle nebula effects */}
+      {/* Subtle nebula clouds */}
       <View style={[styles.nebula, styles.nebula1]} />
       <View style={[styles.nebula, styles.nebula2]} />
+      <View style={[styles.nebula, styles.nebula3]} />
     </View>
   );
 };
@@ -218,76 +312,70 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     overflow: 'hidden',
   },
-  gradientOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
-    opacity: 0.5,
-  },
   star: {
     position: 'absolute',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#FFFFFF',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 3,
+    shadowOpacity: 0.9,
+    shadowRadius: 4,
     elevation: 5,
   },
   shootingStar: {
     position: 'absolute',
-    flexDirection: 'row',
-    alignItems: 'center',
   },
-  shootingStarHead: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#FFFFFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
-    elevation: 10,
-  },
-  shootingStarTail: {
-    width: 60,
+  shootingStarStreak: {
+    width: 80,
     height: 2,
-    marginLeft: -2,
     borderRadius: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    // Gradient effect via opacity
-    opacity: 0.7,
-    // Create tapered effect
-    transform: [{ scaleX: 1 }],
+    backgroundColor: '#FFFFFF',
+    // Gradient fade effect using shadow
     ...Platform.select({
       ios: {
         shadowColor: '#FFFFFF',
-        shadowOffset: { width: -30, height: 0 },
-        shadowOpacity: 0.5,
-        shadowRadius: 10,
+        shadowOffset: { width: -20, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 8,
       },
       android: {
-        elevation: 5,
+        elevation: 8,
+      },
+      web: {
+        boxShadow: '0 0 10px 2px rgba(255,255,255,0.6), -30px 0 20px 0 rgba(255,255,255,0.3)',
       },
     }),
   },
+  auroraWave: {
+    position: 'absolute',
+    left: -50,
+    right: -50,
+    borderRadius: 200,
+  },
   nebula: {
     position: 'absolute',
-    borderRadius: 500,
-    opacity: 0.03,
+    borderRadius: 999,
   },
   nebula1: {
-    width: 400,
-    height: 400,
-    top: -100,
-    right: -100,
-    backgroundColor: '#E31837',
+    width: 500,
+    height: 500,
+    top: -150,
+    right: -200,
+    backgroundColor: '#00D4AA',
+    opacity: 0.02,
   },
   nebula2: {
+    width: 400,
+    height: 400,
+    bottom: 100,
+    left: -200,
+    backgroundColor: '#8B00FF',
+    opacity: 0.025,
+  },
+  nebula3: {
     width: 300,
     height: 300,
-    bottom: 200,
-    left: -150,
-    backgroundColor: '#8B00FF',
+    top: height * 0.4,
+    right: -100,
+    backgroundColor: '#E31837',
+    opacity: 0.015,
   },
 });
 
