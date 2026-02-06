@@ -1157,6 +1157,375 @@ async def mark_notifications_read(request: Request):
     return {"success": True}
 
 
+# ====== STRIPE PAYMENT API ======
+
+# In-memory store for push tokens (in production, use database)
+push_tokens_store: Dict[str, str] = {}  # user_id -> push_token
+
+class PaymentIntentRequest(BaseModel):
+    auction_id: str
+    bid_amount: float
+
+@api_router.get("/payments/publishable-key")
+async def get_stripe_publishable_key():
+    """Get Stripe publishable key for mobile app"""
+    return {
+        "publishableKey": STRIPE_PUBLISHABLE_KEY,
+        "testMode": STRIPE_SECRET_KEY.startswith('sk_test') or STRIPE_SECRET_KEY == 'sk_test_demo_key'
+    }
+
+@api_router.post("/payments/create-payment-intent")
+async def create_payment_intent(request: Request, payment_req: PaymentIntentRequest):
+    """Create a Stripe PaymentIntent for auction bid deposit"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Get the auction
+    auction = await db.auctions.find_one({"id": payment_req.auction_id})
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    
+    # Check auction is still active
+    if auction.get("status") != "active":
+        raise HTTPException(status_code=400, detail="Auction is no longer active")
+    
+    # Validate bid amount
+    if payment_req.bid_amount <= auction.get("current_bid", 0):
+        raise HTTPException(status_code=400, detail="Bid must be higher than current bid")
+    
+    # Calculate deposit (10% of bid amount, minimum $50)
+    deposit_amount = max(int(payment_req.bid_amount * 0.10 * 100), 5000)  # in cents
+    
+    # Check if using demo key (mock payment intent)
+    if STRIPE_SECRET_KEY == 'sk_test_demo_key':
+        # Return mock payment intent for demo mode
+        mock_intent_id = f"pi_demo_{str(uuid.uuid4())[:12]}"
+        
+        # Store the pending bid
+        bid_record = {
+            "id": str(uuid.uuid4())[:8],
+            "auction_id": payment_req.auction_id,
+            "user_id": current_user["user_id"],
+            "bid_amount": payment_req.bid_amount,
+            "deposit_amount": deposit_amount / 100,  # store in dollars
+            "payment_intent_id": mock_intent_id,
+            "payment_status": "pending",
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.bid_deposits.insert_one(bid_record)
+        
+        return {
+            "clientSecret": f"{mock_intent_id}_secret_demo",
+            "paymentIntentId": mock_intent_id,
+            "depositAmount": deposit_amount / 100,
+            "currency": "AUD",
+            "bidId": bid_record["id"],
+            "testMode": True,
+            "message": "Demo mode - no real payment will be processed"
+        }
+    
+    try:
+        # Create real Stripe PaymentIntent
+        payment_intent = stripe.PaymentIntent.create(
+            amount=deposit_amount,
+            currency="aud",
+            automatic_payment_methods={"enabled": True},
+            metadata={
+                "auction_id": payment_req.auction_id,
+                "user_id": current_user["user_id"],
+                "bid_amount": str(payment_req.bid_amount),
+                "auction_title": auction.get("title", "VIP Booth")
+            },
+            description=f"Auction deposit for {auction.get('title', 'VIP Booth')}"
+        )
+        
+        # Store the pending bid
+        bid_record = {
+            "id": str(uuid.uuid4())[:8],
+            "auction_id": payment_req.auction_id,
+            "user_id": current_user["user_id"],
+            "bid_amount": payment_req.bid_amount,
+            "deposit_amount": deposit_amount / 100,
+            "payment_intent_id": payment_intent.id,
+            "payment_status": "pending",
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.bid_deposits.insert_one(bid_record)
+        
+        return {
+            "clientSecret": payment_intent.client_secret,
+            "paymentIntentId": payment_intent.id,
+            "depositAmount": deposit_amount / 100,
+            "currency": "AUD",
+            "bidId": bid_record["id"],
+            "testMode": False
+        }
+        
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error: {e}")
+        raise HTTPException(status_code=500, detail="Payment processing error")
+
+@api_router.post("/payments/confirm-bid")
+async def confirm_bid_payment(request: Request, bid_id: str, payment_intent_id: str):
+    """Confirm a bid payment was successful (called after Payment Sheet completes)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Find the bid record
+    bid = await db.bid_deposits.find_one({
+        "id": bid_id,
+        "user_id": current_user["user_id"],
+        "payment_intent_id": payment_intent_id
+    })
+    
+    if not bid:
+        raise HTTPException(status_code=404, detail="Bid deposit not found")
+    
+    # For demo mode, auto-confirm
+    if STRIPE_SECRET_KEY == 'sk_test_demo_key' or payment_intent_id.startswith('pi_demo_'):
+        # Update bid status
+        await db.bid_deposits.update_one(
+            {"id": bid_id},
+            {"$set": {"payment_status": "succeeded", "updated_at": datetime.now(timezone.utc)}}
+        )
+        
+        # Place the actual bid
+        auction = await db.auctions.find_one({"id": bid["auction_id"]})
+        if auction and bid["bid_amount"] > auction.get("current_bid", 0):
+            # Get previous winner to notify
+            previous_winner_id = auction.get("winner_id")
+            
+            await db.auctions.update_one(
+                {"id": bid["auction_id"]},
+                {"$set": {
+                    "current_bid": bid["bid_amount"],
+                    "winner_id": current_user["user_id"],
+                    "winner_name": (await db.users.find_one({"user_id": current_user["user_id"]}))["name"]
+                }}
+            )
+            
+            # Notify outbid user
+            if previous_winner_id and previous_winner_id != current_user["user_id"]:
+                await notify_outbid_user(previous_winner_id, bid["auction_id"], bid["bid_amount"])
+        
+        return {
+            "success": True,
+            "message": "Bid placed successfully!",
+            "bidAmount": bid["bid_amount"],
+            "depositPaid": bid["deposit_amount"]
+        }
+    
+    # For real Stripe, verify the payment intent status
+    try:
+        payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+        
+        if payment_intent.status == "succeeded":
+            await db.bid_deposits.update_one(
+                {"id": bid_id},
+                {"$set": {"payment_status": "succeeded", "updated_at": datetime.now(timezone.utc)}}
+            )
+            
+            # Place the actual bid
+            auction = await db.auctions.find_one({"id": bid["auction_id"]})
+            if auction and bid["bid_amount"] > auction.get("current_bid", 0):
+                previous_winner_id = auction.get("winner_id")
+                
+                await db.auctions.update_one(
+                    {"id": bid["auction_id"]},
+                    {"$set": {
+                        "current_bid": bid["bid_amount"],
+                        "winner_id": current_user["user_id"],
+                        "winner_name": (await db.users.find_one({"user_id": current_user["user_id"]}))["name"]
+                    }}
+                )
+                
+                if previous_winner_id and previous_winner_id != current_user["user_id"]:
+                    await notify_outbid_user(previous_winner_id, bid["auction_id"], bid["bid_amount"])
+            
+            return {
+                "success": True,
+                "message": "Bid placed successfully!",
+                "bidAmount": bid["bid_amount"],
+                "depositPaid": bid["deposit_amount"]
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Payment status: {payment_intent.status}",
+                "status": payment_intent.status
+            }
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error: {e}")
+        raise HTTPException(status_code=500, detail="Error verifying payment")
+
+@api_router.post("/payments/webhook")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhook events"""
+    payload = await request.body()
+    sig_header = request.headers.get('stripe-signature')
+    
+    if STRIPE_WEBHOOK_SECRET == 'whsec_demo_secret':
+        return {"status": "webhook_disabled_in_demo"}
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.error.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    # Handle payment events
+    if event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']
+        await db.bid_deposits.update_one(
+            {"payment_intent_id": payment_intent['id']},
+            {"$set": {"payment_status": "succeeded", "updated_at": datetime.now(timezone.utc)}}
+        )
+        logger.info(f"Payment succeeded for {payment_intent['id']}")
+    
+    elif event['type'] == 'payment_intent.payment_failed':
+        payment_intent = event['data']['object']
+        await db.bid_deposits.update_one(
+            {"payment_intent_id": payment_intent['id']},
+            {"$set": {"payment_status": "failed", "updated_at": datetime.now(timezone.utc)}}
+        )
+        logger.info(f"Payment failed for {payment_intent['id']}")
+    
+    return {"status": "received"}
+
+
+# ====== PUSH NOTIFICATIONS API ======
+
+class RegisterPushTokenRequest(BaseModel):
+    push_token: str
+    device_type: str = "expo"  # expo, ios, android
+
+@api_router.post("/notifications/register-push-token")
+async def register_push_token(request: Request, token_req: RegisterPushTokenRequest):
+    """Register a push notification token for the user"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Store in database
+    await db.push_tokens.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {
+            "user_id": current_user["user_id"],
+            "push_token": token_req.push_token,
+            "device_type": token_req.device_type,
+            "updated_at": datetime.now(timezone.utc)
+        }},
+        upsert=True
+    )
+    
+    # Also store in memory for quick access
+    push_tokens_store[current_user["user_id"]] = token_req.push_token
+    
+    return {"success": True, "message": "Push token registered"}
+
+@api_router.delete("/notifications/push-token")
+async def remove_push_token(request: Request):
+    """Remove push token (on logout)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.push_tokens.delete_one({"user_id": current_user["user_id"]})
+    push_tokens_store.pop(current_user["user_id"], None)
+    
+    return {"success": True, "message": "Push token removed"}
+
+async def notify_outbid_user(user_id: str, auction_id: str, new_bid_amount: float):
+    """Send push notification to outbid user"""
+    # Get push token
+    token_doc = await db.push_tokens.find_one({"user_id": user_id})
+    if not token_doc:
+        logger.info(f"No push token for user {user_id}")
+        return
+    
+    push_token = token_doc.get("push_token")
+    if not push_token:
+        return
+    
+    # Get auction details
+    auction = await db.auctions.find_one({"id": auction_id})
+    auction_title = auction.get("title", "VIP Booth") if auction else "VIP Booth"
+    
+    # Store notification in database
+    notification = {
+        "id": str(uuid.uuid4())[:8],
+        "user_id": user_id,
+        "type": "outbid",
+        "title": "You've been outbid!",
+        "body": f"Someone bid ${new_bid_amount:,.0f} on {auction_title}. Place a higher bid to win!",
+        "data": {
+            "auction_id": auction_id,
+            "new_bid": new_bid_amount
+        },
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.auction_notifications.insert_one(notification)
+    
+    # Try to send push notification via Expo
+    try:
+        # Using expo-server-sdk approach (but keeping it simple for now)
+        # In production, you would use the exponent_server_sdk library
+        logger.info(f"Would send push to {push_token}: {notification['title']}")
+        
+        # For now, just log it - the notification is stored in DB
+        # Frontend can poll for notifications
+    except Exception as e:
+        logger.error(f"Failed to send push notification: {e}")
+
+@api_router.get("/notifications/pending")
+async def get_pending_notifications(request: Request):
+    """Get all pending (unread) notifications for the user"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    notifications = await db.auction_notifications.find({
+        "user_id": current_user["user_id"],
+        "read": False
+    }).sort("created_at", -1).to_list(50)
+    
+    return {"notifications": clean_mongo_docs(notifications), "count": len(notifications)}
+
+@api_router.post("/notifications/mark-read/{notification_id}")
+async def mark_notification_read(request: Request, notification_id: str):
+    """Mark a specific notification as read"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    result = await db.auction_notifications.update_one(
+        {"id": notification_id, "user_id": current_user["user_id"]},
+        {"$set": {"read": True}}
+    )
+    
+    return {"success": result.modified_count > 0}
+
+@api_router.post("/notifications/test")
+async def send_test_notification(request: Request):
+    """Send a test notification to the user"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    notification = {
+        "id": str(uuid.uuid4())[:8],
+        "user_id": current_user["user_id"],
+        "type": "test",
+        "title": "Test Notification",
+        "body": "This is a test notification from Luna Group VIP!",
+        "data": {},
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.auction_notifications.insert_one(notification)
+    
+    return {"success": True, "notification": clean_mongo_doc(notification)}
+
+
 # CORS
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
