@@ -9,48 +9,55 @@ import {
   Alert,
   Modal,
   Dimensions,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { RewardCard } from '../../src/components/RewardCard';
-import { VenueSelector } from '../../src/components/VenueSelector';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
+import { StarfieldBackground } from '../../src/components/StarfieldBackground';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 const CATEGORIES = ['all', 'drinks', 'bottles', 'vip', 'merch', 'dining'];
 
 export default function RewardsScreen() {
   const user = useAuthStore((state) => state.user);
+  const insets = useSafeAreaInsets();
   const [rewards, setRewards] = useState<any[]>([]);
+  const [venues, setVenues] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
-  const [showVenueFilter, setShowVenueFilter] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [redemptionModal, setRedemptionModal] = useState<any>(null);
 
-  const fetchRewards = async () => {
+  const fetchData = async () => {
     try {
-      const data = await api.getRewards(
-        selectedCategory === 'all' ? undefined : selectedCategory,
-        selectedVenueId || undefined
-      );
-      setRewards(data);
+      const [rewardsData, venuesData] = await Promise.all([
+        api.getRewards(
+          selectedCategory === 'all' ? undefined : selectedCategory,
+          selectedVenueId || undefined
+        ),
+        api.getVenues(),
+      ]);
+      setRewards(rewardsData);
+      setVenues(venuesData);
     } catch (e) {
-      console.error('Failed to fetch rewards:', e);
+      console.error('Failed to fetch data:', e);
     }
   };
 
   useEffect(() => {
-    fetchRewards();
+    fetchData();
   }, [selectedCategory, selectedVenueId]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchRewards();
+    await fetchData();
     try {
       const userData = await api.getMe();
       useAuthStore.getState().setUser(userData);
@@ -73,11 +80,22 @@ export default function RewardsScreen() {
     }
   };
 
+  const handleVenueSelect = (venueId: string | null) => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
+    setSelectedVenueId(selectedVenueId === venueId ? null : venueId);
+  };
+
+  const selectedVenue = venues.find(v => v.id === selectedVenueId);
+
   return (
     <View style={styles.container}>
+      <StarfieldBackground starCount={60} shootingStarCount={2} />
+      
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -87,21 +105,15 @@ export default function RewardsScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Points Hero */}
-        <View style={styles.heroSection}>
-          <LinearGradient
-            colors={[colors.goldGlow, 'transparent']}
-            style={styles.heroGlow}
-          />
-          <View style={styles.heroContent}>
-            <Text style={styles.heroLabel}>YOUR BALANCE</Text>
-            <View style={styles.pointsRow}>
-              <Ionicons name="star" size={32} color={colors.gold} />
-              <Text style={styles.pointsValue}>
-                {user?.points_balance?.toLocaleString() || 0}
-              </Text>
-              <Text style={styles.pointsUnit}>pts</Text>
-            </View>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>REWARDS</Text>
+            <View style={styles.headerUnderline} />
+          </View>
+          <View style={styles.pointsBadge}>
+            <Ionicons name="star" size={14} color={colors.gold} />
+            <Text style={styles.pointsText}>{user?.points_balance?.toLocaleString() || 0}</Text>
           </View>
         </View>
 
@@ -144,26 +156,70 @@ export default function RewardsScreen() {
           ))}
         </ScrollView>
 
-        {/* Venue Filter Button */}
-        <View style={styles.venueFilterContainer}>
-          <TouchableOpacity
-            style={styles.venueFilterButton}
-            onPress={() => setShowVenueFilter(true)}
-            activeOpacity={0.7}
+        {/* Venue Quick Filter - Horizontal Scroll */}
+        <View style={styles.venueFilterSection}>
+          <Text style={styles.filterLabel}>FILTER BY VENUE</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.venueFilterContainer}
           >
-            <Ionicons name="location-outline" size={20} color={colors.accent} />
-            <Text style={styles.venueFilterText}>
-              {selectedVenueId ? 'Venue Selected' : 'Filter by Venue'}
-            </Text>
-            <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
+            {/* All Venues Option */}
+            <TouchableOpacity
+              style={[
+                styles.venueChip,
+                !selectedVenueId && styles.venueChipActive,
+              ]}
+              onPress={() => handleVenueSelect(null)}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name="globe-outline" 
+                size={16} 
+                color={!selectedVenueId ? colors.textPrimary : colors.textMuted} 
+              />
+              <Text style={[
+                styles.venueChipText,
+                !selectedVenueId && styles.venueChipTextActive,
+              ]}>
+                All Venues
+              </Text>
+            </TouchableOpacity>
+
+            {/* Individual Venues */}
+            {venues.map((venue) => (
+              <TouchableOpacity
+                key={venue.id}
+                style={[
+                  styles.venueChip,
+                  selectedVenueId === venue.id && styles.venueChipActive,
+                  selectedVenueId === venue.id && { borderColor: venue.accent_color },
+                ]}
+                onPress={() => handleVenueSelect(venue.id)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.venueChipDot, { backgroundColor: venue.accent_color }]} />
+                <Text 
+                  style={[
+                    styles.venueChipText,
+                    selectedVenueId === venue.id && styles.venueChipTextActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {venue.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         {/* Section Header */}
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
             <View style={styles.sectionAccent} />
-            <Text style={styles.sectionTitle}>AVAILABLE REWARDS</Text>
+            <Text style={styles.sectionTitle}>
+              {selectedVenue ? selectedVenue.name.toUpperCase() : 'ALL REWARDS'}
+            </Text>
           </View>
           <Text style={styles.rewardCount}>{rewards.length} items</Text>
         </View>
@@ -185,10 +241,17 @@ export default function RewardsScreen() {
                 <Ionicons name="gift-outline" size={48} color={colors.textMuted} />
               </View>
               <Text style={styles.emptyTitle}>No rewards available</Text>
-              <Text style={styles.emptyText}>Check back soon for exciting rewards!</Text>
+              <Text style={styles.emptyText}>
+                {selectedVenueId 
+                  ? 'Try selecting a different venue or category'
+                  : 'Check back soon for exciting rewards!'
+                }
+              </Text>
             </View>
           )}
         </View>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* Redemption Success Modal */}
@@ -246,17 +309,6 @@ export default function RewardsScreen() {
           </View>
         </View>
       </Modal>
-
-      {/* Venue Selector Modal */}
-      <VenueSelector
-        visible={showVenueFilter}
-        selectedVenueId={selectedVenueId}
-        onSelectVenue={(venueId) => {
-          setSelectedVenueId(venueId);
-          setShowVenueFilter(false);
-        }}
-        onClose={() => setShowVenueFilter(false)}
-      />
     </View>
   );
 }
@@ -264,7 +316,7 @@ export default function RewardsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000000",
+    backgroundColor: '#000000',
   },
   scrollView: {
     flex: 1,
@@ -272,51 +324,42 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: spacing.xxl,
   },
-  heroSection: {
-    margin: spacing.md,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    backgroundColor: colors.backgroundCard,
-    borderWidth: 1,
-    borderColor: colors.gold + '30',
-    position: 'relative',
-  },
-  heroGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-  },
-  heroContent: {
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  heroLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    letterSpacing: 3,
-    marginBottom: spacing.sm,
-  },
-  pointsRow: {
+  header: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
-  pointsValue: {
-    fontSize: 52,
-    fontWeight: '800',
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '900',
     color: colors.textPrimary,
-    marginLeft: spacing.sm,
+    letterSpacing: 2,
   },
-  pointsUnit: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginLeft: spacing.xs,
+  headerUnderline: {
+    width: 40,
+    height: 3,
+    backgroundColor: colors.accent,
+    marginTop: spacing.xs,
+  },
+  pointsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.goldGlow,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    gap: 6,
+  },
+  pointsText: {
+    color: colors.gold,
+    fontWeight: '700',
+    fontSize: 14,
   },
   categoriesContainer: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
   categoryTab: {
@@ -340,32 +383,55 @@ const styles = StyleSheet.create({
   categoryTextActive: {
     color: colors.textPrimary,
   },
-  venueFilterContainer: {
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.md,
+  venueFilterSection: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
-  venueFilterButton: {
+  filterLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 2,
+    marginBottom: spacing.sm,
+  },
+  venueFilterContainer: {
+    gap: spacing.sm,
+  },
+  venueChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.backgroundCard,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: '#0A0A0A',
     borderWidth: 1,
     borderColor: colors.border,
+    gap: 6,
+    marginRight: spacing.sm,
   },
-  venueFilterText: {
-    flex: 1,
-    marginLeft: spacing.sm,
-    fontSize: 14,
+  venueChipActive: {
+    backgroundColor: colors.backgroundCard,
+    borderColor: colors.accent,
+  },
+  venueChipDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  venueChipText: {
+    fontSize: 13,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: colors.textMuted,
+    maxWidth: 120,
+  },
+  venueChipTextActive: {
+    color: colors.textPrimary,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     marginBottom: spacing.md,
   },
   sectionTitleContainer: {
@@ -390,11 +456,11 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   rewardsSection: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: spacing.xxxl,
+    paddingVertical: spacing.xxl * 2,
   },
   emptyIconContainer: {
     width: 80,
@@ -414,6 +480,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: colors.textSecondary,
+    textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
@@ -480,7 +547,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   codeBox: {
-    backgroundColor: "#000000",
+    backgroundColor: '#000000',
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
