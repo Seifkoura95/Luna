@@ -8,11 +8,13 @@ import { useAuthStore } from '../store/authStore';
 
 interface PageHeaderProps {
   title: string;
+  description?: string;
   showPoints?: boolean;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ 
   title, 
+  description,
   showPoints = false 
 }) => {
   const insets = useSafeAreaInsets();
@@ -23,6 +25,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       <RotatingMoon size={80} rotationDuration={30000} />
       <Text style={styles.headerTitle}>{title}</Text>
       <View style={styles.headerUnderline} />
+      {description && (
+        <Text style={styles.headerDescription}>{description}</Text>
+      )}
       
       {showPoints && (
         <View style={styles.pointsBadge}>
@@ -52,6 +57,14 @@ const styles = StyleSheet.create({
     height: 3,
     backgroundColor: colors.accent,
     marginTop: spacing.sm,
+  },
+  headerDescription: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+    letterSpacing: 1,
+    paddingHorizontal: spacing.lg,
   },
   pointsBadge: {
     flexDirection: 'row',
