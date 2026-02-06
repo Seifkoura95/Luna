@@ -273,9 +273,19 @@ export default function AuctionsScreen() {
         {/* Active Auctions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>ACTIVE NOW</Text>
-          {auctions.filter(a => a.status === 'active').map(renderAuctionCard)}
           
-          {auctions.filter(a => a.status === 'active').length === 0 && (
+          {/* Loading Skeletons */}
+          {isLoading && (
+            <View style={styles.skeletonsContainer}>
+              <CardSkeleton />
+              <CardSkeleton />
+            </View>
+          )}
+          
+          {/* Auction Cards */}
+          {!isLoading && auctions.filter(a => a.status === 'active').map(renderAuctionCard)}
+          
+          {!isLoading && auctions.filter(a => a.status === 'active').length === 0 && (
             <View style={styles.emptyState}>
               <Ionicons name="flash-off" size={48} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>No active auctions</Text>
@@ -285,7 +295,7 @@ export default function AuctionsScreen() {
         </View>
 
         {/* Upcoming Auctions */}
-        {auctions.filter(a => a.status === 'upcoming').length > 0 && (
+        {!isLoading && auctions.filter(a => a.status === 'upcoming').length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>COMING SOON</Text>
             {auctions.filter(a => a.status === 'upcoming').map(renderAuctionCard)}
