@@ -257,7 +257,11 @@ export default function AuctionsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Consistent Header - No Points */}
-        <PageHeader title="AUCTIONS" showPoints={false} />
+        <PageHeader 
+          title="AUCTIONS" 
+          description="Bid on exclusive VIP booths & experiences"
+          showPoints={false} 
+        />
 
         {/* Active Auctions */}
         <View style={styles.section}>
