@@ -57,9 +57,9 @@ export default function TabLayout() {
           headerRight: () => <HeaderRight />,
           headerShadowVisible: false,
           headerBackground: () => (
-            <View style={{ flex: 1, backgroundColor: 'transparent' }} />
+            <View style={{ flex: 1, backgroundColor: '#000000' }} />
           ),
-          sceneContainerStyle: { backgroundColor: 'transparent' },
+          sceneContainerStyle: { backgroundColor: '#000000' },
         }}
       >
       <Tabs.Screen
