@@ -646,6 +646,93 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: spacing.xxl,
   },
+  rewardsCard: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  rewardsGradient: {
+    padding: spacing.lg,
+  },
+  rewardsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  pointsDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  pointsValue: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: colors.textPrimary,
+  },
+  pointsLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 2,
+  },
+  tierBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    gap: 4,
+  },
+  tierBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#000',
+    letterSpacing: 1,
+  },
+  rewardsInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  rewardsStat: {
+    alignItems: 'center',
+  },
+  rewardsStatValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  rewardsStatLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  rewardsDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: colors.border,
+  },
+  upgradeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    gap: spacing.xs,
+  },
+  upgradeButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    letterSpacing: 1,
+  },
   tabContainer: {
     flexDirection: 'row',
     paddingHorizontal: spacing.lg,
