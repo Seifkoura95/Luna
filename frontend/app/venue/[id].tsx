@@ -427,6 +427,45 @@ export default function VenueDetailScreen() {
             </View>
           )}
 
+          {/* Upcoming Events */}
+          {upcomingEvents.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>Upcoming Events</Text>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/events')}>
+                  <Text style={styles.seeAllText}>See All</Text>
+                </TouchableOpacity>
+              </View>
+              {upcomingEvents.slice(0, 4).map((event: any) => (
+                <TouchableOpacity
+                  key={event.id}
+                  style={styles.eventCard}
+                  onPress={() => router.push(`/event/${event.id}`)}
+                >
+                  <Image source={{ uri: event.image_url }} style={styles.eventImage} />
+                  <View style={styles.eventContent}>
+                    <Text style={styles.eventDate}>
+                      {new Date(event.event_date).toLocaleDateString('en-AU', { 
+                        weekday: 'short', 
+                        day: 'numeric', 
+                        month: 'short' 
+                      }).toUpperCase()}
+                    </Text>
+                    <Text style={styles.eventTitle} numberOfLines={1}>{event.title}</Text>
+                    {event.ticket_price > 0 && (
+                      <Text style={[styles.eventPrice, { color: venue?.accent_color }]}>
+                        From ${event.ticket_price}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={[styles.eventTicketBtn, { backgroundColor: venue?.accent_color }]}>
+                    <Ionicons name="ticket" size={16} color="#FFF" />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
           {/* Address */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Location</Text>
