@@ -467,7 +467,7 @@ export default function VenueDetailScreen() {
           end={{ x: 1, y: 0 }}
           style={styles.ctaButton}
         >
-          <TouchableOpacity style={styles.ctaButtonInner} onPress={handleOpenWebsite}>
+          <TouchableOpacity style={styles.ctaButtonInner} onPress={handleBooking}>
             <Text style={styles.ctaButtonText}>
               {venue.type === 'restaurant' ? 'Book a Table' : 'Get on the List'}
             </Text>
@@ -475,6 +475,14 @@ export default function VenueDetailScreen() {
           </TouchableOpacity>
         </LinearGradient>
       </View>
+
+      {/* Booking Modal */}
+      <BookingModal
+        visible={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        venue={venue}
+        type={bookingType}
+      />
     </View>
   );
 }
