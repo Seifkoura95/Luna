@@ -1691,6 +1691,506 @@ async def send_test_notification(request: Request):
     return {"success": True, "notification": clean_mongo_doc(notification)}
 
 
+# ====== SMART NOTIFICATIONS SYSTEM ======
+
+class NotificationPreferences(BaseModel):
+    events_nearby: bool = True
+    favorite_venues: bool = True
+    auction_alerts: bool = True
+    friends_attending: bool = True
+    new_rewards: bool = True
+    weekly_digest: bool = True
+    event_reminders: bool = True
+    booking_updates: bool = True
+    crew_updates: bool = True
+    points_milestones: bool = True
+
+# Main notifications collection (separate from auction_notifications for clarity)
+# Using 'notifications' collection for the unified notification system
+
+@api_router.get("/notifications")
+async def get_all_notifications(
+    request: Request,
+    unread_only: bool = False,
+    limit: int = 50
+):
+    """Get all notifications for the current user"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    query = {"user_id": current_user["user_id"]}
+    if unread_only:
+        query["read"] = False
+    
+    # Fetch from both collections for unified view
+    notifications = await db.notifications.find(query).sort("created_at", -1).to_list(limit)
+    auction_notifs = await db.auction_notifications.find(query).sort("created_at", -1).to_list(limit)
+    
+    # Combine and sort
+    all_notifications = notifications + auction_notifs
+    all_notifications.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+    all_notifications = all_notifications[:limit]
+    
+    # Count unread
+    unread_count = sum(1 for n in all_notifications if not n.get("read", True))
+    
+    return {
+        "notifications": clean_mongo_docs(all_notifications),
+        "unread_count": unread_count,
+        "total": len(all_notifications)
+    }
+
+@api_router.post("/notifications/{notification_id}/read")
+async def mark_single_notification_read(request: Request, notification_id: str):
+    """Mark a single notification as read"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Try both collections
+    result1 = await db.notifications.update_one(
+        {"id": notification_id, "user_id": current_user["user_id"]},
+        {"$set": {"read": True, "read_at": datetime.now(timezone.utc)}}
+    )
+    result2 = await db.auction_notifications.update_one(
+        {"id": notification_id, "user_id": current_user["user_id"]},
+        {"$set": {"read": True, "read_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"success": result1.modified_count > 0 or result2.modified_count > 0}
+
+@api_router.post("/notifications/read-all")
+async def mark_all_notifications_read(request: Request):
+    """Mark all notifications as read for the current user"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    now = datetime.now(timezone.utc)
+    result1 = await db.notifications.update_many(
+        {"user_id": current_user["user_id"], "read": False},
+        {"$set": {"read": True, "read_at": now}}
+    )
+    result2 = await db.auction_notifications.update_many(
+        {"user_id": current_user["user_id"], "read": False},
+        {"$set": {"read": True, "read_at": now}}
+    )
+    
+    return {
+        "success": True,
+        "marked_read": result1.modified_count + result2.modified_count
+    }
+
+@api_router.get("/notifications/preferences")
+async def get_notification_preferences(request: Request):
+    """Get user's notification preferences"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    prefs = await db.notification_preferences.find_one({"user_id": current_user["user_id"]})
+    
+    if not prefs:
+        # Return defaults
+        return {
+            "events_nearby": True,
+            "favorite_venues": True,
+            "auction_alerts": True,
+            "friends_attending": True,
+            "new_rewards": True,
+            "weekly_digest": True,
+            "event_reminders": True,
+            "booking_updates": True,
+            "crew_updates": True,
+            "points_milestones": True
+        }
+    
+    return clean_mongo_doc(prefs)
+
+@api_router.post("/notifications/preferences")
+async def update_notification_preferences(request: Request, prefs: NotificationPreferences):
+    """Update user's notification preferences"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    prefs_dict = prefs.dict()
+    prefs_dict["user_id"] = current_user["user_id"]
+    prefs_dict["updated_at"] = datetime.now(timezone.utc)
+    
+    await db.notification_preferences.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": prefs_dict},
+        upsert=True
+    )
+    
+    return {"success": True, "preferences": prefs_dict}
+
+@api_router.get("/notifications/smart-suggestions")
+async def get_smart_suggestions(request: Request):
+    """
+    Generate smart suggestions based on user behavior and preferences.
+    This is the AI-powered recommendation engine.
+    """
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    suggestions = []
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    
+    if not user:
+        return {"suggestions": [], "generated_at": datetime.now(timezone.utc).isoformat()}
+    
+    # Get user's preferences
+    prefs = await db.notification_preferences.find_one({"user_id": current_user["user_id"]})
+    
+    # Get user's past bookings to understand preferences
+    bookings = await db.bookings.find({"user_id": current_user["user_id"]}).to_list(20)
+    past_venues = [b.get("venue_id") for b in bookings if b.get("venue_id")]
+    
+    # Get user's favorite venues (most visited)
+    venue_counts = {}
+    for venue in past_venues:
+        venue_counts[venue] = venue_counts.get(venue, 0) + 1
+    favorite_venues = sorted(venue_counts.keys(), key=lambda x: venue_counts[x], reverse=True)[:3]
+    
+    # Get upcoming events
+    now = datetime.now(timezone.utc)
+    upcoming_events = await db.events.find({
+        "date": {"$gte": now},
+        "status": {"$in": ["upcoming", "on_sale"]}
+    }).sort("date", 1).to_list(50)
+    
+    # 1. Events at favorite venues
+    for event in upcoming_events[:20]:
+        if event.get("venue_id") in favorite_venues:
+            reasons = [
+                f"You've been to {LUNA_VENUES.get(event['venue_id'], {}).get('name', event['venue_id'])} before",
+                "One of your favorite spots"
+            ]
+            suggestions.append({
+                "type": "event",
+                "event": clean_mongo_doc(event),
+                "venue": LUNA_VENUES.get(event.get("venue_id")),
+                "reasons": reasons,
+                "score": 0.9,
+                "priority": "high"
+            })
+    
+    # 2. Events matching user tier benefits
+    user_tier = user.get("membership_tier", "lunar")
+    if user_tier in ["eclipse", "supernova"]:
+        for event in upcoming_events[:10]:
+            if event.get("featured") or event.get("vip_available"):
+                if not any(s.get("event", {}).get("id") == event.get("id") for s in suggestions):
+                    reasons = [
+                        f"VIP access with your {user_tier.title()} membership",
+                        "Priority entry available"
+                    ]
+                    suggestions.append({
+                        "type": "event",
+                        "event": clean_mongo_doc(event),
+                        "venue": LUNA_VENUES.get(event.get("venue_id")),
+                        "reasons": reasons,
+                        "score": 0.8,
+                        "priority": "medium"
+                    })
+    
+    # 3. Weekend events (most popular)
+    for event in upcoming_events:
+        event_date = event.get("date")
+        if event_date and isinstance(event_date, datetime):
+            if event_date.weekday() in [4, 5]:  # Friday, Saturday
+                if not any(s.get("event", {}).get("id") == event.get("id") for s in suggestions):
+                    reasons = [
+                        "Popular weekend event",
+                        "Great atmosphere expected"
+                    ]
+                    suggestions.append({
+                        "type": "event",
+                        "event": clean_mongo_doc(event),
+                        "venue": LUNA_VENUES.get(event.get("venue_id")),
+                        "reasons": reasons,
+                        "score": 0.7,
+                        "priority": "medium"
+                    })
+                    if len(suggestions) >= 10:
+                        break
+    
+    # 4. Venue suggestions (if user hasn't been to all venues)
+    visited_venues = set(past_venues)
+    for venue_id, venue in LUNA_VENUES.items():
+        if venue_id not in visited_venues and len(suggestions) < 12:
+            if venue.get("type") in ["nightclub", "bar"]:
+                reasons = [
+                    "You haven't visited yet",
+                    f"Known for {venue.get('music_genres', ['great vibes'])[0] if venue.get('music_genres') else 'great vibes'}"
+                ]
+                suggestions.append({
+                    "type": "venue",
+                    "venue": venue,
+                    "reasons": reasons,
+                    "score": 0.6,
+                    "priority": "low"
+                })
+    
+    # Sort by score
+    suggestions.sort(key=lambda x: x.get("score", 0), reverse=True)
+    
+    return {
+        "suggestions": suggestions[:10],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "user_tier": user_tier,
+        "favorite_venues": favorite_venues
+    }
+
+@api_router.post("/notifications/send-test")
+async def send_test_notification_v2(request: Request):
+    """Send a test notification to the current user"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    notification = {
+        "id": str(uuid.uuid4())[:8],
+        "user_id": current_user["user_id"],
+        "type": "test",
+        "title": "Test Notification",
+        "message": "This is a test notification from Luna Group VIP! Your notifications are working correctly.",
+        "data": {"test": True},
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.notifications.insert_one(notification)
+    
+    return {"success": True, "notification": clean_mongo_doc(notification)}
+
+
+# ====== NOTIFICATION GENERATION FUNCTIONS ======
+
+async def create_notification(
+    user_id: str,
+    notification_type: str,
+    title: str,
+    message: str,
+    data: dict = None,
+    priority: str = "normal"
+):
+    """Create and store a notification for a user"""
+    notification = {
+        "id": str(uuid.uuid4())[:8],
+        "user_id": user_id,
+        "type": notification_type,
+        "title": title,
+        "message": message,
+        "data": data or {},
+        "priority": priority,
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.notifications.insert_one(notification)
+    return notification
+
+async def notify_new_event(event: dict, venue_id: str):
+    """
+    Notify users about a new event at their favorite venue.
+    Called when a new event is added.
+    """
+    venue = LUNA_VENUES.get(venue_id, {})
+    venue_name = venue.get("name", venue_id)
+    
+    # Find users who have bookings at this venue (interested users)
+    interested_users = await db.bookings.distinct(
+        "user_id",
+        {"venue_id": venue_id}
+    )
+    
+    # Also get users with this venue in favorites (if we track that)
+    # For now, notify users who've visited
+    
+    for user_id in interested_users[:100]:  # Limit to prevent overload
+        # Check user preferences
+        prefs = await db.notification_preferences.find_one({"user_id": user_id})
+        if prefs and not prefs.get("favorite_venues", True):
+            continue
+        
+        await create_notification(
+            user_id=user_id,
+            notification_type="event",
+            title=f"New Event at {venue_name}!",
+            message=f"{event.get('title', 'A new event')} is coming up. Get your tickets now!",
+            data={
+                "event_id": event.get("id"),
+                "venue_id": venue_id,
+                "action": "view_event"
+            },
+            priority="high"
+        )
+
+async def notify_event_reminder(event: dict, hours_before: int = 24):
+    """
+    Send reminder notifications for an upcoming event.
+    Called by scheduler for events happening soon.
+    """
+    # Find users with bookings/tickets for this event
+    bookings = await db.bookings.find({
+        "event_id": event.get("id"),
+        "status": {"$in": ["confirmed", "pending"]}
+    }).to_list(500)
+    
+    venue = LUNA_VENUES.get(event.get("venue_id"), {})
+    venue_name = venue.get("name", "the venue")
+    
+    for booking in bookings:
+        user_id = booking.get("user_id")
+        
+        # Check preferences
+        prefs = await db.notification_preferences.find_one({"user_id": user_id})
+        if prefs and not prefs.get("event_reminders", True):
+            continue
+        
+        await create_notification(
+            user_id=user_id,
+            notification_type="event",
+            title=f"Event Tomorrow: {event.get('title', 'Your Event')}",
+            message=f"Don't forget! Your event at {venue_name} is in {hours_before} hours. See you there!",
+            data={
+                "event_id": event.get("id"),
+                "booking_id": booking.get("id"),
+                "venue_id": event.get("venue_id"),
+                "action": "view_booking"
+            }
+        )
+
+async def notify_booking_confirmed(booking: dict, user_id: str):
+    """Notify user when their booking is confirmed"""
+    venue = LUNA_VENUES.get(booking.get("venue_id"), {})
+    venue_name = venue.get("name", "the venue")
+    
+    await create_notification(
+        user_id=user_id,
+        notification_type="table_confirmed",
+        title="Booking Confirmed!",
+        message=f"Your booking at {venue_name} has been confirmed. Show this notification at the venue for entry.",
+        data={
+            "booking_id": booking.get("id"),
+            "venue_id": booking.get("venue_id"),
+            "action": "view_booking"
+        },
+        priority="high"
+    )
+
+async def notify_crew_invite(crew: dict, invitee_user_id: str, inviter_name: str):
+    """Notify user when they're invited to a crew"""
+    await create_notification(
+        user_id=invitee_user_id,
+        notification_type="crew",
+        title="Crew Invite!",
+        message=f"{inviter_name} invited you to join '{crew.get('name', 'a crew')}' for an upcoming event.",
+        data={
+            "crew_id": crew.get("id"),
+            "action": "view_crew"
+        },
+        priority="high"
+    )
+
+async def notify_crew_update(crew: dict, update_message: str):
+    """Notify all crew members about an update"""
+    for member in crew.get("members", []):
+        user_id = member.get("user_id")
+        
+        # Check preferences
+        prefs = await db.notification_preferences.find_one({"user_id": user_id})
+        if prefs and not prefs.get("crew_updates", True):
+            continue
+        
+        await create_notification(
+            user_id=user_id,
+            notification_type="crew",
+            title=f"Crew Update: {crew.get('name', 'Your Crew')}",
+            message=update_message,
+            data={
+                "crew_id": crew.get("id"),
+                "action": "view_crew"
+            }
+        )
+
+async def notify_points_milestone(user_id: str, points: int, milestone: int):
+    """Notify user when they reach a points milestone"""
+    await create_notification(
+        user_id=user_id,
+        notification_type="points",
+        title=f"Milestone Reached: {milestone} Points!",
+        message=f"Congratulations! You've earned {points} points. Keep earning to unlock exclusive rewards!",
+        data={
+            "points": points,
+            "milestone": milestone,
+            "action": "view_rewards"
+        },
+        priority="medium"
+    )
+
+async def notify_safety_alert(user_id: str, alert_type: str, message: str):
+    """Send safety-related notifications"""
+    await create_notification(
+        user_id=user_id,
+        notification_type="safety",
+        title="Safety Update",
+        message=message,
+        data={
+            "alert_type": alert_type,
+            "action": "acknowledge"
+        },
+        priority="high"
+    )
+
+
+# ====== SCHEDULED NOTIFICATION GENERATION ======
+
+async def generate_event_notifications():
+    """
+    Generate notifications for upcoming events.
+    Called periodically by the scheduler.
+    """
+    now = datetime.now(timezone.utc)
+    tomorrow = now + timedelta(days=1)
+    next_week = now + timedelta(days=7)
+    
+    notifications_created = 0
+    
+    # 1. Events happening tomorrow - send reminders
+    tomorrow_events = await db.events.find({
+        "date": {
+            "$gte": tomorrow - timedelta(hours=12),
+            "$lte": tomorrow + timedelta(hours=12)
+        }
+    }).to_list(50)
+    
+    for event in tomorrow_events:
+        await notify_event_reminder(event, hours_before=24)
+        notifications_created += 1
+    
+    # 2. New events added in the last 24 hours - notify interested users
+    recent_events = await db.events.find({
+        "created_at": {"$gte": now - timedelta(hours=24)},
+        "synced_at": {"$gte": now - timedelta(hours=24)}
+    }).to_list(20)
+    
+    for event in recent_events:
+        venue_id = event.get("venue_id")
+        if venue_id:
+            await notify_new_event(event, venue_id)
+            notifications_created += 1
+    
+    logging.info(f"Generated {notifications_created} event notifications")
+    return notifications_created
+
+# Register the event notification generator with the scheduler
+async def run_notification_generation():
+    """Wrapper for scheduled notification generation"""
+    logging.info("Running scheduled notification generation...")
+    try:
+        count = await generate_event_notifications()
+        logging.info(f"Notification generation complete: {count} notifications created")
+    except Exception as e:
+        logging.error(f"Notification generation failed: {str(e)}")
+
+
 # ====== EMAIL NOTIFICATIONS API (Mock for Development) ======
 
 class CrewInviteEmailRequest(BaseModel):
