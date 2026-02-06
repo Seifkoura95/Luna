@@ -146,7 +146,43 @@ SUBSCRIPTION_TIERS = {
 # Points configuration
 POINTS_PER_DOLLAR = 1  # Base rate: $1 = 1 point
 
-# Create app - defined here but lifespan added later via scheduler setup
+# ====== SCHEDULER SETUP (must be before app creation) ======
+scheduler = AsyncIOScheduler()
+
+@asynccontextmanager
+async def lifespan(app_instance: FastAPI):
+    """Application lifespan handler - manages scheduler startup/shutdown"""
+    # Startup
+    logging.info("Starting Luna Group VIP API with scheduler...")
+    
+    # Schedule Megatix sync every 12 hours
+    scheduler.add_job(
+        scheduled_megatix_sync,
+        IntervalTrigger(hours=12),
+        id="megatix_sync",
+        name="Megatix Event Sync",
+        replace_existing=True
+    )
+    
+    # Also run a sync on startup (after 60 seconds to let everything initialize)
+    scheduler.add_job(
+        scheduled_megatix_sync,
+        'date',
+        run_date=datetime.now(timezone.utc) + timedelta(seconds=60),
+        id="megatix_startup_sync",
+        name="Megatix Startup Sync"
+    )
+    
+    scheduler.start()
+    logging.info("Event scheduler started - Megatix sync every 12 hours")
+    
+    yield
+    
+    # Shutdown
+    logging.info("Shutting down scheduler...")
+    scheduler.shutdown()
+
+# Create app with lifespan
 app = FastAPI(title="Luna Group VIP API", lifespan=lifespan)
 api_router = APIRouter(prefix="/api")
 
