@@ -57,6 +57,14 @@ export default function ProfileScreen() {
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [showCrewMap, setShowCrewMap] = useState(false);
   const [selectedCrewForMap, setSelectedCrewForMap] = useState<any>(null);
+  const [showInviteMember, setShowInviteMember] = useState(false);
+  const [selectedCrewForInvite, setSelectedCrewForInvite] = useState<any>(null);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteMessage, setInviteMessage] = useState('');
+  const [isInviting, setIsInviting] = useState(false);
+  const [showCrewDetails, setShowCrewDetails] = useState(false);
+  const [selectedCrewForDetails, setSelectedCrewForDetails] = useState<any>(null);
 
   // Helper function to capitalize name properly
   const formatName = (name: string | undefined) => {
