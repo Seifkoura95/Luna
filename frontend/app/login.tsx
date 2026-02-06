@@ -64,9 +64,9 @@ export default function LoginScreen() {
       >
         {/* Lunar Background Effects */}
         <View style={styles.lunarBackground}>
-          <View style={[styles.moonOrb, styles.moonOrbLarge]} />
-          <View style={[styles.moonOrb, styles.moonOrbMedium]} />
-          <View style={[styles.moonOrb, styles.moonOrbSmall]} />
+          <View style={[styles.lunarOrb, styles.lunarOrbLarge]} />
+          <View style={[styles.lunarOrb, styles.lunarOrbMedium]} />
+          <View style={[styles.lunarOrb, styles.lunarOrbSmall]} />
           <View style={styles.starsContainer}>
             {[...Array(20)].map((_, i) => (
               <View
@@ -90,7 +90,7 @@ export default function LoginScreen() {
           <View style={styles.logoSection}>
             <View style={styles.logoContainer}>
               <View style={styles.logoGlow} />
-              <Ionicons name="moon" size={80} color={colors.textPrimary} />
+              <Text style={styles.logoText}>L</Text>
             </View>
             <Text style={styles.title}>LUNA GROUP</Text>
             <Text style={styles.subtitle}>QUEENSLAND'S PREMIER NIGHTLIFE</Text>
@@ -201,25 +201,25 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  moonOrb: {
+  lunarOrb: {
     position: 'absolute',
     borderRadius: 1000,
-    backgroundColor: colors.textPrimary,
+    backgroundColor: colors.accent,
     opacity: 0.03,
   },
-  moonOrbLarge: {
+  lunarOrbLarge: {
     width: 400,
     height: 400,
     top: -100,
     right: -100,
   },
-  moonOrbMedium: {
+  lunarOrbMedium: {
     width: 250,
     height: 250,
     bottom: 100,
     left: -50,
   },
-  moonOrbSmall: {
+  lunarOrbSmall: {
     width: 150,
     height: 150,
     top: height * 0.4,
@@ -248,6 +248,10 @@ const styles = StyleSheet.create({
   logoContainer: {
     position: 'relative',
     marginBottom: spacing.xl,
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   logoGlow: {
     position: 'absolute',
@@ -257,7 +261,15 @@ const styles = StyleSheet.create({
     bottom: -20,
     backgroundColor: colors.accentGlow,
     borderRadius: 100,
-    opacity: 0.4,
+    opacity: 0.5,
+  },
+  logoText: {
+    fontSize: 72,
+    fontWeight: '900',
+    color: colors.textPrimary,
+    textShadowColor: colors.accent,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 30,
   },
   title: {
     fontSize: 48,

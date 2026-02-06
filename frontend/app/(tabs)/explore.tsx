@@ -43,7 +43,6 @@ export default function ExploreScreen() {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    // Navigate to venue details or open map
   };
 
   const handleGetDirections = (venue: any) => {
@@ -51,7 +50,7 @@ export default function ExploreScreen() {
     Linking.openURL(url);
   };
 
-  const brisbanVenues = venues.filter(v => v.region === 'brisbane');
+  const brisbaneVenues = venues.filter(v => v.region === 'brisbane');
   const goldCoastVenues = venues.filter(v => v.region === 'gold_coast');
 
   return (
@@ -61,9 +60,9 @@ export default function ExploreScreen() {
           colors={[colors.background, colors.backgroundElevated]}
           style={styles.headerGradient}
         >
-          <View style={styles.headerIconContainer}>
+          <View style={styles.headerLogoContainer}>
             <View style={styles.headerGlow} />
-            <Ionicons name="moon" size={24} color={colors.accent} />
+            <Text style={styles.headerLogo}>L</Text>
           </View>
           <Text style={styles.headerTitle}>LUNA GROUP</Text>
           <Text style={styles.headerSubtitle}>7 Premier Venues • Brisbane & Gold Coast</Text>
@@ -233,9 +232,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     alignItems: 'center',
   },
-  headerIconContainer: {
+  headerLogoContainer: {
     position: 'relative',
     marginBottom: spacing.sm,
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerGlow: {
     position: 'absolute',
@@ -246,6 +249,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentGlow,
     borderRadius: 50,
     opacity: 0.4,
+  },
+  headerLogo: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: colors.textPrimary,
+    textShadowColor: colors.accent,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
   },
   headerTitle: {
     fontSize: 32,

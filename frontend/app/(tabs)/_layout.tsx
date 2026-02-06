@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
-import { BlurView } from 'expo-blur';
 
 const TabBarIcon = ({ name, color, focused }: { name: keyof typeof Ionicons.glyphMap; color: string; focused: boolean }) => (
   <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
@@ -48,11 +47,6 @@ export default function TabLayout() {
         headerTintColor: colors.textPrimary,
         headerRight: () => <HeaderRight />,
         headerShadowVisible: false,
-        headerLeft: () => (
-          <View style={styles.headerLeft}>
-            <Ionicons name="moon" size={20} color={colors.accent} style={{ marginRight: spacing.xs }} />
-          </View>
-        ),
       }}
     >
       <Tabs.Screen
@@ -61,7 +55,7 @@ export default function TabLayout() {
           title: 'Tonight',
           headerTitle: 'LUNA GROUP',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="moon" color={color} focused={focused} />
+            <TabBarIcon name="radio-button-on" color={color} focused={focused} />
           ),
         }}
       />
@@ -169,11 +163,6 @@ const styles = StyleSheet.create({
     textShadowColor: colors.accent,
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
-  },
-  headerLeft: {
-    marginLeft: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   headerRight: {
     marginRight: spacing.md,
