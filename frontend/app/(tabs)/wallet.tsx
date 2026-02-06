@@ -129,12 +129,18 @@ export default function WalletScreen() {
   const [showAddGuest, setShowAddGuest] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
+  
+  // Points & Subscription state
+  const [pointsData, setPointsData] = useState<any>(null);
+  const [subscriptionData, setSubscriptionData] = useState<any>(null);
 
   const fetchData = useCallback(async () => {
     try {
-      const [ticketsData, eventsData] = await Promise.all([
+      const [ticketsData, eventsData, pointsRes, subRes] = await Promise.all([
         api.getTickets().catch(() => null),
         api.getEvents(),
+        api.getPointsBalance().catch(() => null),
+        api.getMySubscription().catch(() => null),
       ]);
       // Merge mock data with API data for demonstration
       if (ticketsData && (ticketsData.active?.length > 0 || ticketsData.upcoming?.length > 0 || ticketsData.history?.length > 0)) {
@@ -144,6 +150,8 @@ export default function WalletScreen() {
         setTickets(MOCK_TICKETS);
       }
       setEvents(eventsData || []);
+      setPointsData(pointsRes);
+      setSubscriptionData(subRes);
     } catch (e) {
       console.error('Failed to fetch wallet data:', e);
       // Use mock data on error
