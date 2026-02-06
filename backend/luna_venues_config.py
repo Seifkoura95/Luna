@@ -1,0 +1,102 @@
+"""Luna Group Venues Configuration"""
+
+LUNA_VENUES = {
+    "eclipse": {
+        "id": "eclipse",
+        "name": "Eclipse",
+        "type": "nightclub",
+        "region": "brisbane",
+        "location": "Fortitude Valley, Brisbane",
+        "address": "201 Wickham St, Fortitude Valley QLD 4006",
+        "coordinates": {"lat": -27.4572, "lng": 153.0347},
+        "accent_color": "#E31837",
+        "description": "Premium nightclub experience in the heart of the Valley",
+        "features": ["booth_booking", "fast_lane", "auctions", "photos"],
+        "points_rate": 1.0,
+        "image_url": "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800"
+    },
+    "after_dark": {
+        "id": "after_dark",
+        "name": "After Dark",
+        "type": "nightclub",
+        "region": "brisbane",
+        "location": "Fortitude Valley, Brisbane",
+        "address": "201 Wickham St, Fortitude Valley QLD 4006",
+        "coordinates": {"lat": -27.4572, "lng": 153.0347},
+        "accent_color": "#8B00FF",
+        "description": "R&B, Hip Hop & Afrobeats club",
+        "features": ["booth_booking", "fast_lane", "auctions", "photos"],
+        "points_rate": 1.0,
+        "image_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800"
+    },
+    "su_casa_brisbane": {
+        "id": "su_casa_brisbane",
+        "name": "Su Casa Brisbane",
+        "type": "bar",
+        "region": "brisbane",
+        "location": "Fortitude Valley, Brisbane",
+        "address": "123 Brunswick St, Fortitude Valley QLD 4006",
+        "coordinates": {"lat": -27.4575, "lng": 153.0350},
+        "accent_color": "#FFB800",
+        "description": "Rooftop bar & nightlife destination",
+        "features": ["booth_booking", "fast_lane", "auctions"],
+        "points_rate": 1.0,
+        "image_url": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800"
+    },
+    "su_casa_gold_coast": {
+        "id": "su_casa_gold_coast",
+        "name": "Su Casa Gold Coast",
+        "type": "nightclub",
+        "region": "gold_coast",
+        "location": "Surfers Paradise, Gold Coast",
+        "address": "Orchid Ave, Surfers Paradise QLD 4217",
+        "coordinates": {"lat": -28.0023, "lng": 153.4295},
+        "accent_color": "#FF6B35",
+        "description": "Late-night club on the Gold Coast",
+        "features": ["booth_booking", "fast_lane", "auctions"],
+        "points_rate": 1.0,
+        "image_url": "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=800"
+    },
+    "juju": {
+        "id": "juju",
+        "name": "Juju Mermaid Beach",
+        "type": "restaurant",
+        "region": "gold_coast",
+        "location": "Nobby Beach, Gold Coast",
+        "address": "2 Albatross Ave, Mermaid Beach QLD 4218",
+        "coordinates": {"lat": -28.0450, "lng": 153.4380},
+        "accent_color": "#00D4AA",
+        "description": "Restaurant & rooftop bar with ocean views",
+        "features": ["table_booking"],
+        "points_rate": 0.5,
+        "image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800"
+    },
+    "night_market": {
+        "id": "night_market",
+        "name": "Night Market",
+        "type": "restaurant",
+        "region": "brisbane",
+        "location": "Fortitude Valley, Brisbane",
+        "address": "Chinatown Mall, Fortitude Valley QLD 4006",
+        "coordinates": {"lat": -27.4580, "lng": 153.0345},
+        "accent_color": "#FF4757",
+        "description": "Asian-inspired dining experience",
+        "features": ["table_booking"],
+        "points_rate": 0.5,
+        "image_url": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800"
+    },
+    "ember_and_ash": {
+        "id": "ember_and_ash",
+        "name": "Ember and Ash",
+        "type": "restaurant",
+        "region": "brisbane",
+        "location": "Brisbane CBD",
+        "address": "Brisbane CBD QLD 4000",
+        "coordinates": {"lat": -27.4698, "lng": 153.0251},
+        "accent_color": "#FFA502",
+        "description": "Restaurant, cafe & bar",
+        "features": ["table_booking"],
+        "points_rate": 0.5,
+        "image_url": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800"
+    }
+}
