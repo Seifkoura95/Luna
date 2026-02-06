@@ -296,31 +296,94 @@ async def get_auctions(venue_id: Optional[str] = None, status: Optional[str] = N
     auctions = await db.auctions.find(query).sort("start_time", 1).to_list(50)
     return clean_mongo_docs(auctions)
 
+@api_router.get("/auctions/{auction_id}")
+async def get_auction_detail(auction_id: str):
+    """Get detailed auction info with bid history"""
+    auction = await db.auctions.find_one({"id": auction_id})
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    
+    # Get bid history
+    bids = await db.bids.find({"auction_id": auction_id}).sort("timestamp", -1).to_list(20)
+    
+    auction_data = clean_mongo_doc(auction)
+    auction_data["bid_history"] = clean_mongo_docs(bids)
+    auction_data["total_bids"] = len(bids)
+    
+    return auction_data
+
+class PlaceBidRequest(BaseModel):
+    auction_id: str
+    amount: float
+    max_bid: Optional[float] = None  # For auto-bidding
+
 @api_router.post("/auctions/bid")
-async def place_bid(request: Request, auction_id: str, amount: float):
+async def place_bid(request: Request, bid_request: PlaceBidRequest):
     auth_header = request.headers.get("authorization")
     current_user = get_current_user(auth_header)
-    auction = await db.auctions.find_one({"id": auction_id})
+    
+    auction = await db.auctions.find_one({"id": bid_request.auction_id})
     if not auction:
         raise HTTPException(status_code=404, detail="Auction not found")
     if auction["status"] != "active":
         raise HTTPException(status_code=400, detail="Auction not active")
-    if amount <= auction["current_bid"]:
-        raise HTTPException(status_code=400, detail="Bid must be higher than current bid")
+    
+    # Check max bid limit
+    max_limit = auction.get("max_bid_limit", 10000)
+    if bid_request.amount > max_limit:
+        raise HTTPException(status_code=400, detail=f"Bid cannot exceed ${max_limit}")
+    
+    min_bid = auction["current_bid"] + auction.get("min_increment", 5)
+    if bid_request.amount < min_bid:
+        raise HTTPException(status_code=400, detail=f"Bid must be at least ${min_bid}")
+    
     user = await db.users.find_one({"user_id": current_user["user_id"]})
+    previous_winner_id = auction.get("winner_id")
+    
+    # Update auction
     await db.auctions.update_one(
-        {"id": auction_id},
-        {"$set": {"current_bid": amount, "winner_id": user["user_id"], "winner_name": user["name"]}}
+        {"id": bid_request.auction_id},
+        {"$set": {
+            "current_bid": bid_request.amount, 
+            "winner_id": user["user_id"], 
+            "winner_name": user["name"],
+            "last_bid_time": datetime.now(timezone.utc)
+        }}
     )
+    
+    # Record bid
     await db.bids.insert_one({
         "id": str(uuid.uuid4()),
-        "auction_id": auction_id,
+        "auction_id": bid_request.auction_id,
         "user_id": user["user_id"],
-        "amount": amount,
+        "user_name": user["name"],
+        "amount": bid_request.amount,
+        "max_bid": bid_request.max_bid,
         "timestamp": datetime.now(timezone.utc)
     })
-    updated_auction = await db.auctions.find_one({"id": auction_id})
+    
+    # Notify previous winner they've been outbid
+    if previous_winner_id and previous_winner_id != user["user_id"]:
+        await db.auction_notifications.insert_one({
+            "id": str(uuid.uuid4()),
+            "user_id": previous_winner_id,
+            "auction_id": bid_request.auction_id,
+            "auction_title": auction["title"],
+            "type": "outbid",
+            "message": f"You've been outbid on {auction['title']}! Current bid: ${bid_request.amount}",
+            "new_bid": bid_request.amount,
+            "read": False,
+            "created_at": datetime.now(timezone.utc)
+        })
+    
+    updated_auction = await db.auctions.find_one({"id": bid_request.auction_id})
     return {"message": "Bid placed successfully!", "auction": clean_mongo_doc(updated_auction)}
+
+@api_router.get("/auctions/{auction_id}/bids")
+async def get_auction_bids(auction_id: str):
+    """Get bid history for an auction"""
+    bids = await db.bids.find({"auction_id": auction_id}).sort("timestamp", -1).to_list(50)
+    return clean_mongo_docs(bids)
 
 # ====== PHOTOS API ======
 
