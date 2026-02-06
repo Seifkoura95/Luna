@@ -48,6 +48,11 @@ export default function TabLayout() {
         headerTintColor: colors.textPrimary,
         headerRight: () => <HeaderRight />,
         headerShadowVisible: false,
+        headerLeft: () => (
+          <View style={styles.headerLeft}>
+            <Ionicons name="moon" size={20} color={colors.accent} style={{ marginRight: spacing.xs }} />
+          </View>
+        ),
       }}
     >
       <Tabs.Screen
@@ -97,6 +102,18 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="events"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="photos"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
@@ -113,8 +130,8 @@ const styles = StyleSheet.create({
   },
   tabBarLabel: {
     fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.3,
+    fontWeight: '700',
+    letterSpacing: 0.5,
     marginTop: 4,
   },
   tabBarItem: {
@@ -146,9 +163,17 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: colors.textPrimary,
-    fontWeight: '800',
-    fontSize: 18,
-    letterSpacing: 6,
+    fontWeight: '900',
+    fontSize: 20,
+    letterSpacing: 8,
+    textShadowColor: colors.accent,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  headerLeft: {
+    marginLeft: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   headerRight: {
     marginRight: spacing.md,
