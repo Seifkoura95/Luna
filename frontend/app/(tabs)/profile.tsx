@@ -639,6 +639,9 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  content: {
+    paddingBottom: spacing.xxl,
+  },
   header: {
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
