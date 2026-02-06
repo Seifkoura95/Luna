@@ -562,13 +562,14 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     padding: 20,
   },
+  // Venue Logo - consistent sizing
   venueLogo: {
     position: 'absolute',
     top: 16,
     right: 16,
-    width: 60,
-    height: 40,
-    opacity: 0.9,
+    width: 70,
+    height: 28,
+    opacity: 0.95,
   },
   featuredContent: {
     gap: 6,
