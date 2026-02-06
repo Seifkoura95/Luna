@@ -202,12 +202,14 @@ export default function ProfileScreen() {
       
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={{ paddingTop: insets.top }}
+        contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
         showsVerticalScrollIndicator={false}
       >
+        {/* Consistent Header with Points shown */}
+        <PageHeader title="PROFILE" showPoints={true} />
         {/* Profile Header */}
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
