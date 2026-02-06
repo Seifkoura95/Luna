@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
+import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 
 const TabBarIcon = ({ name, color, focused }: { name: keyof typeof Ionicons.glyphMap; color: string; focused: boolean }) => (
   <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
