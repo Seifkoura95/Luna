@@ -1,286 +1,313 @@
-diff --git a/backend/server.py b/backend/server.py
-index 1ddebc3..0206886 100644
---- a/backend/server.py
-+++ b/backend/server.py
-@@ -1014,7 +1014,7 @@ async def get_user_photos(current_user: User = Depends(get_current_user)):
-                 "tag_id": tag["id"],
-                 "tag_status": tag["status"],
-                 "purchase_price": tag["purchase_price"],
--                "ai_enhanced": tag["ai_enhanced"],
-+                "ai_enhanced": tag.get("ai_enhanced", False),
-                 "approved_at": tag.get("approved_at"),
-                 "purchased_at": tag.get("purchased_at")
-             })
-@@ -1156,8 +1156,8 @@ async def get_purchased_photos(current_user: User = Depends(get_current_user)):
-         if photo:
-             result.append({
-                 **photo,
--                "ai_enhanced": tag["ai_enhanced"],
--                "purchased_at": tag["purchased_at"]
-+                "ai_enhanced": tag.get("ai_enhanced", False),
-+                "purchased_at": tag.get("purchased_at")
-             })
-     
-     return result
-@@ -1187,9 +1187,22 @@ async def get_night_recap(current_user: User = Depends(get_current_user)):
-     
-     # Get recent photos
-     photos = await get_user_photos(current_user)
--    recent_photos = [p for p in photos if p.get("taken_at") and 
--                     (datetime.fromisoformat(str(p["taken_at"]).replace("Z", "+00:00")) if isinstance(p["taken_at"], str) 
--                      else p["taken_at"]) >= last_24h][:10]
-+    recent_photos = []
-+    for p in photos:
-+        if p.get("taken_at"):
-+            taken_at = p["taken_at"]
-+            if isinstance(taken_at, str):
-+                try:
-+                    taken_at = datetime.fromisoformat(str(taken_at).replace("Z", "+00:00"))
-+                except:
-+                    continue
-+            elif taken_at.tzinfo is None:
-+                taken_at = taken_at.replace(tzinfo=timezone.utc)
-+            
-+            if taken_at >= last_24h:
-+                recent_photos.append(p)
-+                if len(recent_photos) >= 10:
-+                    break
-     
-     return {
-         "date": now.date().isoformat(),
+diff --git a/frontend/src/components/QRCode.tsx b/frontend/src/components/QRCode.tsx
+index cc5d2e0..65a8b10 100644
+--- a/frontend/src/components/QRCode.tsx
++++ b/frontend/src/components/QRCode.tsx
+@@ -23,7 +23,7 @@ export const QRCode: React.FC<QRCodeProps> = ({ size = 200, venueId }) => {
+     try {
+       setLoading(true);
+       setError(null);
+-      const data = await api.getQRData();
++      const data = await api.getQRData(venueId);
+       setQrData(data.qr_data);
+       setCountdown(data.expires_in);
+       if (Platform.OS !== 'web') {
+@@ -38,7 +38,7 @@ export const QRCode: React.FC<QRCodeProps> = ({ size = 200, venueId }) => {
+ 
+   useEffect(() => {
+     fetchQRData();
+-  }, []);
++  }, [venueId]);
+ 
+   useEffect(() => {
+     if (countdown <= 0) {
 diff --git a/model.patch b/model.patch
-index 6490dfc..e69de29 100644
+index 63f57f0..e69de29 100644
 --- a/model.patch
 +++ b/model.patch
-@@ -1,164 +0,0 @@
+@@ -1,286 +0,0 @@
+-diff --git a/backend/server.py b/backend/server.py
+-index 1ddebc3..0206886 100644
+---- a/backend/server.py
+-+++ b/backend/server.py
+-@@ -1014,7 +1014,7 @@ async def get_user_photos(current_user: User = Depends(get_current_user)):
+-                 "tag_id": tag["id"],
+-                 "tag_status": tag["status"],
+-                 "purchase_price": tag["purchase_price"],
+--                "ai_enhanced": tag["ai_enhanced"],
+-+                "ai_enhanced": tag.get("ai_enhanced", False),
+-                 "approved_at": tag.get("approved_at"),
+-                 "purchased_at": tag.get("purchased_at")
+-             })
+-@@ -1156,8 +1156,8 @@ async def get_purchased_photos(current_user: User = Depends(get_current_user)):
+-         if photo:
+-             result.append({
+-                 **photo,
+--                "ai_enhanced": tag["ai_enhanced"],
+--                "purchased_at": tag["purchased_at"]
+-+                "ai_enhanced": tag.get("ai_enhanced", False),
+-+                "purchased_at": tag.get("purchased_at")
+-             })
+-     
+-     return result
+-@@ -1187,9 +1187,22 @@ async def get_night_recap(current_user: User = Depends(get_current_user)):
+-     
+-     # Get recent photos
+-     photos = await get_user_photos(current_user)
+--    recent_photos = [p for p in photos if p.get("taken_at") and 
+--                     (datetime.fromisoformat(str(p["taken_at"]).replace("Z", "+00:00")) if isinstance(p["taken_at"], str) 
+--                      else p["taken_at"]) >= last_24h][:10]
+-+    recent_photos = []
+-+    for p in photos:
+-+        if p.get("taken_at"):
+-+            taken_at = p["taken_at"]
+-+            if isinstance(taken_at, str):
+-+                try:
+-+                    taken_at = datetime.fromisoformat(str(taken_at).replace("Z", "+00:00"))
+-+                except:
+-+                    continue
+-+            elif taken_at.tzinfo is None:
+-+                taken_at = taken_at.replace(tzinfo=timezone.utc)
+-+            
+-+            if taken_at >= last_24h:
+-+                recent_photos.append(p)
+-+                if len(recent_photos) >= 10:
+-+                    break
+-     
+-     return {
+-         "date": now.date().isoformat(),
+-diff --git a/model.patch b/model.patch
+-index 6490dfc..e69de29 100644
+---- a/model.patch
+-+++ b/model.patch
+-@@ -1,164 +0,0 @@
+--diff --git a/test_result.md b/test_result.md
+--index ee8d431..20d15a4 100644
+----- a/test_result.md
+--+++ b/test_result.md
+--@@ -107,99 +107,123 @@ user_problem_statement: "Build Eclipse Brisbane VIP App - Premium nightclub mobi
+-- backend:
+--   - task: "Auth Session Exchange API"
+--     implemented: true
+---    working: "NA"
+--+    working: true
+--     file: "/app/backend/server.py"
+--     stuck_count: 0
+--     priority: "high"
+---    needs_retesting: true
+--+    needs_retesting: false
+--     status_history:
+--       - working: "NA"
+--         agent: "main"
+--         comment: "Implemented Emergent Google OAuth session exchange endpoint at POST /api/auth/session"
+--+      - working: true
+--+        agent: "testing"
+--+        comment: "✅ TESTED: POST /api/auth/session endpoint accessible and correctly rejects invalid sessions. Authentication flow structure is properly implemented."
+-- 
+--   - task: "QR Code Generation API"
+--     implemented: true
+---    working: "NA"
+--+    working: true
+--     file: "/app/backend/server.py"
+--     stuck_count: 0
+--     priority: "high"
+---    needs_retesting: true
+--+    needs_retesting: false
+--     status_history:
+--       - working: "NA"
+--         agent: "main"
+--         comment: "Implemented QR code generation with HMAC signature at GET /api/checkin/qr"
+--+      - working: true
+--+        agent: "testing"
+--+        comment: "✅ TESTED: GET /api/checkin/qr successfully generates QR data with HMAC signature, expires in 60 seconds. Authentication required and working."
+-- 
+--   - task: "Rewards CRUD API"
+--     implemented: true
+---    working: "NA"
+--+    working: true
+--     file: "/app/backend/server.py"
+--     stuck_count: 0
+--     priority: "high"
+---    needs_retesting: true
+--+    needs_retesting: false
+--     status_history:
+--       - working: "NA"
+--         agent: "main"
+--         comment: "Implemented GET /api/rewards and POST /api/rewards/redeem endpoints"
+--+      - working: true
+--+        agent: "testing"
+--+        comment: "✅ TESTED: All rewards APIs working - GET /api/rewards (8 rewards), category filtering (?category=drinks returns 3), POST /api/rewards/redeem successful with validation code, GET /api/rewards/redemptions retrieves user history."
+-- 
+--   - task: "Missions API"
+--     implemented: true
+---    working: "NA"
+--+    working: true
+--     file: "/app/backend/server.py"
+--     stuck_count: 0
+--     priority: "medium"
+---    needs_retesting: true
+--+    needs_retesting: false
+--     status_history:
+--       - working: "NA"
+--         agent: "main"
+--         comment: "Implemented GET /api/missions with user progress tracking"
+--+      - working: true
+--+        agent: "testing"
+--+        comment: "✅ TESTED: GET /api/missions returns 4 missions with user progress tracking. Authentication required and working properly."
+-- 
+--   - task: "Boosts API"
+--     implemented: true
+---    working: "NA"
+--+    working: true
+--     file: "/app/backend/server.py"
+--     stuck_count: 0
+--     priority: "medium"
+---    needs_retesting: true
+--+    needs_retesting: false
+--     status_history:
+--       - working: "NA"
+--         agent: "main"
+--         comment: "Implemented GET /api/boosts and /api/boosts/upcoming endpoints"
+--+      - working: true
+--+        agent: "testing"
+--+        comment: "✅ TESTED: GET /api/boosts (0 active) and GET /api/boosts/upcoming (2 upcoming) both working correctly. Time-based filtering functioning properly."
+-- 
+--   - task: "Events API"
+--     implemented: true
+---    working: "NA"
+--+    working: true
+--     file: "/app/backend/server.py"
+--     stuck_count: 0
+--     priority: "medium"
+---    needs_retesting: true
+--+    needs_retesting: false
+--     status_history:
+--       - working: "NA"
+--         agent: "main"
+--         comment: "Implemented GET /api/events endpoint"
+--+      - working: true
+--+        agent: "testing"
+--+        comment: "✅ TESTED: GET /api/events returns 3 upcoming events with proper date filtering. Public endpoint working correctly."
+-- 
+--   - task: "Queue Status API"
+--     implemented: true
+---    working: "NA"
+--+    working: true
+--     file: "/app/backend/server.py"
+--     stuck_count: 0
+--     priority: "low"
+---    needs_retesting: true
+--+    needs_retesting: false
+--     status_history:
+--       - working: "NA"
+--         agent: "main"
+--         comment: "Implemented GET /api/queue/status with mock data"
+--+      - working: true
+--+        agent: "testing"
+--+        comment: "✅ TESTED: GET /api/queue/status returns mock queue data (status: medium, 130 people inside). Mock implementation working as expected."
+-- 
+--   - task: "Membership Tiers API"
+--     implemented: true
+---    working: "NA"
+--+    working: true
+--     file: "/app/backend/server.py"
+--     stuck_count: 0
+--     priority: "medium"
+---    needs_retesting: true
+--+    needs_retesting: false
+--     status_history:
+--       - working: "NA"
+--         agent: "main"
+--         comment: "Implemented GET /api/membership/tiers and POST /api/membership/upgrade"
+--+      - working: true
+--+        agent: "testing"
+--+        comment: "✅ TESTED: GET /api/membership/tiers returns 5 tiers, POST /api/membership/upgrade successfully upgraded bronze→silver with 500 bonus points. Mock payment integration working."
+-- 
+--   - task: "Data Seed API"
+--     implemented: true
+--@@ -281,15 +305,13 @@ metadata:
+--   run_ui: false
+-- 
+-- test_plan:
+---  current_focus:
+---    - "Auth Session Exchange API"
+---    - "QR Code Generation API"
+---    - "Rewards CRUD API"
+---    - "Missions API"
+--+  current_focus: []
+--   stuck_tasks: []
+---  test_all: true
+--+  test_all: false
+--   test_priority: "high_first"
+-- 
+-- agent_communication:
+--   - agent: "main"
+--     message: "Implemented full Eclipse VIP MVP backend and frontend. Backend has all APIs for auth, QR check-in, rewards, missions, boosts, events, membership. Frontend has login, tabs with Tonight Pass, Rewards, Events, Profile screens. Please test backend APIs first."
+--+  - agent: "testing"
+--+    message: "✅ BACKEND TESTING COMPLETE: All 8 backend APIs tested successfully with 100% pass rate (18/18 tests). Auth session exchange, QR generation, rewards CRUD, missions, boosts, events, queue status, and membership APIs all working correctly. Authentication flow, data persistence, and business logic validated. Backend is production-ready."
 -diff --git a/test_result.md b/test_result.md
--index ee8d431..20d15a4 100644
+-index 20d15a4..ce628a1 100644
 ---- a/test_result.md
 -+++ b/test_result.md
--@@ -107,99 +107,123 @@ user_problem_statement: "Build Eclipse Brisbane VIP App - Premium nightclub mobi
-- backend:
--   - task: "Auth Session Exchange API"
--     implemented: true
---    working: "NA"
--+    working: true
--     file: "/app/backend/server.py"
--     stuck_count: 0
--     priority: "high"
---    needs_retesting: true
--+    needs_retesting: false
--     status_history:
--       - working: "NA"
+-@@ -298,10 +298,55 @@ frontend:
 -         agent: "main"
--         comment: "Implemented Emergent Google OAuth session exchange endpoint at POST /api/auth/session"
+-         comment: "Implemented profile with stats, membership tiers, redemptions, logout"
+- 
+-+  - task: "Auction APIs"
+-+    implemented: true
+-+    working: true
+-+    file: "/app/backend/server.py"
+-+    stuck_count: 0
+-+    priority: "high"
+-+    needs_retesting: false
+-+    status_history:
+-+      - working: "NA"
+-+        agent: "main"
+-+        comment: "Implemented auction system with bidding, claiming, and user management"
 -+      - working: true
 -+        agent: "testing"
--+        comment: "✅ TESTED: POST /api/auth/session endpoint accessible and correctly rejects invalid sessions. Authentication flow structure is properly implemented."
-- 
--   - task: "QR Code Generation API"
--     implemented: true
---    working: "NA"
+-+        comment: "✅ TESTED: All 6 auction APIs working correctly - GET /api/auctions (4 auctions), GET /api/auctions?status=active (1 active), GET /api/auctions/a2 (details with bids), POST /api/auctions/bid ($55 bid placed), GET /api/auctions/user/won (0 won), POST /api/auctions/a2/claim (correct validation). Bidding logic, status updates, and authentication all functioning properly."
+-+
+-+  - task: "Photo Management APIs"
+-+    implemented: true
 -+    working: true
--     file: "/app/backend/server.py"
--     stuck_count: 0
--     priority: "high"
---    needs_retesting: true
+-+    file: "/app/backend/server.py"
+-+    stuck_count: 0
+-+    priority: "high"
 -+    needs_retesting: false
--     status_history:
--       - working: "NA"
--         agent: "main"
--         comment: "Implemented QR code generation with HMAC signature at GET /api/checkin/qr"
+-+    status_history:
+-+      - working: "NA"
+-+        agent: "main"
+-+        comment: "Implemented photo tagging, approval, purchase, and recap system"
 -+      - working: true
 -+        agent: "testing"
--+        comment: "✅ TESTED: GET /api/checkin/qr successfully generates QR data with HMAC signature, expires in 60 seconds. Authentication required and working."
-- 
--   - task: "Rewards CRUD API"
--     implemented: true
---    working: "NA"
+-+        comment: "✅ TESTED: All 6 photo APIs working correctly - GET /api/photos (4 tagged photos), GET /api/photos/pending (3 pending), POST /api/photos/approve (approved successfully), POST /api/photos/purchase ($5 purchase), GET /api/photos/purchased (1 purchased), GET /api/photos/recap (night recap generated). Photo workflow from tagging to purchase functioning properly. Fixed KeyError issues with ai_enhanced field and datetime comparison in recap."
+-+
+-+  - task: "Admin Photo API"
+-+    implemented: true
 -+    working: true
--     file: "/app/backend/server.py"
--     stuck_count: 0
--     priority: "high"
---    needs_retesting: true
+-+    file: "/app/backend/server.py"
+-+    stuck_count: 0
+-+    priority: "medium"
 -+    needs_retesting: false
--     status_history:
--       - working: "NA"
--         agent: "main"
--         comment: "Implemented GET /api/rewards and POST /api/rewards/redeem endpoints"
+-+    status_history:
+-+      - working: "NA"
+-+        agent: "main"
+-+        comment: "Implemented admin endpoint for photographers to tag photos to users"
 -+      - working: true
 -+        agent: "testing"
--+        comment: "✅ TESTED: All rewards APIs working - GET /api/rewards (8 rewards), category filtering (?category=drinks returns 3), POST /api/rewards/redeem successful with validation code, GET /api/rewards/redemptions retrieves user history."
-- 
--   - task: "Missions API"
--     implemented: true
---    working: "NA"
--+    working: true
--     file: "/app/backend/server.py"
--     stuck_count: 0
--     priority: "medium"
---    needs_retesting: true
--+    needs_retesting: false
--     status_history:
--       - working: "NA"
--         agent: "main"
--         comment: "Implemented GET /api/missions with user progress tracking"
--+      - working: true
--+        agent: "testing"
--+        comment: "✅ TESTED: GET /api/missions returns 4 missions with user progress tracking. Authentication required and working properly."
-- 
--   - task: "Boosts API"
--     implemented: true
---    working: "NA"
--+    working: true
--     file: "/app/backend/server.py"
--     stuck_count: 0
--     priority: "medium"
---    needs_retesting: true
--+    needs_retesting: false
--     status_history:
--       - working: "NA"
--         agent: "main"
--         comment: "Implemented GET /api/boosts and /api/boosts/upcoming endpoints"
--+      - working: true
--+        agent: "testing"
--+        comment: "✅ TESTED: GET /api/boosts (0 active) and GET /api/boosts/upcoming (2 upcoming) both working correctly. Time-based filtering functioning properly."
-- 
--   - task: "Events API"
--     implemented: true
---    working: "NA"
--+    working: true
--     file: "/app/backend/server.py"
--     stuck_count: 0
--     priority: "medium"
---    needs_retesting: true
--+    needs_retesting: false
--     status_history:
--       - working: "NA"
--         agent: "main"
--         comment: "Implemented GET /api/events endpoint"
--+      - working: true
--+        agent: "testing"
--+        comment: "✅ TESTED: GET /api/events returns 3 upcoming events with proper date filtering. Public endpoint working correctly."
-- 
--   - task: "Queue Status API"
--     implemented: true
---    working: "NA"
--+    working: true
--     file: "/app/backend/server.py"
--     stuck_count: 0
--     priority: "low"
---    needs_retesting: true
--+    needs_retesting: false
--     status_history:
--       - working: "NA"
--         agent: "main"
--         comment: "Implemented GET /api/queue/status with mock data"
--+      - working: true
--+        agent: "testing"
--+        comment: "✅ TESTED: GET /api/queue/status returns mock queue data (status: medium, 130 people inside). Mock implementation working as expected."
-- 
--   - task: "Membership Tiers API"
--     implemented: true
---    working: "NA"
--+    working: true
--     file: "/app/backend/server.py"
--     stuck_count: 0
--     priority: "medium"
---    needs_retesting: true
--+    needs_retesting: false
--     status_history:
--       - working: "NA"
--         agent: "main"
--         comment: "Implemented GET /api/membership/tiers and POST /api/membership/upgrade"
--+      - working: true
--+        agent: "testing"
--+        comment: "✅ TESTED: GET /api/membership/tiers returns 5 tiers, POST /api/membership/upgrade successfully upgraded bronze→silver with 500 bonus points. Mock payment integration working."
-- 
--   - task: "Data Seed API"
--     implemented: true
--@@ -281,15 +305,13 @@ metadata:
+-+        comment: "✅ TESTED: POST /api/admin/photos/tag working correctly - successfully tagged photo to user 'Auction Tester'. Admin functionality for photographer workflow operational."
+-+
+- metadata:
+-   created_by: "main_agent"
+-   version: "1.0"
+--  test_sequence: 1
+-+  test_sequence: 2
 -   run_ui: false
 - 
 - test_plan:
---  current_focus:
---    - "Auth Session Exchange API"
---    - "QR Code Generation API"
---    - "Rewards CRUD API"
---    - "Missions API"
--+  current_focus: []
--   stuck_tasks: []
---  test_all: true
--+  test_all: false
--   test_priority: "high_first"
-- 
-- agent_communication:
--   - agent: "main"
+-@@ -315,3 +360,5 @@ agent_communication:
 -     message: "Implemented full Eclipse VIP MVP backend and frontend. Backend has all APIs for auth, QR check-in, rewards, missions, boosts, events, membership. Frontend has login, tabs with Tonight Pass, Rewards, Events, Profile screens. Please test backend APIs first."
+-   - agent: "testing"
+-     message: "✅ BACKEND TESTING COMPLETE: All 8 backend APIs tested successfully with 100% pass rate (18/18 tests). Auth session exchange, QR generation, rewards CRUD, missions, boosts, events, queue status, and membership APIs all working correctly. Authentication flow, data persistence, and business logic validated. Backend is production-ready."
 -+  - agent: "testing"
--+    message: "✅ BACKEND TESTING COMPLETE: All 8 backend APIs tested successfully with 100% pass rate (18/18 tests). Auth session exchange, QR generation, rewards CRUD, missions, boosts, events, queue status, and membership APIs all working correctly. Authentication flow, data persistence, and business logic validated. Backend is production-ready."
-diff --git a/test_result.md b/test_result.md
-index 20d15a4..ce628a1 100644
---- a/test_result.md
-+++ b/test_result.md
-@@ -298,10 +298,55 @@ frontend:
-         agent: "main"
-         comment: "Implemented profile with stats, membership tiers, redemptions, logout"
- 
-+  - task: "Auction APIs"
-+    implemented: true
-+    working: true
-+    file: "/app/backend/server.py"
-+    stuck_count: 0
-+    priority: "high"
-+    needs_retesting: false
-+    status_history:
-+      - working: "NA"
-+        agent: "main"
-+        comment: "Implemented auction system with bidding, claiming, and user management"
-+      - working: true
-+        agent: "testing"
-+        comment: "✅ TESTED: All 6 auction APIs working correctly - GET /api/auctions (4 auctions), GET /api/auctions?status=active (1 active), GET /api/auctions/a2 (details with bids), POST /api/auctions/bid ($55 bid placed), GET /api/auctions/user/won (0 won), POST /api/auctions/a2/claim (correct validation). Bidding logic, status updates, and authentication all functioning properly."
-+
-+  - task: "Photo Management APIs"
-+    implemented: true
-+    working: true
-+    file: "/app/backend/server.py"
-+    stuck_count: 0
-+    priority: "high"
-+    needs_retesting: false
-+    status_history:
-+      - working: "NA"
-+        agent: "main"
-+        comment: "Implemented photo tagging, approval, purchase, and recap system"
-+      - working: true
-+        agent: "testing"
-+        comment: "✅ TESTED: All 6 photo APIs working correctly - GET /api/photos (4 tagged photos), GET /api/photos/pending (3 pending), POST /api/photos/approve (approved successfully), POST /api/photos/purchase ($5 purchase), GET /api/photos/purchased (1 purchased), GET /api/photos/recap (night recap generated). Photo workflow from tagging to purchase functioning properly. Fixed KeyError issues with ai_enhanced field and datetime comparison in recap."
-+
-+  - task: "Admin Photo API"
-+    implemented: true
-+    working: true
-+    file: "/app/backend/server.py"
-+    stuck_count: 0
-+    priority: "medium"
-+    needs_retesting: false
-+    status_history:
-+      - working: "NA"
-+        agent: "main"
-+        comment: "Implemented admin endpoint for photographers to tag photos to users"
-+      - working: true
-+        agent: "testing"
-+        comment: "✅ TESTED: POST /api/admin/photos/tag working correctly - successfully tagged photo to user 'Auction Tester'. Admin functionality for photographer workflow operational."
-+
- metadata:
-   created_by: "main_agent"
-   version: "1.0"
--  test_sequence: 1
-+  test_sequence: 2
-   run_ui: false
- 
- test_plan:
-@@ -315,3 +360,5 @@ agent_communication:
-     message: "Implemented full Eclipse VIP MVP backend and frontend. Backend has all APIs for auth, QR check-in, rewards, missions, boosts, events, membership. Frontend has login, tabs with Tonight Pass, Rewards, Events, Profile screens. Please test backend APIs first."
-   - agent: "testing"
-     message: "✅ BACKEND TESTING COMPLETE: All 8 backend APIs tested successfully with 100% pass rate (18/18 tests). Auth session exchange, QR generation, rewards CRUD, missions, boosts, events, queue status, and membership APIs all working correctly. Authentication flow, data persistence, and business logic validated. Backend is production-ready."
-+  - agent: "testing"
-+    message: "✅ AUCTION & PHOTO APIs TESTING COMPLETE: All 13 new APIs tested successfully with 100% pass rate (13/13 tests). Auction APIs: GET /api/auctions, GET /api/auctions?status=active, GET /api/auctions/{id}, POST /api/auctions/bid, GET /api/auctions/user/won, POST /api/auctions/{id}/claim all working. Photo APIs: GET /api/photos, GET /api/photos/pending, POST /api/photos/approve, POST /api/photos/purchase, GET /api/photos/purchased, GET /api/photos/recap all working. Admin API: POST /api/admin/photos/tag working. Fixed KeyError issues with ai_enhanced field and datetime comparison. All auction and photo management features are production-ready."
+-+    message: "✅ AUCTION & PHOTO APIs TESTING COMPLETE: All 13 new APIs tested successfully with 100% pass rate (13/13 tests). Auction APIs: GET /api/auctions, GET /api/auctions?status=active, GET /api/auctions/{id}, POST /api/auctions/bid, GET /api/auctions/user/won, POST /api/auctions/{id}/claim all working. Photo APIs: GET /api/photos, GET /api/photos/pending, POST /api/photos/approve, POST /api/photos/purchase, GET /api/photos/purchased, GET /api/photos/recap all working. Admin API: POST /api/admin/photos/tag working. Fixed KeyError issues with ai_enhanced field and datetime comparison. All auction and photo management features are production-ready."
