@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Image,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
@@ -19,6 +20,7 @@ import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { PageHeader } from '../../src/components/PageHeader';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import { useFonts, fonts } from '../../src/hooks/useFonts';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 40;
@@ -26,6 +28,7 @@ const CARD_WIDTH = width - 40;
 export default function TonightScreen() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
+  const fontsLoaded = useFonts();
   const [venues, setVenues] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,12 +71,10 @@ export default function TonightScreen() {
 
   // Featured events (first 5)
   const featuredEvents = useMemo(() => {
-    return events
-      .filter(e => e.featured)
-      .slice(0, 5);
+    return events.filter(e => e.featured).slice(0, 5);
   }, [events]);
 
-  // Tonight's events (within 24 hours)
+  // Tonight's events
   const tonightsEvents = useMemo(() => {
     const now = new Date();
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
@@ -100,6 +101,15 @@ export default function TonightScreen() {
     }
   };
 
+  if (!fontsLoaded) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StarfieldBackground starCount={30} />
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <StarfieldBackground starCount={50} shootingStarCount={2} />
@@ -119,36 +129,82 @@ export default function TonightScreen() {
           showPoints={false} 
         />
 
-        {/* Quick Actions - Revenue Focused */}
-        <View style={styles.quickActions}>
+        {/* Quick Actions - Premium Redesigned */}
+        <View style={styles.quickActionsContainer}>
           <TouchableOpacity 
-            style={styles.quickActionBtn}
+            style={styles.primaryAction}
             onPress={() => { handleHaptic(); router.push('/table-booking'); }}
+            activeOpacity={0.85}
           >
-            <LinearGradient colors={[colors.accent, colors.accentDark]} style={styles.quickActionGradient}>
-              <Ionicons name="restaurant" size={22} color="#FFF" />
-              <Text style={styles.quickActionText}>BOOK VIP TABLE</Text>
+            <LinearGradient 
+              colors={['#E31837', '#B8132C', '#8A0F22']} 
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.primaryActionGradient}
+            >
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="restaurant-outline" size={26} color="#FFF" />
+              </View>
+              <View style={styles.actionTextContainer}>
+                <Text style={[styles.actionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>VIP Tables</Text>
+                <Text style={[styles.actionSubtitle, fontsLoaded && { fontFamily: fonts.regular }]}>Book premium booths</Text>
+              </View>
+              <Ionicons name="arrow-forward" size={20} color="rgba(255,255,255,0.6)" />
             </LinearGradient>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.quickActionBtn}
-            onPress={() => { handleHaptic(); router.push('/auctions'); }}
-          >
-            <LinearGradient colors={[colors.gold, colors.goldDark]} style={styles.quickActionGradient}>
-              <Ionicons name="trophy" size={22} color="#000" />
-              <Text style={[styles.quickActionText, { color: '#000' }]}>AUCTIONS</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+
+          <View style={styles.secondaryActionsRow}>
+            <TouchableOpacity 
+              style={styles.secondaryAction}
+              onPress={() => { handleHaptic(); router.push('/auctions'); }}
+              activeOpacity={0.85}
+            >
+              <LinearGradient 
+                colors={['rgba(212,175,55,0.15)', 'rgba(212,175,55,0.05)']}
+                style={styles.secondaryActionGradient}
+              >
+                <Ionicons name="trophy" size={22} color={colors.gold} />
+                <Text style={[styles.secondaryActionText, fontsLoaded && { fontFamily: fonts.semiBold }]}>Auctions</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.secondaryAction}
+              onPress={() => { handleHaptic(); router.push('/guestlist'); }}
+              activeOpacity={0.85}
+            >
+              <LinearGradient 
+                colors={['rgba(0,212,170,0.15)', 'rgba(0,212,170,0.05)']}
+                style={styles.secondaryActionGradient}
+              >
+                <Ionicons name="people" size={22} color="#00D4AA" />
+                <Text style={[styles.secondaryActionText, fontsLoaded && { fontFamily: fonts.semiBold }]}>Guestlist</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.secondaryAction}
+              onPress={() => { handleHaptic(); router.push('/rewards'); }}
+              activeOpacity={0.85}
+            >
+              <LinearGradient 
+                colors={['rgba(139,0,255,0.15)', 'rgba(139,0,255,0.05)']}
+                style={styles.secondaryActionGradient}
+              >
+                <Ionicons name="gift" size={22} color="#8B00FF" />
+                <Text style={[styles.secondaryActionText, fontsLoaded && { fontFamily: fonts.semiBold }]}>Rewards</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Featured Events Section */}
         {featuredEvents.length > 0 && (
           <>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>FEATURED EVENTS</Text>
+              <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>FEATURED EVENTS</Text>
               <TouchableOpacity onPress={() => router.push('/events')}>
-                <Text style={styles.seeAllText}>See All</Text>
+                <Text style={[styles.seeAllText, fontsLoaded && { fontFamily: fonts.medium }]}>See All</Text>
               </TouchableOpacity>
             </View>
 
@@ -171,41 +227,46 @@ export default function TonightScreen() {
                   >
                     <Image source={{ uri: event.image_url }} style={styles.featuredImage} />
                     <LinearGradient
-                      colors={['transparent', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0.98)']}
-                      locations={[0, 0.5, 1]}
+                      colors={['transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']}
+                      locations={[0, 0.4, 1]}
                       style={styles.featuredOverlay}
                     >
-                      {/* Venue Logo */}
                       {venue?.logo_url && (
-                        <Image 
-                          source={{ uri: venue.logo_url }} 
-                          style={styles.venueLogo}
-                          resizeMode="contain"
-                        />
+                        <Image source={{ uri: venue.logo_url }} style={styles.venueLogo} resizeMode="contain" />
                       )}
                       
                       <View style={styles.featuredContent}>
                         <View style={styles.eventMeta}>
                           <View style={[styles.dateBadge, { backgroundColor: venue?.accent_color || colors.accent }]}>
-                            <Text style={styles.dateBadgeText}>{formatEventDate(event.event_date)}</Text>
+                            <Text style={[styles.dateBadgeText, fontsLoaded && { fontFamily: fonts.bold }]}>
+                              {formatEventDate(event.event_date)}
+                            </Text>
                           </View>
                           {event.ticket_price > 0 && (
                             <View style={styles.priceBadge}>
-                              <Text style={styles.priceBadgeText}>${event.ticket_price}</Text>
+                              <Text style={[styles.priceBadgeText, fontsLoaded && { fontFamily: fonts.bold }]}>
+                                ${event.ticket_price}
+                              </Text>
                             </View>
                           )}
                         </View>
                         
-                        <Text style={styles.featuredTitle} numberOfLines={2}>{event.title}</Text>
-                        <Text style={styles.featuredVenue}>{venue?.name || event.venue_name}</Text>
-                        <Text style={styles.featuredDesc} numberOfLines={2}>{event.description}</Text>
+                        <Text style={[styles.featuredTitle, fontsLoaded && { fontFamily: fonts.bold }]} numberOfLines={2}>
+                          {event.title}
+                        </Text>
+                        <Text style={[styles.featuredVenue, fontsLoaded && { fontFamily: fonts.medium }]}>
+                          {venue?.name || event.venue_name}
+                        </Text>
+                        <Text style={[styles.featuredDesc, fontsLoaded && { fontFamily: fonts.regular }]} numberOfLines={2}>
+                          {event.description}
+                        </Text>
                         
                         <TouchableOpacity 
                           style={[styles.ticketButton, { backgroundColor: venue?.accent_color || colors.accent }]}
                           onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
                         >
                           <Ionicons name="ticket" size={18} color="#FFF" />
-                          <Text style={styles.ticketButtonText}>GET TICKETS</Text>
+                          <Text style={[styles.ticketButtonText, fontsLoaded && { fontFamily: fonts.bold }]}>GET TICKETS</Text>
                         </TouchableOpacity>
                       </View>
                     </LinearGradient>
@@ -222,7 +283,7 @@ export default function TonightScreen() {
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
                 <View style={styles.liveDot} />
-                <Text style={styles.sectionTitle}>HAPPENING TONIGHT</Text>
+                <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>HAPPENING TONIGHT</Text>
               </View>
             </View>
 
@@ -238,9 +299,11 @@ export default function TonightScreen() {
                   <Image source={{ uri: event.image_url }} style={styles.eventListImage} />
                   <View style={styles.eventListContent}>
                     <View style={styles.eventListHeader}>
-                      <Text style={styles.eventListTitle} numberOfLines={1}>{event.title}</Text>
+                      <Text style={[styles.eventListTitle, fontsLoaded && { fontFamily: fonts.semiBold }]} numberOfLines={1}>
+                        {event.title}
+                      </Text>
                       {event.ticket_price > 0 && (
-                        <Text style={[styles.eventListPrice, { color: venue?.accent_color || colors.accent }]}>
+                        <Text style={[styles.eventListPrice, { color: venue?.accent_color || colors.accent }, fontsLoaded && { fontFamily: fonts.bold }]}>
                           ${event.ticket_price}
                         </Text>
                       )}
@@ -251,7 +314,9 @@ export default function TonightScreen() {
                       ) : (
                         <View style={[styles.venueDot, { backgroundColor: venue?.accent_color }]} />
                       )}
-                      <Text style={styles.eventListVenue}>{venue?.name || event.venue_name}</Text>
+                      <Text style={[styles.eventListVenue, fontsLoaded && { fontFamily: fonts.regular }]}>
+                        {venue?.name || event.venue_name}
+                      </Text>
                     </View>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
@@ -263,7 +328,7 @@ export default function TonightScreen() {
 
         {/* Venues Section */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>OUR VENUES</Text>
+          <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>OUR VENUES</Text>
         </View>
         
         <ScrollView 
@@ -286,14 +351,15 @@ export default function TonightScreen() {
                 {venue.logo_url ? (
                   <Image source={{ uri: venue.logo_url }} style={styles.venueCardLogo} resizeMode="contain" />
                 ) : (
-                  <Text style={styles.venueCardName}>{venue.name}</Text>
+                  <Text style={[styles.venueCardName, fontsLoaded && { fontFamily: fonts.bold }]}>{venue.name}</Text>
                 )}
-                <Text style={styles.venueCardType}>{venue.tagline || venue.type.toUpperCase()}</Text>
+                <Text style={[styles.venueCardType, fontsLoaded && { fontFamily: fonts.regular }]}>
+                  {venue.tagline || venue.type.toUpperCase()}
+                </Text>
                 
-                {/* Events count badge */}
                 {eventsByVenue[venue.id]?.length > 0 && (
                   <View style={[styles.eventsCountBadge, { backgroundColor: venue.accent_color }]}>
-                    <Text style={styles.eventsCountText}>
+                    <Text style={[styles.eventsCountText, fontsLoaded && { fontFamily: fonts.semiBold }]}>
                       {eventsByVenue[venue.id].length} Events
                     </Text>
                   </View>
@@ -303,7 +369,7 @@ export default function TonightScreen() {
           ))}
         </ScrollView>
 
-        {/* All Upcoming Events by Venue */}
+        {/* Venue Events Sections */}
         {Object.entries(eventsByVenue).slice(0, 3).map(([venueId, venueEvents]) => {
           const venue = getVenueForEvent(venueId);
           if (!venue || venueEvents.length === 0) return null;
@@ -316,11 +382,13 @@ export default function TonightScreen() {
                 ) : (
                   <View style={styles.venueEventNameContainer}>
                     <View style={[styles.venueDotLarge, { backgroundColor: venue.accent_color }]} />
-                    <Text style={styles.venueEventName}>{venue.name}</Text>
+                    <Text style={[styles.venueEventName, fontsLoaded && { fontFamily: fonts.bold }]}>{venue.name}</Text>
                   </View>
                 )}
                 <TouchableOpacity onPress={() => router.push(`/venue/${venueId}`)}>
-                  <Text style={[styles.seeAllText, { color: venue.accent_color }]}>View All</Text>
+                  <Text style={[styles.seeAllText, { color: venue.accent_color }, fontsLoaded && { fontFamily: fonts.medium }]}>
+                    View All
+                  </Text>
                 </TouchableOpacity>
               </View>
               
@@ -340,10 +408,14 @@ export default function TonightScreen() {
                       colors={['transparent', 'rgba(0,0,0,0.9)']}
                       style={styles.smallEventOverlay}
                     >
-                      <Text style={styles.smallEventDate}>{formatEventDate(event.event_date)}</Text>
-                      <Text style={styles.smallEventTitle} numberOfLines={2}>{event.title}</Text>
+                      <Text style={[styles.smallEventDate, fontsLoaded && { fontFamily: fonts.medium }]}>
+                        {formatEventDate(event.event_date)}
+                      </Text>
+                      <Text style={[styles.smallEventTitle, fontsLoaded && { fontFamily: fonts.semiBold }]} numberOfLines={2}>
+                        {event.title}
+                      </Text>
                       {event.ticket_price > 0 && (
-                        <Text style={[styles.smallEventPrice, { color: venue.accent_color }]}>
+                        <Text style={[styles.smallEventPrice, { color: venue.accent_color }, fontsLoaded && { fontFamily: fonts.bold }]}>
                           From ${event.ticket_price}
                         </Text>
                       )}
@@ -373,31 +445,67 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   
-  // Quick Actions
-  quickActions: {
-    flexDirection: 'row',
+  // Quick Actions - Premium Redesigned
+  quickActionsContainer: {
     paddingHorizontal: 20,
+    marginBottom: 28,
     gap: 12,
-    marginBottom: 24,
   },
-  quickActionBtn: {
-    flex: 1,
+  primaryAction: {
     borderRadius: radius.lg,
     overflow: 'hidden',
   },
-  quickActionGradient: {
+  primaryActionGradient: {
     flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  actionIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionTextContainer: {
+    flex: 1,
+  },
+  actionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFF',
+    letterSpacing: 0.5,
+  },
+  actionSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
+  },
+  secondaryActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  secondaryAction: {
+    flex: 1,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  secondaryActionGradient: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
     gap: 8,
   },
-  quickActionText: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#FFF',
-    letterSpacing: 1,
+  secondaryActionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    letterSpacing: 0.3,
   },
   
   // Section Headers
@@ -415,14 +523,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 13,
+    fontWeight: '700',
     color: colors.textSecondary,
     letterSpacing: 2,
   },
   seeAllText: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Medium' : 'sans-serif',
     fontSize: 13,
     color: colors.accent,
     fontWeight: '600',
@@ -441,7 +547,7 @@ const styles = StyleSheet.create({
   },
   featuredCard: {
     width: CARD_WIDTH,
-    height: 380,
+    height: 360,
     borderRadius: radius.xl,
     overflow: 'hidden',
     backgroundColor: colors.backgroundCard,
@@ -465,7 +571,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   featuredContent: {
-    gap: 8,
+    gap: 6,
   },
   eventMeta: {
     flexDirection: 'row',
@@ -479,11 +585,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   dateBadgeText: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#FFF',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   priceBadge: {
     paddingHorizontal: 10,
@@ -492,29 +597,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   priceBadgeText: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
     fontSize: 12,
     fontWeight: '700',
     color: '#FFF',
   },
   featuredTitle: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '700',
     color: colors.textPrimary,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   featuredVenue: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Medium' : 'sans-serif',
     fontSize: 14,
     color: colors.textSecondary,
     marginTop: -2,
   },
   featuredDesc: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textMuted,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   ticketButton: {
     flexDirection: 'row',
@@ -523,14 +624,13 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: radius.md,
-    marginTop: 12,
+    marginTop: 10,
   },
   ticketButtonText: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 13,
+    fontWeight: '700',
     color: '#FFF',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   
   // Tonight's Events List
@@ -545,8 +645,8 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   eventListImage: {
-    width: 64,
-    height: 64,
+    width: 60,
+    height: 60,
     borderRadius: radius.md,
   },
   eventListContent: {
@@ -559,17 +659,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   eventListTitle: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.textPrimary,
     flex: 1,
     marginRight: 8,
   },
   eventListPrice: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   eventListMeta: {
     flexDirection: 'row',
@@ -582,7 +680,6 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   eventListVenue: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
     fontSize: 13,
     color: colors.textSecondary,
   },
@@ -599,8 +696,8 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   venueCard: {
-    width: 160,
-    height: 200,
+    width: 155,
+    height: 195,
     borderRadius: radius.lg,
     overflow: 'hidden',
   },
@@ -616,20 +713,18 @@ const styles = StyleSheet.create({
   },
   venueCardLogo: {
     width: 80,
-    height: 35,
+    height: 32,
     marginBottom: 4,
   },
   venueCardName: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 17,
+    fontWeight: '700',
     color: colors.textPrimary,
   },
   venueCardType: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
-    fontSize: 11,
+    fontSize: 10,
     color: colors.textMuted,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
     marginTop: 2,
   },
   eventsCountBadge: {
@@ -641,9 +736,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   eventsCountText: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Medium' : 'sans-serif',
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#FFF',
   },
   
@@ -660,7 +754,7 @@ const styles = StyleSheet.create({
   },
   venueEventLogo: {
     width: 100,
-    height: 30,
+    height: 28,
   },
   venueEventNameContainer: {
     flexDirection: 'row',
@@ -673,8 +767,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   venueEventName: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
     color: colors.textPrimary,
   },
@@ -683,8 +776,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   smallEventCard: {
-    width: 150,
-    height: 180,
+    width: 145,
+    height: 175,
     borderRadius: radius.md,
     overflow: 'hidden',
   },
@@ -699,22 +792,19 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   smallEventDate: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Medium' : 'sans-serif',
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '500',
     color: colors.textSecondary,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
     marginBottom: 4,
   },
   smallEventTitle: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.textPrimary,
-    lineHeight: 18,
+    lineHeight: 17,
   },
   smallEventPrice: {
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-condensed',
     fontSize: 12,
     fontWeight: '700',
     marginTop: 4,
