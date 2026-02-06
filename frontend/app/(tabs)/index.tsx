@@ -6,15 +6,18 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
+  Dimensions,
 } from 'react-native';
-import { colors } from '../../src/theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, spacing, radius, tierColors, tierGlows } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { QRCode } from '../../src/components/QRCode';
 import { QueueStatus } from '../../src/components/QueueStatus';
 import { MissionCard } from '../../src/components/MissionCard';
 import { Ionicons } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
 
 export default function TonightScreen() {
   const user = useAuthStore((state) => state.user);
@@ -42,7 +45,6 @@ export default function TonightScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchData();
-    // Refresh user data
     try {
       const userData = await api.getMe();
       useAuthStore.getState().setUser(userData);
@@ -52,8 +54,11 @@ export default function TonightScreen() {
     setRefreshing(false);
   };
 
+  const tierColor = tierColors[user?.tier || 'bronze'] || colors.gold;
+  const tierGlow = tierGlows[user?.tier || 'bronze'] || colors.goldGlow;
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -69,22 +74,88 @@ export default function TonightScreen() {
         {/* Active Boost Banner */}
         {boosts.length > 0 && (
           <View style={styles.boostBanner}>
-            <Ionicons name="flash" size={20} color={colors.warning} />
-            <Text style={styles.boostText}>
-              {boosts[0].name}: {boosts[0].multiplier}x points active!
-            </Text>
+            <LinearGradient
+              colors={[colors.warningGlow, 'transparent']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.boostGradient}
+            />
+            <View style={styles.boostContent}>
+              <View style={styles.boostIconContainer}>
+                <Ionicons name="flash" size={18} color={colors.warning} />
+              </View>
+              <View style={styles.boostTextContainer}>
+                <Text style={styles.boostTitle}>{boosts[0].name}</Text>
+                <Text style={styles.boostMultiplier}>{boosts[0].multiplier}x Points Active!</Text>
+              </View>
+            </View>
           </View>
         )}
 
-        {/* Tonight Pass Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>TONIGHT PASS</Text>
-          <Text style={styles.sectionSubtitle}>
-            Show this QR code at the door for instant check-in
-          </Text>
-          <View style={styles.qrContainer}>
-            <QRCode size={220} />
-          </View>
+        {/* Premium Hero Card */}
+        <View style={styles.heroSection}>
+          <LinearGradient
+            colors={['#1A1A1A', '#111111', '#0A0A0A']}
+            style={styles.heroCard}
+          >
+            {/* Top Info */}
+            <View style={styles.heroHeader}>
+              <View>
+                <Text style={styles.heroGreeting}>Welcome back,</Text>
+                <Text style={styles.heroName}>{user?.name?.split(' ')[0]}</Text>
+              </View>
+              <View style={styles.tierContainer}>
+                <View style={[styles.tierGlow, { backgroundColor: tierGlow }]} />
+                <View style={[styles.tierBadge, { borderColor: tierColor }]}>
+                  <Ionicons name="diamond" size={14} color={tierColor} />
+                  <Text style={[styles.tierText, { color: tierColor }]}>
+                    {user?.tier?.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* QR Code Section */}
+            <View style={styles.qrSection}>
+              <Text style={styles.qrLabel}>TONIGHT PASS</Text>
+              <Text style={styles.qrSubtitle}>Show this at the door for instant entry</Text>
+              <View style={styles.qrWrapper}>
+                <View style={styles.qrGlow} />
+                <QRCode size={200} />
+              </View>
+            </View>
+
+            {/* Quick Stats */}
+            <View style={styles.quickStats}>
+              <View style={styles.quickStatItem}>
+                <View style={styles.quickStatIcon}>
+                  <Ionicons name="star" size={16} color={colors.gold} />
+                </View>
+                <Text style={styles.quickStatValue}>{user?.points_balance || 0}</Text>
+                <Text style={styles.quickStatLabel}>Points</Text>
+              </View>
+              <View style={styles.quickStatDivider} />
+              <View style={styles.quickStatItem}>
+                <View style={styles.quickStatIcon}>
+                  <Ionicons name="trophy" size={16} color={colors.accent} />
+                </View>
+                <Text style={styles.quickStatValue}>
+                  {missions.filter(m => m.completed).length}
+                </Text>
+                <Text style={styles.quickStatLabel}>Missions</Text>
+              </View>
+              <View style={styles.quickStatDivider} />
+              <View style={styles.quickStatItem}>
+                <View style={styles.quickStatIcon}>
+                  <Ionicons name="flame" size={16} color={colors.warning} />
+                </View>
+                <Text style={styles.quickStatValue}>
+                  {boosts.length > 0 ? `${boosts[0].multiplier}x` : '1x'}
+                </Text>
+                <Text style={styles.quickStatLabel}>Boost</Text>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
 
         {/* Queue Status */}
@@ -96,9 +167,13 @@ export default function TonightScreen() {
         {missions.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>ACTIVE MISSIONS</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAll}>See All</Text>
+              <View style={styles.sectionTitleContainer}>
+                <View style={styles.sectionAccent} />
+                <Text style={styles.sectionTitle}>ACTIVE MISSIONS</Text>
+              </View>
+              <TouchableOpacity style={styles.seeAllBtn}>
+                <Text style={styles.seeAllText}>See All</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.accent} />
               </TouchableOpacity>
             </View>
             <ScrollView
@@ -106,38 +181,14 @@ export default function TonightScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.missionsScroll}
             >
-              {missions.filter(m => !m.completed).slice(0, 3).map((mission) => (
+              {missions.filter(m => !m.completed).slice(0, 4).map((mission) => (
                 <MissionCard key={mission.id} mission={mission} />
               ))}
             </ScrollView>
           </View>
         )}
-
-        {/* Quick Stats */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>YOUR STATS</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Ionicons name="star" size={24} color={colors.premiumGold} />
-              <Text style={styles.statValue}>{user?.points_balance || 0}</Text>
-              <Text style={styles.statLabel}>Points</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Ionicons name="calendar" size={24} color={colors.accent} />
-              <Text style={styles.statValue}>
-                {missions.filter(m => m.completed).length}
-              </Text>
-              <Text style={styles.statLabel}>Missions Done</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Ionicons name="trophy" size={24} color={colors.premiumGold} />
-              <Text style={styles.statValue}>{user?.tier?.toUpperCase() || 'BRONZE'}</Text>
-              <Text style={styles.statLabel}>Your Tier</Text>
-            </View>
-          </View>
-        </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -150,88 +201,207 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 24,
+    paddingBottom: spacing.xxl,
   },
   boostBanner: {
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 1,
+    borderColor: colors.warning + '30',
+  },
+  boostGradient: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 100,
+  },
+  boostContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.warning + '20',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.warning + '40',
+    padding: spacing.md,
   },
-  boostText: {
-    color: colors.warning,
+  boostIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.warning + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  boostTextContainer: {
+    flex: 1,
+  },
+  boostTitle: {
+    color: colors.textPrimary,
     fontSize: 14,
     fontWeight: '600',
-    marginLeft: 8,
+  },
+  boostMultiplier: {
+    color: colors.warning,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  heroSection: {
+    padding: spacing.md,
+  },
+  heroCard: {
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.lg,
+  },
+  heroGreeting: {
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  heroName: {
+    color: colors.textPrimary,
+    fontSize: 26,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  tierContainer: {
+    position: 'relative',
+  },
+  tierGlow: {
+    position: 'absolute',
+    top: -5,
+    left: -5,
+    right: -5,
+    bottom: -5,
+    borderRadius: radius.full,
+    opacity: 0.6,
+  },
+  tierBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
+    borderWidth: 1.5,
+  },
+  tierText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginLeft: spacing.xs,
+  },
+  qrSection: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  qrLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 3,
+    marginBottom: spacing.xs,
+  },
+  qrSubtitle: {
+    color: colors.textMuted,
+    fontSize: 13,
+    marginBottom: spacing.lg,
+  },
+  qrWrapper: {
+    position: 'relative',
+  },
+  qrGlow: {
+    position: 'absolute',
+    top: -20,
+    left: -20,
+    right: -20,
+    bottom: -20,
+    backgroundColor: colors.accentGlow,
+    borderRadius: radius.xl,
+    opacity: 0.3,
+  },
+  quickStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingTop: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  quickStatItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  quickStatIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.backgroundElevated,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  quickStatValue: {
+    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  quickStatLabel: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  quickStatDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: colors.border,
   },
   section: {
-    paddingHorizontal: 16,
-    marginTop: 24,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.lg,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionAccent: {
+    width: 3,
+    height: 16,
+    backgroundColor: colors.accent,
+    borderRadius: 2,
+    marginRight: spacing.sm,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
     color: colors.textSecondary,
     letterSpacing: 2,
-    marginBottom: 4,
   },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: colors.textMuted,
-    marginBottom: 16,
+  seeAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  seeAll: {
+  seeAllText: {
     color: colors.accent,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
-  qrContainer: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
   missionsScroll: {
-    paddingRight: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginTop: 8,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 4,
+    paddingRight: spacing.md,
   },
 });
