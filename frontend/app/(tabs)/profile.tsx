@@ -24,9 +24,14 @@ import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { RotatingMoon } from '../../src/components/RotatingMoon';
 import { FierySun } from '../../src/components/FierySun';
 import { SafetyAlert } from '../../src/components/SafetyAlert';
-import { CrewMap } from '../../src/components/CrewMap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+
+// Conditionally import CrewMap only on native platforms to avoid react-native-maps web error
+let CrewMap: any = null;
+if (Platform.OS !== 'web') {
+  CrewMap = require('../../src/components/CrewMap').CrewMap;
+}
 
 const { width } = Dimensions.get('window');
 const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
