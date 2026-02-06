@@ -655,6 +655,17 @@ const styles = StyleSheet.create({
   },
   rewardsGradient: {
     padding: spacing.lg,
+    position: 'relative',
+  },
+  accentBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    borderTopWidth: 3,
   },
   rewardsHeader: {
     flexDirection: 'row',
