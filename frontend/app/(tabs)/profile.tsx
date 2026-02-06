@@ -5,11 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Alert,
   RefreshControl,
   Dimensions,
   Platform,
+  Modal,
+  TextInput,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
@@ -22,6 +24,7 @@ import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
+const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
 
 const TIER_CONFIG: Record<string, { color: string; icon: string; next: string; pointsNeeded: number }> = {
   bronze: { color: '#CD7F32', icon: 'shield', next: 'Silver', pointsNeeded: 1000 },
@@ -37,17 +40,35 @@ export default function ProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [reservations, setReservations] = useState<any>(null);
+  const [showQRPass, setShowQRPass] = useState(false);
+  const [qrData, setQrData] = useState<any>(null);
+  const [showSafety, setShowSafety] = useState(false);
+  const [showCrewPlan, setShowCrewPlan] = useState(false);
+  const [crews, setCrews] = useState<any[]>([]);
+  const [newCrewName, setNewCrewName] = useState('');
+  const [showCreateCrew, setShowCreateCrew] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [statsData, reservationsData] = await Promise.all([
-        api.getUserStats(),
-        api.getMyReservations(),
+      const [statsData, reservationsData, crewsData] = await Promise.all([
+        api.getUserStats().catch(() => null),
+        api.getMyReservations().catch(() => null),
+        api.getCrews().catch(() => []),
       ]);
       setStats(statsData);
       setReservations(reservationsData);
+      setCrews(crewsData || []);
     } catch (e) {
       console.error('Failed to fetch profile data:', e);
+    }
+  };
+
+  const refreshUser = async () => {
+    try {
+      const userData = await api.getMe();
+      useAuthStore.getState().setUser(userData);
+    } catch (e) {
+      console.error('Failed to refresh user:', e);
     }
   };
 
@@ -79,38 +100,92 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const handleGetQR = async () => {
+    try {
+      const data = await api.getQRData('eclipse'); // Default venue
+      setQrData(data);
+      setShowQRPass(true);
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to generate QR code');
+    }
+  };
+
+  const handleCreateCrew = async () => {
+    if (!newCrewName.trim()) {
+      Alert.alert('Error', 'Please enter a crew name');
+      return;
+    }
+    try {
+      await api.createCrew(newCrewName.trim());
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      Alert.alert('Success', 'Crew created!');
+      setShowCreateCrew(false);
+      setNewCrewName('');
+      fetchData();
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to create crew');
+    }
+  };
+
+  const handleEmergencyCall = () => {
+    Alert.alert(
+      'Emergency Services',
+      'This will call 000. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Call 000', style: 'destructive', onPress: () => Linking.openURL('tel:000') },
+      ]
+    );
+  };
+
+  const handleRideshare = async (service: 'uber' | 'didi') => {
+    try {
+      const links = await api.getRideshareLinks('eclipse');
+      const url = service === 'uber' ? links.uber_web : links.didi;
+      Linking.openURL(url);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to open rideshare app');
+    }
+  };
+
   const tierConfig = TIER_CONFIG[user?.tier || 'bronze'];
   const currentPoints = user?.points_balance || 0;
   const progressToNext = Math.min((currentPoints / tierConfig.pointsNeeded) * 100, 100);
 
-  const menuItems = [
+  const quickActions = [
     {
-      id: 'reservations',
-      icon: 'calendar',
-      title: 'My Reservations',
-      subtitle: `${reservations?.bookings?.length || 0} upcoming`,
+      id: 'qr',
+      icon: 'qr-code',
+      title: "Tonight's Pass",
+      subtitle: 'Show at entrance',
       color: colors.accent,
+      onPress: handleGetQR,
     },
     {
-      id: 'guestlist',
+      id: 'crew',
       icon: 'people',
-      title: 'Guestlist History',
-      subtitle: `${reservations?.guestlist?.length || 0} entries`,
+      title: 'Crew Plan',
+      subtitle: `${crews.length} crews`,
       color: '#8B00FF',
+      onPress: () => setShowCrewPlan(true),
     },
     {
-      id: 'photos',
-      icon: 'images',
-      title: 'My Photos',
-      subtitle: 'View & purchase night photos',
-      color: '#FF6B35',
+      id: 'safety',
+      icon: 'shield-checkmark',
+      title: 'Safety',
+      subtitle: 'Help & Support',
+      color: colors.success,
+      onPress: () => setShowSafety(true),
     },
     {
-      id: 'achievements',
-      icon: 'trophy',
-      title: 'Achievements',
-      subtitle: `${stats?.achievements_earned || 0} unlocked`,
+      id: 'rewards',
+      icon: 'gift',
+      title: 'Rewards',
+      subtitle: 'Redeem points',
       color: colors.gold,
+      onPress: () => router.push('/(tabs)/rewards'),
     },
   ];
 
@@ -237,13 +312,11 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>QUICK ACTIONS</Text>
           <View style={styles.actionsGrid}>
-            {menuItems.map((item) => (
+            {quickActions.map((item) => (
               <TouchableOpacity
                 key={item.id}
                 style={styles.actionCard}
-                onPress={() => {
-                  if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
+                onPress={item.onPress}
                 activeOpacity={0.7}
               >
                 <View style={[styles.actionIcon, { backgroundColor: item.color + '20' }]}>
@@ -327,6 +400,232 @@ export default function ProfileScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* QR Pass Modal */}
+      <Modal
+        visible={showQRPass}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowQRPass(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={[colors.backgroundCard, colors.background]}
+              style={styles.modalGradient}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Tonight's Pass</Text>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowQRPass(false)}
+                >
+                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.qrSection}>
+                <View style={styles.qrCodeLarge}>
+                  <Ionicons name="qr-code" size={180} color={colors.textPrimary} />
+                </View>
+                <Text style={styles.qrVenue}>{qrData?.venue_name || 'Luna Group'}</Text>
+                <Text style={styles.qrHelp}>Show this QR code at the entrance</Text>
+                <Text style={styles.qrExpiry}>Valid for 60 seconds</Text>
+              </View>
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Safety Modal */}
+      <Modal
+        visible={showSafety}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSafety(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={[colors.backgroundCard, colors.background]}
+              style={styles.modalGradient}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Safety</Text>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowSafety(false)}
+                >
+                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Emergency Button */}
+              <TouchableOpacity
+                style={styles.emergencyButton}
+                onPress={handleEmergencyCall}
+              >
+                <Ionicons name="call" size={24} color={colors.textPrimary} />
+                <Text style={styles.emergencyText}>Emergency Call (000)</Text>
+              </TouchableOpacity>
+
+              {/* Rideshare Links */}
+              <View style={styles.safetySection}>
+                <Text style={styles.safetySectionTitle}>GET A RIDE HOME</Text>
+                <View style={styles.rideshareRow}>
+                  <TouchableOpacity
+                    style={styles.rideshareButton}
+                    onPress={() => handleRideshare('uber')}
+                  >
+                    <Text style={styles.rideshareText}>Uber</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.rideshareButton}
+                    onPress={() => handleRideshare('didi')}
+                  >
+                    <Text style={styles.rideshareText}>DiDi</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Report Options */}
+              <View style={styles.safetySection}>
+                <Text style={styles.safetySectionTitle}>REPORT</Text>
+                <TouchableOpacity style={styles.reportButton}>
+                  <Ionicons name="alert-circle" size={20} color={colors.error} />
+                  <Text style={styles.reportText}>Report an Incident</Text>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.reportButton}>
+                  <Ionicons name="search" size={20} color={colors.textSecondary} />
+                  <Text style={styles.reportText}>Lost Property</Text>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Helplines */}
+              <View style={styles.safetySection}>
+                <Text style={styles.safetySectionTitle}>HELPLINES</Text>
+                <Text style={styles.helplineText}>Lifeline: 13 11 14</Text>
+                <Text style={styles.helplineText}>Police Non-Emergency: 131 444</Text>
+              </View>
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Crew Plan Modal */}
+      <Modal
+        visible={showCrewPlan}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCrewPlan(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={[colors.backgroundCard, colors.background]}
+              style={styles.modalGradient}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Crew Plan</Text>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowCrewPlan(false)}
+                >
+                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.createCrewButton}
+                onPress={() => setShowCreateCrew(true)}
+              >
+                <LinearGradient
+                  colors={[colors.accent, colors.accentDark]}
+                  style={styles.createCrewGradient}
+                >
+                  <Ionicons name="add" size={20} color={colors.textPrimary} />
+                  <Text style={styles.createCrewText}>Create New Crew</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <ScrollView style={styles.crewList}>
+                {crews.length > 0 ? (
+                  crews.map((crew) => (
+                    <TouchableOpacity key={crew.id} style={styles.crewCard}>
+                      <View style={styles.crewInfo}>
+                        <Text style={styles.crewName}>{crew.name}</Text>
+                        <Text style={styles.crewMembers}>
+                          {crew.members?.length || 1} members
+                        </Text>
+                      </View>
+                      <View style={styles.crewCode}>
+                        <Text style={styles.crewCodeText}>{crew.invite_code}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={styles.noCrews}>No crews yet. Create one to start planning!</Text>
+                )}
+              </ScrollView>
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Create Crew Modal */}
+      <Modal
+        visible={showCreateCrew}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCreateCrew(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '40%' }]}>
+            <LinearGradient
+              colors={[colors.backgroundCard, colors.background]}
+              style={styles.modalGradient}
+            >
+              <Text style={styles.modalTitle}>Create Crew</Text>
+              
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>CREW NAME</Text>
+                <TextInput
+                  style={styles.input}
+                  value={newCrewName}
+                  onChangeText={setNewCrewName}
+                  placeholder="e.g., Saturday Squad"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setShowCreateCrew(false);
+                    setNewCrewName('');
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={handleCreateCrew}
+                >
+                  <LinearGradient
+                    colors={[colors.accent, colors.accentDark]}
+                    style={styles.confirmButtonGradient}
+                  >
+                    <Text style={styles.confirmButtonText}>Create</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -627,5 +926,233 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     marginBottom: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    maxHeight: '85%',
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
+    overflow: 'hidden',
+  },
+  modalGradient: {
+    padding: spacing.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.backgroundElevated,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qrSection: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  qrCodeLarge: {
+    backgroundColor: colors.textPrimary,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    marginBottom: spacing.lg,
+  },
+  qrVenue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  qrHelp: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  qrExpiry: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
+  emergencyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.error,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  emergencyText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  safetySection: {
+    marginBottom: spacing.lg,
+  },
+  safetySectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 2,
+    marginBottom: spacing.md,
+  },
+  rideshareRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  rideshareButton: {
+    flex: 1,
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  rideshareText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  reportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    gap: spacing.md,
+  },
+  reportText: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  helplineText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  createCrewButton: {
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    marginBottom: spacing.lg,
+  },
+  createCrewGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  createCrewText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  crewList: {
+    maxHeight: 300,
+  },
+  crewCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  crewInfo: {},
+  crewName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  crewMembers: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  crewCode: {
+    backgroundColor: colors.accent + '20',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+  },
+  crewCodeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+  noCrews: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: 'center',
+    paddingVertical: spacing.xl,
+  },
+  inputContainer: {
+    marginBottom: spacing.lg,
+    marginTop: spacing.md,
+  },
+  inputLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 2,
+    marginBottom: spacing.sm,
+  },
+  input: {
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    fontSize: 16,
+    color: colors.textPrimary,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.backgroundElevated,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  confirmButton: {
+    flex: 1,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  confirmButtonGradient: {
+    padding: spacing.md,
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
 });
