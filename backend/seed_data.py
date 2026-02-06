@@ -1,4 +1,4 @@
-"""Comprehensive seed data for Luna Group"""
+"""Comprehensive seed data for Luna Group with real events"""
 from datetime import datetime, timezone, timedelta
 import uuid
 
@@ -122,82 +122,107 @@ def get_seed_data():
         {
             "id": "auction_" + str(uuid.uuid4())[:8],
             "venue_id": "eclipse",
-            "title": "Eclipse Premium VIP Booth Upgrade",
-            "description": "Upgrade to our exclusive premium booth with champagne service tonight",
+            "venue_name": "Eclipse",
+            "title": "Eclipse Premium VIP Booth",
+            "description": "Exclusive premium booth with champagne service for tonight. Includes dedicated host, bottle service, and priority seating.",
             "auction_type": "booth_upgrade",
-            "reserve_price": 150,
-            "instant_win_price": 400,
+            "starting_bid": 150,
             "current_bid": 180,
+            "min_increment": 10,
+            "deposit_required": 50,
+            "deposit_rules": "50% deposit required within 30 minutes of winning. Non-refundable if cancelled within 2 hours of event.",
+            "max_bid_limit": 1000,
             "winner_id": None,
             "winner_name": None,
             "start_time": now - timedelta(minutes=15),
             "end_time": now + timedelta(minutes=45),
             "status": "active",
-            "bid_increment": 10.0
+            "image_url": "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=600",
+            "features": ["Premium Booth", "Bottle Service", "Dedicated Host", "VIP Entry"]
         },
         {
             "id": "auction_" + str(uuid.uuid4())[:8],
             "venue_id": "eclipse",
-            "title": "Meet the DJ - Exclusive Access",
-            "description": "Meet tonight's headliner DJ with backstage access for you + 2 guests",
+            "venue_name": "Eclipse",
+            "title": "Meet the DJ - Backstage Access",
+            "description": "Meet tonight's headliner DJ with exclusive backstage access for you + 2 guests. Photo opportunity included.",
             "auction_type": "experience",
-            "reserve_price": 100,
-            "instant_win_price": 300,
+            "starting_bid": 100,
             "current_bid": 120,
+            "min_increment": 10,
+            "deposit_required": 30,
+            "deposit_rules": "Full payment required within 15 minutes of winning.",
+            "max_bid_limit": 500,
             "winner_id": None,
             "winner_name": None,
             "start_time": now - timedelta(minutes=5),
             "end_time": now + timedelta(hours=1, minutes=20),
             "status": "active",
-            "bid_increment": 10.0
+            "image_url": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600",
+            "features": ["Backstage Access", "Photo Op", "2 Guest Passes", "Exclusive"]
         },
         {
             "id": "auction_" + str(uuid.uuid4())[:8],
             "venue_id": "after_dark",
-            "title": "Fast Lane + Bottle Service",
-            "description": "Skip the line and get premium bottle service at After Dark",
+            "venue_name": "After Dark",
+            "title": "Fast Lane + Bottle Package",
+            "description": "Skip the line and get premium bottle service at After Dark. Includes Grey Goose or Hennessy.",
             "auction_type": "package",
-            "reserve_price": 80,
-            "instant_win_price": 200,
+            "starting_bid": 80,
             "current_bid": 95,
+            "min_increment": 5,
+            "deposit_required": 25,
+            "deposit_rules": "Deposit required. Balance due on arrival.",
+            "max_bid_limit": 400,
             "winner_id": None,
             "winner_name": None,
             "start_time": now - timedelta(minutes=25),
             "end_time": now + timedelta(minutes=35),
             "status": "active",
-            "bid_increment": 5.0
+            "image_url": "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=600",
+            "features": ["Fast Lane Entry", "Premium Bottle", "VIP Area", "4 Guests"]
         },
         {
             "id": "auction_" + str(uuid.uuid4())[:8],
             "venue_id": "su_casa_brisbane",
+            "venue_name": "Su Casa Brisbane",
             "title": "Rooftop VIP Section - 8 People",
-            "description": "Exclusive rooftop VIP section with premium bottle selection",
+            "description": "Exclusive rooftop VIP section with premium bottle selection and city views for you and 7 guests.",
             "auction_type": "vip_section",
-            "reserve_price": 200,
-            "instant_win_price": 500,
+            "starting_bid": 200,
             "current_bid": 0,
+            "min_increment": 15,
+            "deposit_required": 75,
+            "deposit_rules": "75% deposit required. Cancellation fee applies within 24 hours.",
+            "max_bid_limit": 800,
             "winner_id": None,
             "winner_name": None,
             "start_time": now + timedelta(minutes=5),
             "end_time": now + timedelta(hours=2),
             "status": "upcoming",
-            "bid_increment": 15.0
+            "image_url": "https://images.unsplash.com/photo-1613066697301-d7dccfc86bb5?w=600",
+            "features": ["Rooftop Access", "8 Guests", "Premium Bottles", "City Views"]
         },
         {
             "id": "auction_" + str(uuid.uuid4())[:8],
             "venue_id": "eclipse",
+            "venue_name": "Eclipse",
             "title": "DJ Shout-Out + Bottle",
-            "description": "Get a DJ shout-out plus premium bottle service",
+            "description": "Get a personalized DJ shout-out plus premium bottle service. Perfect for birthdays!",
             "auction_type": "experience",
-            "reserve_price": 120,
-            "instant_win_price": 350,
+            "starting_bid": 120,
             "current_bid": 145,
+            "min_increment": 10,
+            "deposit_required": 40,
+            "deposit_rules": "Payment required within 20 minutes of winning.",
+            "max_bid_limit": 600,
             "winner_id": None,
             "winner_name": None,
             "start_time": now - timedelta(minutes=10),
             "end_time": now + timedelta(minutes=50),
             "status": "active",
-            "bid_increment": 10.0
+            "image_url": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600",
+            "features": ["DJ Shout-Out", "Premium Bottle", "Photo Op", "VIP Treatment"]
         },
     ]
     
@@ -212,7 +237,8 @@ def get_seed_data():
             "points_reward": 150,
             "venue_requirements": None,
             "cross_venue_flag": False,
-            "is_active": True
+            "is_active": True,
+            "icon": "moon"
         },
         {
             "id": str(uuid.uuid4()),
@@ -223,7 +249,8 @@ def get_seed_data():
             "points_reward": 750,
             "venue_requirements": None,
             "cross_venue_flag": True,
-            "is_active": True
+            "is_active": True,
+            "icon": "planet"
         },
         {
             "id": str(uuid.uuid4()),
@@ -234,7 +261,8 @@ def get_seed_data():
             "points_reward": 400,
             "venue_requirements": None,
             "cross_venue_flag": True,
-            "is_active": True
+            "is_active": True,
+            "icon": "stars"
         },
         {
             "id": str(uuid.uuid4()),
@@ -245,7 +273,8 @@ def get_seed_data():
             "points_reward": 500,
             "venue_requirements": ["eclipse"],
             "cross_venue_flag": False,
-            "is_active": True
+            "is_active": True,
+            "icon": "rocket"
         },
         {
             "id": str(uuid.uuid4()),
@@ -256,7 +285,8 @@ def get_seed_data():
             "points_reward": 600,
             "venue_requirements": None,
             "cross_venue_flag": False,
-            "is_active": True
+            "is_active": True,
+            "icon": "galaxy"
         },
         {
             "id": str(uuid.uuid4()),
@@ -267,54 +297,214 @@ def get_seed_data():
             "points_reward": 800,
             "venue_requirements": None,
             "cross_venue_flag": False,
-            "is_active": True
+            "is_active": True,
+            "icon": "constellation"
         },
     ]
     
-    # Enhanced events
+    # Real Events from venues - combining scraped data with mock data
     events = [
+        # Eclipse Events
         {
             "id": str(uuid.uuid4()),
             "venue_id": "eclipse",
-            "title": "DJ SODA - International Showcase",
-            "description": "World-renowned K-Pop DJ bringing the heat to Eclipse. EDM, K-Pop, and Hip-Hop all night.",
-            "event_date": now + timedelta(days=7),
-            "ticket_url": "https://eclipse.com/tickets",
-            "image_url": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800",
+            "venue_name": "Eclipse",
+            "title": "BLACK:CELL ft. BIIANCO",
+            "description": "Electronic music experience featuring international DJ BIIANCO. Immersive audiovisual production with state-of-the-art sound.",
+            "event_date": now + timedelta(days=3),
+            "event_end_date": now + timedelta(days=3, hours=6),
+            "ticket_url": "https://eclipsebrisbane.com.au/tickets",
+            "ticket_price": 35.00,
+            "image_url": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800",
+            "category": "club_night",
+            "featured": True,
             "featured_artist": {
-                "name": "DJ SODA",
+                "name": "BIIANCO",
                 "image": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400",
-                "bio": "International sensation with 5M+ followers"
+                "bio": "International electronic DJ and producer"
             }
         },
         {
             "id": str(uuid.uuid4()),
-            "venue_id": "after_dark",
-            "title": "R&B & Hip-Hop Night",
-            "description": "The best in R&B, Hip-Hop, and Afrobeats with resident DJs",
-            "event_date": now + timedelta(days=2),
-            "ticket_url": None,
+            "venue_id": "eclipse",
+            "venue_name": "Eclipse",
+            "title": "WINDOW KID",
+            "description": "UK Grime sensation Window Kid brings his high-energy performance to Brisbane. Support acts all night.",
+            "event_date": now + timedelta(days=7),
+            "event_end_date": now + timedelta(days=7, hours=5),
+            "ticket_url": "https://eclipsebrisbane.com.au/tickets",
+            "ticket_price": 45.00,
             "image_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800",
+            "category": "concert",
+            "featured": True,
+            "featured_artist": {
+                "name": "Window Kid",
+                "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
+                "bio": "UK Grime artist with millions of streams"
+            }
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "eclipse",
+            "venue_name": "Eclipse",
+            "title": "Saturday Night Takeover",
+            "description": "Brisbane's biggest Saturday night with resident DJs spinning Hip Hop, House & Electronic.",
+            "event_date": now + timedelta(days=2),
+            "event_end_date": now + timedelta(days=2, hours=6),
+            "ticket_url": None,
+            "ticket_price": 20.00,
+            "image_url": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
+            "category": "club_night",
+            "featured": False,
+            "featured_artist": None
+        },
+        
+        # After Dark Events
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "after_dark",
+            "venue_name": "After Dark",
+            "title": "R&B & Hip-Hop Fridays",
+            "description": "The best in R&B, Hip-Hop, and Afrobeats every Friday. Premium sound, premium vibes.",
+            "event_date": now + timedelta(days=1),
+            "event_end_date": now + timedelta(days=1, hours=6),
+            "ticket_url": "https://eclipsebrisbane.com.au/after-dark",
+            "ticket_price": 15.00,
+            "image_url": "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=800",
+            "category": "club_night",
+            "featured": True,
             "featured_artist": None
         },
         {
             "id": str(uuid.uuid4()),
-            "venue_id": "juju",
-            "title": "Sunset Rooftop Sessions",
-            "description": "Live acoustic music with ocean views and craft cocktails",
-            "event_date": now + timedelta(days=5),
+            "venue_id": "after_dark",
+            "venue_name": "After Dark",
+            "title": "Afrobeats Saturdays",
+            "description": "Global sounds featuring the best Afrobeats, Amapiano, and African diaspora music.",
+            "event_date": now + timedelta(days=2),
+            "event_end_date": now + timedelta(days=2, hours=6),
             "ticket_url": None,
-            "image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
+            "ticket_price": 15.00,
+            "image_url": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
+            "category": "club_night",
+            "featured": False,
+            "featured_artist": None
+        },
+        
+        # Su Casa Brisbane Events
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "su_casa_brisbane",
+            "venue_name": "Su Casa Brisbane",
+            "title": "Rooftop Fridays",
+            "description": "Start your weekend early with sunset cocktails, live DJs, and city views. House & Disco vibes.",
+            "event_date": now + timedelta(days=1),
+            "event_end_date": now + timedelta(days=1, hours=8),
+            "ticket_url": "https://sucasabrisbane.com",
+            "ticket_price": 0,
+            "image_url": "https://images.unsplash.com/photo-1613066697301-d7dccfc86bb5?w=800",
+            "category": "rooftop",
+            "featured": True,
             "featured_artist": None
         },
         {
             "id": str(uuid.uuid4()),
             "venue_id": "su_casa_brisbane",
-            "title": "Latin Night",
-            "description": "Reggaeton, Salsa, and Bachata all night long",
+            "venue_name": "Su Casa Brisbane",
+            "title": "Sunday Sesh & Hospo Night",
+            "description": "Industry night with golden wristbands for hospitality workers. Hip-Hop, R&B, Afrobeats from 9PM.",
             "event_date": now + timedelta(days=4),
+            "event_end_date": now + timedelta(days=4, hours=6),
             "ticket_url": None,
+            "ticket_price": 0,
+            "image_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800",
+            "category": "club_night",
+            "featured": False,
+            "featured_artist": None
+        },
+        
+        # Su Casa Gold Coast Events
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "su_casa_gold_coast",
+            "venue_name": "Su Casa Gold Coast",
+            "title": "Gold Coast Saturdays",
+            "description": "The Gold Coast's premier Saturday night destination. R&B, Hip-Hop and party anthems.",
+            "event_date": now + timedelta(days=2),
+            "event_end_date": now + timedelta(days=2, hours=6),
+            "ticket_url": "https://sucasagc.com.au",
+            "ticket_price": 15.00,
+            "image_url": "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800",
+            "category": "club_night",
+            "featured": True,
+            "featured_artist": None
+        },
+        
+        # Juju Mermaid Beach Events
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "juju",
+            "venue_name": "Juju Mermaid Beach",
+            "title": "Sundown Social",
+            "description": "Every Sunday on the rooftop. Live DJs, sultry saxophone, sunset views, and booth packages with cocktails.",
+            "event_date": now + timedelta(days=4),
+            "event_end_date": now + timedelta(days=4, hours=5),
+            "ticket_url": "https://jujumermaidbeach.com.au/whats-on",
+            "ticket_price": 0,
+            "image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
+            "category": "rooftop",
+            "featured": True,
+            "featured_artist": None
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "juju",
+            "venue_name": "Juju Mermaid Beach",
+            "title": "Acoustic Thursdays",
+            "description": "Weekly from 6PM - live soloists, chilled cocktails, coastal views, and nibbles like steak tartare and oysters.",
+            "event_date": now + timedelta(days=5),
+            "event_end_date": now + timedelta(days=5, hours=4),
+            "ticket_url": None,
+            "ticket_price": 0,
+            "image_url": "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800",
+            "category": "live_music",
+            "featured": False,
+            "featured_artist": None
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "juju",
+            "venue_name": "Juju Mermaid Beach",
+            "title": "ETHEREAL SUNDAYS Vol 10",
+            "description": "Global house, deep melodic & afro grooves, live percussion. A rooftop music journey with ocean views.",
+            "event_date": now + timedelta(days=11),
+            "event_end_date": now + timedelta(days=11, hours=7),
+            "ticket_url": "https://eventbrite.com.au",
+            "ticket_price": 0,
+            "image_url": "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800",
+            "category": "special_event",
+            "featured": True,
+            "featured_artist": {
+                "name": "Various Artists",
+                "image": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=400",
+                "bio": "Global house DJs and live percussionists"
+            }
+        },
+        
+        # Night Market Events
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "night_market",
+            "venue_name": "Night Market",
+            "title": "Late Night Dining",
+            "description": "Pan-Asian street food experience every Friday and Saturday until late. Neon-lit atmosphere.",
+            "event_date": now + timedelta(days=1),
+            "event_end_date": now + timedelta(days=1, hours=5),
+            "ticket_url": None,
+            "ticket_price": 0,
             "image_url": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
+            "category": "dining",
+            "featured": False,
             "featured_artist": None
         },
     ]
