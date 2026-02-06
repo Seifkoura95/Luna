@@ -10,6 +10,7 @@ import {
   Modal,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
@@ -19,14 +20,28 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import * as Haptics from 'expo-haptics';
+import { useFonts, fonts } from '../src/hooks/useFonts';
+
+// Venues that offer table booking
+const TABLE_VENUES = [
+  { id: 'eclipse', name: 'Eclipse', type: 'Nightclub', color: '#E31837' },
+  { id: 'after_dark', name: 'After Dark', type: 'Nightclub', color: '#8B00FF' },
+  { id: 'su_casa_brisbane', name: 'Su Casa Brisbane', type: 'Rooftop Bar', color: '#FFB800' },
+  { id: 'su_casa_gold_coast', name: 'Su Casa Gold Coast', type: 'Nightclub', color: '#FF6B35' },
+  { id: 'juju', name: 'Juju Mermaid Beach', type: 'Restaurant', color: '#00D4AA' },
+  { id: 'night_market', name: 'Night Market', type: 'Restaurant', color: '#FF4757' },
+  { id: 'ember_and_ash', name: 'Ember & Ash', type: 'Restaurant', color: '#FFA502' },
+];
 
 export default function TableBookingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
-  const venueId = params.venue_id as string || 'eclipse';
-  const venueName = params.venue_name as string || 'Eclipse';
-
+  const fontsLoaded = useFonts();
+  
+  // State
+  const [selectedVenue, setSelectedVenue] = useState<any>(TABLE_VENUES[0]);
+  const [venues, setVenues] = useState<any[]>([]);
   const [tables, setTables] = useState<any[]>([]);
   const [selectedTable, setSelectedTable] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -55,20 +70,48 @@ export default function TableBookingScreen() {
 
   const availableDates = getAvailableDates();
 
+  // Fetch venues with logos
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        const venuesData = await api.getVenues();
+        setVenues(venuesData || []);
+      } catch (e) {
+        console.error('Failed to fetch venues:', e);
+      }
+    };
+    fetchVenues();
+  }, []);
+
   useEffect(() => {
     fetchTables();
-  }, [venueId, selectedDate]);
+    setSelectedTable(null); // Reset table selection when venue changes
+  }, [selectedVenue, selectedDate]);
 
   const fetchTables = async () => {
     setLoading(true);
     try {
-      const response = await api.getVenueTables(venueId, selectedDate || undefined);
+      const response = await api.getVenueTables(selectedVenue.id, selectedDate || undefined);
       setTables(response.tables || []);
     } catch (e) {
       console.error('Failed to fetch tables:', e);
+      setTables([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getVenueLogo = (venueId: string) => {
+    const venue = venues.find(v => v.id === venueId);
+    return venue?.logo_url;
+  };
+
+  const handleSelectVenue = (venue: any) => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
+    setSelectedVenue(venue);
+    setSelectedTable(null);
   };
 
   const handleSelectTable = (table: any) => {
@@ -88,7 +131,7 @@ export default function TableBookingScreen() {
     setBookingLoading(true);
     try {
       const response = await api.createTableBooking({
-        venue_id: venueId,
+        venue_id: selectedVenue.id,
         table_id: selectedTable.id,
         date: selectedDate,
         party_size: partySize,
@@ -116,7 +159,6 @@ export default function TableBookingScreen() {
       const depositResponse = await api.getTableDepositIntent(createdBooking.booking_id);
       
       if (depositResponse.demo_mode) {
-        // Demo mode - simulate payment success
         Alert.alert(
           'Demo Payment',
           `This is demo mode. In production, you'd pay $${depositResponse.amount} via Stripe.\n\nSimulating successful payment...`,
@@ -144,7 +186,6 @@ export default function TableBookingScreen() {
           ]
         );
       } else {
-        // Real Stripe payment would go here
         Alert.alert('Payment', 'Stripe payment sheet would open here');
       }
     } catch (e: any) {
@@ -162,35 +203,68 @@ export default function TableBookingScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>VIP TABLES</Text>
-          <Text style={styles.headerSubtitle}>{venueName}</Text>
+          <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.bold }]}>VIP TABLES</Text>
+          <Text style={[styles.headerSubtitle, fontsLoaded && { fontFamily: fonts.regular }]}>All Venues</Text>
         </View>
         <View style={{ width: 44 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Venue Selector */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>SELECT VENUE</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.venueScroll}>
+            {TABLE_VENUES.map((venue) => {
+              const isSelected = selectedVenue.id === venue.id;
+              const logoUrl = getVenueLogo(venue.id);
+              return (
+                <TouchableOpacity
+                  key={venue.id}
+                  style={[
+                    styles.venueCard,
+                    isSelected && { borderColor: venue.color, borderWidth: 2 }
+                  ]}
+                  onPress={() => handleSelectVenue(venue)}
+                >
+                  {logoUrl ? (
+                    <Image source={{ uri: logoUrl }} style={styles.venueLogo} resizeMode="contain" />
+                  ) : (
+                    <Text style={[styles.venueName, fontsLoaded && { fontFamily: fonts.semiBold }]}>{venue.name}</Text>
+                  )}
+                  <Text style={[styles.venueType, fontsLoaded && { fontFamily: fonts.regular }]}>{venue.type}</Text>
+                  {isSelected && (
+                    <View style={[styles.selectedDot, { backgroundColor: venue.color }]} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
         {/* Date Selection */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>SELECT DATE</Text>
+          <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>SELECT DATE</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
             {availableDates.map((date) => (
               <TouchableOpacity
                 key={date.value}
                 style={[
                   styles.dateCard,
-                  selectedDate === date.value && styles.dateCardSelected
+                  selectedDate === date.value && [styles.dateCardSelected, { borderColor: selectedVenue.color }]
                 ]}
                 onPress={() => setSelectedDate(date.value)}
               >
                 <Text style={[
                   styles.dateDayName,
-                  selectedDate === date.value && styles.dateTextSelected
+                  selectedDate === date.value && styles.dateTextSelected,
+                  fontsLoaded && { fontFamily: fonts.semiBold }
                 ]}>
                   {date.dayName}
                 </Text>
                 <Text style={[
                   styles.dateLabel,
-                  selectedDate === date.value && styles.dateTextSelected
+                  selectedDate === date.value && styles.dateTextSelected,
+                  fontsLoaded && { fontFamily: fonts.regular }
                 ]}>
                   {date.label.split(',')[1]}
                 </Text>
@@ -201,213 +275,194 @@ export default function TableBookingScreen() {
 
         {/* Tables */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>AVAILABLE TABLES</Text>
+          <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+            AVAILABLE TABLES {tables.length > 0 && `(${tables.length})`}
+          </Text>
+          
           {loading ? (
-            <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={selectedVenue.color} />
+            </View>
           ) : tables.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={48} color={colors.textMuted} />
-              <Text style={styles.emptyText}>No tables available</Text>
-              <Text style={styles.emptySubtext}>Select a date to see availability</Text>
+            <View style={styles.emptyContainer}>
+              <Ionicons name="restaurant-outline" size={48} color={colors.textMuted} />
+              <Text style={[styles.emptyText, fontsLoaded && { fontFamily: fonts.medium }]}>
+                No tables available at {selectedVenue.name}
+              </Text>
+              <Text style={[styles.emptySubtext, fontsLoaded && { fontFamily: fonts.regular }]}>
+                Please select a different date or venue
+              </Text>
             </View>
           ) : (
-            tables.map((table) => (
-              <TouchableOpacity
-                key={table.id}
-                style={[
-                  styles.tableCard,
-                  selectedTable?.id === table.id && styles.tableCardSelected,
-                  !table.available && styles.tableCardUnavailable
-                ]}
-                onPress={() => table.available && handleSelectTable(table)}
-                disabled={!table.available}
-              >
-                <LinearGradient
-                  colors={selectedTable?.id === table.id ? [colors.accent + '30', '#0A0A0A'] : ['#1A1A1A', '#0A0A0A']}
-                  style={styles.tableCardGradient}
+            tables.map((table) => {
+              const isSelected = selectedTable?.id === table.id;
+              const isAvailable = table.available !== false;
+              return (
+                <TouchableOpacity
+                  key={table.id}
+                  style={[
+                    styles.tableCard,
+                    isSelected && { borderColor: selectedVenue.color, borderWidth: 2 },
+                    !isAvailable && styles.tableUnavailable
+                  ]}
+                  onPress={() => isAvailable && handleSelectTable(table)}
+                  disabled={!isAvailable}
                 >
-                  <View style={styles.tableHeader}>
-                    <View>
-                      <Text style={styles.tableName}>{table.name}</Text>
-                      <Text style={styles.tableLocation}>
-                        <Ionicons name="location-outline" size={12} color={colors.textMuted} /> {table.location}
+                  <Image source={{ uri: table.image_url }} style={styles.tableImage} />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.9)']}
+                    style={styles.tableGradient}
+                  >
+                    <View style={styles.tableInfo}>
+                      <Text style={[styles.tableName, fontsLoaded && { fontFamily: fonts.bold }]}>{table.name}</Text>
+                      <Text style={[styles.tableLocation, fontsLoaded && { fontFamily: fonts.regular }]}>{table.location}</Text>
+                      
+                      <View style={styles.tableStats}>
+                        <View style={styles.tableStat}>
+                          <Ionicons name="people" size={14} color={colors.textSecondary} />
+                          <Text style={[styles.tableStatText, fontsLoaded && { fontFamily: fonts.medium }]}>Up to {table.capacity}</Text>
+                        </View>
+                        <View style={styles.tableStat}>
+                          <Ionicons name="card" size={14} color={colors.textSecondary} />
+                          <Text style={[styles.tableStatText, fontsLoaded && { fontFamily: fonts.medium }]}>Min ${table.min_spend}</Text>
+                        </View>
+                      </View>
+                      
+                      <View style={styles.tableFeatures}>
+                        {table.features?.slice(0, 3).map((feature: string, i: number) => (
+                          <View key={i} style={styles.featureBadge}>
+                            <Text style={[styles.featureText, fontsLoaded && { fontFamily: fonts.medium }]}>{feature}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                    
+                    <View style={styles.tableRight}>
+                      <Text style={[styles.depositLabel, fontsLoaded && { fontFamily: fonts.regular }]}>Deposit</Text>
+                      <Text style={[styles.depositAmount, { color: selectedVenue.color }, fontsLoaded && { fontFamily: fonts.bold }]}>
+                        ${table.deposit_amount}
                       </Text>
+                      {isSelected && (
+                        <View style={[styles.checkCircle, { backgroundColor: selectedVenue.color }]}>
+                          <Ionicons name="checkmark" size={16} color="#FFF" />
+                        </View>
+                      )}
+                      {!isAvailable && (
+                        <Text style={[styles.bookedText, fontsLoaded && { fontFamily: fonts.medium }]}>BOOKED</Text>
+                      )}
                     </View>
-                    {!table.available && (
-                      <View style={styles.unavailableBadge}>
-                        <Text style={styles.unavailableText}>BOOKED</Text>
-                      </View>
-                    )}
-                    {table.available && selectedTable?.id === table.id && (
-                      <Ionicons name="checkmark-circle" size={28} color={colors.accent} />
-                    )}
-                  </View>
-
-                  <View style={styles.tableStats}>
-                    <View style={styles.tableStat}>
-                      <Ionicons name="people" size={16} color={colors.gold} />
-                      <Text style={styles.tableStatText}>Up to {table.capacity}</Text>
-                    </View>
-                    <View style={styles.tableStat}>
-                      <Ionicons name="card" size={16} color={colors.gold} />
-                      <Text style={styles.tableStatText}>${table.min_spend} min</Text>
-                    </View>
-                    <View style={styles.tableStat}>
-                      <Ionicons name="lock-closed" size={16} color={colors.gold} />
-                      <Text style={styles.tableStatText}>${table.deposit_amount} deposit</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.tableFeatures}>
-                    {table.features?.slice(0, 4).map((feature: string, idx: number) => (
-                      <View key={idx} style={styles.featureBadge}>
-                        <Text style={styles.featureText}>{feature}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))
+                  </LinearGradient>
+                </TouchableOpacity>
+              );
+            })
           )}
         </View>
 
         {/* Party Size */}
         {selectedTable && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>PARTY SIZE</Text>
+            <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>PARTY SIZE</Text>
             <View style={styles.partySizeContainer}>
               <TouchableOpacity
-                style={styles.partySizeButton}
+                style={styles.partySizeBtn}
                 onPress={() => setPartySize(Math.max(1, partySize - 1))}
               >
                 <Ionicons name="remove" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
-              <Text style={styles.partySizeText}>{partySize} guests</Text>
+              <Text style={[styles.partySizeText, fontsLoaded && { fontFamily: fonts.bold }]}>{partySize}</Text>
               <TouchableOpacity
-                style={styles.partySizeButton}
+                style={styles.partySizeBtn}
                 onPress={() => setPartySize(Math.min(selectedTable.capacity, partySize + 1))}
               >
                 <Ionicons name="add" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
+            <Text style={[styles.capacityNote, fontsLoaded && { fontFamily: fonts.regular }]}>Max {selectedTable.capacity} guests</Text>
           </View>
         )}
 
         {/* Special Requests */}
         {selectedTable && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>SPECIAL REQUESTS (OPTIONAL)</Text>
+            <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>SPECIAL REQUESTS</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.textInput, fontsLoaded && { fontFamily: fonts.regular }]}
+              placeholder="Any special requests or celebrations?"
+              placeholderTextColor={colors.textMuted}
               value={specialRequests}
               onChangeText={setSpecialRequests}
-              placeholder="Birthday celebration, dietary requirements..."
-              placeholderTextColor={colors.textMuted}
               multiline
-              numberOfLines={3}
             />
           </View>
         )}
 
-        <View style={{ height: 120 }} />
-      </ScrollView>
-
-      {/* Booking Summary & CTA */}
-      {selectedTable && selectedDate && (
-        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + spacing.md }]}>
-          <View style={styles.bookingSummary}>
-            <Text style={styles.summaryText}>{selectedTable.name}</Text>
-            <Text style={styles.summaryPrice}>${selectedTable.deposit_amount} deposit</Text>
-          </View>
+        {/* Book Button */}
+        {selectedTable && selectedDate && (
           <TouchableOpacity
             style={styles.bookButton}
             onPress={handleBookTable}
             disabled={bookingLoading}
           >
             <LinearGradient
-              colors={[colors.gold, '#B8860B']}
+              colors={[selectedVenue.color, adjustColor(selectedVenue.color, -30)]}
               style={styles.bookButtonGradient}
             >
               {bookingLoading ? (
-                <ActivityIndicator color="#000" />
+                <ActivityIndicator color="#FFF" />
               ) : (
                 <>
-                  <Ionicons name="diamond" size={20} color="#000" />
-                  <Text style={styles.bookButtonText}>RESERVE TABLE</Text>
+                  <Ionicons name="checkmark-circle" size={24} color="#FFF" />
+                  <Text style={[styles.bookButtonText, fontsLoaded && { fontFamily: fonts.bold }]}>
+                    RESERVE • ${selectedTable.deposit_amount} DEPOSIT
+                  </Text>
                 </>
               )}
             </LinearGradient>
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
 
       {/* Confirmation Modal */}
       <Modal visible={showConfirmModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <LinearGradient
-              colors={['#1A1A1A', '#0A0A0A']}
-              style={styles.modalGradient}
-            >
-              <View style={styles.modalHeader}>
-                <Ionicons name="checkmark-circle" size={60} color={colors.success} />
-                <Text style={styles.modalTitle}>Table Reserved!</Text>
-                <Text style={styles.modalSubtitle}>Pay deposit to confirm</Text>
-              </View>
-
-              {createdBooking && (
-                <View style={styles.bookingDetails}>
-                  <View style={styles.bookingRow}>
-                    <Text style={styles.bookingLabel}>Table</Text>
-                    <Text style={styles.bookingValue}>{createdBooking.table_name}</Text>
-                  </View>
-                  <View style={styles.bookingRow}>
-                    <Text style={styles.bookingLabel}>Date</Text>
-                    <Text style={styles.bookingValue}>{createdBooking.date}</Text>
-                  </View>
-                  <View style={styles.bookingRow}>
-                    <Text style={styles.bookingLabel}>Party Size</Text>
-                    <Text style={styles.bookingValue}>{createdBooking.party_size} guests</Text>
-                  </View>
-                  <View style={styles.bookingRow}>
-                    <Text style={styles.bookingLabel}>Min Spend</Text>
-                    <Text style={styles.bookingValue}>${createdBooking.min_spend}</Text>
-                  </View>
-                  <View style={[styles.bookingRow, styles.depositRow]}>
-                    <Text style={styles.depositLabel}>DEPOSIT DUE</Text>
-                    <Text style={styles.depositValue}>${createdBooking.deposit_amount}</Text>
-                  </View>
-                </View>
-              )}
-
-              <Text style={styles.expiryNote}>
-                ⏰ Pay within 24 hours to confirm your booking
+            <View style={[styles.modalHeader, { backgroundColor: selectedVenue.color }]}>
+              <Ionicons name="checkmark-circle" size={48} color="#FFF" />
+              <Text style={[styles.modalTitle, fontsLoaded && { fontFamily: fonts.bold }]}>Booking Created!</Text>
+            </View>
+            
+            <View style={styles.modalBody}>
+              <Text style={[styles.modalVenue, fontsLoaded && { fontFamily: fonts.bold }]}>{selectedVenue.name}</Text>
+              <Text style={[styles.modalTable, fontsLoaded && { fontFamily: fonts.semiBold }]}>{selectedTable?.name}</Text>
+              <Text style={[styles.modalDate, fontsLoaded && { fontFamily: fonts.regular }]}>{selectedDate}</Text>
+              <Text style={[styles.modalGuests, fontsLoaded && { fontFamily: fonts.regular }]}>{partySize} Guests</Text>
+              
+              <View style={styles.modalDivider} />
+              
+              <Text style={[styles.modalDeposit, fontsLoaded && { fontFamily: fonts.medium }]}>
+                Deposit Required: <Text style={{ color: selectedVenue.color }}>${selectedTable?.deposit_amount}</Text>
               </Text>
-
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={styles.laterButton}
-                  onPress={() => {
-                    setShowConfirmModal(false);
-                    router.push('/my-bookings');
-                  }}
-                >
-                  <Text style={styles.laterButtonText}>Pay Later</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.payNowButton}
-                  onPress={handlePayDeposit}
-                >
-                  <LinearGradient
-                    colors={[colors.success, '#1e7e34']}
-                    style={styles.payNowGradient}
-                  >
-                    <Ionicons name="card" size={18} color="#FFF" />
-                    <Text style={styles.payNowText}>PAY NOW</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            </LinearGradient>
+              <Text style={[styles.modalMinSpend, fontsLoaded && { fontFamily: fonts.regular }]}>
+                Minimum spend: ${selectedTable?.min_spend}
+              </Text>
+            </View>
+            
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalSecondaryBtn}
+                onPress={() => setShowConfirmModal(false)}
+              >
+                <Text style={[styles.modalSecondaryText, fontsLoaded && { fontFamily: fonts.semiBold }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalPrimaryBtn, { backgroundColor: selectedVenue.color }]}
+                onPress={handlePayDeposit}
+              >
+                <Text style={[styles.modalPrimaryText, fontsLoaded && { fontFamily: fonts.bold }]}>Pay Deposit</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -415,33 +470,41 @@ export default function TableBookingScreen() {
   );
 }
 
+// Helper function to darken color
+function adjustColor(color: string, amount: number): string {
+  const hex = color.replace('#', '');
+  const num = parseInt(hex, 16);
+  const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+  const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
+  const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
+  return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   backButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerCenter: {
+    flex: 1,
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '900',
-    color: colors.gold,
+    fontWeight: '700',
+    color: colors.textPrimary,
     letterSpacing: 2,
   },
   headerSubtitle: {
@@ -451,322 +514,362 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
   },
   section: {
-    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 2,
+    color: colors.textSecondary,
+    letterSpacing: 1.5,
     marginBottom: spacing.md,
   },
+  
+  // Venue Selector
+  venueScroll: {
+    marginHorizontal: -spacing.lg,
+    paddingHorizontal: spacing.lg,
+  },
+  venueCard: {
+    width: 120,
+    height: 90,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: radius.md,
+    marginRight: spacing.sm,
+    padding: spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  venueLogo: {
+    width: 80,
+    height: 30,
+    marginBottom: 4,
+  },
+  venueName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  venueType: {
+    fontSize: 10,
+    color: colors.textMuted,
+  },
+  selectedDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  
+  // Date Selection
   dateScroll: {
     marginHorizontal: -spacing.lg,
     paddingHorizontal: spacing.lg,
   },
   dateCard: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: '#1A1A1A',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.backgroundCard,
     borderRadius: radius.md,
     marginRight: spacing.sm,
+    minWidth: 70,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
   dateCardSelected: {
-    backgroundColor: colors.gold + '20',
-    borderColor: colors.gold,
+    backgroundColor: 'rgba(227,24,55,0.1)',
+    borderWidth: 2,
   },
   dateDayName: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.textSecondary,
     marginBottom: 2,
   },
   dateLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    fontSize: 11,
+    color: colors.textMuted,
   },
   dateTextSelected: {
-    color: colors.gold,
+    color: colors.textPrimary,
   },
-  emptyState: {
+  
+  // Tables
+  loadingContainer: {
+    height: 200,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.xl * 2,
+  },
+  emptyContainer: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   emptyText: {
     fontSize: 16,
-    fontWeight: '600',
     color: colors.textSecondary,
-    marginTop: spacing.md,
+    textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 13,
     color: colors.textMuted,
-    marginTop: spacing.xs,
+    textAlign: 'center',
   },
   tableCard: {
+    height: 180,
     borderRadius: radius.lg,
     overflow: 'hidden',
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  tableCardSelected: {
-    borderColor: colors.accent,
-  },
-  tableCardUnavailable: {
+  tableUnavailable: {
     opacity: 0.5,
   },
-  tableCardGradient: {
-    padding: spacing.lg,
+  tableImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
   },
-  tableHeader: {
+  tableGradient: {
+    ...StyleSheet.absoluteFillObject,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
+    alignItems: 'flex-end',
+    padding: spacing.md,
+  },
+  tableInfo: {
+    flex: 1,
   },
   tableName: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.textPrimary,
+    marginBottom: 2,
   },
   tableLocation: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 4,
-  },
-  unavailableBadge: {
-    backgroundColor: colors.error + '30',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radius.sm,
-  },
-  unavailableText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.error,
-    letterSpacing: 1,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
   },
   tableStats: {
     flexDirection: 'row',
-    gap: spacing.lg,
-    marginBottom: spacing.md,
+    gap: spacing.md,
+    marginBottom: spacing.sm,
   },
   tableStat: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   tableStatText: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textSecondary,
-    fontWeight: '500',
   },
   tableFeatures: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: 4,
   },
   featureBadge: {
     backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: radius.sm,
   },
   featureText: {
-    fontSize: 11,
+    fontSize: 10,
     color: colors.textSecondary,
-    fontWeight: '500',
   },
+  tableRight: {
+    alignItems: 'flex-end',
+  },
+  depositLabel: {
+    fontSize: 11,
+    color: colors.textMuted,
+  },
+  depositAmount: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
+  },
+  checkCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bookedText: {
+    fontSize: 10,
+    color: colors.error,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  
+  // Party Size
   partySizeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1A1A1A',
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    gap: spacing.xl,
+    gap: spacing.lg,
   },
-  partySizeButton: {
+  partySizeBtn: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.gold + '20',
+    backgroundColor: colors.backgroundCard,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   partySizeText: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 32,
+    fontWeight: '700',
     color: colors.textPrimary,
-    minWidth: 100,
+    minWidth: 60,
     textAlign: 'center',
   },
-  input: {
-    backgroundColor: '#1A1A1A',
+  capacityNote: {
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+  },
+  
+  // Text Input
+  textInput: {
+    backgroundColor: colors.backgroundCard,
     borderRadius: radius.md,
     padding: spacing.md,
     color: colors.textPrimary,
     fontSize: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
     minHeight: 80,
     textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.95)',
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    padding: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  bookingSummary: {
-    flex: 1,
-  },
-  summaryText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  summaryPrice: {
-    fontSize: 12,
-    color: colors.gold,
-    marginTop: 2,
-  },
+  
+  // Book Button
   bookButton: {
-    borderRadius: radius.md,
+    marginHorizontal: spacing.lg,
+    borderRadius: radius.lg,
     overflow: 'hidden',
   },
   bookButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
-  },
-  bookButtonText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#000',
-    letterSpacing: 1,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    overflow: 'hidden',
-  },
-  modalGradient: {
-    padding: spacing.xl,
-  },
-  modalHeader: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: colors.textPrimary,
-    marginTop: spacing.md,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  bookingDetails: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-  },
-  bookingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  bookingLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  bookingValue: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  depositRow: {
-    borderBottomWidth: 0,
-    marginTop: spacing.sm,
-  },
-  depositLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.gold,
-    letterSpacing: 1,
-  },
-  depositValue: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: colors.gold,
-  },
-  expiryNote: {
-    fontSize: 12,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  laterButton: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  laterButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  payNowButton: {
-    flex: 2,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-  },
-  payNowGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.md,
     gap: spacing.sm,
   },
-  payNowText: {
-    fontSize: 14,
-    fontWeight: '800',
+  bookButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
     color: '#FFF',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+  },
+  
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: colors.backgroundCard,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    padding: spacing.lg,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFF',
+    marginTop: spacing.sm,
+  },
+  modalBody: {
+    padding: spacing.lg,
+    alignItems: 'center',
+  },
+  modalVenue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  modalTable: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  modalDate: {
+    fontSize: 14,
+    color: colors.textMuted,
+    marginTop: spacing.sm,
+  },
+  modalGuests: {
+    fontSize: 14,
+    color: colors.textMuted,
+  },
+  modalDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    width: '100%',
+    marginVertical: spacing.md,
+  },
+  modalDeposit: {
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  modalMinSpend: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 4,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    padding: spacing.md,
+    gap: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  modalSecondaryBtn: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalSecondaryText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  modalPrimaryBtn: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    borderRadius: radius.md,
+  },
+  modalPrimaryText: {
+    fontSize: 14,
+    color: '#FFF',
   },
 });
