@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '../theme/colors';
 import { RotatingMoon } from './RotatingMoon';
@@ -46,11 +46,17 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   headerTitle: {
-    fontSize: 24,
+    fontFamily: Platform.select({
+      ios: 'Avenir-Black',
+      android: 'sans-serif-condensed',
+      default: 'system-ui',
+    }),
+    fontSize: 28,
     fontWeight: '900',
     color: colors.textPrimary,
-    letterSpacing: 6,
+    letterSpacing: 8,
     marginTop: spacing.sm,
+    textTransform: 'uppercase',
   },
   headerUnderline: {
     width: 50,
@@ -59,11 +65,16 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   headerDescription: {
+    fontFamily: Platform.select({
+      ios: 'Avenir',
+      android: 'sans-serif',
+      default: 'system-ui',
+    }),
     fontSize: 12,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.sm,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     paddingHorizontal: spacing.lg,
   },
   pointsBadge: {
@@ -77,6 +88,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   pointsText: {
+    fontFamily: Platform.select({
+      ios: 'Avenir-Heavy',
+      android: 'sans-serif-condensed',
+      default: 'system-ui',
+    }),
     color: colors.gold,
     fontWeight: '700',
     fontSize: 14,
