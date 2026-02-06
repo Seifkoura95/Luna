@@ -21,7 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PageHeader } from '../../src/components/PageHeader';
 
 const { width } = Dimensions.get('window');
 const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
