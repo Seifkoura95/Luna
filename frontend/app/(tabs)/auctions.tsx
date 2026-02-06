@@ -48,7 +48,6 @@ interface Auction {
 
 export default function AuctionsScreen() {
   const user = useAuthStore((state) => state.user);
-  const insets = useSafeAreaInsets();
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null);
