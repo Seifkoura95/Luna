@@ -329,6 +329,27 @@ const styles = StyleSheet.create({
   categoryTextActive: {
     color: colors.textPrimary,
   },
+  venueFilterContainer: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  venueFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundCard,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  venueFilterText: {
+    flex: 1,
+    marginLeft: spacing.sm,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
