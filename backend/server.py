@@ -1526,6 +1526,270 @@ async def send_test_notification(request: Request):
     return {"success": True, "notification": clean_mongo_doc(notification)}
 
 
+# ====== EMAIL NOTIFICATIONS API (Mock for Development) ======
+
+class CrewInviteEmailRequest(BaseModel):
+    crew_id: str
+    invitee_email: str
+    invitee_name: Optional[str] = None
+    message: Optional[str] = None
+
+@api_router.post("/crews/{crew_id}/send-invite-email")
+async def send_crew_invite_email(request: Request, crew_id: str, email_req: CrewInviteEmailRequest):
+    """Send an email invitation to join a crew (Mock for development)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Get the crew
+    crew = await db.crews.find_one({"id": crew_id})
+    if not crew:
+        raise HTTPException(status_code=404, detail="Crew not found")
+    
+    # Get the inviter's details
+    inviter = await db.users.find_one({"user_id": current_user["user_id"]})
+    inviter_name = inviter.get("name", "A Luna Member") if inviter else "A Luna Member"
+    
+    # Get the target event/auction
+    event = None
+    auction = None
+    if crew.get("event_id"):
+        event = await db.events.find_one({"id": crew["event_id"]})
+    if crew.get("target_auction"):
+        auction = await db.auctions.find_one({"id": crew["target_auction"]})
+    
+    # Create the invite record
+    invite_token = str(uuid.uuid4())[:12]
+    invite = {
+        "id": str(uuid.uuid4())[:8],
+        "token": invite_token,
+        "crew_id": crew_id,
+        "crew_name": crew.get("name", "Unnamed Crew"),
+        "email": email_req.invitee_email,
+        "invitee_name": email_req.invitee_name,
+        "invited_by": current_user["user_id"],
+        "inviter_name": inviter_name,
+        "message": email_req.message,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(days=7)
+    }
+    await db.crew_invites.insert_one(invite)
+    
+    # Mock email content (in production, this would send a real email via SendGrid/Resend/etc.)
+    invite_link = f"lunagroup://crew-invite/{invite_token}"
+    email_content = {
+        "to": email_req.invitee_email,
+        "from": "noreply@lunagroup.vip",
+        "subject": f"🌙 {inviter_name} invited you to join their crew on Luna Group!",
+        "body": f"""
+Hey{' ' + email_req.invitee_name if email_req.invitee_name else ''}!
+
+{inviter_name} wants you to join their crew "{crew.get('name', 'Party Crew')}" on Luna Group VIP!
+
+{f"They're planning to attend: {event['title']}" if event else ""}
+{f"They're bidding on: {auction['title']}" if auction else ""}
+{f"Message: {email_req.message}" if email_req.message else ""}
+
+Join the crew to:
+✨ Split booth costs with friends
+✨ Coordinate entry times
+✨ Share VIP perks
+
+Tap here to join: {invite_link}
+
+See you at the club!
+- Luna Group Team
+        """,
+        "invite_link": invite_link
+    }
+    
+    # Store the email record (mock - no actual email sent)
+    email_record = {
+        "id": str(uuid.uuid4())[:8],
+        "type": "crew_invite",
+        "invite_id": invite["id"],
+        "email_content": email_content,
+        "sent_at": datetime.now(timezone.utc),
+        "status": "mock_sent"  # In production: "sent", "delivered", "opened"
+    }
+    await db.sent_emails.insert_one(email_record)
+    
+    logger.info(f"[MOCK EMAIL] Would send crew invite to {email_req.invitee_email}")
+    
+    return {
+        "success": True,
+        "message": f"Invite sent to {email_req.invitee_email}!",
+        "invite": clean_mongo_doc(invite),
+        "email_preview": email_content,
+        "mock": True  # Indicates this is a development mock
+    }
+
+@api_router.get("/crews/invite/{token}")
+async def get_invite_by_token(token: str):
+    """Get invite details by token (for accepting invites)"""
+    invite = await db.crew_invites.find_one({"token": token})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found or expired")
+    
+    if invite.get("status") != "pending":
+        raise HTTPException(status_code=400, detail=f"Invite already {invite.get('status')}")
+    
+    if datetime.now(timezone.utc) > invite.get("expires_at", datetime.now(timezone.utc)):
+        raise HTTPException(status_code=400, detail="Invite has expired")
+    
+    crew = await db.crews.find_one({"id": invite["crew_id"]})
+    
+    return {
+        "invite": clean_mongo_doc(invite),
+        "crew": clean_mongo_doc(crew) if crew else None
+    }
+
+@api_router.post("/crews/invite/{token}/accept")
+async def accept_invite_by_token(request: Request, token: str):
+    """Accept a crew invite using the token"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    invite = await db.crew_invites.find_one({"token": token, "status": "pending"})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found or already used")
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    
+    # Add user to crew
+    member = {
+        "user_id": current_user["user_id"],
+        "name": user.get("name", "Member"),
+        "role": "member",
+        "status": "confirmed",
+        "joined_at": datetime.now(timezone.utc)
+    }
+    
+    await db.crews.update_one(
+        {"id": invite["crew_id"]},
+        {"$push": {"members": member}}
+    )
+    
+    # Update invite status
+    await db.crew_invites.update_one(
+        {"token": token},
+        {"$set": {"status": "accepted", "accepted_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"success": True, "message": "You've joined the crew!"}
+
+@api_router.post("/crews/invite/{token}/decline")
+async def decline_invite_by_token(request: Request, token: str):
+    """Decline a crew invite"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.crew_invites.update_one(
+        {"token": token, "status": "pending"},
+        {"$set": {"status": "declined", "declined_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"success": True, "message": "Invite declined"}
+
+@api_router.get("/crews/{crew_id}/pending-invites")
+async def get_pending_invites(request: Request, crew_id: str):
+    """Get all pending invites for a crew"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    invites = await db.crew_invites.find({
+        "crew_id": crew_id,
+        "status": "pending"
+    }).to_list(50)
+    
+    return {"invites": clean_mongo_docs(invites)}
+
+
+# ====== SPLIT PAYMENTS API ======
+
+class SplitPaymentRequest(BaseModel):
+    crew_id: str
+    auction_id: str
+    total_amount: float
+    splits: List[Dict[str, Any]]  # [{user_id, amount, email}]
+
+@api_router.post("/payments/create-split-payment")
+async def create_split_payment(request: Request, split_req: SplitPaymentRequest):
+    """Create a split payment for a crew auction bid"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Validate crew and auction
+    crew = await db.crews.find_one({"id": split_req.crew_id})
+    if not crew:
+        raise HTTPException(status_code=404, detail="Crew not found")
+    
+    auction = await db.auctions.find_one({"id": split_req.auction_id})
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    
+    # Calculate deposit for each split (10% of their share, min $25 each)
+    split_payments = []
+    for split in split_req.splits:
+        deposit = max(int(split["amount"] * 0.10 * 100), 2500)  # cents
+        
+        # Mock payment intent for demo
+        mock_intent_id = f"pi_split_demo_{str(uuid.uuid4())[:8]}"
+        
+        split_payment = {
+            "id": str(uuid.uuid4())[:8],
+            "crew_id": split_req.crew_id,
+            "auction_id": split_req.auction_id,
+            "user_id": split.get("user_id"),
+            "email": split.get("email"),
+            "share_amount": split["amount"],
+            "deposit_amount": deposit / 100,
+            "payment_intent_id": mock_intent_id,
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.split_payments.insert_one(split_payment)
+        split_payments.append(split_payment)
+    
+    # Create a master split record
+    master_split = {
+        "id": str(uuid.uuid4())[:8],
+        "crew_id": split_req.crew_id,
+        "auction_id": split_req.auction_id,
+        "total_amount": split_req.total_amount,
+        "total_deposit": sum(s["deposit_amount"] for s in split_payments),
+        "initiated_by": current_user["user_id"],
+        "splits": [clean_mongo_doc(s) for s in split_payments],
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.master_splits.insert_one(master_split)
+    
+    return {
+        "success": True,
+        "message": "Split payment created!",
+        "master_split": clean_mongo_doc(master_split),
+        "individual_splits": clean_mongo_docs(split_payments),
+        "testMode": True
+    }
+
+@api_router.get("/crews/{crew_id}/split-status")
+async def get_split_status(request: Request, crew_id: str):
+    """Get the current split payment status for a crew"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    master_split = await db.master_splits.find_one({
+        "crew_id": crew_id,
+        "status": {"$in": ["pending", "partial", "complete"]}
+    })
+    
+    if not master_split:
+        return {"split": None}
+    
+    return {"split": clean_mongo_doc(master_split)}
+
+
 # CORS
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
