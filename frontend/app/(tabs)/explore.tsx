@@ -218,58 +218,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#000000",
   },
-  header: {
-    paddingTop: spacing.xxxl + spacing.md,
-    paddingBottom: spacing.xl,
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerContent: {
-    alignItems: 'center',
-  },
-  logoContainer: {
-    position: 'relative',
-    marginBottom: spacing.lg,
-  },
-  logoGlow: {
-    position: 'absolute',
-    top: -12,
-    left: -12,
-    right: -12,
-    bottom: -12,
-    backgroundColor: colors.accentGlow,
-    borderRadius: 50,
-    opacity: 0.4,
-  },
-  logoImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-  },
-  headerTextContainer: {
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: colors.textPrimary,
-    letterSpacing: 8,
-    marginBottom: spacing.sm,
-  },
-  headerUnderline: {
-    width: 50,
-    height: 3,
-    backgroundColor: colors.accent,
-  },
-  headerSubtitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    letterSpacing: 2,
-    textAlign: 'center',
-  },
   scrollView: {
     flex: 1,
   },
