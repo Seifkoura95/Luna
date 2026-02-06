@@ -169,6 +169,65 @@ export default function TonightScreen() {
           showPoints={false} 
         />
 
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity 
+            style={styles.quickActionButton}
+            onPress={() => router.push('/(tabs)/auctions')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#E31837', '#8B0000']}
+              style={styles.quickActionGradient}
+            >
+              <Ionicons name="flash" size={22} color="#FFF" />
+            </LinearGradient>
+            <Text style={styles.quickActionLabel}>Auctions</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.quickActionButton}
+            onPress={() => router.push('/(tabs)/wallet')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={[colors.gold, '#B8860B']}
+              style={styles.quickActionGradient}
+            >
+              <Ionicons name="ticket" size={22} color="#FFF" />
+            </LinearGradient>
+            <Text style={styles.quickActionLabel}>My Tickets</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.quickActionButton}
+            onPress={() => router.push('/(tabs)/explore')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#00D4AA', '#008B72']}
+              style={styles.quickActionGradient}
+            >
+              <Ionicons name="compass" size={22} color="#FFF" />
+            </LinearGradient>
+            <Text style={styles.quickActionLabel}>Venues</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.quickActionButton}
+            onPress={() => router.push('/(tabs)/profile')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#8B00FF', '#4B0082']}
+              style={styles.quickActionGradient}
+            >
+              <Ionicons name="person" size={22} color="#FFF" />
+            </LinearGradient>
+            <Text style={styles.quickActionLabel}>Profile</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Venue Dropdown Selector */}
         <View style={styles.dropdownSection}>
           <TouchableOpacity
