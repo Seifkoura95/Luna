@@ -282,7 +282,7 @@ async def get_upcoming_boosts(venue_id: Optional[str] = None):
             {"venue_restriction": venue_id}
         ]
     boosts = await db.boosts.find(query).sort("start_time", 1).to_list(10)
-    return boosts
+    return clean_mongo_docs(boosts)
 
 # ====== AUCTIONS API ======
 
