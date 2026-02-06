@@ -120,7 +120,6 @@ const MOCK_TICKETS = {
 
 export default function WalletScreen() {
   const user = useAuthStore((state) => state.user);
-  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [tickets, setTickets] = useState<any>({ active: [], upcoming: [], history: [] });
   const [events, setEvents] = useState<any[]>([]);
