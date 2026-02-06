@@ -211,32 +211,30 @@ export default function ProfileScreen() {
         {/* Consistent Header with Points shown */}
         <PageHeader title="PROFILE" showPoints={true} />
 
-        {/* Profile Header */}
-        <View style={styles.header}>
-          {/* User Info Section */}
-          <View style={styles.userInfoSection}>
-            <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={[tierConfig.color + '40', tierConfig.color + '10']}
-                style={styles.avatarGradient}
-              >
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                  </Text>
-                </View>
-              </LinearGradient>
-              <View style={[styles.tierBadge, { backgroundColor: tierConfig.color }]}>
-                <Ionicons name={tierConfig.icon as any} size={12} color="#000" />
+        {/* User Info Section */}
+        <View style={styles.userInfoSection}>
+          <View style={styles.avatarContainer}>
+            <LinearGradient
+              colors={[tierConfig.color + '40', tierConfig.color + '10']}
+              style={styles.avatarGradient}
+            >
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                </Text>
               </View>
+            </LinearGradient>
+            <View style={[styles.tierBadge, { backgroundColor: tierConfig.color }]}>
+              <Ionicons name={tierConfig.icon as any} size={12} color="#000" />
             </View>
-
-            <Text style={styles.userName}>{user?.name || 'Luna Member'}</Text>
-            <Text style={styles.userEmail}>{user?.email}</Text>
           </View>
 
-          {/* Membership Tier Card */}
-          <View style={styles.tierCard}>
+          <Text style={styles.userName}>{user?.name || 'Luna Member'}</Text>
+          <Text style={styles.userEmail}>{user?.email}</Text>
+        </View>
+
+        {/* Membership Tier Card */}
+        <View style={styles.tierCardContainer}>
             <LinearGradient
               colors={[tierConfig.color + '20', '#0A0A0A']}
               start={{ x: 0, y: 0 }}
