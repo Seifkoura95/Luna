@@ -27,7 +27,6 @@ const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_clubosce
 export default function TonightScreen() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null); // null = Luna Group (all)
   const [venues, setVenues] = useState<any[]>([]);
   const [missions, setMissions] = useState<any[]>([]);
