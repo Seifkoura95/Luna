@@ -876,6 +876,75 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
   },
+  subscriptionCard: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  subscriptionGradient: {
+    padding: spacing.lg,
+  },
+  subscriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  subscriptionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  subscriptionInfo: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  subscriptionTier: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 2,
+  },
+  subscriptionPrice: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  subscriptionArrow: {
+    padding: spacing.sm,
+  },
+  subscriptionPerks: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  subscriptionPerk: {
+    alignItems: 'center',
+  },
+  subscriptionPerkValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  subscriptionPerkLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  upgradePrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    gap: spacing.xs,
+  },
+  upgradePromptText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
   reservationCard: {
     flexDirection: 'row',
     alignItems: 'center',
