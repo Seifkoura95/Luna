@@ -23,7 +23,7 @@ export const QRCode: React.FC<QRCodeProps> = ({ size = 200, venueId }) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.getQRData();
+      const data = await api.getQRData(venueId);
       setQrData(data.qr_data);
       setCountdown(data.expires_in);
       if (Platform.OS !== 'web') {
