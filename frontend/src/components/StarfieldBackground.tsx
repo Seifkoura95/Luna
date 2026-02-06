@@ -473,12 +473,6 @@ const styles = StyleSheet.create({
   },
   planetContainer: {
     position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  planetGlow: {
-    position: 'absolute',
-    backgroundColor: '#FFFFFF08',
   },
   nebulaImage: {
     position: 'absolute',
