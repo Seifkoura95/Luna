@@ -754,8 +754,8 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   venueEventLogo: {
-    width: 100,
-    height: 28,
+    width: 90,
+    height: 32,
   },
   venueEventNameContainer: {
     flexDirection: 'row',
