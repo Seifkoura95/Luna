@@ -319,4 +319,84 @@ export const api = {
   
   getCrewSplitStatus: (crewId: string) =>
     apiFetch<{ split: any | null }>(`/api/crews/${crewId}/split-status`),
+  
+  // ====== SUBSCRIPTIONS ======
+  getSubscriptionTiers: () =>
+    apiFetch<{ tiers: any[]; entry_venues: string[] }>('/api/subscriptions/tiers', { auth: false }),
+  
+  getMySubscription: () =>
+    apiFetch<{ subscription: any | null; tier: any; is_subscribed: boolean }>('/api/subscriptions/my'),
+  
+  subscribeTo: (tierId: string, paymentMethodId?: string) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      subscription: any;
+      tier: any;
+      mock: boolean;
+    }>('/api/subscriptions/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ tier_id: tierId, payment_method_id: paymentMethodId })
+    }),
+  
+  cancelSubscription: () =>
+    apiFetch<{ success: boolean; message: string }>('/api/subscriptions/cancel', {
+      method: 'POST'
+    }),
+  
+  useFreeEntry: (venueId: string) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      entries_remaining: number;
+      unlimited: boolean;
+    }>(`/api/subscriptions/use-entry?venue_id=${venueId}`, {
+      method: 'POST'
+    }),
+  
+  // ====== POINTS ======
+  getPointsBalance: () =>
+    apiFetch<{
+      balance: number;
+      multiplier: number;
+      tier: string;
+      recent_transactions: any[];
+      points_per_dollar: number;
+    }>('/api/points/balance'),
+  
+  getPointsHistory: (limit: number = 50) =>
+    apiFetch<{
+      transactions: any[];
+      total_earned: number;
+      total_spent: number;
+      net_points: number;
+    }>(`/api/points/history?limit=${limit}`),
+  
+  recordSpending: (amount: number, source: string, sourceId?: string, venueId?: string, description?: string) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      amount_spent: number;
+      base_points: number;
+      bonus_points: number;
+      total_points: number;
+      multiplier: number;
+    }>('/api/points/record-spending', {
+      method: 'POST',
+      body: JSON.stringify({ amount, source, source_id: sourceId, venue_id: venueId, description })
+    }),
+  
+  simulatePurchase: (amount: number, description: string = 'Test Purchase') =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      amount_spent: number;
+      base_points: number;
+      bonus_points: number;
+      total_points: number;
+      multiplier: number;
+      demo: boolean;
+    }>(`/api/points/simulate-purchase?amount=${amount}&description=${encodeURIComponent(description)}`, {
+      method: 'POST'
+    }),
 };
