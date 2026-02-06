@@ -52,6 +52,19 @@ def get_current_user(authorization: Optional[str] = None) -> dict:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+# Helper function to clean MongoDB documents
+def clean_mongo_doc(doc):
+    """Remove MongoDB _id field from document"""
+    if doc and isinstance(doc, dict):
+        doc_copy = dict(doc)
+        doc_copy.pop('_id', None)
+        return doc_copy
+    return doc
+
+def clean_mongo_docs(docs):
+    """Remove MongoDB _id field from list of documents"""
+    return [clean_mongo_doc(doc) for doc in docs]
+
 # ====== VENUES API ======
 
 @api_router.get("/venues")
