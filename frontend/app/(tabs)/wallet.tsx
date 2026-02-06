@@ -26,9 +26,99 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 
 const { width } = Dimensions.get('window');
-const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
 
 type TabType = 'active' | 'upcoming' | 'history';
+
+// Mock tickets data for demonstration
+const MOCK_TICKETS = {
+  active: [
+    {
+      id: 'TKT-ECLIPSE-001',
+      event_title: 'Saturday Night Takeover',
+      venue_name: 'Eclipse',
+      event_date: new Date().toISOString(),
+      ticket_type: 'VIP',
+      qr_code: 'TKT-ECLIPSE-001-DEMO',
+      status: 'active',
+      guests: [
+        { id: 'g1', name: 'Sarah Johnson', email: 'sarah@email.com' },
+        { id: 'g2', name: 'Mike Chen', email: 'mike@email.com' },
+      ],
+    },
+    {
+      id: 'TKT-AFTERDARK-002',
+      event_title: 'R&B & Hip-Hop Fridays',
+      venue_name: 'After Dark',
+      event_date: new Date().toISOString(),
+      ticket_type: 'GENERAL',
+      qr_code: 'TKT-AFTERDARK-002-DEMO',
+      status: 'active',
+      guests: [],
+    },
+  ],
+  upcoming: [
+    {
+      id: 'TKT-ECLIPSE-003',
+      event_title: 'BLACK:CELL ft. BIIANCO',
+      venue_name: 'Eclipse',
+      event_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_type: 'VIP',
+      qr_code: 'TKT-ECLIPSE-003-DEMO',
+      status: 'active',
+      guests: [
+        { id: 'g3', name: 'Alex Rivera', email: 'alex@email.com' },
+      ],
+    },
+    {
+      id: 'TKT-JUJU-004',
+      event_title: 'Sundown Social',
+      venue_name: 'Juju Mermaid Beach',
+      event_date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_type: 'BOOTH',
+      qr_code: 'TKT-JUJU-004-DEMO',
+      status: 'active',
+      guests: [
+        { id: 'g4', name: 'Emma Wilson', email: 'emma@email.com' },
+        { id: 'g5', name: 'James Park', email: 'james@email.com' },
+        { id: 'g6', name: 'Olivia Brown', email: 'olivia@email.com' },
+      ],
+    },
+    {
+      id: 'TKT-SUCASA-005',
+      event_title: 'Rooftop Fridays',
+      venue_name: 'Su Casa Brisbane',
+      event_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_type: 'GENERAL',
+      qr_code: 'TKT-SUCASA-005-DEMO',
+      status: 'active',
+      guests: [],
+    },
+  ],
+  history: [
+    {
+      id: 'TKT-ECLIPSE-OLD1',
+      event_title: 'New Years Eve Bash',
+      venue_name: 'Eclipse',
+      event_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_type: 'VIP',
+      qr_code: 'TKT-ECLIPSE-OLD1-DEMO',
+      status: 'used',
+      guests: [
+        { id: 'g7', name: 'Chris Taylor', email: 'chris@email.com' },
+      ],
+    },
+    {
+      id: 'TKT-AFTERDARK-OLD2',
+      event_title: 'Afrobeats Saturdays',
+      venue_name: 'After Dark',
+      event_date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_type: 'GENERAL',
+      qr_code: 'TKT-AFTERDARK-OLD2-DEMO',
+      status: 'used',
+      guests: [],
+    },
+  ],
+};
 
 export default function WalletScreen() {
   const user = useAuthStore((state) => state.user);
