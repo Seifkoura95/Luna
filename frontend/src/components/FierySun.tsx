@@ -161,11 +161,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-  outerGlow: {
-    position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: '#FF6B00',
-  },
   sunContainer: {
     position: 'relative',
   },
@@ -173,29 +168,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-  },
-  sparkleLayer: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  sparkle: {
-    position: 'absolute',
-    width: 2,
-    height: 2,
-    borderRadius: 1,
-  },
-  sparkle1: {
-    top: '10%',
-    left: '50%',
-  },
-  sparkle2: {
-    top: '50%',
-    right: '10%',
-  },
-  sparkle3: {
-    bottom: '20%',
-    left: '20%',
   },
 });
 
