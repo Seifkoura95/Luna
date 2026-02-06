@@ -63,7 +63,11 @@ export default function ExploreScreen() {
       <StarfieldBackground starCount={60} shootingStarCount={2} />
       
       {/* Consistent Header - No Points */}
-      <PageHeader title="EXPLORE" showPoints={false} />
+      <PageHeader 
+        title="EXPLORE" 
+        description="7 premier venues across Brisbane & Gold Coast"
+        showPoints={false} 
+      />
 
       <ScrollView
         style={styles.scrollView}
