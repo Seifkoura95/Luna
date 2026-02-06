@@ -40,26 +40,28 @@ const HeaderRight = () => {
 
 export default function TabLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.tabBarLabel,
-        tabBarItemStyle: styles.tabBarItem,
-        headerStyle: styles.header,
-        headerTitleStyle: styles.headerTitle,
-        headerTintColor: colors.textPrimary,
-        headerRight: () => <HeaderRight />,
-        headerShadowVisible: false,
-        headerBackground: () => (
-          <LinearGradient
-            colors={[colors.background, colors.backgroundElevated]}
-            style={{ flex: 1 }}
-          />
-        ),
-      }}
-    >
+    <View style={styles.rootContainer}>
+      {/* Global Starfield Background */}
+      <StarfieldBackground starCount={60} shootingStarCount={2} />
+      
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: colors.accent,
+          tabBarInactiveTintColor: colors.textMuted,
+          tabBarStyle: styles.tabBar,
+          tabBarLabelStyle: styles.tabBarLabel,
+          tabBarItemStyle: styles.tabBarItem,
+          headerStyle: styles.header,
+          headerTitleStyle: styles.headerTitle,
+          headerTintColor: colors.textPrimary,
+          headerRight: () => <HeaderRight />,
+          headerShadowVisible: false,
+          headerBackground: () => (
+            <View style={{ flex: 1, backgroundColor: 'transparent' }} />
+          ),
+          sceneContainerStyle: { backgroundColor: 'transparent' },
+        }}
+      >
       <Tabs.Screen
         name="index"
         options={{
