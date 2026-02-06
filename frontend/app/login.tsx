@@ -76,7 +76,7 @@ export default function LoginScreen() {
           <ScrollView 
             contentContainerStyle={[
               styles.scrollContent,
-              { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg }
+              { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.lg }
             ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -85,9 +85,8 @@ export default function LoginScreen() {
             <View style={styles.content}>
               {/* Header Section */}
               <View style={styles.header}>
-                {/* Lunar Moon Logo */}
+                {/* Lunar Moon Logo - No glow */}
                 <View style={styles.logoContainer}>
-                  <View style={styles.logoGlow} />
                   <Image
                     source={{ uri: LUNAR_MOON_IMAGE }}
                     style={styles.logoImage}
@@ -95,25 +94,15 @@ export default function LoginScreen() {
                   />
                 </View>
 
-                {/* Brand Title - Optimized for screen */}
-                <View style={styles.brandContainer}>
-                  <Text style={styles.brandTitle}>LUNA</Text>
-                  <Text style={styles.brandTitle}>GROUP</Text>
-                  <View style={styles.brandUnderline} />
-                </View>
+                {/* Brand Title - Strong font, one line */}
+                <Text style={styles.brandTitle}>LUNA GROUP</Text>
+                <View style={styles.brandUnderline} />
 
-                {/* Tagline */}
-                <Text style={styles.tagline}>QUEENSLAND'S PREMIER{'\n'}NIGHTLIFE COLLECTIVE</Text>
-
-                {/* Venue Count */}
-                <View style={styles.venuesBadge}>
-                  <View style={styles.venuesDot} />
-                  <Text style={styles.venuesText}>7 ELITE VENUES</Text>
-                  <View style={styles.venuesDot} />
-                </View>
+                {/* Tagline - Replaced cheesy text */}
+                <Text style={styles.tagline}>BRISBANE • GOLD COAST</Text>
               </View>
 
-              {/* Auth Toggle */}
+              {/* Auth Toggle - Fixed colors */}
               <View style={styles.toggleContainer}>
                 <TouchableOpacity
                   style={[styles.toggleButton, isLogin && styles.toggleButtonActive]}
@@ -123,12 +112,6 @@ export default function LoginScreen() {
                   }}
                   activeOpacity={0.7}
                 >
-                  {isLogin && (
-                    <LinearGradient
-                      colors={[colors.accent + '30', colors.accent + '10']}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  )}
                   <Text style={[styles.toggleText, isLogin && styles.toggleTextActive]}>
                     Sign In
                   </Text>
@@ -141,12 +124,6 @@ export default function LoginScreen() {
                   }}
                   activeOpacity={0.7}
                 >
-                  {!isLogin && (
-                    <LinearGradient
-                      colors={[colors.accent + '30', colors.accent + '10']}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  )}
                   <Text style={[styles.toggleText, !isLogin && styles.toggleTextActive]}>
                     Join Luna
                   </Text>
@@ -298,99 +275,58 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   logoContainer: {
-    position: 'relative',
     marginBottom: spacing.lg,
   },
-  logoGlow: {
-    position: 'absolute',
-    top: -15,
-    left: -15,
-    right: -15,
-    bottom: -15,
-    backgroundColor: colors.accent,
-    borderRadius: 60,
-    opacity: 0.15,
-  },
   logoImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-  },
-  brandContainer: {
-    alignItems: 'center',
-    marginBottom: spacing.md,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
   brandTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '900',
     color: colors.textPrimary,
-    letterSpacing: 10,
-    lineHeight: 40,
+    letterSpacing: 6,
+    textTransform: 'uppercase',
   },
   brandUnderline: {
     width: 60,
     height: 3,
     backgroundColor: colors.accent,
     marginTop: spacing.sm,
+    marginBottom: spacing.md,
   },
   tagline: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.textSecondary,
-    letterSpacing: 2,
-    textAlign: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-    lineHeight: 16,
-  },
-  venuesBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.backgroundCard,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  venuesDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.accent,
-    marginHorizontal: spacing.sm,
-  },
-  venuesText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    letterSpacing: 2,
+    letterSpacing: 4,
   },
   toggleContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: '#111111',
     borderRadius: radius.lg,
     padding: 4,
     marginBottom: spacing.xl,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#222222',
   },
   toggleButton: {
     flex: 1,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
     alignItems: 'center',
-    overflow: 'hidden',
   },
   toggleButtonActive: {
+    backgroundColor: '#1A1A1A',
     borderWidth: 1,
-    borderColor: colors.accent + '40',
+    borderColor: '#333333',
   },
   toggleText: {
     fontSize: 15,
     fontWeight: '700',
     color: colors.textMuted,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   toggleTextActive: {
     color: colors.textPrimary,
@@ -411,16 +347,16 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: '#0A0A0A',
     borderRadius: radius.lg,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: '#1F1F1F',
     paddingHorizontal: spacing.md,
     height: 56,
   },
   inputContainerFocused: {
     borderColor: colors.accent,
-    backgroundColor: colors.backgroundElevated,
+    backgroundColor: '#111111',
   },
   inputIcon: {
     marginRight: spacing.md,
