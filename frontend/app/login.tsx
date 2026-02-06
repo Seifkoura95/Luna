@@ -119,7 +119,7 @@ export default function LoginScreen() {
           {/* Premium Logo Section */}
           <View style={styles.logoSection}>
             <View style={styles.logoGlow} />
-            <Text style={styles.logoText}>ECLIPSE</Text>
+            <Text style={styles.logoText}>LUNA GROUP VIP</Text>
             <View style={styles.locationBadge}>
               <View style={styles.locationDot} />
               <Text style={styles.locationText}>BRISBANE</Text>
