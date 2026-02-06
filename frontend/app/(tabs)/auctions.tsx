@@ -60,13 +60,17 @@ export default function AuctionsScreen() {
   const [showMaxBid, setShowMaxBid] = useState(false);
   const [timeLeft, setTimeLeft] = useState<Record<string, string>>({});
   const [isPlacingBid, setIsPlacingBid] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     try {
+      setIsLoading(true);
       const data = await api.getAuctions();
       setAuctions(data || []);
     } catch (e) {
       console.error('Failed to fetch auctions:', e);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
