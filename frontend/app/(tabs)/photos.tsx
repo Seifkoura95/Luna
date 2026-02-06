@@ -236,30 +236,38 @@ export default function PhotosScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Photos Grid */}
-        <View style={styles.photosGrid}>
-          {displayPhotos.map((photo) => (
-            <PhotoCard
-              key={photo.id}
-              photo={photo}
-              onApprove={activeTab === 'pending' ? handleApprove : undefined}
-              tagId={photo.tag_id}
-              selectable={activeTab === 'all'}
-              selected={selectedPhotos.has(photo.id)}
-              onSelect={togglePhotoSelection}
-              onPress={activeTab === 'purchased' ? () => setSelectedPhoto(photo) : undefined}
-            />
-          ))}
-        </View>
-
-        {/* Empty State */}
-        {displayPhotos.length === 0 && (
+        {displayPhotos.length > 0 ? (
+          <View style={styles.photosGrid}>
+            {displayPhotos.map((photo) => (
+              <PhotoCard
+                key={photo.id}
+                photo={photo}
+                onApprove={activeTab === 'pending' ? handleApprove : undefined}
+                tagId={photo.tag_id}
+                selectable={activeTab === 'all'}
+                selected={selectedPhotos.has(photo.id)}
+                onSelect={togglePhotoSelection}
+                onPress={activeTab === 'purchased' ? () => setSelectedPhoto(photo) : undefined}
+              />
+            ))}
+          </View>
+        ) : (
           <View style={styles.emptyState}>
-            <Ionicons 
-              name={activeTab === 'purchased' ? 'images-outline' : 'camera-outline'} 
-              size={64} 
-              color={colors.textMuted} 
-            />
+            <View style={styles.emptyIconContainer}>
+              <LinearGradient
+                colors={[colors.accentGlow, 'transparent']}
+                style={styles.emptyGlow}
+              />
+              <Ionicons 
+                name={
+                  activeTab === 'purchased' ? 'images-outline' : 
+                  activeTab === 'pending' ? 'hourglass-outline' : 
+                  'camera-outline'
+                } 
+                size={56} 
+                color={colors.textMuted} 
+              />
+            </View>
             <Text style={styles.emptyTitle}>
               {activeTab === 'pending' ? 'No Photos to Review' :
                activeTab === 'purchased' ? 'No Purchased Photos' :
@@ -267,8 +275,10 @@ export default function PhotosScreen() {
             </Text>
             <Text style={styles.emptyText}>
               {activeTab === 'pending' 
-                ? 'Photos tagged to you will appear here for approval'
-                : 'Visit Eclipse and get your photos taken!'}
+                ? 'Photos tagged to you by our photographers will appear here for your approval'
+                : activeTab === 'purchased'
+                ? 'Your purchased memories will be stored here'
+                : 'Visit Eclipse Brisbane and capture unforgettable moments!'}
             </Text>
           </View>
         )}
