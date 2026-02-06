@@ -9,7 +9,6 @@ import Animated, {
   withRepeat,
   withTiming,
   Easing,
-  interpolate,
 } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
@@ -21,14 +20,14 @@ export default function Index() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
   
-  // Sideways rotation animation (like a real moon)
+  // Rotation animation - spinning left like a real planet (Y-axis)
   const rotation = useSharedValue(0);
   
   useEffect(() => {
-    // Start continuous rotation
+    // Rotate counter-clockwise (negative) for spinning left effect
     rotation.value = withRepeat(
-      withTiming(360, {
-        duration: 20000, // 20 seconds for full rotation - slow and realistic
+      withTiming(-360, {
+        duration: 20000, // 20 seconds for full rotation
         easing: Easing.linear,
       }),
       -1, // Infinite
@@ -54,31 +53,14 @@ export default function Index() {
     }
   }, [isLoading, isAuthenticated]);
 
-  // Sideways rotation like a real moon - using scaleX to simulate Y-axis rotation
-  const animatedStyle = useAnimatedStyle(() => {
-    const scaleX = interpolate(
-      rotation.value % 360,
-      [0, 90, 180, 270, 360],
-      [1, 0.85, 1, 0.85, 1]
-    );
-    
-    const translateX = interpolate(
-      rotation.value % 360,
-      [0, 90, 180, 270, 360],
-      [0, -4, 0, 4, 0]
-    );
-
-    return {
-      transform: [
-        { scaleX },
-        { translateX },
-      ],
-    };
-  });
+  // Spinning left like a real planet (Y-axis rotation)
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotateY: `${rotation.value}deg` }],
+  }));
 
   return (
     <View style={styles.container}>
-      {/* Moon without glow - clean look */}
+      {/* Moon spinning left like a planet */}
       <Animated.View style={[styles.moonContainer, animatedStyle]}>
         <Image
           source={{ uri: LUNAR_MOON_IMAGE }}
