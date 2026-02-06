@@ -175,7 +175,7 @@ LUNA_VENUES = {
         "coordinates": {"lat": -28.0450, "lng": 153.4380},
         "accent_color": "#00D4AA",
         "tagline": "Modern Australian Rooftop Dining",
-        "logo_url": None,
+        "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/wzf6k0km_Juju.webp",
         "description": "Restaurant & rooftop bar with panoramic coastal views, modern Australian cuisine, and cocktails on the Gold Coast.",
         "long_description": "Juju Mermaid Beach offers an elevated dining experience with stunning panoramic coastal views. The open-air rooftop terrace features a retractable roof, signature cocktails, and modern Australian bar fare. Downstairs, enjoy refined modern Australian cuisine in an intimate setting. Perfect for sunset sessions, boozy Sunday brunch, or special occasions.",
         "features": ["table_booking", "rooftop_terrace", "private_dining"],
