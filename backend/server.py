@@ -270,7 +270,7 @@ async def get_active_boosts(venue_id: Optional[str] = None):
             {"venue_restriction": venue_id}
         ]
     boosts = await db.boosts.find(query).to_list(10)
-    return boosts
+    return clean_mongo_docs(boosts)
 
 @api_router.get("/boosts/upcoming")
 async def get_upcoming_boosts(venue_id: Optional[str] = None):
