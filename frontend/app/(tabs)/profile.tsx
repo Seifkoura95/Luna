@@ -632,13 +632,24 @@ export default function ProfileScreen() {
                 {crews.length > 0 ? (
                   crews.map((crew) => (
                     <View key={crew.id} style={styles.crewCard}>
-                      <View style={styles.crewInfo}>
+                      <TouchableOpacity 
+                        style={styles.crewInfo}
+                        onPress={() => openCrewDetails(crew)}
+                        activeOpacity={0.7}
+                      >
                         <Text style={styles.crewName}>{crew.name}</Text>
                         <Text style={styles.crewMembers}>
                           {crew.members?.length || 1} members
                         </Text>
-                      </View>
+                      </TouchableOpacity>
                       <View style={styles.crewActions}>
+                        <TouchableOpacity 
+                          style={styles.inviteButton}
+                          onPress={() => openInviteModal(crew)}
+                        >
+                          <Ionicons name="person-add" size={16} color={colors.success} />
+                          <Text style={styles.inviteButtonText}>Invite</Text>
+                        </TouchableOpacity>
                         <TouchableOpacity 
                           style={styles.trackButton}
                           onPress={() => {
@@ -650,14 +661,15 @@ export default function ProfileScreen() {
                           <Ionicons name="location" size={16} color={colors.accent} />
                           <Text style={styles.trackButtonText}>Track</Text>
                         </TouchableOpacity>
-                        <View style={styles.crewCode}>
-                          <Text style={styles.crewCodeText}>{crew.invite_code}</Text>
-                        </View>
                       </View>
                     </View>
                   ))
                 ) : (
-                  <Text style={styles.noCrews}>No crews yet. Create one to start planning!</Text>
+                  <View style={styles.noCrewsContainer}>
+                    <Ionicons name="people-outline" size={48} color={colors.textMuted} />
+                    <Text style={styles.noCrews}>No crews yet</Text>
+                    <Text style={styles.noCrewsSubtitle}>Create one to start planning with friends!</Text>
+                  </View>
                 )}
               </ScrollView>
             </LinearGradient>
