@@ -3,6 +3,16 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  MoonIcon,
+  GalaxyIcon,
+  ConstellationIcon,
+  RocketIcon,
+  OrbitIcon,
+  CometIcon,
+  EclipseIcon,
+  StarburstIcon,
+} from './LunarIcons';
 
 interface MissionCardProps {
   mission: {
@@ -17,30 +27,75 @@ interface MissionCardProps {
   };
 }
 
-const missionConfig: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
-  check_in_streak: { icon: 'calendar', color: colors.accent },
-  early_bird: { icon: 'sunny', color: colors.gold },
-  spending: { icon: 'wallet', color: colors.success },
+// Map mission types to lunar-themed icons and colors
+const missionConfig: Record<string, { 
+  icon: React.FC<{ size?: number; color?: string }>; 
+  color: string;
+  glowColor: string;
+}> = {
+  early_bird: { 
+    icon: StarburstIcon, 
+    color: colors.gold,
+    glowColor: colors.goldGlow,
+  },
+  cross_venue: { 
+    icon: GalaxyIcon, 
+    color: '#E31837',
+    glowColor: 'rgba(227, 24, 55, 0.3)',
+  },
+  venue_specific: { 
+    icon: EclipseIcon, 
+    color: '#8B00FF',
+    glowColor: 'rgba(139, 0, 255, 0.3)',
+  },
+  consistency: { 
+    icon: OrbitIcon, 
+    color: '#00D4AA',
+    glowColor: 'rgba(0, 212, 170, 0.3)',
+  },
+  social: { 
+    icon: ConstellationIcon, 
+    color: '#FFB800',
+    glowColor: 'rgba(255, 184, 0, 0.3)',
+  },
+  spending: { 
+    icon: CometIcon, 
+    color: colors.success,
+    glowColor: colors.successGlow,
+  },
+  check_in_streak: { 
+    icon: RocketIcon, 
+    color: '#FF6B35',
+    glowColor: 'rgba(255, 107, 53, 0.3)',
+  },
+  default: { 
+    icon: MoonIcon, 
+    color: colors.accent,
+    glowColor: colors.accentGlow,
+  },
 };
 
 export const MissionCard: React.FC<MissionCardProps> = ({ mission }) => {
   const progress = Math.min(mission.current_value / mission.requirement_value, 1);
-  const config = missionConfig[mission.mission_type] || { icon: 'trophy', color: colors.accent };
+  const config = missionConfig[mission.mission_type] || missionConfig.default;
+  const IconComponent = config.icon;
 
   return (
     <View style={[styles.container, mission.completed && styles.containerCompleted]}>
       <LinearGradient
-        colors={mission.completed ? [colors.successGlow, colors.backgroundCard] : [colors.backgroundCard, colors.backgroundElevated]}
+        colors={mission.completed 
+          ? [colors.successGlow, colors.backgroundCard] 
+          : [colors.backgroundCard, colors.backgroundElevated]}
         style={styles.gradient}
       >
         {/* Header */}
         <View style={styles.header}>
-          <View style={[styles.iconContainer, { backgroundColor: config.color + '20' }]}>
-            <Ionicons 
-              name={mission.completed ? 'checkmark' : config.icon} 
-              size={22} 
-              color={mission.completed ? colors.success : config.color} 
-            />
+          <View style={[styles.iconContainer, { backgroundColor: config.glowColor }]}>
+            {mission.completed ? (
+              <Ionicons name="checkmark" size={26} color={colors.success} />
+            ) : (
+              <IconComponent size={32} color={config.color} />
+            )}
           </View>
           <View style={styles.rewardBadge}>
             <Ionicons name="star" size={12} color={colors.gold} />
@@ -56,7 +111,9 @@ export const MissionCard: React.FC<MissionCardProps> = ({ mission }) => {
         <View style={styles.progressSection}>
           <View style={styles.progressBar}>
             <LinearGradient
-              colors={mission.completed ? [colors.success, colors.success] : [config.color, config.color + '80']}
+              colors={mission.completed 
+                ? [colors.success, colors.success] 
+                : [config.color, config.color + '80']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={[styles.progressFill, { width: `${progress * 100}%` }]}
@@ -102,9 +159,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
