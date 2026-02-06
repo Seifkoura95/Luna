@@ -170,15 +170,15 @@ export default function TonightScreen() {
 
             <TouchableOpacity 
               style={styles.secondaryAction}
-              onPress={() => { handleHaptic(); router.push('/guestlist'); }}
+              onPress={() => { handleHaptic(); router.push('/refer-friend'); }}
               activeOpacity={0.85}
             >
               <LinearGradient 
                 colors={['rgba(0,212,170,0.15)', 'rgba(0,212,170,0.05)']}
                 style={styles.secondaryActionGradient}
               >
-                <Ionicons name="people" size={22} color="#00D4AA" />
-                <Text style={[styles.secondaryActionText, fontsLoaded && { fontFamily: fonts.semiBold }]}>Guestlist</Text>
+                <Ionicons name="gift" size={22} color="#00D4AA" />
+                <Text style={[styles.secondaryActionText, fontsLoaded && { fontFamily: fonts.semiBold }]}>Refer & Earn</Text>
               </LinearGradient>
             </TouchableOpacity>
 
