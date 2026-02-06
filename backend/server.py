@@ -151,11 +151,17 @@ scheduler = AsyncIOScheduler()
 
 # Placeholder for the sync function - will be set later
 _megatix_sync_func = None
+_notification_gen_func = None
 
 def set_megatix_sync_func(func):
     """Set the megatix sync function for the scheduler"""
     global _megatix_sync_func
     _megatix_sync_func = func
+
+def set_notification_gen_func(func):
+    """Set the notification generation function for the scheduler"""
+    global _notification_gen_func
+    _notification_gen_func = func
 
 async def run_scheduled_sync():
     """Wrapper to call the megatix sync function"""
@@ -167,6 +173,17 @@ async def run_scheduled_sync():
             logging.info(f"Scheduled sync completed: {result.get('message', 'done')}")
         except Exception as e:
             logging.error(f"Scheduled sync failed: {str(e)}")
+
+async def run_scheduled_notifications():
+    """Wrapper to call the notification generation function"""
+    global _notification_gen_func
+    if _notification_gen_func:
+        logging.info("Running scheduled notification generation...")
+        try:
+            result = await _notification_gen_func()
+            logging.info(f"Notification generation completed: {result} notifications created")
+        except Exception as e:
+            logging.error(f"Notification generation failed: {str(e)}")
 
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
