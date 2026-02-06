@@ -210,8 +210,9 @@ export default function ProfileScreen() {
       >
         {/* Consistent Header with Points shown */}
         <PageHeader title="PROFILE" showPoints={true} />
-        {/* Profile Header */}
-        <View style={styles.header}>
+
+        {/* User Info Section */}
+        <View style={styles.userInfoSection}>
           <View style={styles.avatarContainer}>
             <LinearGradient
               colors={[tierConfig.color + '40', tierConfig.color + '10']}
@@ -230,6 +231,7 @@ export default function ProfileScreen() {
 
           <Text style={styles.userName}>{user?.name || 'Luna Member'}</Text>
           <Text style={styles.userEmail}>{user?.email}</Text>
+        </View>
 
           {/* Membership Tier Card */}
           <View style={styles.tierCard}>
