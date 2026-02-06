@@ -6,19 +6,20 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   Modal,
+  Dimensions,
 } from 'react-native';
-import { colors } from '../../src/theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
-import { PointsDisplay } from '../../src/components/PointsDisplay';
 import { RewardCard } from '../../src/components/RewardCard';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
+const { width } = Dimensions.get('window');
 const CATEGORIES = ['all', 'drinks', 'bottles', 'vip', 'merch'];
 
 export default function RewardsScreen() {
@@ -46,7 +47,6 @@ export default function RewardsScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchRewards();
-    // Refresh user data
     try {
       const userData = await api.getMe();
       useAuthStore.getState().setUser(userData);
@@ -62,11 +62,7 @@ export default function RewardsScreen() {
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      
-      // Update user points
       useAuthStore.getState().updatePoints(result.new_balance);
-      
-      // Show redemption modal
       setRedemptionModal(result);
     } catch (e: any) {
       Alert.alert('Redemption Failed', e.message || 'Please try again');
@@ -74,7 +70,7 @@ export default function RewardsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -87,9 +83,22 @@ export default function RewardsScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Points Display */}
-        <View style={styles.pointsSection}>
-          <PointsDisplay points={user?.points_balance || 0} tier={user?.tier || 'bronze'} />
+        {/* Points Hero */}
+        <View style={styles.heroSection}>
+          <LinearGradient
+            colors={[colors.goldGlow, 'transparent']}
+            style={styles.heroGlow}
+          />
+          <View style={styles.heroContent}>
+            <Text style={styles.heroLabel}>YOUR BALANCE</Text>
+            <View style={styles.pointsRow}>
+              <Ionicons name="star" size={32} color={colors.gold} />
+              <Text style={styles.pointsValue}>
+                {user?.points_balance?.toLocaleString() || 0}
+              </Text>
+              <Text style={styles.pointsUnit}>pts</Text>
+            </View>
+          </View>
         </View>
 
         {/* Category Tabs */}
@@ -105,8 +114,20 @@ export default function RewardsScreen() {
                 styles.categoryTab,
                 selectedCategory === category && styles.categoryTabActive,
               ]}
-              onPress={() => setSelectedCategory(category)}
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.selectionAsync();
+                setSelectedCategory(category);
+              }}
+              activeOpacity={0.7}
             >
+              {selectedCategory === category && (
+                <LinearGradient
+                  colors={[colors.accent, colors.accentDark]}
+                  style={StyleSheet.absoluteFill}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                />
+              )}
               <Text
                 style={[
                   styles.categoryText,
@@ -118,6 +139,15 @@ export default function RewardsScreen() {
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {/* Section Header */}
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleContainer}>
+            <View style={styles.sectionAccent} />
+            <Text style={styles.sectionTitle}>AVAILABLE REWARDS</Text>
+          </View>
+          <Text style={styles.rewardCount}>{rewards.length} items</Text>
+        </View>
 
         {/* Rewards List */}
         <View style={styles.rewardsSection}>
@@ -132,8 +162,11 @@ export default function RewardsScreen() {
           
           {rewards.length === 0 && (
             <View style={styles.emptyState}>
-              <Ionicons name="gift-outline" size={48} color={colors.textMuted} />
-              <Text style={styles.emptyText}>No rewards available in this category</Text>
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="gift-outline" size={48} color={colors.textMuted} />
+              </View>
+              <Text style={styles.emptyTitle}>No rewards available</Text>
+              <Text style={styles.emptyText}>Check back soon for exciting rewards!</Text>
             </View>
           )}
         </View>
@@ -148,31 +181,53 @@ export default function RewardsScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalIcon}>
-              <Ionicons name="checkmark-circle" size={64} color={colors.success} />
-            </View>
-            <Text style={styles.modalTitle}>Reward Redeemed!</Text>
-            <Text style={styles.modalReward}>{redemptionModal?.reward_name}</Text>
-            
-            <View style={styles.codeContainer}>
-              <Text style={styles.codeLabel}>Validation Code</Text>
-              <Text style={styles.codeValue}>{redemptionModal?.validation_code}</Text>
-            </View>
-            
-            <Text style={styles.modalNote}>
-              Show this code to staff to claim your reward
-            </Text>
-            
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => setRedemptionModal(null)}
+            <LinearGradient
+              colors={[colors.backgroundCard, colors.background]}
+              style={styles.modalGradient}
             >
-              <Text style={styles.modalButtonText}>Done</Text>
-            </TouchableOpacity>
+              {/* Success Animation */}
+              <View style={styles.successIconContainer}>
+                <LinearGradient
+                  colors={[colors.successGlow, 'transparent']}
+                  style={styles.successGlow}
+                />
+                <View style={styles.successIcon}>
+                  <Ionicons name="checkmark" size={40} color={colors.success} />
+                </View>
+              </View>
+              
+              <Text style={styles.modalTitle}>Reward Redeemed!</Text>
+              <Text style={styles.modalReward}>{redemptionModal?.reward_name}</Text>
+              
+              {/* Code Display */}
+              <View style={styles.codeContainer}>
+                <Text style={styles.codeLabel}>VALIDATION CODE</Text>
+                <View style={styles.codeBox}>
+                  <Text style={styles.codeValue}>{redemptionModal?.validation_code}</Text>
+                </View>
+              </View>
+              
+              <Text style={styles.modalNote}>
+                Show this code to staff to claim your reward
+              </Text>
+              
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setRedemptionModal(null)}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={[colors.accent, colors.accentDark]}
+                  style={styles.modalButtonGradient}
+                >
+                  <Text style={styles.modalButtonText}>Got It</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -185,27 +240,66 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 24,
+    paddingBottom: spacing.xxl,
   },
-  pointsSection: {
-    padding: 16,
+  heroSection: {
+    margin: spacing.md,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 1,
+    borderColor: colors.gold + '30',
+    position: 'relative',
+  },
+  heroGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+  },
+  heroContent: {
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  heroLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 3,
+    marginBottom: spacing.sm,
+  },
+  pointsRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  pointsValue: {
+    fontSize: 52,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginLeft: spacing.sm,
+  },
+  pointsUnit: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginLeft: spacing.xs,
   },
   categoriesContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 8,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   categoryTab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: colors.card,
-    marginRight: 8,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.backgroundCard,
+    marginRight: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: 'hidden',
   },
   categoryTabActive: {
-    backgroundColor: colors.accent,
     borderColor: colors.accent,
   },
   categoryText: {
@@ -216,81 +310,156 @@ const styles = StyleSheet.create({
   categoryTextActive: {
     color: colors.textPrimary,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionAccent: {
+    width: 3,
+    height: 16,
+    backgroundColor: colors.accent,
+    borderRadius: 2,
+    marginRight: spacing.sm,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 2,
+  },
+  rewardCount: {
+    fontSize: 13,
+    color: colors.textMuted,
+  },
   rewardsSection: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 48,
+    paddingVertical: spacing.xxxl,
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.backgroundCard,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
   },
   emptyText: {
-    color: colors.textMuted,
     fontSize: 14,
-    marginTop: 12,
+    color: colors.textSecondary,
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.lg,
   },
   modalContent: {
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    padding: 24,
     width: '100%',
     maxWidth: 340,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalGradient: {
+    padding: spacing.xl,
     alignItems: 'center',
   },
-  modalIcon: {
-    marginBottom: 16,
+  successIconContainer: {
+    position: 'relative',
+    marginBottom: spacing.lg,
+  },
+  successGlow: {
+    position: 'absolute',
+    top: -20,
+    left: -20,
+    right: -20,
+    bottom: -20,
+    borderRadius: 60,
+  },
+  successIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.success + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.success,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   modalReward: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textSecondary,
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   codeContainer: {
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    padding: 16,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   codeLabel: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '700',
     color: colors.textSecondary,
-    marginBottom: 4,
+    letterSpacing: 2,
+    marginBottom: spacing.sm,
+  },
+  codeBox: {
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.success + '40',
   },
   codeValue: {
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.success,
-    letterSpacing: 4,
+    letterSpacing: 6,
   },
   modalNote: {
     fontSize: 13,
     color: colors.textMuted,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   modalButton: {
-    backgroundColor: colors.accent,
-    paddingVertical: 14,
-    paddingHorizontal: 48,
-    borderRadius: 12,
+    width: '100%',
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  modalButtonGradient: {
+    paddingVertical: spacing.md + 2,
+    alignItems: 'center',
   },
   modalButtonText: {
     color: colors.textPrimary,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

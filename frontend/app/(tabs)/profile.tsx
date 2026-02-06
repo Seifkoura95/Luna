@@ -6,39 +6,39 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, tierColors } from '../../src/theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, spacing, radius, tierColors, tierGlows } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { Platform } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 const TIERS = [
-  { key: 'bronze', name: 'Bronze', price: 0, multiplier: '1.0x' },
-  { key: 'silver', name: 'Silver', price: 29, multiplier: '1.2x' },
-  { key: 'gold', name: 'Gold', price: 79, multiplier: '1.5x' },
-  { key: 'platinum', name: 'Platinum', price: 199, multiplier: '2.0x' },
-  { key: 'black', name: 'Black', price: 499, multiplier: '3.0x' },
+  { key: 'bronze', name: 'Bronze', price: 0, multiplier: '1.0x', icon: 'shield' },
+  { key: 'silver', name: 'Silver', price: 29, multiplier: '1.2x', icon: 'shield-half' },
+  { key: 'gold', name: 'Gold', price: 79, multiplier: '1.5x', icon: 'diamond' },
+  { key: 'platinum', name: 'Platinum', price: 199, multiplier: '2.0x', icon: 'diamond' },
+  { key: 'black', name: 'Black', price: 499, multiplier: '3.0x', icon: 'diamond' },
 ];
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const [stats, setStats] = useState<any>(null);
-  const [redemptions, setRedemptions] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [statsData, redemptionsData] = await Promise.all([
-        api.getPointsStats(),
-        api.getRedemptions(),
-      ]);
+      const statsData = await api.getPointsStats();
       setStats(statsData);
-      setRedemptions(redemptionsData);
     } catch (e) {
       console.error('Failed to fetch profile data:', e);
     }
@@ -51,7 +51,6 @@ export default function ProfileScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchData();
-    // Refresh user data
     try {
       const userData = await api.getMe();
       useAuthStore.getState().setUser(userData);
@@ -62,6 +61,9 @@ export default function ProfileScreen() {
   };
 
   const handleUpgrade = async (tier: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     Alert.alert(
       'Upgrade Membership',
       `Upgrade to ${tier.charAt(0).toUpperCase() + tier.slice(1)} tier?`,
@@ -72,6 +74,9 @@ export default function ProfileScreen() {
           onPress: async () => {
             try {
               const result = await api.upgradeMembership(tier);
+              if (Platform.OS !== 'web') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }
               Alert.alert('Success', result.message);
               useAuthStore.getState().updateTier(tier);
               useAuthStore.getState().updatePoints(
@@ -87,28 +92,25 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/login');
-          },
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/login');
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  const tierColor = tierColors[user?.tier || 'bronze'] || colors.textPrimary;
+  const tierColor = tierColors[user?.tier || 'bronze'] || colors.gold;
+  const tierGlow = tierGlows[user?.tier || 'bronze'] || colors.goldGlow;
   const currentTierIndex = TIERS.findIndex((t) => t.key === user?.tier);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -121,42 +123,87 @@ export default function ProfileScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile Header */}
-        <View style={styles.header}>
-          <View style={styles.avatarContainer}>
-            {user?.picture ? (
-              <Image source={{ uri: user.picture }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Ionicons name="person" size={40} color={colors.textMuted} />
+        {/* Profile Hero */}
+        <View style={styles.heroSection}>
+          <LinearGradient
+            colors={[tierGlow, 'transparent']}
+            style={styles.heroGlow}
+          />
+          <LinearGradient
+            colors={[colors.backgroundCard, colors.backgroundElevated]}
+            style={styles.heroCard}
+          >
+            {/* Avatar */}
+            <View style={styles.avatarContainer}>
+              <View style={[styles.avatarGlow, { backgroundColor: tierGlow }]} />
+              {user?.picture ? (
+                <Image source={{ uri: user.picture }} style={styles.avatar} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarInitial}>
+                    {user?.name?.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <View style={[styles.tierIndicator, { backgroundColor: tierColor }]}>
+                <Ionicons name="diamond" size={12} color={colors.background} />
               </View>
-            )}
-            <View style={[styles.tierBadge, { backgroundColor: tierColor }]}>
-              <Text style={styles.tierBadgeText}>{user?.tier?.toUpperCase()}</Text>
             </View>
-          </View>
-          <Text style={styles.userName}>{user?.name}</Text>
-          <Text style={styles.userEmail}>{user?.email}</Text>
+
+            {/* User Info */}
+            <Text style={styles.userName}>{user?.name}</Text>
+            <Text style={styles.userEmail}>{user?.email}</Text>
+
+            {/* Tier Badge */}
+            <View style={[styles.tierBadge, { borderColor: tierColor }]}>
+              <Text style={[styles.tierBadgeText, { color: tierColor }]}>
+                {user?.tier?.toUpperCase()} MEMBER
+              </Text>
+            </View>
+          </LinearGradient>
         </View>
 
         {/* Stats Grid */}
         {stats && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>YOUR STATS</Text>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionAccent} />
+              <Text style={styles.sectionTitle}>YOUR STATS</Text>
+            </View>
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
+                <LinearGradient
+                  colors={[colors.goldGlow, 'transparent']}
+                  style={styles.statGlow}
+                />
+                <Ionicons name="star" size={24} color={colors.gold} />
                 <Text style={styles.statValue}>{stats.total_earned}</Text>
                 <Text style={styles.statLabel}>Total Earned</Text>
               </View>
               <View style={styles.statCard}>
+                <LinearGradient
+                  colors={[colors.accentGlow, 'transparent']}
+                  style={styles.statGlow}
+                />
+                <Ionicons name="gift" size={24} color={colors.accent} />
                 <Text style={styles.statValue}>{stats.total_spent}</Text>
-                <Text style={styles.statLabel}>Total Spent</Text>
+                <Text style={styles.statLabel}>Redeemed</Text>
               </View>
               <View style={styles.statCard}>
+                <LinearGradient
+                  colors={[colors.successGlow, 'transparent']}
+                  style={styles.statGlow}
+                />
+                <Ionicons name="calendar" size={24} color={colors.success} />
                 <Text style={styles.statValue}>{stats.checkin_count}</Text>
                 <Text style={styles.statLabel}>Check-ins</Text>
               </View>
               <View style={styles.statCard}>
+                <LinearGradient
+                  colors={[colors.warningGlow, 'transparent']}
+                  style={styles.statGlow}
+                />
+                <Ionicons name="trophy" size={24} color={colors.warning} />
                 <Text style={styles.statValue}>{stats.missions_completed}</Text>
                 <Text style={styles.statLabel}>Missions</Text>
               </View>
@@ -166,87 +213,84 @@ export default function ProfileScreen() {
 
         {/* Membership Tiers */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>MEMBERSHIP TIERS</Text>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionAccent} />
+            <Text style={styles.sectionTitle}>MEMBERSHIP TIERS</Text>
+          </View>
           {TIERS.map((tier, index) => {
             const isCurrentTier = tier.key === user?.tier;
             const isLowerTier = index <= currentTierIndex;
-            const tierBgColor = tierColors[tier.key] || colors.textPrimary;
+            const color = tierColors[tier.key] || colors.textPrimary;
+            const glow = tierGlows[tier.key] || colors.goldGlow;
 
             return (
               <View
                 key={tier.key}
                 style={[
                   styles.tierCard,
-                  isCurrentTier && { borderColor: tierBgColor },
+                  isCurrentTier && { borderColor: color },
                 ]}
               >
-                <View style={styles.tierHeader}>
-                  <View style={[styles.tierIcon, { backgroundColor: tierBgColor + '30' }]}>
-                    <Ionicons name="diamond" size={20} color={tierBgColor} />
+                <LinearGradient
+                  colors={isCurrentTier ? [glow, colors.backgroundCard] : [colors.backgroundCard, colors.backgroundElevated]}
+                  style={styles.tierCardGradient}
+                >
+                  <View style={styles.tierCardHeader}>
+                    <View style={[styles.tierIcon, { backgroundColor: color + '20' }]}>
+                      <Ionicons name={tier.icon as any} size={22} color={color} />
+                    </View>
+                    <View style={styles.tierInfo}>
+                      <Text style={styles.tierName}>{tier.name}</Text>
+                      <Text style={styles.tierPrice}>
+                        {tier.price === 0 ? 'Free' : `$${tier.price}/mo`}
+                      </Text>
+                    </View>
+                    <View style={[styles.multiplierBadge, { backgroundColor: color + '20' }]}>
+                      <Text style={[styles.multiplierText, { color }]}>
+                        {tier.multiplier}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.tierInfo}>
-                    <Text style={styles.tierName}>{tier.name}</Text>
-                    <Text style={styles.tierPrice}>
-                      {tier.price === 0 ? 'Free' : `$${tier.price}/mo`}
-                    </Text>
-                  </View>
-                  <View style={styles.tierMultiplier}>
-                    <Text style={[styles.multiplierText, { color: tierBgColor }]}>
-                      {tier.multiplier}
-                    </Text>
-                    <Text style={styles.multiplierLabel}>points</Text>
-                  </View>
-                </View>
-                {isCurrentTier ? (
-                  <View style={[styles.currentBadge, { backgroundColor: tierBgColor }]}>
-                    <Text style={styles.currentBadgeText}>Current Tier</Text>
-                  </View>
-                ) : !isLowerTier ? (
-                  <TouchableOpacity
-                    style={styles.upgradeButton}
-                    onPress={() => handleUpgrade(tier.key)}
-                  >
-                    <Text style={styles.upgradeButtonText}>Upgrade</Text>
-                  </TouchableOpacity>
-                ) : null}
+                  
+                  {isCurrentTier ? (
+                    <View style={[styles.currentTierBadge, { backgroundColor: color }]}>
+                      <Ionicons name="checkmark-circle" size={14} color={colors.background} />
+                      <Text style={styles.currentTierText}>Current Tier</Text>
+                    </View>
+                  ) : !isLowerTier ? (
+                    <TouchableOpacity
+                      style={styles.upgradeButton}
+                      onPress={() => handleUpgrade(tier.key)}
+                      activeOpacity={0.8}
+                    >
+                      <LinearGradient
+                        colors={[colors.accent, colors.accentDark]}
+                        style={styles.upgradeGradient}
+                      >
+                        <Text style={styles.upgradeText}>Upgrade</Text>
+                        <Ionicons name="arrow-forward" size={16} color={colors.textPrimary} />
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  ) : null}
+                </LinearGradient>
               </View>
             );
           })}
         </View>
 
-        {/* Recent Redemptions */}
-        {redemptions.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>RECENT REDEMPTIONS</Text>
-            {redemptions.slice(0, 5).map((redemption) => (
-              <View key={redemption.id} style={styles.redemptionCard}>
-                <View style={styles.redemptionInfo}>
-                  <Text style={styles.redemptionName}>{redemption.reward_name}</Text>
-                  <Text style={styles.redemptionCode}>Code: {redemption.validation_code}</Text>
-                </View>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    redemption.status === 'validated' && styles.statusValidated,
-                    redemption.status === 'expired' && styles.statusExpired,
-                  ]}
-                >
-                  <Text style={styles.statusText}>{redemption.status.toUpperCase()}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
         {/* Logout Button */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            activeOpacity={0.8}
+          >
             <Ionicons name="log-out-outline" size={20} color={colors.error} />
-            <Text style={styles.logoutText}>Logout</Text>
+            <Text style={styles.logoutText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -259,114 +303,179 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 24,
+    paddingBottom: spacing.xxl,
   },
-  header: {
+  heroSection: {
+    padding: spacing.md,
+    position: 'relative',
+  },
+  heroGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 150,
+  },
+  heroCard: {
+    borderRadius: radius.xl,
+    padding: spacing.xl,
     alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   avatarContainer: {
     position: 'relative',
-    marginBottom: 16,
+    marginBottom: spacing.md,
+  },
+  avatarGlow: {
+    position: 'absolute',
+    top: -10,
+    left: -10,
+    right: -10,
+    bottom: -10,
+    borderRadius: 60,
+    opacity: 0.5,
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
+    borderWidth: 3,
+    borderColor: colors.background,
   },
   avatarPlaceholder: {
-    backgroundColor: colors.card,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.backgroundElevated,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: colors.background,
   },
-  tierBadge: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  tierBadgeText: {
-    color: colors.background,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  userName: {
-    fontSize: 24,
+  avatarInitial: {
+    fontSize: 40,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: 4,
+  },
+  tierIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: colors.background,
+  },
+  userName: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
   },
   userEmail: {
     fontSize: 14,
     color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  tierBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
+    borderWidth: 1.5,
+    backgroundColor: colors.background,
+  },
+  tierBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 2,
   },
   section: {
-    paddingHorizontal: 16,
-    marginTop: 24,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  sectionAccent: {
+    width: 3,
+    height: 16,
+    backgroundColor: colors.accent,
+    borderRadius: 2,
+    marginRight: spacing.sm,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
     color: colors.textSecondary,
     letterSpacing: 2,
-    marginBottom: 12,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: spacing.sm,
   },
   statCard: {
-    width: '47%',
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
+    width: (width - spacing.md * 2 - spacing.sm) / 2 - 1,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: radius.lg,
+    padding: spacing.md,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  statGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 60,
   },
   statValue: {
     fontSize: 28,
     fontWeight: '700',
     color: colors.textPrimary,
+    marginTop: spacing.sm,
   },
   statLabel: {
     fontSize: 12,
     color: colors.textSecondary,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   tierCard: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: radius.lg,
+    marginBottom: spacing.sm,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.border,
   },
-  tierHeader: {
+  tierCardGradient: {
+    padding: spacing.md,
+  },
+  tierCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   tierIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   tierInfo: {
     flex: 1,
   },
   tierName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
     color: colors.textPrimary,
   },
   tierPrice: {
@@ -374,97 +483,60 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  tierMultiplier: {
-    alignItems: 'center',
+  multiplierBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
   },
   multiplierText: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '700',
   },
-  multiplierLabel: {
-    fontSize: 10,
-    color: colors.textMuted,
-  },
-  currentBadge: {
-    marginTop: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+  currentTierBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
   },
-  currentBadgeText: {
+  currentTierText: {
     color: colors.background,
     fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 1,
+    marginLeft: spacing.xs,
   },
   upgradeButton: {
-    marginTop: 12,
-    backgroundColor: colors.accent,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
+    marginTop: spacing.md,
+    borderRadius: radius.md,
+    overflow: 'hidden',
   },
-  upgradeButtonText: {
-    color: colors.textPrimary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  redemptionCard: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
+  upgradeGradient: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+    justifyContent: 'center',
+    paddingVertical: spacing.sm + 2,
   },
-  redemptionInfo: {
-    flex: 1,
-  },
-  redemptionName: {
+  upgradeText: {
+    color: colors.textPrimary,
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  redemptionCode: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  statusBadge: {
-    backgroundColor: colors.warning + '20',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusValidated: {
-    backgroundColor: colors.success + '20',
-  },
-  statusExpired: {
-    backgroundColor: colors.error + '20',
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    letterSpacing: 1,
+    marginRight: spacing.xs,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.card,
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: colors.backgroundCard,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.error + '40',
+    borderColor: colors.error + '30',
   },
   logoutText: {
     color: colors.error,
     fontSize: 16,
     fontWeight: '600',
-    marginLeft: 8,
+    marginLeft: spacing.sm,
   },
 });
