@@ -1,5 +1,14 @@
 """Luna Group Venues Configuration - Real venue data"""
 
+# Venue logos (uploaded by client)
+VENUE_LOGOS = {
+    "su_casa_brisbane": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/fb4gjnlf_Sucasa2.webp",
+    "su_casa_gold_coast": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/w4lbm1ea_Sucasa1.webp",
+    "night_market": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/9rmm0g7d_Night%20market.webp",
+    "ember_and_ash": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/c1fkz73x_Ember%20and%20ash.webp",
+    "after_dark": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/2f51mmzf_After%20dark.webp",
+}
+
 LUNA_VENUES = {
     "eclipse": {
         "id": "eclipse",
@@ -11,6 +20,7 @@ LUNA_VENUES = {
         "coordinates": {"lat": -27.4572, "lng": 153.0347},
         "accent_color": "#E31837",
         "tagline": "Discover New Nightlife",
+        "logo_url": None,
         "description": "Brisbane's transformative super club with international and domestic headliners across a range of genres. A new phase for the Brisbane entertainment scene unlike anything the city has experienced before.",
         "long_description": "Eclipse is Brisbane's premier destination for world-class nightlife. Featuring state-of-the-art sound systems, immersive lighting installations, and hosting international and domestic headliners across hip hop, RnB, house, and electronic genres. Experience the transformation of Brisbane's entertainment scene in the heart of Fortitude Valley.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos", "vip_tables"],
@@ -48,6 +58,7 @@ LUNA_VENUES = {
         "coordinates": {"lat": -27.4572, "lng": 153.0347},
         "accent_color": "#8B00FF",
         "tagline": "R&B, Hip Hop & Afrobeats",
+        "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/2f51mmzf_After%20dark.webp",
         "description": "Brisbane's biggest multi-room super club. Specialising in hip hop, RnB, Afrobeats and Global Sounds with premium sound and lighting.",
         "long_description": "After Dark transforms the Eclipse space into Brisbane's ultimate destination for urban music. Every Saturday night, experience the best in hip hop, RnB, Afrobeats, and global sounds across multiple rooms. Premium bottle service, VIP booths, and an incredible atmosphere await. The best crowd, best sound, and best vibes in Brisbane.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos", "bottle_service"],
@@ -85,6 +96,7 @@ LUNA_VENUES = {
         "coordinates": {"lat": -27.4575, "lng": 153.0350},
         "accent_color": "#FFB800",
         "tagline": "Rooftop Bar & Nightlife",
+        "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/fb4gjnlf_Sucasa2.webp",
         "description": "Vibrant rooftop bar and nightclub offering tapas, cocktails, and DJ vibes above the main nightclub in Fortitude Valley.",
         "long_description": "Su Casa Brisbane is your ultimate rooftop escape in the heart of Fortitude Valley. Enjoy stunning city views, signature cocktails, and shareable tapas as the sun sets. As night falls, the vibe transforms with resident DJs spinning the best house, disco, and party anthems. Available for private events and VIP experiences.",
         "features": ["booth_booking", "fast_lane", "auctions", "rooftop_terrace"],
@@ -123,6 +135,7 @@ LUNA_VENUES = {
         "coordinates": {"lat": -28.0023, "lng": 153.4295},
         "accent_color": "#FF6B35",
         "tagline": "Gold Coast's Premier Late-Night Destination",
+        "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/w4lbm1ea_Sucasa1.webp",
         "description": "Late-night club in the heart of Surfers Paradise focusing on Hip Hop and R&B. The Gold Coast's ultimate party destination.",
         "long_description": "Su Casa Gold Coast brings the renowned Su Casa experience to Surfers Paradise. Open Thursday through Sunday, experience the best in Hip Hop, R&B, and party anthems. Premium bottle service, VIP booths, and the Gold Coast's most electric atmosphere await you in the heart of the action on Orchid Avenue.",
         "features": ["booth_booking", "fast_lane", "auctions", "bottle_service"],
@@ -160,6 +173,7 @@ LUNA_VENUES = {
         "coordinates": {"lat": -28.0450, "lng": 153.4380},
         "accent_color": "#00D4AA",
         "tagline": "Modern Australian Rooftop Dining",
+        "logo_url": None,
         "description": "Restaurant & rooftop bar with panoramic coastal views, modern Australian cuisine, and cocktails on the Gold Coast.",
         "long_description": "Juju Mermaid Beach offers an elevated dining experience with stunning panoramic coastal views. The open-air rooftop terrace features a retractable roof, signature cocktails, and modern Australian bar fare. Downstairs, enjoy refined modern Australian cuisine in an intimate setting. Perfect for sunset sessions, boozy Sunday brunch, or special occasions.",
         "features": ["table_booking", "rooftop_terrace", "private_dining"],
@@ -198,6 +212,7 @@ LUNA_VENUES = {
         "coordinates": {"lat": -27.4580, "lng": 153.0345},
         "accent_color": "#FF4757",
         "tagline": "Pan-Asian Street Food & Cocktails",
+        "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/9rmm0g7d_Night%20market.webp",
         "description": "Pan-Asian themed bar and restaurant inspired by Asia's street markets, serving shareable small plates in a neon-lit atmosphere.",
         "long_description": "Night Market brings the vibrant energy of Asia's street markets to Fortitude Valley. Experience shareable small plates like wagyu tartare and miso caramel popcorn chicken, alongside innovative cocktails in a neon-lit, lively atmosphere. Perfect for groups, date nights, and those seeking authentic Asian-fusion flavors with a modern twist.",
         "features": ["table_booking", "group_dining", "cocktail_bar"],
@@ -236,6 +251,7 @@ LUNA_VENUES = {
         "coordinates": {"lat": -27.4698, "lng": 153.0251},
         "accent_color": "#FFA502",
         "tagline": "Good Food, Great Drinks, Better Company",
+        "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/c1fkz73x_Ember%20and%20ash.webp",
         "description": "Restaurant, cafe & bar coming soon to Brisbane CBD. Good food, great drinks, and better company.",
         "long_description": "Ember & Ash is Brisbane's upcoming destination for refined casual dining. Combining the warmth of a neighborhood cafe with the sophistication of a cocktail bar, we're creating a space where good food meets great drinks and even better company. Opening soon in Brisbane CBD.",
         "features": ["table_booking", "cocktail_bar", "cafe"],
