@@ -312,11 +312,14 @@ export default function ProfileScreen() {
         <View style={styles.tierCardContainer}>
           <View style={styles.tierCard}>
             <LinearGradient
-              colors={[tierConfig.color + '20', '#0A0A0A']}
+              colors={['#1A1A1A', '#0D0D0D']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.tierCardGradient}
             >
+              {/* Accent top border */}
+              <View style={[styles.tierAccentBorder, { backgroundColor: tierConfig.color }]} />
+              
               <View style={styles.tierHeader}>
                 <View>
                   <Text style={styles.tierLabel}>MEMBERSHIP TIER</Text>
