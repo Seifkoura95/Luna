@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PageHeader } from '../../src/components/PageHeader';
 
 export default function ExploreScreen() {
   const [venues, setVenues] = useState<any[]>([]);
