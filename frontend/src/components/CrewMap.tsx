@@ -1,6 +1,4 @@
-// Platform-specific export - automatically selects native or web version
-import { Platform } from 'react-native';
-
-// Export the appropriate component based on platform
+// CrewMap component - uses web fallback for web preview
+// Native map implementation should be added via CrewMap.native.tsx when building for iOS/Android
 export { CrewMapWeb as CrewMap } from './CrewMapWeb';
 export { default } from './CrewMapWeb';
