@@ -38,7 +38,7 @@ export const QRCode: React.FC<QRCodeProps> = ({ size = 200, venueId }) => {
 
   useEffect(() => {
     fetchQRData();
-  }, []);
+  }, [venueId]);
 
   useEffect(() => {
     if (countdown <= 0) {
