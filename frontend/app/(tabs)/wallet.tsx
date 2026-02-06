@@ -734,15 +734,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'transparent',
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
     gap: spacing.xs,
+    borderWidth: 1,
   },
   upgradeButtonText: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.textPrimary,
     letterSpacing: 1,
   },
   tabContainer: {
