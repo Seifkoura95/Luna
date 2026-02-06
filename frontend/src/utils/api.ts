@@ -264,4 +264,59 @@ export const api = {
     apiFetch<{ success: boolean; notification: any }>('/api/notifications/test', {
       method: 'POST'
     }),
+  
+  // ====== CREW INVITE & EMAIL ======
+  sendCrewInviteEmail: (crewId: string, email: string, name?: string, message?: string) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      invite: any;
+      email_preview: any;
+      mock: boolean;
+    }>(`/api/crews/${crewId}/send-invite-email`, {
+      method: 'POST',
+      body: JSON.stringify({ 
+        crew_id: crewId,
+        invitee_email: email, 
+        invitee_name: name, 
+        message 
+      })
+    }),
+  
+  getInviteByToken: (token: string) =>
+    apiFetch<{ invite: any; crew: any }>(`/api/crews/invite/${token}`, { auth: false }),
+  
+  acceptInviteByToken: (token: string) =>
+    apiFetch<{ success: boolean; message: string }>(`/api/crews/invite/${token}/accept`, {
+      method: 'POST'
+    }),
+  
+  declineInviteByToken: (token: string) =>
+    apiFetch<{ success: boolean; message: string }>(`/api/crews/invite/${token}/decline`, {
+      method: 'POST'
+    }),
+  
+  getPendingCrewInvites: (crewId: string) =>
+    apiFetch<{ invites: any[] }>(`/api/crews/${crewId}/pending-invites`),
+  
+  // ====== SPLIT PAYMENTS ======
+  createSplitPayment: (crewId: string, auctionId: string, totalAmount: number, splits: any[]) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      master_split: any;
+      individual_splits: any[];
+      testMode: boolean;
+    }>('/api/payments/create-split-payment', {
+      method: 'POST',
+      body: JSON.stringify({
+        crew_id: crewId,
+        auction_id: auctionId,
+        total_amount: totalAmount,
+        splits
+      })
+    }),
+  
+  getCrewSplitStatus: (crewId: string) =>
+    apiFetch<{ split: any | null }>(`/api/crews/${crewId}/split-status`),
 };
