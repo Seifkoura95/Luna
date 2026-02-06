@@ -20,6 +20,7 @@ import { useRouter } from 'expo-router';
 export default function ExploreScreen() {
   const [venues, setVenues] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
 
   const fetchVenues = async () => {
     try {
@@ -44,6 +45,7 @@ export default function ExploreScreen() {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+    router.push(`/venue/${venue.id}`);
   };
 
   const handleGetDirections = (venue: any) => {
