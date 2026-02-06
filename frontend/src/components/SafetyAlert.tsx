@@ -131,7 +131,7 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
     }
   };
 
-  const handleSendAlert = async () => {
+  const confirmAndSendAlert = () => {
     if (!selectedAlertType) {
       Alert.alert('Select Alert Type', 'Please select what kind of help you need.');
       return;
@@ -142,6 +142,24 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
       return;
     }
 
+    const alertType = ALERT_TYPES.find(a => a.id === selectedAlertType);
+    const alertName = alertType?.label || 'Safety Alert';
+    
+    Alert.alert(
+      'Confirm Alert',
+      `Are you sure you want to send a "${alertName}" alert? This will notify ${selectedCrew ? 'your crew and ' : ''}${selectedVenue ? 'venue staff' : 'emergency contacts'} with your current location.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Send Alert', 
+          style: 'destructive',
+          onPress: handleSendAlert 
+        },
+      ]
+    );
+  };
+
+  const handleSendAlert = async () => {
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
@@ -150,9 +168,9 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
 
     try {
       const result = await api.sendSafetyAlert(
-        selectedAlertType,
-        location.latitude,
-        location.longitude,
+        selectedAlertType!,
+        location!.latitude,
+        location!.longitude,
         selectedVenue || undefined,
         selectedCrew || undefined,
         message || undefined
