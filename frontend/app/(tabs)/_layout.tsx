@@ -115,10 +115,15 @@ export default function TabLayout() {
       <Tabs.Screen name="events" options={{ href: null }} />
       <Tabs.Screen name="photos" options={{ href: null }} />
     </Tabs>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   tabBar: {
     backgroundColor: colors.backgroundCard,
     borderTopColor: colors.border,
