@@ -54,18 +54,19 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Tonight',
-          headerTitle: 'ECLIPSE',
+          headerTitle: 'LUNA GROUP',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="moon" color={color} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
-        name="auctions"
+        name="explore"
         options={{
-          title: 'Auctions',
+          title: 'Explore',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="flash" color={color} focused={focused} />
+            <TabBarIcon name="compass" color={color} focused={focused} />
           ),
         }}
       />
@@ -79,20 +80,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="photos"
+        name="auctions"
         options={{
-          title: 'Photos',
+          title: 'Auctions',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="images" color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="events"
-        options={{
-          title: 'Events',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="calendar" color={color} focused={focused} />
+            <TabBarIcon name="flash" color={color} focused={focused} />
           ),
         }}
       />
