@@ -1163,7 +1163,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  crewInfo: {},
+  crewInfo: {
+    flex: 1,
+  },
+  crewActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  trackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.accent + '20',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+    gap: 4,
+  },
+  trackButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.accent,
+  },
   crewName: {
     fontSize: 16,
     fontWeight: '700',
