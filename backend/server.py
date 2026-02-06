@@ -3894,6 +3894,9 @@ async def sync_megatix_events():
 # Register the sync function for the scheduler
 set_megatix_sync_func(scrape_megatix_events)
 
+# Register the notification generation function for the scheduler
+set_notification_gen_func(generate_event_notifications)
+
 @api_router.post("/admin/events/add")
 async def add_event_manually(
     venue_id: str,
