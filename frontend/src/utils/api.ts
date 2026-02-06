@@ -139,4 +139,31 @@ export const api = {
     }),
   getPurchasedPhotos: () => apiFetch<any[]>('/api/photos/purchased'),
   getNightRecap: () => apiFetch<any>('/api/photos/recap'),
+  
+  // Bookings (SevenRooms Mock)
+  getAvailability: (venueId: string, date: string, partySize: number = 2) =>
+    apiFetch<any>(`/api/bookings/availability?venue_id=${venueId}&date=${date}&party_size=${partySize}`, { auth: false }),
+  createReservation: (venueId: string, date: string, time: string, partySize: number, specialRequests?: string, occasion?: string) =>
+    apiFetch<any>('/api/bookings/reserve', { 
+      method: 'POST', 
+      body: JSON.stringify({ venue_id: venueId, date, time, party_size: partySize, special_requests: specialRequests, occasion }) 
+    }),
+  addToGuestlist: (venueId: string, date: string, partySize: number, arrivalTime?: string, vipBooth: boolean = false) =>
+    apiFetch<any>('/api/bookings/guestlist', { 
+      method: 'POST', 
+      body: JSON.stringify({ venue_id: venueId, date, party_size: partySize, arrival_time: arrivalTime, vip_booth: vipBooth }) 
+    }),
+  getMyReservations: () => apiFetch<any>('/api/bookings/my-reservations'),
+  cancelBooking: (bookingId: string) =>
+    apiFetch<any>(`/api/bookings/${bookingId}`, { method: 'DELETE' }),
+  
+  // Auction Notifications
+  subscribeToAuction: (auctionId: string, notifyOutbid: boolean = true) =>
+    apiFetch<any>('/api/auctions/subscribe', { 
+      method: 'POST', 
+      body: JSON.stringify({ auction_id: auctionId, notify_outbid: notifyOutbid }) 
+    }),
+  getAuctionNotifications: () => apiFetch<any>('/api/auctions/notifications'),
+  markNotificationsRead: () =>
+    apiFetch<any>('/api/auctions/notifications/mark-read', { method: 'POST' }),
 };
