@@ -36,7 +36,6 @@ const TIER_CONFIG: Record<string, { color: string; icon: string; next: string; p
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
-  const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [reservations, setReservations] = useState<any>(null);
