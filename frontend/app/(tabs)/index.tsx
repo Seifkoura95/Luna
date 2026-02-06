@@ -16,6 +16,8 @@ import { api } from '../../src/utils/api';
 import { MissionCard } from '../../src/components/MissionCard';
 import { Ionicons } from '@expo/vector-icons';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
+import { RotatingMoon } from '../../src/components/RotatingMoon';
+import { FierySun } from '../../src/components/FierySun';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
