@@ -845,26 +845,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
   },
-  qrPreview: {
+  tapHint: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.backgroundElevated,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  qrCode: {
-    width: 50,
-    height: 50,
-    backgroundColor: colors.textPrimary,
-    borderRadius: radius.sm,
     justifyContent: 'center',
-    alignItems: 'center',
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    marginTop: spacing.sm,
+    gap: spacing.xs,
   },
-  qrText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    fontWeight: '500',
+  tapHintText: {
+    fontSize: 12,
+    color: colors.textMuted,
   },
   emptyState: {
     alignItems: 'center',
