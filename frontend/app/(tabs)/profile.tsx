@@ -24,7 +24,7 @@ import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { RotatingMoon } from '../../src/components/RotatingMoon';
 import { FierySun } from '../../src/components/FierySun';
 import { SafetyAlert } from '../../src/components/SafetyAlert';
-import { CrewMapWeb } from '../../src/components/CrewMapWeb';
+import { CrewMap } from '../../src/components/CrewMap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
