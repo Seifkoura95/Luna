@@ -713,8 +713,8 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   venueCardLogo: {
-    width: 80,
-    height: 32,
+    width: 70,
+    height: 28,
     marginBottom: 4,
   },
   venueCardName: {
