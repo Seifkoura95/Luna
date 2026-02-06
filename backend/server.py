@@ -3053,9 +3053,13 @@ async def get_smart_suggestions(request: Request):
         
         # This weekend
         event_date = event.get("event_date")
-        if event_date and (event_date - now).days <= 3:
-            score += 10
-            reasons.append("Happening soon")
+        if event_date:
+            # Make sure both datetimes are comparable
+            if hasattr(event_date, 'tzinfo') and event_date.tzinfo is None:
+                event_date = event_date.replace(tzinfo=timezone.utc)
+            if (event_date - now).days <= 3:
+                score += 10
+                reasons.append("Happening soon")
         
         # Has featured artist
         if event.get("featured_artist"):
