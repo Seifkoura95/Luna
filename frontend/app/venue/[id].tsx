@@ -21,6 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { api } from '../../src/utils/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BookingModal } from '../../src/components/BookingModal';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HEADER_HEIGHT = SCREEN_HEIGHT * 0.45;
@@ -35,6 +36,8 @@ export default function VenueDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [activeAuctions, setActiveAuctions] = useState<any[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingType, setBookingType] = useState<'reservation' | 'guestlist'>('reservation');
 
   useEffect(() => {
     fetchVenueData();
