@@ -109,7 +109,7 @@ async def register(request: RegisterRequest):
     await db.users.insert_one(user)
     token_payload = {
         "user_id": user_id,
-        "email": email,
+        "email": request.email,
         "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRY_DAYS)
     }
     token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -117,11 +117,11 @@ async def register(request: RegisterRequest):
     return {"user": user_copy, "token": token}
 
 @api_router.post("/auth/login")
-async def login(email: EmailStr, password: str):
-    user = await db.users.find_one({"email": email})
+async def login(request: LoginRequest):
+    user = await db.users.find_one({"email": request.email})
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    if not bcrypt.checkpw(password.encode(), user["hashed_password"].encode()):
+    if not bcrypt.checkpw(request.password.encode(), user["hashed_password"].encode()):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token_payload = {
         "user_id": user["user_id"],
