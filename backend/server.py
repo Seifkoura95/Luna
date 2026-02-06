@@ -332,7 +332,7 @@ async def get_user_photos(request: Request, venue_id: Optional[str] = None):
     if venue_id:
         query["venue_id"] = venue_id
     photos = await db.photos.find(query).sort("created_at", -1).to_list(100)
-    return photos
+    return clean_mongo_docs(photos)
 
 # ====== ADMIN SEED API ======
 
