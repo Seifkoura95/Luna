@@ -196,18 +196,18 @@ export default function ProfileScreen() {
     {
       id: 'safety',
       icon: 'shield-checkmark',
-      title: 'Safety',
-      subtitle: 'Help & Support',
+      title: 'Get Help',
+      subtitle: 'Safety Alert',
       color: colors.success,
       onPress: () => setShowSafety(true),
     },
     {
-      id: 'rewards',
-      icon: 'gift',
-      title: 'Rewards',
-      subtitle: 'Redeem points',
+      id: 'wallet',
+      icon: 'wallet',
+      title: 'Wallet',
+      subtitle: 'Tickets & Rewards',
       color: colors.gold,
-      onPress: () => router.push('/(tabs)/rewards'),
+      onPress: () => router.push('/(tabs)/wallet'),
     },
   ];
 
