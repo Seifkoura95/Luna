@@ -10,9 +10,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 interface QRCodeProps {
   size?: number;
+  venueId: string;
 }
 
-export const QRCode: React.FC<QRCodeProps> = ({ size = 200 }) => {
+export const QRCode: React.FC<QRCodeProps> = ({ size = 200, venueId }) => {
   const [qrData, setQrData] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState(60);
