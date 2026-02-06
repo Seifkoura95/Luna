@@ -163,7 +163,11 @@ export default function TonightScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Consistent Header with Rotating Moon - No Points */}
-        <PageHeader title="TONIGHT" showPoints={false} />
+        <PageHeader 
+          title="TONIGHT" 
+          description="Events & happenings across Luna Group venues"
+          showPoints={false} 
+        />
 
         {/* Venue Dropdown Selector */}
         <View style={styles.dropdownSection}>
