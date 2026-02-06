@@ -989,7 +989,7 @@ export default function ProfileScreen() {
       {/* Crew Map Modal */}
       {showCrewMap && selectedCrewForMap && (
         <Modal visible={showCrewMap} animationType="slide">
-          <CrewMapWeb
+          <CrewMap
             crewId={selectedCrewForMap.id}
             crewName={selectedCrewForMap.name}
             onClose={() => {
