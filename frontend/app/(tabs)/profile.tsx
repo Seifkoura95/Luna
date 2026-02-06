@@ -40,6 +40,7 @@ const TIER_CONFIG: Record<string, { color: string; icon: string; next: string; p
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
   const insets = useSafeAreaInsets();
+  const navRouter = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [reservations, setReservations] = useState<any>(null);
@@ -50,6 +51,7 @@ export default function ProfileScreen() {
   const [crews, setCrews] = useState<any[]>([]);
   const [newCrewName, setNewCrewName] = useState('');
   const [showCreateCrew, setShowCreateCrew] = useState(false);
+  const [subscriptionData, setSubscriptionData] = useState<any>(null);
 
   // Helper function to capitalize name properly
   const formatName = (name: string | undefined) => {
@@ -61,14 +63,16 @@ export default function ProfileScreen() {
 
   const fetchData = async () => {
     try {
-      const [statsData, reservationsData, crewsData] = await Promise.all([
+      const [statsData, reservationsData, crewsData, subData] = await Promise.all([
         api.getUserStats().catch(() => null),
         api.getMyReservations().catch(() => null),
         api.getCrews().catch(() => []),
+        api.getMySubscription().catch(() => null),
       ]);
       setStats(statsData);
       setReservations(reservationsData);
       setCrews(crewsData || []);
+      setSubscriptionData(subData);
     } catch (e) {
       console.error('Failed to fetch profile data:', e);
     }
