@@ -1052,90 +1052,87 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    borderTopWidth: 3,
   },
   tierHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: spacing.md,
   },
-  tierLabel: {
+  tierPointsDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  tierPointsValue: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: colors.textPrimary,
+  },
+  tierPointsLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 2,
-    marginBottom: 4,
-  },
-  tierName: {
-    fontSize: 24,
-    fontWeight: '900',
+    color: colors.textSecondary,
     letterSpacing: 2,
   },
-  pointsDisplay: {
+  tierBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.lg,
-    gap: 6,
-    borderWidth: 1,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    gap: 4,
   },
-  pointsValue: {
-    fontSize: 18,
-    fontWeight: '900',
+  tierBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#000',
+    letterSpacing: 1,
   },
-  progressSection: {
-    marginBottom: spacing.lg,
-  },
-  progressBarContainer: {
+  tierStatsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  progressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: '#2A2A2A',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  progressPercent: {
-    fontSize: 12,
-    fontWeight: '700',
-    minWidth: 35,
-  },
-  progressText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  benefitsRow: {
-    flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#0D0D0D',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     borderRadius: radius.md,
     padding: spacing.md,
+    marginBottom: spacing.md,
   },
-  benefitItem: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  benefitIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
+  tierStat: {
     alignItems: 'center',
   },
-  benefitText: {
-    fontSize: 11,
+  tierStatValue: {
+    fontSize: 18,
+    fontWeight: '800',
     color: colors.textPrimary,
-    fontWeight: '600',
+  },
+  tierStatLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  tierStatDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: colors.border,
+  },
+  tierUpgradeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    gap: spacing.xs,
+    borderWidth: 1,
+  },
+  tierUpgradeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   statsGrid: {
     flexDirection: 'row',
