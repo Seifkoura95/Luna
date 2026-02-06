@@ -3120,6 +3120,170 @@ async def send_test_notification(request: Request):
     return {"success": True, "notification": {k: v for k, v in notification.items() if k != "_id"}}
 
 
+# ====== MEGATIX EVENT SYNC API ======
+
+# Megatix venue search terms
+MEGATIX_VENUE_SEARCHES = {
+    "eclipse": ["Eclipse Brisbane", "Eclipse+", "Luna+Saturday"],
+    "after_dark": ["After Dark Brisbane", "After+Dark+Eclipse"],
+    "su_casa_brisbane": ["Su Casa Brisbane", "Su+Casa+Rooftop"],
+    "juju": ["Juju Mermaid", "Juju+Gold+Coast"],
+}
+
+@api_router.get("/admin/megatix/sync-status")
+async def get_megatix_sync_status():
+    """Get the status of Megatix event synchronization"""
+    last_sync = await db.system_config.find_one({"key": "megatix_last_sync"})
+    
+    return {
+        "last_sync": last_sync.get("value") if last_sync else None,
+        "venues_configured": list(MEGATIX_VENUE_SEARCHES.keys()),
+        "megatix_base_url": "https://megatix.com.au/events",
+        "note": "Events are synced from Megatix ticketing platform"
+    }
+
+@api_router.post("/admin/megatix/sync")
+async def sync_megatix_events():
+    """
+    Sync events from Megatix. 
+    Since Megatix doesn't have a public API, this endpoint provides 
+    a manual sync mechanism where events can be added/updated.
+    
+    In production, you would:
+    1. Use a web scraping service (Apify, ScrapingBee) 
+    2. Or integrate with Megatix's partner API (requires business agreement)
+    3. Or use a scheduled job to fetch and parse their event pages
+    """
+    try:
+        import httpx
+        
+        synced_events = []
+        errors = []
+        
+        # For each venue, try to fetch events from Megatix
+        for venue_id, search_terms in MEGATIX_VENUE_SEARCHES.items():
+            for search_term in search_terms[:1]:  # Just use first search term
+                try:
+                    # Megatix search URL
+                    url = f"https://megatix.com.au/events?search={search_term}"
+                    
+                    async with httpx.AsyncClient(timeout=10.0) as client:
+                        response = await client.get(url, follow_redirects=True)
+                        
+                        if response.status_code == 200:
+                            # Parse the response - in production you'd extract event data
+                            # For now, we log that we can reach Megatix
+                            synced_events.append({
+                                "venue_id": venue_id,
+                                "search_term": search_term,
+                                "status": "reachable",
+                                "note": "Megatix page accessible - manual event entry required"
+                            })
+                        else:
+                            errors.append({
+                                "venue_id": venue_id,
+                                "error": f"HTTP {response.status_code}"
+                            })
+                except Exception as e:
+                    errors.append({
+                        "venue_id": venue_id,
+                        "error": str(e)
+                    })
+        
+        # Update last sync time
+        await db.system_config.update_one(
+            {"key": "megatix_last_sync"},
+            {"$set": {"value": datetime.now(timezone.utc).isoformat(), "key": "megatix_last_sync"}},
+            upsert=True
+        )
+        
+        return {
+            "success": True,
+            "message": "Megatix sync check completed",
+            "synced": synced_events,
+            "errors": errors,
+            "recommendation": "For automated syncing, integrate with a web scraping service or Megatix partner API",
+            "megatix_urls": {
+                venue: f"https://megatix.com.au/events?search={terms[0]}"
+                for venue, terms in MEGATIX_VENUE_SEARCHES.items()
+            }
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "recommendation": "Install httpx package or use manual event entry"
+        }
+
+@api_router.post("/admin/events/add")
+async def add_event_manually(
+    venue_id: str,
+    title: str,
+    description: str,
+    event_date: str,  # ISO format
+    ticket_price: float = 0,
+    ticket_url: Optional[str] = None,
+    image_url: Optional[str] = None,
+    category: str = "club_night",
+    featured: bool = False,
+    featured_artist_name: Optional[str] = None,
+    featured_artist_bio: Optional[str] = None
+):
+    """Manually add an event (for admin use)"""
+    
+    if venue_id not in LUNA_VENUES:
+        raise HTTPException(status_code=400, detail=f"Unknown venue: {venue_id}")
+    
+    venue = LUNA_VENUES[venue_id]
+    
+    event = {
+        "id": str(uuid.uuid4()),
+        "venue_id": venue_id,
+        "venue_name": venue["name"],
+        "title": title,
+        "description": description,
+        "event_date": datetime.fromisoformat(event_date.replace('Z', '+00:00')),
+        "event_end_date": datetime.fromisoformat(event_date.replace('Z', '+00:00')) + timedelta(hours=6),
+        "ticket_url": ticket_url,
+        "ticket_price": ticket_price,
+        "image_url": image_url or "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800",
+        "category": category,
+        "featured": featured,
+        "featured_artist": {
+            "name": featured_artist_name,
+            "bio": featured_artist_bio,
+            "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400"
+        } if featured_artist_name else None,
+        "source": "manual",
+        "created_at": datetime.now(timezone.utc),
+        "active": True
+    }
+    
+    await db.events.insert_one(event)
+    
+    return {
+        "success": True,
+        "event": {k: v for k, v in event.items() if k != "_id"},
+        "message": f"Event '{title}' added to {venue['name']}"
+    }
+
+@api_router.get("/admin/events/megatix-urls")
+async def get_megatix_urls():
+    """Get Megatix URLs for each venue for manual checking"""
+    return {
+        "venues": {
+            venue_id: {
+                "name": LUNA_VENUES[venue_id]["name"],
+                "megatix_search_url": f"https://megatix.com.au/events?search={MEGATIX_VENUE_SEARCHES.get(venue_id, [''])[0]}",
+                "direct_venue_url": f"https://megatix.com.au/venues/{venue_id}" if venue_id == "eclipse" else None
+            }
+            for venue_id in MEGATIX_VENUE_SEARCHES.keys()
+        },
+        "main_search": "https://megatix.com.au/events?search=Luna+Group",
+        "note": "Check these URLs regularly to add new events manually, or integrate with a scraping service"
+    }
+
+
 # CORS
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
