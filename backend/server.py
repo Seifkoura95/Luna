@@ -242,7 +242,7 @@ async def get_missions(request: Request, venue_id: Optional[str] = None):
     for mission in missions:
         mission["completed"] = False
         mission["progress"] = 0
-    return missions
+    return clean_mongo_docs(missions)
 
 # ====== EVENTS API ======
 
