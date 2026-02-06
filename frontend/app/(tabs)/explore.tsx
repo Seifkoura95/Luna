@@ -61,14 +61,15 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.container}>
+      <StarfieldBackground starCount={60} shootingStarCount={2} />
+      
       {/* Premium Header with Custom Lunar Image */}
       <LinearGradient
-        colors={[colors.background, colors.backgroundElevated]}
-        style={styles.header}
+        colors={['transparent', 'transparent']}
+        style={[styles.header, { paddingTop: insets.top + spacing.md }]}
       >
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
-            <View style={styles.logoGlow} />
             <Image
               source={{ uri: 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG' }}
               style={styles.logoImage}
