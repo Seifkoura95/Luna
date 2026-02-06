@@ -3377,13 +3377,83 @@ async def get_megatix_urls():
     }
 
 
+# ====== SCHEDULER SETUP ======
+scheduler = AsyncIOScheduler()
+
+async def scheduled_megatix_sync():
+    """Scheduled job to sync events from Megatix every 12 hours"""
+    logging.info("Starting scheduled Megatix sync...")
+    try:
+        result = await scrape_megatix_events()
+        logging.info(f"Scheduled sync result: {result.get('message', 'completed')}")
+    except Exception as e:
+        logging.error(f"Scheduled Megatix sync failed: {str(e)}")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan handler - manages scheduler startup/shutdown"""
+    # Startup
+    logging.info("Starting Luna Group VIP API...")
+    
+    # Schedule Megatix sync every 12 hours
+    scheduler.add_job(
+        scheduled_megatix_sync,
+        IntervalTrigger(hours=12),
+        id="megatix_sync",
+        name="Megatix Event Sync",
+        replace_existing=True
+    )
+    
+    # Also run a sync on startup (after 30 seconds to let everything initialize)
+    scheduler.add_job(
+        scheduled_megatix_sync,
+        'date',
+        run_date=datetime.now(timezone.utc) + timedelta(seconds=30),
+        id="megatix_startup_sync",
+        name="Megatix Startup Sync"
+    )
+    
+    scheduler.start()
+    logging.info("Event scheduler started - Megatix sync every 12 hours")
+    
+    yield
+    
+    # Shutdown
+    logging.info("Shutting down scheduler...")
+    scheduler.shutdown()
+
+# Update app with lifespan
+app = FastAPI(lifespan=lifespan)
+api_router = APIRouter(prefix="/api")
+
 # CORS
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
 
 @app.get("/")
 async def root():
-    return {"message": "Luna Group VIP API", "venues": len(LUNA_VENUES)}
+    return {"message": "Luna Group VIP API", "venues": len(LUNA_VENUES), "scheduler": "active"}
+
+# Scheduler status endpoint
+@api_router.get("/admin/scheduler/status")
+async def get_scheduler_status():
+    """Get the status of the event sync scheduler"""
+    jobs = scheduler.get_jobs()
+    last_sync = await db.system_config.find_one({"key": "megatix_last_sync"})
+    
+    return {
+        "scheduler_running": scheduler.running,
+        "jobs": [
+            {
+                "id": job.id,
+                "name": job.name,
+                "next_run": str(job.next_run_time) if job.next_run_time else None
+            }
+            for job in jobs
+        ],
+        "last_sync": last_sync.get("value") if last_sync else None,
+        "sync_interval": "12 hours"
+    }
 
 if __name__ == "__main__":
     import uvicorn
