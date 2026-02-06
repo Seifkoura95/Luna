@@ -282,7 +282,7 @@ export default function ProfileScreen() {
   ];
 
   const settingsItems = [
-    { id: 'notifications', icon: 'notifications', title: 'Notifications' },
+    { id: 'notifications', icon: 'notifications', title: 'Notifications', route: '/notifications' },
     { id: 'payment', icon: 'card', title: 'Payment Methods' },
     { id: 'privacy', icon: 'lock-closed', title: 'Privacy & Security' },
     { id: 'help', icon: 'help-circle', title: 'Help & Support' },
