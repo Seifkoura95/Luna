@@ -338,13 +338,13 @@ export default function ProfileScreen() {
               {/* Stats Row */}
               <View style={styles.tierStatsRow}>
                 <View style={styles.tierStat}>
-                  <Text style={styles.tierStatValue}>{progressToNext}%</Text>
-                  <Text style={styles.tierStatLabel}>To {tierConfig.next}</Text>
+                  <Text style={styles.tierStatValue}>{currentPoints.toLocaleString()}</Text>
+                  <Text style={styles.tierStatLabel}>Points</Text>
                 </View>
                 <View style={styles.tierStatDivider} />
                 <View style={styles.tierStat}>
                   <Text style={styles.tierStatValue}>2x</Text>
-                  <Text style={styles.tierStatLabel}>Points</Text>
+                  <Text style={styles.tierStatLabel}>Multiplier</Text>
                 </View>
                 <View style={styles.tierStatDivider} />
                 <View style={styles.tierStat}>
@@ -353,14 +353,14 @@ export default function ProfileScreen() {
                 </View>
               </View>
 
-              {/* Progress to next tier */}
+              {/* Upgrade via subscription */}
               <TouchableOpacity 
                 style={[styles.tierUpgradeButton, { borderColor: colors.gold }]}
                 onPress={() => router.push('/subscriptions')}
               >
-                <Ionicons name="arrow-up-circle" size={18} color={colors.gold} />
+                <Ionicons name="diamond" size={18} color={colors.gold} />
                 <Text style={[styles.tierUpgradeText, { color: colors.gold }]}>
-                  {tierConfig.pointsNeeded - currentPoints} POINTS TO {tierConfig.next?.toUpperCase()}
+                  UPGRADE VIA SUBSCRIPTION
                 </Text>
               </TouchableOpacity>
             </LinearGradient>
