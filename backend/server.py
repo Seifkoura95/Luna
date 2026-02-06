@@ -736,7 +736,6 @@ async def complete_referral(referred_user_id: str):
     )
     
     # Create notification for referrer
-    from server import create_notification
     await create_notification(
         user_id=referral["referrer_user_id"],
         notification_type="referral",
