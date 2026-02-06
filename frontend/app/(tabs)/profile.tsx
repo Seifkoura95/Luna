@@ -159,6 +159,68 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleInviteMember = async () => {
+    if (!inviteEmail.trim()) {
+      Alert.alert('Error', 'Please enter an email address');
+      return;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(inviteEmail.trim())) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+    
+    if (!selectedCrewForInvite) {
+      Alert.alert('Error', 'No crew selected');
+      return;
+    }
+    
+    setIsInviting(true);
+    try {
+      const result = await api.sendCrewInviteEmail(
+        selectedCrewForInvite.id,
+        inviteEmail.trim(),
+        inviteName.trim() || undefined,
+        inviteMessage.trim() || undefined
+      );
+      
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      
+      Alert.alert(
+        'Invite Sent! 🎉',
+        `An invitation has been sent to ${inviteEmail}.\n\n${result.mock ? '(Demo mode - no actual email sent)' : ''}`,
+        [{ text: 'OK', onPress: () => {
+          setShowInviteMember(false);
+          setInviteEmail('');
+          setInviteName('');
+          setInviteMessage('');
+          setSelectedCrewForInvite(null);
+          fetchData();
+        }}]
+      );
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to send invite');
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
+  const openInviteModal = (crew: any) => {
+    setSelectedCrewForInvite(crew);
+    setShowCrewPlan(false);
+    setShowInviteMember(true);
+  };
+
+  const openCrewDetails = (crew: any) => {
+    setSelectedCrewForDetails(crew);
+    setShowCrewPlan(false);
+    setShowCrewDetails(true);
+  };
+
   const handleEmergencyCall = () => {
     Alert.alert(
       'Emergency Services',
