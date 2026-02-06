@@ -597,6 +597,189 @@ async def get_user_photos(request: Request, venue_id: Optional[str] = None):
     photos = await db.photos.find(query).sort("created_at", -1).to_list(100)
     return clean_mongo_docs(photos)
 
+
+# ====== REFERRAL SYSTEM ======
+
+REFERRAL_POINTS_REWARD = 10  # Points awarded when referred friend signs up
+
+@api_router.get("/referral/code")
+async def get_referral_code(request: Request):
+    """Get or generate user's unique referral code"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if user already has a referral code
+    if user.get("referral_code"):
+        referral_code = user["referral_code"]
+    else:
+        # Generate unique referral code (username-based or random)
+        name_part = (user.get("name", "LUNA")[:4]).upper().replace(" ", "")
+        random_part = secrets.token_hex(3).upper()
+        referral_code = f"{name_part}{random_part}"
+        
+        # Save to user
+        await db.users.update_one(
+            {"user_id": current_user["user_id"]},
+            {"$set": {"referral_code": referral_code}}
+        )
+    
+    # Get referral stats
+    successful_referrals = await db.referrals.count_documents({
+        "referrer_user_id": current_user["user_id"],
+        "status": "completed"
+    })
+    
+    pending_referrals = await db.referrals.count_documents({
+        "referrer_user_id": current_user["user_id"],
+        "status": "pending"
+    })
+    
+    total_points_earned = successful_referrals * REFERRAL_POINTS_REWARD
+    
+    return {
+        "referral_code": referral_code,
+        "referral_link": f"https://lunagroup.app/join?ref={referral_code}",
+        "stats": {
+            "successful_referrals": successful_referrals,
+            "pending_referrals": pending_referrals,
+            "total_points_earned": total_points_earned,
+            "points_per_referral": REFERRAL_POINTS_REWARD
+        }
+    }
+
+@api_router.get("/referral/history")
+async def get_referral_history(request: Request):
+    """Get user's referral history"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    referrals = await db.referrals.find({
+        "referrer_user_id": current_user["user_id"]
+    }).sort("created_at", -1).to_list(50)
+    
+    return {
+        "referrals": clean_mongo_docs(referrals),
+        "total": len(referrals)
+    }
+
+@api_router.post("/referral/apply")
+async def apply_referral_code(referral_code: str, request: Request):
+    """Apply a referral code for a new user (called during registration)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Check if user has already used a referral code
+    existing = await db.referrals.find_one({
+        "referred_user_id": current_user["user_id"]
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already used a referral code")
+    
+    # Find the referrer
+    referrer = await db.users.find_one({"referral_code": referral_code.upper()})
+    if not referrer:
+        raise HTTPException(status_code=404, detail="Invalid referral code")
+    
+    # Can't refer yourself
+    if referrer["user_id"] == current_user["user_id"]:
+        raise HTTPException(status_code=400, detail="You cannot use your own referral code")
+    
+    # Create pending referral
+    referral = {
+        "id": str(uuid.uuid4())[:8],
+        "referrer_user_id": referrer["user_id"],
+        "referrer_name": referrer.get("name", "Luna Member"),
+        "referred_user_id": current_user["user_id"],
+        "referral_code": referral_code.upper(),
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.referrals.insert_one(referral)
+    
+    return {
+        "success": True,
+        "message": f"Referral code applied! {referrer.get('name', 'Your friend')} will receive {REFERRAL_POINTS_REWARD} points once you're verified.",
+        "referral": clean_mongo_doc(referral)
+    }
+
+async def complete_referral(referred_user_id: str):
+    """
+    Complete a referral and award points to the referrer.
+    Called automatically when a referred user is verified/completes signup.
+    """
+    # Find pending referral for this user
+    referral = await db.referrals.find_one({
+        "referred_user_id": referred_user_id,
+        "status": "pending"
+    })
+    
+    if not referral:
+        return None  # No pending referral
+    
+    # Update referral status
+    await db.referrals.update_one(
+        {"_id": referral["_id"]},
+        {"$set": {
+            "status": "completed",
+            "completed_at": datetime.now(timezone.utc)
+        }}
+    )
+    
+    # Award points to referrer
+    await db.users.update_one(
+        {"user_id": referral["referrer_user_id"]},
+        {"$inc": {"points_balance": REFERRAL_POINTS_REWARD}}
+    )
+    
+    # Create notification for referrer
+    from server import create_notification
+    await create_notification(
+        user_id=referral["referrer_user_id"],
+        notification_type="referral",
+        title="Referral Bonus! 🎉",
+        message=f"Your friend just joined Luna! You earned {REFERRAL_POINTS_REWARD} points.",
+        data={
+            "points_earned": REFERRAL_POINTS_REWARD,
+            "referral_id": referral["id"]
+        },
+        priority="high"
+    )
+    
+    logging.info(f"Referral completed: {referral['referrer_user_id']} earned {REFERRAL_POINTS_REWARD} points")
+    
+    return referral
+
+@api_router.post("/referral/verify/{user_id}")
+async def verify_and_complete_referral(user_id: str, request: Request):
+    """
+    Admin endpoint to verify a user and complete their referral.
+    In production, this would be triggered by email verification or first purchase.
+    """
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # For demo purposes, allow any authenticated user to trigger this
+    # In production, this would be admin-only or automatic
+    
+    result = await complete_referral(user_id)
+    
+    if result:
+        return {
+            "success": True,
+            "message": f"Referral completed! {result['referrer_name']} earned {REFERRAL_POINTS_REWARD} points.",
+            "referral": clean_mongo_doc(result)
+        }
+    else:
+        return {
+            "success": False,
+            "message": "No pending referral found for this user"
+        }
+
+
 # ====== ADMIN SEED API ======
 
 @api_router.post("/admin/seed")
