@@ -15,24 +15,28 @@ import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { RewardCard } from '../../src/components/RewardCard';
+import { VenueSelector } from '../../src/components/VenueSelector';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
 const { width } = Dimensions.get('window');
-const CATEGORIES = ['all', 'drinks', 'bottles', 'vip', 'merch'];
+const CATEGORIES = ['all', 'drinks', 'bottles', 'vip', 'merch', 'dining'];
 
 export default function RewardsScreen() {
   const user = useAuthStore((state) => state.user);
   const [rewards, setRewards] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
+  const [showVenueFilter, setShowVenueFilter] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [redemptionModal, setRedemptionModal] = useState<any>(null);
 
   const fetchRewards = async () => {
     try {
       const data = await api.getRewards(
-        selectedCategory === 'all' ? undefined : selectedCategory
+        selectedCategory === 'all' ? undefined : selectedCategory,
+        selectedVenueId || undefined
       );
       setRewards(data);
     } catch (e) {
@@ -42,7 +46,7 @@ export default function RewardsScreen() {
 
   useEffect(() => {
     fetchRewards();
-  }, [selectedCategory]);
+  }, [selectedCategory, selectedVenueId]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -58,7 +62,7 @@ export default function RewardsScreen() {
 
   const handleRedeem = async (rewardId: string) => {
     try {
-      const result = await api.redeemReward(rewardId);
+      const result = await api.redeemReward(rewardId, selectedVenueId || undefined);
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
