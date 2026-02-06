@@ -3390,10 +3390,10 @@ async def scheduled_megatix_sync():
         logging.error(f"Scheduled Megatix sync failed: {str(e)}")
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app_instance: FastAPI):
     """Application lifespan handler - manages scheduler startup/shutdown"""
     # Startup
-    logging.info("Starting Luna Group VIP API...")
+    logging.info("Starting Luna Group VIP API with scheduler...")
     
     # Schedule Megatix sync every 12 hours
     scheduler.add_job(
@@ -3404,11 +3404,11 @@ async def lifespan(app: FastAPI):
         replace_existing=True
     )
     
-    # Also run a sync on startup (after 30 seconds to let everything initialize)
+    # Also run a sync on startup (after 60 seconds to let everything initialize)
     scheduler.add_job(
         scheduled_megatix_sync,
         'date',
-        run_date=datetime.now(timezone.utc) + timedelta(seconds=30),
+        run_date=datetime.now(timezone.utc) + timedelta(seconds=60),
         id="megatix_startup_sync",
         name="Megatix Startup Sync"
     )
@@ -3421,18 +3421,6 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logging.info("Shutting down scheduler...")
     scheduler.shutdown()
-
-# Update app with lifespan
-app = FastAPI(lifespan=lifespan)
-api_router = APIRouter(prefix="/api")
-
-# CORS
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-app.include_router(api_router)
-
-@app.get("/")
-async def root():
-    return {"message": "Luna Group VIP API", "venues": len(LUNA_VENUES), "scheduler": "active"}
 
 # Scheduler status endpoint
 @api_router.get("/admin/scheduler/status")
@@ -3454,6 +3442,14 @@ async def get_scheduler_status():
         "last_sync": last_sync.get("value") if last_sync else None,
         "sync_interval": "12 hours"
     }
+
+# CORS
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.include_router(api_router)
+
+@app.get("/")
+async def root():
+    return {"message": "Luna Group VIP API", "venues": len(LUNA_VENUES), "scheduler": "active"}
 
 if __name__ == "__main__":
     import uvicorn
