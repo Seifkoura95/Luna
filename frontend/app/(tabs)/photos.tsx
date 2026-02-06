@@ -141,33 +141,87 @@ export default function PhotosScreen() {
   const approvedCount = photos.filter(p => p.tag_status === 'approved').length;
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Tabs */}
-      <View style={styles.tabsContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'all' && styles.tabActive]}
-          onPress={() => setActiveTab('all')}
+    <View style={styles.container}>
+      {/* Premium Header with Tabs */}
+      <View style={styles.header}>
+        <LinearGradient
+          colors={[colors.background, colors.backgroundElevated]}
+          style={styles.headerGradient}
         >
-          <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>
-            Available ({approvedCount})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'pending' && styles.tabActive]}
-          onPress={() => setActiveTab('pending')}
-        >
-          <Text style={[styles.tabText, activeTab === 'pending' && styles.tabTextActive]}>
-            Review ({pendingPhotos.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'purchased' && styles.tabActive]}
-          onPress={() => setActiveTab('purchased')}
-        >
-          <Text style={[styles.tabText, activeTab === 'purchased' && styles.tabTextActive]}>
-            Owned ({purchasedPhotos.length})
-          </Text>
-        </TouchableOpacity>
+          <View style={styles.tabsContainer}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'all' && styles.tabActive]}
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.selectionAsync();
+                setActiveTab('all');
+              }}
+              activeOpacity={0.7}
+            >
+              {activeTab === 'all' && (
+                <LinearGradient
+                  colors={[colors.accent, colors.accentDark]}
+                  style={StyleSheet.absoluteFill}
+                />
+              )}
+              <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>
+                Available
+              </Text>
+              <View style={[styles.tabBadge, activeTab === 'all' && styles.tabBadgeActive]}>
+                <Text style={[styles.tabBadgeText, activeTab === 'all' && styles.tabBadgeTextActive]}>
+                  {approvedCount}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'pending' && styles.tabActive]}
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.selectionAsync();
+                setActiveTab('pending');
+              }}
+              activeOpacity={0.7}
+            >
+              {activeTab === 'pending' && (
+                <LinearGradient
+                  colors={[colors.accent, colors.accentDark]}
+                  style={StyleSheet.absoluteFill}
+                />
+              )}
+              <Text style={[styles.tabText, activeTab === 'pending' && styles.tabTextActive]}>
+                Review
+              </Text>
+              <View style={[styles.tabBadge, activeTab === 'pending' && styles.tabBadgeActive]}>
+                <Text style={[styles.tabBadgeText, activeTab === 'pending' && styles.tabBadgeTextActive]}>
+                  {pendingPhotos.length}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'purchased' && styles.tabActive]}
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.selectionAsync();
+                setActiveTab('purchased');
+              }}
+              activeOpacity={0.7}
+            >
+              {activeTab === 'purchased' && (
+                <LinearGradient
+                  colors={[colors.accent, colors.accentDark]}
+                  style={StyleSheet.absoluteFill}
+                />
+              )}
+              <Text style={[styles.tabText, activeTab === 'purchased' && styles.tabTextActive]}>
+                Owned
+              </Text>
+              <View style={[styles.tabBadge, activeTab === 'purchased' && styles.tabBadgeActive]}>
+                <Text style={[styles.tabBadgeText, activeTab === 'purchased' && styles.tabBadgeTextActive]}>
+                  {purchasedPhotos.length}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
       </View>
 
       <ScrollView
