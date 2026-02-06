@@ -411,7 +411,7 @@ export default function PhotosScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "#000000",
   },
   header: {
     borderBottomWidth: 1,
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
   },
   tabBadgeActive: {
-    backgroundColor: "transparent",
+    backgroundColor: "#000000",
   },
   tabBadgeText: {
     fontSize: 11,

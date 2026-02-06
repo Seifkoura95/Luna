@@ -166,7 +166,7 @@ export default function EventsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "#000000",
   },
   scrollView: {
     flex: 1,

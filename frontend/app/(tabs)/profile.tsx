@@ -297,7 +297,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "#000000",
   },
   scrollView: {
     flex: 1,
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs + 2,
     borderRadius: radius.full,
     borderWidth: 1.5,
-    backgroundColor: "transparent",
+    backgroundColor: "#000000",
   },
   tierBadgeText: {
     fontSize: 11,
