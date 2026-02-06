@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, spacing, radius } from '../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../utils/api';
 
@@ -16,7 +17,7 @@ export const QueueStatus: React.FC = () => {
 
   useEffect(() => {
     fetchQueueStatus();
-    const interval = setInterval(fetchQueueStatus, 30000); // Refresh every 30s
+    const interval = setInterval(fetchQueueStatus, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -31,129 +32,195 @@ export const QueueStatus: React.FC = () => {
 
   if (!queueData) return null;
 
-  const statusColors = {
-    low: colors.queueLow,
-    medium: colors.queueMedium,
-    high: colors.queueHigh,
+  const statusConfig = {
+    low: {
+      color: colors.success,
+      glow: colors.successGlow,
+      label: 'LOW',
+      message: 'Perfect time to arrive!',
+      icon: 'checkmark-circle' as const,
+    },
+    medium: {
+      color: colors.warning,
+      glow: colors.warningGlow,
+      label: 'MODERATE',
+      message: 'Slight wait expected',
+      icon: 'time' as const,
+    },
+    high: {
+      color: colors.error,
+      glow: colors.errorGlow,
+      label: 'BUSY',
+      message: 'Longer wait times',
+      icon: 'alert-circle' as const,
+    },
   };
 
-  const statusLabels = {
-    low: 'LOW',
-    medium: 'MEDIUM',
-    high: 'HIGH',
-  };
-
-  const statusColor = statusColors[queueData.status];
+  const config = statusConfig[queueData.status];
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Queue Status</Text>
-        <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
-          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-          <Text style={[styles.statusText, { color: statusColor }]}>
-            {statusLabels[queueData.status]}
-          </Text>
+      <LinearGradient
+        colors={[colors.backgroundCard, colors.backgroundElevated]}
+        style={styles.gradient}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.titleContainer}>
+            <View style={styles.titleAccent} />
+            <Text style={styles.title}>LIVE QUEUE</Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: config.glow }]}>
+            <View style={[styles.statusDot, { backgroundColor: config.color }]} />
+            <Text style={[styles.statusLabel, { color: config.color }]}>
+              {config.label}
+            </Text>
+          </View>
         </View>
-      </View>
-      
-      <View style={styles.statsRow}>
-        <View style={styles.stat}>
-          <Ionicons name="people" size={20} color={colors.textSecondary} />
-          <Text style={styles.statValue}>{queueData.people_inside}</Text>
-          <Text style={styles.statLabel}>Inside</Text>
+
+        {/* Stats */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="people" size={20} color={colors.accent} />
+            </View>
+            <Text style={styles.statValue}>{queueData.people_inside}</Text>
+            <Text style={styles.statLabel}>Inside</Text>
+          </View>
+          
+          <View style={styles.statDivider} />
+          
+          <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="hourglass" size={20} color={colors.gold} />
+            </View>
+            <Text style={styles.statValue}>{queueData.queue_length}</Text>
+            <Text style={styles.statLabel}>In Queue</Text>
+          </View>
         </View>
-        <View style={styles.divider} />
-        <View style={styles.stat}>
-          <Ionicons name="time" size={20} color={colors.textSecondary} />
-          <Text style={styles.statValue}>{queueData.queue_length}</Text>
-          <Text style={styles.statLabel}>In Queue</Text>
+
+        {/* Best Time Banner */}
+        <View style={[styles.bestTimeBanner, { backgroundColor: config.glow }]}>
+          <Ionicons name={config.icon} size={18} color={config.color} />
+          <View style={styles.bestTimeContent}>
+            <Text style={[styles.bestTimeMessage, { color: config.color }]}>
+              {config.message}
+            </Text>
+            <Text style={styles.bestTimeValue}>
+              Best arrival: {queueData.best_arrival_time}
+            </Text>
+          </View>
         </View>
-      </View>
-      
-      <View style={styles.bestTime}>
-        <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-        <Text style={styles.bestTimeText}>
-          Best arrival: {queueData.best_arrival_time}
-        </Text>
-      </View>
+      </LinearGradient>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  gradient: {
+    padding: spacing.lg,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  titleAccent: {
+    width: 3,
+    height: 16,
+    backgroundColor: colors.accent,
+    borderRadius: 2,
+    marginRight: spacing.sm,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 2,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
   },
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: 6,
+    marginRight: spacing.sm,
   },
-  statusText: {
-    fontSize: 12,
+  statusLabel: {
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
   },
-  statsRow: {
+  statsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
   },
-  stat: {
+  statItem: {
     flex: 1,
     alignItems: 'center',
+  },
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.backgroundCard,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
   },
   statValue: {
     fontSize: 28,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginTop: 4,
   },
   statLabel: {
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
   },
-  divider: {
+  statDivider: {
     width: 1,
-    height: 50,
+    height: 60,
     backgroundColor: colors.border,
+    marginHorizontal: spacing.md,
   },
-  bestTime: {
+  bestTimeBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.success + '10',
-    padding: 10,
-    borderRadius: 8,
+    padding: spacing.md,
+    borderRadius: radius.md,
   },
-  bestTimeText: {
-    color: colors.success,
+  bestTimeContent: {
+    marginLeft: spacing.sm,
+    flex: 1,
+  },
+  bestTimeMessage: {
     fontSize: 13,
-    fontWeight: '500',
-    marginLeft: 8,
+    fontWeight: '600',
+  },
+  bestTimeValue: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
 });

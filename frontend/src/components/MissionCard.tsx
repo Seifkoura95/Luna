@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, spacing, radius } from '../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 
 interface MissionCardProps {
@@ -16,118 +17,125 @@ interface MissionCardProps {
   };
 }
 
-const missionIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
-  check_in_streak: 'calendar',
-  early_bird: 'time',
-  spending: 'wallet',
+const missionConfig: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
+  check_in_streak: { icon: 'calendar', color: colors.accent },
+  early_bird: { icon: 'sunny', color: colors.gold },
+  spending: { icon: 'wallet', color: colors.success },
 };
 
 export const MissionCard: React.FC<MissionCardProps> = ({ mission }) => {
   const progress = Math.min(mission.current_value / mission.requirement_value, 1);
-  const icon = missionIcons[mission.mission_type] || 'trophy';
+  const config = missionConfig[mission.mission_type] || { icon: 'trophy', color: colors.accent };
 
   return (
     <View style={[styles.container, mission.completed && styles.containerCompleted]}>
-      <View style={styles.header}>
-        <View style={[styles.iconContainer, mission.completed && styles.iconCompleted]}>
-          <Ionicons 
-            name={mission.completed ? 'checkmark' : icon} 
-            size={24} 
-            color={mission.completed ? colors.success : colors.accent} 
-          />
+      <LinearGradient
+        colors={mission.completed ? [colors.successGlow, colors.backgroundCard] : [colors.backgroundCard, colors.backgroundElevated]}
+        style={styles.gradient}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={[styles.iconContainer, { backgroundColor: config.color + '20' }]}>
+            <Ionicons 
+              name={mission.completed ? 'checkmark' : config.icon} 
+              size={22} 
+              color={mission.completed ? colors.success : config.color} 
+            />
+          </View>
+          <View style={styles.rewardBadge}>
+            <Ionicons name="star" size={12} color={colors.gold} />
+            <Text style={styles.rewardText}>+{mission.points_reward}</Text>
+          </View>
         </View>
-        <View style={styles.rewardBadge}>
-          <Ionicons name="star" size={12} color={colors.premiumGold} />
-          <Text style={styles.rewardText}>+{mission.points_reward}</Text>
+        
+        {/* Content */}
+        <Text style={styles.name} numberOfLines={1}>{mission.name}</Text>
+        <Text style={styles.description} numberOfLines={2}>{mission.description}</Text>
+        
+        {/* Progress */}
+        <View style={styles.progressSection}>
+          <View style={styles.progressBar}>
+            <LinearGradient
+              colors={mission.completed ? [colors.success, colors.success] : [config.color, config.color + '80']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.progressFill, { width: `${progress * 100}%` }]}
+            />
+          </View>
+          <Text style={styles.progressText}>
+            {mission.current_value}/{mission.requirement_value}
+          </Text>
         </View>
-      </View>
-      
-      <Text style={styles.name}>{mission.name}</Text>
-      <Text style={styles.description}>{mission.description}</Text>
-      
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <View 
-            style={[
-              styles.progressFill, 
-              { width: `${progress * 100}%` },
-              mission.completed && styles.progressCompleted
-            ]} 
-          />
-        </View>
-        <Text style={styles.progressText}>
-          {mission.current_value}/{mission.requirement_value}
-        </Text>
-      </View>
-      
-      {mission.completed && (
-        <View style={styles.completedBadge}>
-          <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-          <Text style={styles.completedText}>COMPLETED</Text>
-        </View>
-      )}
+        
+        {/* Completed Badge */}
+        {mission.completed && (
+          <View style={styles.completedBadge}>
+            <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+            <Text style={styles.completedText}>COMPLETED</Text>
+          </View>
+        )}
+      </LinearGradient>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    marginRight: 16,
-    width: 200,
+    width: 180,
+    borderRadius: radius.lg,
+    marginRight: spacing.md,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.border,
   },
   containerCompleted: {
-    borderColor: colors.success + '50',
-    backgroundColor: colors.success + '10',
+    borderColor: colors.success + '40',
+  },
+  gradient: {
+    padding: spacing.md,
+    minHeight: 180,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   iconContainer: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.accent + '20',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  iconCompleted: {
-    backgroundColor: colors.success + '20',
   },
   rewardBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.goldGlow,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
   },
   rewardText: {
-    color: colors.premiumGold,
+    color: colors.gold,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     marginLeft: 4,
   },
   name: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   description: {
     fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 12,
     lineHeight: 16,
+    marginBottom: spacing.md,
+    flex: 1,
   },
-  progressContainer: {
+  progressSection: {
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -137,29 +145,27 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: 3,
     overflow: 'hidden',
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.accent,
     borderRadius: 3,
   },
-  progressCompleted: {
-    backgroundColor: colors.success,
-  },
   progressText: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: '600',
+    minWidth: 35,
+    textAlign: 'right',
   },
   completedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: spacing.sm,
   },
   completedText: {
     color: colors.success,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     letterSpacing: 1,
     marginLeft: 4,

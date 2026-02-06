@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import QRCodeSVG from 'react-native-qrcode-svg';
-import { colors } from '../theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, spacing, radius } from '../theme/colors';
 import { api } from '../utils/api';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface QRCodeProps {
   size?: number;
 }
 
-export const QRCode: React.FC<QRCodeProps> = ({ size = 250 }) => {
+export const QRCode: React.FC<QRCodeProps> = ({ size = 200 }) => {
   const [qrData, setQrData] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState(60);
@@ -50,50 +52,85 @@ export const QRCode: React.FC<QRCodeProps> = ({ size = 250 }) => {
     return () => clearInterval(timer);
   }, [countdown]);
 
+  const isUrgent = countdown <= 10;
+
   if (loading) {
     return (
-      <View style={[styles.container, { width: size, height: size }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={styles.loadingText}>Generating QR Code...</Text>
+      <View style={[styles.container, { width: size + 40, height: size + 100 }]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text style={styles.loadingText}>Generating your pass...</Text>
+        </View>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, { width: size, height: size }]}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={[styles.container, { width: size + 40, height: size + 100 }]}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={48} color={colors.error} />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchQRData}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.wrapper}>
-      <View style={[styles.qrContainer, { width: size + 20, height: size + 20 }]}>
-        {qrData && (
-          <QRCodeSVG
-            value={qrData}
-            size={size}
-            backgroundColor="white"
-            color="black"
-          />
-        )}
+      {/* QR Code Container */}
+      <View style={styles.qrOuterContainer}>
+        <LinearGradient
+          colors={['#FFFFFF', '#F5F5F5']}
+          style={[styles.qrContainer, { width: size + 32, height: size + 32 }]}
+        >
+          {/* Corner Accents */}
+          <View style={[styles.cornerAccent, styles.cornerTopLeft]} />
+          <View style={[styles.cornerAccent, styles.cornerTopRight]} />
+          <View style={[styles.cornerAccent, styles.cornerBottomLeft]} />
+          <View style={[styles.cornerAccent, styles.cornerBottomRight]} />
+          
+          {qrData && (
+            <QRCodeSVG
+              value={qrData}
+              size={size}
+              backgroundColor="transparent"
+              color="#000000"
+            />
+          )}
+        </LinearGradient>
       </View>
-      <View style={styles.timerContainer}>
-        <View style={styles.timerRow}>
-          <Text style={styles.timerLabel}>Refreshes in</Text>
-          <Text style={[styles.timerValue, countdown <= 10 && styles.timerWarning]}>
-            {countdown}s
-          </Text>
-        </View>
-        <View style={styles.progressBar}>
-          <View 
-            style={[
-              styles.progressFill, 
-              { width: `${(countdown / 60) * 100}%` },
-              countdown <= 10 && styles.progressWarning
-            ]} 
+
+      {/* Timer Section */}
+      <View style={[styles.timerContainer, isUrgent && styles.timerContainerUrgent]}>
+        <View style={styles.timerContent}>
+          <Ionicons 
+            name="refresh-circle" 
+            size={18} 
+            color={isUrgent ? colors.warning : colors.textSecondary} 
           />
+          <Text style={[styles.timerLabel, isUrgent && styles.timerLabelUrgent]}>
+            Auto-refresh in
+          </Text>
+          <View style={[styles.timerBadge, isUrgent && styles.timerBadgeUrgent]}>
+            <Text style={[styles.timerValue, isUrgent && styles.timerValueUrgent]}>
+              {countdown}s
+            </Text>
+          </View>
+        </View>
+        <View style={styles.progressContainer}>
+          <View style={styles.progressTrack}>
+            <View 
+              style={[
+                styles.progressFill, 
+                { width: `${(countdown / 60) * 100}%` },
+                isUrgent && styles.progressFillUrgent
+              ]} 
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -107,53 +144,133 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 16,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: colors.textSecondary,
+    marginTop: spacing.md,
+    fontSize: 14,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  errorText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
+  },
+  retryButton: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+  },
+  retryText: {
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  qrOuterContainer: {
+    padding: 4,
+    borderRadius: radius.lg + 4,
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   qrContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 10,
+    borderRadius: radius.lg,
+    position: 'relative',
   },
-  loadingText: {
-    color: colors.textSecondary,
-    marginTop: 12,
-    fontSize: 14,
+  cornerAccent: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderColor: colors.accent,
   },
-  errorText: {
-    color: colors.error,
-    fontSize: 14,
-    textAlign: 'center',
-    padding: 20,
+  cornerTopLeft: {
+    top: 8,
+    left: 8,
+    borderTopWidth: 3,
+    borderLeftWidth: 3,
+    borderTopLeftRadius: 4,
+  },
+  cornerTopRight: {
+    top: 8,
+    right: 8,
+    borderTopWidth: 3,
+    borderRightWidth: 3,
+    borderTopRightRadius: 4,
+  },
+  cornerBottomLeft: {
+    bottom: 8,
+    left: 8,
+    borderBottomWidth: 3,
+    borderLeftWidth: 3,
+    borderBottomLeftRadius: 4,
+  },
+  cornerBottomRight: {
+    bottom: 8,
+    right: 8,
+    borderBottomWidth: 3,
+    borderRightWidth: 3,
+    borderBottomRightRadius: 4,
   },
   timerContainer: {
-    marginTop: 16,
+    marginTop: spacing.md,
     width: '100%',
-    paddingHorizontal: 20,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  timerRow: {
+  timerContainerUrgent: {
+    borderColor: colors.warning + '50',
+    backgroundColor: colors.warningGlow,
+  },
+  timerContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   timerLabel: {
     color: colors.textSecondary,
-    fontSize: 14,
+    fontSize: 13,
+    marginLeft: spacing.sm,
+    flex: 1,
+  },
+  timerLabelUrgent: {
+    color: colors.warning,
+  },
+  timerBadge: {
+    backgroundColor: colors.backgroundElevated,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
+  },
+  timerBadgeUrgent: {
+    backgroundColor: colors.warning,
   },
   timerValue: {
     color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '700',
   },
-  timerWarning: {
-    color: colors.warning,
+  timerValueUrgent: {
+    color: colors.background,
   },
-  progressBar: {
+  progressContainer: {
+    marginTop: spacing.xs,
+  },
+  progressTrack: {
     height: 4,
-    backgroundColor: colors.card,
+    backgroundColor: colors.backgroundElevated,
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -162,7 +279,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     borderRadius: 2,
   },
-  progressWarning: {
+  progressFillUrgent: {
     backgroundColor: colors.warning,
   },
 });
