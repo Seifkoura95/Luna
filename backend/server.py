@@ -324,49 +324,44 @@ async def get_user_photos(request: Request, venue_id: Optional[str] = None):
 
 @api_router.post("/admin/seed")
 async def seed_database():
+    from seed_data import get_seed_data
+    
+    # Get comprehensive seed data
+    seed_data = get_seed_data()
+    
     # Seed rewards
     await db.rewards.delete_many({})
-    rewards = [
-        {"id": str(uuid.uuid4()), "name": "Complimentary Cocktail", "description": "One signature cocktail", "points_cost": 150, "category": "drinks", "venue_restriction": None, "is_active": True},
-        {"id": str(uuid.uuid4()), "name": "VIP Booth Upgrade", "description": "Upgrade your booth", "points_cost": 500, "category": "vip", "venue_restriction": "eclipse", "is_active": True},
-        {"id": str(uuid.uuid4()), "name": "Fast Lane Token", "description": "Skip the queue at any nightclub", "points_cost": 200, "category": "vip", "venue_restriction": None, "is_active": True},
-        {"id": str(uuid.uuid4()), "name": "Dining Credit - $25", "description": "$25 credit at any Luna restaurant", "points_cost": 300, "category": "dining", "venue_restriction": None, "is_active": True},
-    ]
-    await db.rewards.insert_many(rewards)
+    if seed_data["rewards"]:
+        await db.rewards.insert_many(seed_data["rewards"])
     
     # Seed missions
     await db.missions.delete_many({})
-    missions = [
-        {"id": str(uuid.uuid4()), "name": "Early Bird", "description": "Check in before 10:30pm at any nightclub", "mission_type": "early_bird", "requirement_value": 1, "points_reward": 100, "venue_requirements": None, "cross_venue_flag": False, "is_active": True},
-        {"id": str(uuid.uuid4()), "name": "Explorer", "description": "Visit 3 different Luna venues this month", "mission_type": "cross_venue", "requirement_value": 3, "points_reward": 500, "venue_requirements": None, "cross_venue_flag": True, "is_active": True},
-        {"id": str(uuid.uuid4()), "name": "Dine and Dance", "description": "Dinner + nightclub in one night", "mission_type": "cross_venue", "requirement_value": 2, "points_reward": 300, "venue_requirements": None, "cross_venue_flag": True, "is_active": True},
-    ]
-    await db.missions.insert_many(missions)
+    if seed_data["missions"]:
+        await db.missions.insert_many(seed_data["missions"])
     
     # Seed events
     await db.events.delete_many({})
-    events = [
-        {"id": str(uuid.uuid4()), "venue_id": "eclipse", "title": "DJ SODA - International Showcase", "description": "World-renowned DJ", "event_date": datetime.now(timezone.utc) + timedelta(days=7), "ticket_url": "https://eclipse.com/tickets", "featured_artist": {"name": "DJ SODA", "image": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400", "bio": "International sensation"}},
-        {"id": str(uuid.uuid4()), "venue_id": "after_dark", "title": "Hip Hop Night", "description": "Best in R&B and Hip Hop", "event_date": datetime.now(timezone.utc) + timedelta(days=3), "ticket_url": None},
-        {"id": str(uuid.uuid4()), "venue_id": "juju", "title": "Rooftop Sunset Sessions", "description": "Live music and ocean views", "event_date": datetime.now(timezone.utc) + timedelta(days=5), "ticket_url": None},
-    ]
-    await db.events.insert_many(events)
+    if seed_data["events"]:
+        await db.events.insert_many(seed_data["events"])
     
     # Seed boosts
     await db.boosts.delete_many({})
-    boosts = [
-        {"id": str(uuid.uuid4()), "name": "Weekend Happy Hour", "description": "2x points before 11pm", "multiplier": 2.0, "start_time": datetime.now(timezone.utc) + timedelta(hours=2), "end_time": datetime.now(timezone.utc) + timedelta(hours=5), "venue_restriction": None, "eligibility": "all"},
-    ]
-    await db.boosts.insert_many(boosts)
+    if seed_data["boosts"]:
+        await db.boosts.insert_many(seed_data["boosts"])
     
     # Seed auctions
     await db.auctions.delete_many({})
-    auctions = [
-        {"id": "a1", "venue_id": "eclipse", "title": "VIP Booth Upgrade", "description": "Upgrade to premium VIP", "auction_type": "booth_upgrade", "reserve_price": 100, "instant_win_price": 300, "current_bid": 0, "winner_id": None, "start_time": datetime.now(timezone.utc), "end_time": datetime.now(timezone.utc) + timedelta(hours=2), "status": "active", "bid_increment": 10.0},
-    ]
-    await db.auctions.insert_many(auctions)
+    if seed_data["auctions"]:
+        await db.auctions.insert_many(seed_data["auctions"])
     
-    return {"message": "Database seeded successfully for Luna Group!"}
+    return {
+        "message": "Luna Group database seeded successfully!",
+        "rewards": len(seed_data["rewards"]),
+        "missions": len(seed_data["missions"]),
+        "events": len(seed_data["events"]),
+        "boosts": len(seed_data["boosts"]),
+        "auctions": len(seed_data["auctions"])
+    }
 
 # CORS
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
