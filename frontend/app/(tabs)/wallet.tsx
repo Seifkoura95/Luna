@@ -329,16 +329,8 @@ export default function WalletScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-          <RotatingMoon size={60} rotationDuration={30000} />
-          <Text style={styles.headerTitle}>WALLET</Text>
-          <View style={styles.headerUnderline} />
-          <View style={styles.pointsBadge}>
-            <FierySun size={18} />
-            <Text style={styles.pointsText}>{user?.points_balance?.toLocaleString() || 0} pts</Text>
-          </View>
-        </View>
+        {/* Consistent Header - No Points */}
+        <PageHeader title="WALLET" showPoints={false} />
 
         {/* Tab Selector */}
         <View style={styles.tabContainer}>
