@@ -20,13 +20,13 @@ export default function Index() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
   
-  // Rotation animation - spinning left like a real planet (Y-axis)
+  // Simple spinning animation
   const rotation = useSharedValue(0);
   
   useEffect(() => {
-    // Rotate counter-clockwise (negative) for spinning left effect
+    // Continuous spin like a planet
     rotation.value = withRepeat(
-      withTiming(-360, {
+      withTiming(360, {
         duration: 20000, // 20 seconds for full rotation
         easing: Easing.linear,
       }),
@@ -53,14 +53,14 @@ export default function Index() {
     }
   }, [isLoading, isAuthenticated]);
 
-  // Spinning left like a real planet (Y-axis rotation)
+  // Smooth spinning rotation
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotateY: `${rotation.value}deg` }],
+    transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
   return (
     <View style={styles.container}>
-      {/* Moon spinning left like a planet */}
+      {/* Spinning Moon */}
       <Animated.View style={[styles.moonContainer, animatedStyle]}>
         <Image
           source={{ uri: LUNAR_MOON_IMAGE }}
