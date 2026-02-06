@@ -55,19 +55,25 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <LinearGradient
-          colors={[colors.background, colors.backgroundElevated]}
-          style={styles.headerGradient}
-        >
-          <View style={styles.headerLogoContainer}>
-            <View style={styles.headerGlow} />
-            <Text style={styles.headerLogo}>L</Text>
+      {/* Premium Header */}
+      <LinearGradient
+        colors={[colors.background, colors.backgroundElevated]}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logoGlow} />
+            <View style={styles.logoCircle}>
+              <Text style={styles.logoText}>L</Text>
+            </View>
           </View>
-          <Text style={styles.headerTitle}>LUNA GROUP</Text>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>EXPLORE</Text>
+            <View style={styles.headerUnderline} />
+          </View>
           <Text style={styles.headerSubtitle}>7 Premier Venues • Brisbane & Gold Coast</Text>
-        </LinearGradient>
-      </View>
+        </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scrollView}
@@ -223,55 +229,64 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
+    paddingTop: spacing.xxxl + spacing.md,
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  headerGradient: {
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
-    paddingHorizontal: spacing.md,
+  headerContent: {
     alignItems: 'center',
   },
-  headerLogoContainer: {
+  logoContainer: {
     position: 'relative',
-    marginBottom: spacing.sm,
-    width: 48,
-    height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: spacing.lg,
   },
-  headerGlow: {
+  logoGlow: {
     position: 'absolute',
-    top: -10,
-    left: -10,
-    right: -10,
-    bottom: -10,
+    top: -12,
+    left: -12,
+    right: -12,
+    bottom: -12,
     backgroundColor: colors.accentGlow,
     borderRadius: 50,
     opacity: 0.4,
   },
-  headerLogo: {
+  logoCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 2,
+    borderColor: colors.accent + '40',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoText: {
     fontSize: 32,
     fontWeight: '900',
     color: colors.textPrimary,
-    textShadowColor: colors.accent,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 15,
+    letterSpacing: 1,
+  },
+  headerTextContainer: {
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '900',
     color: colors.textPrimary,
     letterSpacing: 8,
-    marginBottom: spacing.xs,
-    textAlign: 'center',
-    textShadowColor: colors.accent,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 15,
+    marginBottom: spacing.sm,
+  },
+  headerUnderline: {
+    width: 50,
+    height: 3,
+    backgroundColor: colors.accent,
   },
   headerSubtitle: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.textSecondary,
     letterSpacing: 2,
     textAlign: 'center',

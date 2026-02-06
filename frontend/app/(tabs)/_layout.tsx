@@ -8,10 +8,15 @@ import { useAuthStore } from '../../src/store/authStore';
 
 const TabBarIcon = ({ name, color, focused }: { name: keyof typeof Ionicons.glyphMap; color: string; focused: boolean }) => (
   <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-    {focused && (
-      <View style={styles.iconGlow} />
-    )}
-    <Ionicons name={name} size={22} color={color} />
+    {focused && <View style={styles.iconGlow} />}
+    <Ionicons name={name} size={24} color={color} />
+  </View>
+);
+
+const HeaderTitle = ({ title }: { title: string }) => (
+  <View style={styles.headerTitleContainer}>
+    <Text style={styles.headerTitleText}>{title}</Text>
+    <View style={styles.headerTitleUnderline} />
   </View>
 );
 
@@ -21,13 +26,12 @@ const HeaderRight = () => {
 
   return (
     <View style={styles.headerRight}>
-      <LinearGradient
-        colors={[colors.goldGlow, 'transparent']}
-        style={styles.pointsGlow}
-      />
-      <View style={styles.pointsBadge}>
-        <Ionicons name="star" size={14} color={colors.gold} />
-        <Text style={styles.pointsText}>{user.points_balance.toLocaleString()}</Text>
+      <View style={styles.pointsContainer}>
+        <View style={styles.pointsGlow} />
+        <View style={styles.pointsBadge}>
+          <Ionicons name="star" size={16} color={colors.gold} />
+          <Text style={styles.pointsText}>{user.points_balance.toLocaleString()}</Text>
+        </View>
       </View>
     </View>
   );
@@ -47,13 +51,19 @@ export default function TabLayout() {
         headerTintColor: colors.textPrimary,
         headerRight: () => <HeaderRight />,
         headerShadowVisible: false,
+        headerBackground: () => (
+          <LinearGradient
+            colors={[colors.background, colors.backgroundElevated]}
+            style={{ flex: 1 }}
+          />
+        ),
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Tonight',
-          headerTitle: 'LUNA GROUP',
+          headerTitle: () => <HeaderTitle title="TONIGHT" />,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="radio-button-on" color={color} focused={focused} />
           ),
@@ -73,6 +83,7 @@ export default function TabLayout() {
         name="rewards"
         options={{
           title: 'Rewards',
+          headerTitle: () => <HeaderTitle title="REWARDS" />,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="gift" color={color} focused={focused} />
           ),
@@ -82,6 +93,7 @@ export default function TabLayout() {
         name="auctions"
         options={{
           title: 'Auctions',
+          headerTitle: () => <HeaderTitle title="LIVE AUCTIONS" />,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="flash" color={color} focused={focused} />
           ),
@@ -91,23 +103,14 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          headerTitle: () => <HeaderTitle title="PROFILE" />,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="person" color={color} focused={focused} />
           ),
         }}
       />
-      <Tabs.Screen
-        name="events"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="photos"
-        options={{
-          href: null,
-        }}
-      />
+      <Tabs.Screen name="events" options={{ href: null }} />
+      <Tabs.Screen name="photos" options={{ href: null }} />
     </Tabs>
   );
 }
@@ -117,65 +120,83 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundCard,
     borderTopColor: colors.border,
     borderTopWidth: 1,
-    paddingTop: spacing.sm,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-    height: Platform.OS === 'ios' ? 90 : 70,
+    paddingTop: spacing.sm + 2,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
+    height: Platform.OS === 'ios' ? 95 : 75,
     elevation: 0,
   },
   tabBarLabel: {
     fontSize: 10,
     fontWeight: '700',
-    letterSpacing: 0.5,
-    marginTop: 4,
+    letterSpacing: 1,
+    marginTop: 6,
   },
   tabBarItem: {
-    paddingTop: 4,
+    paddingTop: 6,
   },
   iconContainer: {
-    width: 40,
-    height: 32,
+    width: 44,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
+    position: 'relative',
   },
   iconContainerActive: {
     backgroundColor: colors.accentGlow,
   },
   iconGlow: {
     position: 'absolute',
-    width: 40,
-    height: 32,
+    width: 44,
+    height: 36,
     backgroundColor: colors.accent,
-    borderRadius: radius.sm,
-    opacity: 0.15,
+    borderRadius: radius.md,
+    opacity: 0.2,
   },
   header: {
     backgroundColor: colors.background,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     elevation: 0,
+    height: 100,
   },
   headerTitle: {
     color: colors.textPrimary,
     fontWeight: '900',
-    fontSize: 20,
-    letterSpacing: 8,
-    textShadowColor: colors.accent,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
+    fontSize: 18,
+    letterSpacing: 6,
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitleText: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: colors.textPrimary,
+    letterSpacing: 6,
+    marginBottom: 6,
+  },
+  headerTitleUnderline: {
+    width: 40,
+    height: 2,
+    backgroundColor: colors.accent,
   },
   headerRight: {
     marginRight: spacing.md,
+  },
+  pointsContainer: {
     position: 'relative',
   },
   pointsGlow: {
     position: 'absolute',
-    top: -5,
-    left: -5,
-    right: -5,
-    bottom: -5,
+    top: -6,
+    left: -6,
+    right: -6,
+    bottom: -6,
     borderRadius: radius.full,
-    opacity: 0.5,
+    backgroundColor: colors.goldGlow,
+    opacity: 0.4,
   },
   pointsBadge: {
     flexDirection: 'row',
@@ -184,13 +205,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 2,
     borderRadius: radius.full,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.gold + '40',
+    gap: spacing.xs,
   },
   pointsText: {
     color: colors.gold,
-    fontSize: 14,
-    fontWeight: '700',
-    marginLeft: spacing.xs,
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });
