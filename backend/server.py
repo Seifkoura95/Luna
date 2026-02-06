@@ -14,6 +14,7 @@ import hashlib
 import secrets
 import bcrypt
 import jwt
+import stripe
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -28,6 +29,14 @@ QR_SECRET = os.environ.get('QR_SECRET', 'luna-group-vip-2024')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'luna-jwt-secret-2024')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRY_DAYS = 7
+
+# Stripe Configuration (Test Mode)
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_demo_key')
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', 'pk_test_demo_key')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', 'whsec_demo_secret')
+
+# Initialize Stripe with test key
+stripe.api_key = STRIPE_SECRET_KEY
 
 # Create app
 app = FastAPI(title="Luna Group VIP API")
