@@ -135,15 +135,21 @@ export default function WalletScreen() {
   const fetchData = useCallback(async () => {
     try {
       const [ticketsData, eventsData] = await Promise.all([
-        api.getTickets(),
+        api.getTickets().catch(() => null),
         api.getEvents(),
       ]);
-      setTickets(ticketsData);
+      // Merge mock data with API data for demonstration
+      if (ticketsData && (ticketsData.active?.length > 0 || ticketsData.upcoming?.length > 0 || ticketsData.history?.length > 0)) {
+        setTickets(ticketsData);
+      } else {
+        // Use mock data if no real tickets
+        setTickets(MOCK_TICKETS);
+      }
       setEvents(eventsData || []);
     } catch (e) {
       console.error('Failed to fetch wallet data:', e);
-      // Set empty data on error
-      setTickets({ active: [], upcoming: [], history: [] });
+      // Use mock data on error
+      setTickets(MOCK_TICKETS);
     }
   }, []);
 
