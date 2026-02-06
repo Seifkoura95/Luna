@@ -2,7 +2,6 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Platform, StyleSheet, View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
@@ -31,7 +30,7 @@ const HeaderRight = () => {
         <View style={styles.pointsGlow} />
         <View style={styles.pointsBadge}>
           <Ionicons name="star" size={16} color={colors.gold} />
-          <Text style={styles.pointsText}>{user.points_balance.toLocaleString()}</Text>
+          <Text style={styles.pointsText}>{user.points_balance?.toLocaleString() || 0}</Text>
         </View>
       </View>
     </View>
@@ -66,7 +65,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Tonight',
-          headerTitle: () => <HeaderTitle title="TONIGHT" />,
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="radio-button-on" color={color} focused={focused} />
           ),
@@ -83,12 +82,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="rewards"
+        name="wallet"
         options={{
-          title: 'Rewards',
-          headerTitle: () => <HeaderTitle title="REWARDS" />,
+          title: 'Wallet',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="gift" color={color} focused={focused} />
+            <TabBarIcon name="ticket" color={color} focused={focused} />
           ),
         }}
       />
@@ -96,7 +95,7 @@ export default function TabLayout() {
         name="auctions"
         options={{
           title: 'Auctions',
-          headerTitle: () => <HeaderTitle title="LIVE AUCTIONS" />,
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="flash" color={color} focused={focused} />
           ),
@@ -106,14 +105,16 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          headerTitle: () => <HeaderTitle title="PROFILE" />,
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="person" color={color} focused={focused} />
           ),
         }}
       />
+      {/* Hidden screens */}
       <Tabs.Screen name="events" options={{ href: null }} />
       <Tabs.Screen name="photos" options={{ href: null }} />
+      <Tabs.Screen name="rewards" options={{ href: null }} />
     </Tabs>
     </View>
   );
