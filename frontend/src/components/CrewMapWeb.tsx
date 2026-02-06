@@ -306,4 +306,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CrewMap;
+export default CrewMapWeb;
