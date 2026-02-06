@@ -284,45 +284,79 @@ export default function PhotosScreen() {
         )}
       </ScrollView>
 
-      {/* Purchase Bar */}
+      {/* Premium Purchase Bar */}
       {activeTab === 'all' && approvedCount > 0 && (
-        <View style={styles.purchaseBar}>
-          <View style={styles.purchaseInfo}>
-            <Text style={styles.selectedCount}>
-              {selectedPhotos.size} selected
-            </Text>
-            <TouchableOpacity
-              style={styles.aiToggle}
-              onPress={() => setAiEnhance(!aiEnhance)}
-            >
-              <View style={[styles.checkbox, aiEnhance && styles.checkboxActive]}>
-                {aiEnhance && <Ionicons name="checkmark" size={14} color={colors.textPrimary} />}
-              </View>
-              <Text style={styles.aiText}>AI Enhance (+$2/photo)</Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            style={[
-              styles.purchaseBtn,
-              (selectedPhotos.size === 0 || purchasing) && styles.purchaseBtnDisabled
-            ]}
-            onPress={handlePurchase}
-            disabled={selectedPhotos.size === 0 || purchasing}
+        <View style={styles.purchaseBarContainer}>
+          <LinearGradient
+            colors={[colors.backgroundCard, colors.background]}
+            style={styles.purchaseBar}
           >
-            <Text style={styles.purchaseBtnText}>
-              {purchasing ? 'Processing...' : `Buy ${selectedPhotos.size} Photos`}
-            </Text>
-          </TouchableOpacity>
+            <View style={styles.purchaseInfo}>
+              <View style={styles.selectedBadge}>
+                <Ionicons name="images" size={16} color={colors.accent} />
+                <Text style={styles.selectedCount}>{selectedPhotos.size} selected</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.aiToggle}
+                onPress={() => {
+                  if (Platform.OS !== 'web') Haptics.selectionAsync();
+                  setAiEnhance(!aiEnhance);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.checkbox, aiEnhance && styles.checkboxActive]}>
+                  {aiEnhance && <Ionicons name="checkmark" size={14} color={colors.background} />}
+                </View>
+                <Ionicons name="sparkles" size={16} color={colors.gold} style={{ marginRight: spacing.xs }} />
+                <Text style={styles.aiText}>AI Enhance (+$2 each)</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.purchaseBtn,
+                (selectedPhotos.size === 0 || purchasing) && styles.purchaseBtnDisabled
+              ]}
+              onPress={handlePurchase}
+              disabled={selectedPhotos.size === 0 || purchasing}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={
+                  selectedPhotos.size === 0 || purchasing
+                    ? [colors.border, colors.border]
+                    : [colors.accent, colors.accentDark]
+                }
+                style={styles.purchaseBtnGradient}
+              >
+                <Ionicons name="cart" size={18} color={colors.textPrimary} />
+                <Text style={styles.purchaseBtnText}>
+                  {purchasing ? 'Processing...' : `Purchase ${selectedPhotos.size > 0 ? `(${selectedPhotos.size})` : ''}`}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
       )}
 
-      {/* Bundle Hint */}
+      {/* Premium Bundle Hint */}
       {activeTab === 'all' && selectedPhotos.size > 0 && selectedPhotos.size < 5 && (
-        <View style={styles.bundleHint}>
-          <Ionicons name="gift" size={16} color={colors.premiumGold} />
-          <Text style={styles.bundleHintText}>
-            Select {5 - selectedPhotos.size} more for bundle deal ($25 for all)!
-          </Text>
+        <View style={styles.bundleHintContainer}>
+          <LinearGradient
+            colors={[colors.goldGlow, 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.bundleHint}
+          >
+            <View style={styles.bundleIconContainer}>
+              <Ionicons name="gift" size={20} color={colors.gold} />
+            </View>
+            <Text style={styles.bundleHintText}>
+              Select {5 - selectedPhotos.size} more for bundle pricing
+            </Text>
+            <View style={styles.bundleBadge}>
+              <Text style={styles.bundleBadgeText}>$25</Text>
+            </View>
+          </LinearGradient>
         </View>
       )}
 
