@@ -253,7 +253,7 @@ async def get_events(venue_id: Optional[str] = None):
     if venue_id:
         query["venue_id"] = venue_id
     events = await db.events.find(query).sort("event_date", 1).to_list(50)
-    return events
+    return clean_mongo_docs(events)
 
 # ====== BOOSTS API ======
 
