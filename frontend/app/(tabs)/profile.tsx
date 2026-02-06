@@ -650,6 +650,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     paddingBottom: spacing.lg,
   },
+  userInfoSection: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
   avatarContainer: {
     position: 'relative',
     marginBottom: spacing.md,
