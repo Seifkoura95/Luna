@@ -146,8 +146,8 @@ SUBSCRIPTION_TIERS = {
 # Points configuration
 POINTS_PER_DOLLAR = 1  # Base rate: $1 = 1 point
 
-# Create app
-app = FastAPI(title="Luna Group VIP API")
+# Create app - defined here but lifespan added later via scheduler setup
+app = FastAPI(title="Luna Group VIP API", lifespan=lifespan)
 api_router = APIRouter(prefix="/api")
 
 logging.basicConfig(level=logging.INFO)
