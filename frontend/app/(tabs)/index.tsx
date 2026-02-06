@@ -17,11 +17,14 @@ import { VenueSelector } from '../../src/components/VenueSelector';
 import { FeaturedContent } from '../../src/components/FeaturedContent';
 import { VenueStatusCard } from '../../src/components/VenueStatusCard';
 import { Ionicons } from '@expo/vector-icons';
+import { StarfieldBackground } from '../../src/components/StarfieldBackground';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
 export default function TonightScreen() {
   const user = useAuthStore((state) => state.user);
+  const insets = useSafeAreaInsets();
   const [selectedVenueId, setSelectedVenueId] = useState('eclipse');
   const [missions, setMissions] = useState<any[]>([]);
   const [boosts, setBoosts] = useState<any[]>([]);
