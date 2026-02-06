@@ -3437,51 +3437,6 @@ async def get_megatix_urls():
     }
 
 
-# ====== SCHEDULER SETUP ======
-scheduler = AsyncIOScheduler()
-
-async def scheduled_megatix_sync():
-    """Scheduled job to sync events from Megatix every 12 hours"""
-    logging.info("Starting scheduled Megatix sync...")
-    try:
-        result = await scrape_megatix_events()
-        logging.info(f"Scheduled sync result: {result.get('message', 'completed')}")
-    except Exception as e:
-        logging.error(f"Scheduled Megatix sync failed: {str(e)}")
-
-@asynccontextmanager
-async def lifespan(app_instance: FastAPI):
-    """Application lifespan handler - manages scheduler startup/shutdown"""
-    # Startup
-    logging.info("Starting Luna Group VIP API with scheduler...")
-    
-    # Schedule Megatix sync every 12 hours
-    scheduler.add_job(
-        scheduled_megatix_sync,
-        IntervalTrigger(hours=12),
-        id="megatix_sync",
-        name="Megatix Event Sync",
-        replace_existing=True
-    )
-    
-    # Also run a sync on startup (after 60 seconds to let everything initialize)
-    scheduler.add_job(
-        scheduled_megatix_sync,
-        'date',
-        run_date=datetime.now(timezone.utc) + timedelta(seconds=60),
-        id="megatix_startup_sync",
-        name="Megatix Startup Sync"
-    )
-    
-    scheduler.start()
-    logging.info("Event scheduler started - Megatix sync every 12 hours")
-    
-    yield
-    
-    # Shutdown
-    logging.info("Shutting down scheduler...")
-    scheduler.shutdown()
-
 # Scheduler status endpoint
 @api_router.get("/admin/scheduler/status")
 async def get_scheduler_status():
