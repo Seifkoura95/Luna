@@ -3152,24 +3152,17 @@ async def get_megatix_sync_status():
         "note": "Events are synced from Megatix ticketing platform"
     }
 
-@api_router.post("/admin/megatix/sync")
-async def sync_megatix_events():
+async def scrape_megatix_events():
     """
-    Sync events from Megatix. 
-    Since Megatix doesn't have a public API, this endpoint provides 
-    a manual sync mechanism where events can be added/updated.
+    Core function to scrape events from Megatix.
+    Called by both the API endpoint and the scheduler.
+    """
+    synced_events = []
+    errors = []
+    new_events_count = 0
+    updated_events_count = 0
     
-    In production, you would:
-    1. Use a web scraping service (Apify, ScrapingBee) 
-    2. Or integrate with Megatix's partner API (requires business agreement)
-    3. Or use a scheduled job to fetch and parse their event pages
-    """
     try:
-        import httpx
-        
-        synced_events = []
-        errors = []
-        
         # For each venue, try to fetch events from Megatix
         for venue_id, search_terms in MEGATIX_VENUE_SEARCHES.items():
             for search_term in search_terms[:1]:  # Just use first search term
@@ -3177,17 +3170,91 @@ async def sync_megatix_events():
                     # Megatix search URL
                     url = f"https://megatix.com.au/events?search={search_term}"
                     
-                    async with httpx.AsyncClient(timeout=10.0) as client:
-                        response = await client.get(url, follow_redirects=True)
+                    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+                        response = await client.get(url, headers={
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        })
                         
                         if response.status_code == 200:
-                            # Parse the response - in production you'd extract event data
-                            # For now, we log that we can reach Megatix
+                            # Parse HTML to extract events
+                            soup = BeautifulSoup(response.text, 'lxml')
+                            
+                            # Find event cards - Megatix uses various structures
+                            event_cards = soup.find_all(['div', 'article'], class_=lambda x: x and any(
+                                keyword in str(x).lower() for keyword in ['event', 'card', 'listing', 'item']
+                            ))
+                            
+                            parsed_events = []
+                            for card in event_cards[:10]:  # Limit to first 10 per venue
+                                try:
+                                    # Try to extract event info
+                                    title_elem = card.find(['h2', 'h3', 'h4', 'a'], class_=lambda x: x and 'title' in str(x).lower() if x else False)
+                                    if not title_elem:
+                                        title_elem = card.find(['h2', 'h3', 'h4'])
+                                    
+                                    date_elem = card.find(['span', 'div', 'time'], class_=lambda x: x and 'date' in str(x).lower() if x else False)
+                                    if not date_elem:
+                                        date_elem = card.find('time')
+                                    
+                                    link_elem = card.find('a', href=True)
+                                    img_elem = card.find('img', src=True)
+                                    
+                                    if title_elem:
+                                        event_title = title_elem.get_text(strip=True)
+                                        if event_title and len(event_title) > 5:
+                                            event_data = {
+                                                "title": event_title,
+                                                "date": date_elem.get_text(strip=True) if date_elem else None,
+                                                "url": link_elem['href'] if link_elem else None,
+                                                "image": img_elem['src'] if img_elem else None,
+                                                "source": "megatix"
+                                            }
+                                            parsed_events.append(event_data)
+                                except Exception:
+                                    continue
+                            
+                            # Update database with any valid events found
+                            for event_data in parsed_events:
+                                if event_data.get("title"):
+                                    # Check if event already exists
+                                    existing = await db.events.find_one({
+                                        "title": event_data["title"],
+                                        "venue_id": venue_id
+                                    })
+                                    
+                                    if not existing:
+                                        # Create new event
+                                        new_event = {
+                                            "id": str(uuid.uuid4())[:8],
+                                            "venue_id": venue_id,
+                                            "title": event_data["title"],
+                                            "description": f"Event at {LUNA_VENUES.get(venue_id, {}).get('name', venue_id)}",
+                                            "date_raw": event_data.get("date"),
+                                            "ticket_url": event_data.get("url"),
+                                            "image_url": event_data.get("image"),
+                                            "source": "megatix",
+                                            "synced_at": datetime.now(timezone.utc),
+                                            "status": "upcoming"
+                                        }
+                                        await db.events.insert_one(new_event)
+                                        new_events_count += 1
+                                    else:
+                                        # Update existing event
+                                        await db.events.update_one(
+                                            {"_id": existing["_id"]},
+                                            {"$set": {
+                                                "synced_at": datetime.now(timezone.utc),
+                                                "ticket_url": event_data.get("url") or existing.get("ticket_url"),
+                                            }}
+                                        )
+                                        updated_events_count += 1
+                            
                             synced_events.append({
                                 "venue_id": venue_id,
                                 "search_term": search_term,
-                                "status": "reachable",
-                                "note": "Megatix page accessible - manual event entry required"
+                                "status": "synced",
+                                "events_found": len(parsed_events),
+                                "page_reachable": True
                             })
                         else:
                             errors.append({
@@ -3203,27 +3270,43 @@ async def sync_megatix_events():
         # Update last sync time
         await db.system_config.update_one(
             {"key": "megatix_last_sync"},
-            {"$set": {"value": datetime.now(timezone.utc).isoformat(), "key": "megatix_last_sync"}},
+            {"$set": {
+                "value": datetime.now(timezone.utc).isoformat(),
+                "key": "megatix_last_sync",
+                "new_events": new_events_count,
+                "updated_events": updated_events_count
+            }},
             upsert=True
         )
         
+        logging.info(f"Megatix sync completed: {new_events_count} new, {updated_events_count} updated")
+        
         return {
             "success": True,
-            "message": "Megatix sync check completed",
+            "message": "Megatix sync completed",
+            "new_events": new_events_count,
+            "updated_events": updated_events_count,
             "synced": synced_events,
-            "errors": errors,
-            "recommendation": "For automated syncing, integrate with a web scraping service or Megatix partner API",
-            "megatix_urls": {
-                venue: f"https://megatix.com.au/events?search={terms[0]}"
-                for venue, terms in MEGATIX_VENUE_SEARCHES.items()
-            }
+            "errors": errors
         }
+        
     except Exception as e:
+        logging.error(f"Megatix sync failed: {str(e)}")
         return {
             "success": False,
-            "error": str(e),
-            "recommendation": "Install httpx package or use manual event entry"
+            "error": str(e)
         }
+
+@api_router.post("/admin/megatix/sync")
+async def sync_megatix_events():
+    """
+    Manually trigger Megatix event sync.
+    This endpoint scrapes events from Megatix and updates the database.
+    
+    Also runs automatically every 12 hours via APScheduler.
+    """
+    result = await scrape_megatix_events()
+    return result
 
 @api_router.post("/admin/events/add")
 async def add_event_manually(
