@@ -165,20 +165,16 @@ export default function TonightScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero Header with Lunar Moon */}
+        {/* Hero Header with Rotating Lunar Moon */}
         <View style={[styles.heroHeader, { paddingTop: insets.top + spacing.lg }]}>
-          <Image
-            source={{ uri: LUNAR_MOON_IMAGE }}
-            style={styles.moonImage}
-            resizeMode="contain"
-          />
+          <RotatingMoon size={80} rotationDuration={30000} />
           <Text style={styles.brandTitle}>LUNA GROUP</Text>
           <View style={styles.brandUnderline} />
           
-          {/* Points Badge - Below title */}
+          {/* Points Badge with Fiery Sun */}
           <View style={styles.pointsContainer}>
             <View style={styles.pointsBadge}>
-              <Ionicons name="star" size={16} color={colors.gold} />
+              <FierySun size={22} />
               <Text style={styles.pointsText}>{user?.points_balance?.toLocaleString() || 0} pts</Text>
             </View>
           </View>
