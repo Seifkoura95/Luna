@@ -573,6 +573,9 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginBottom: spacing.md,
   },
+  skeletonsContainer: {
+    gap: spacing.md,
+  },
   auctionCard: {
     height: 280,
     borderRadius: radius.lg,
