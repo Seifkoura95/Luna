@@ -204,7 +204,7 @@ async def lifespan(app_instance: FastAPI):
     
     # Schedule notification generation every 6 hours
     scheduler.add_job(
-        run_notification_generation,
+        run_scheduled_notifications,
         IntervalTrigger(hours=6),
         id="notification_generation",
         name="Notification Generation",
