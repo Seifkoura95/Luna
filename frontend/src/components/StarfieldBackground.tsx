@@ -221,43 +221,26 @@ const GalaxyImageComponent = ({ x, y, size, imageUrl, rotation, delay }: any) =>
   );
 };
 
-// Hyperrealistic planet image component
+// Hyperrealistic planet image component - NO GLOW
 const PlanetImageComponent = ({ x, y, size, imageUrl, delay }: any) => {
   const opacity = useSharedValue(0);
-  const glowOpacity = useSharedValue(0.2);
 
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(0.7, { duration: 1500 }));
-    
-    glowOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.5, { duration: 4000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.2, { duration: 4000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-  }));
-
   return (
-    <View style={[styles.planetContainer, { left: x, top: y }]}>
-      <Animated.View style={[styles.planetGlow, { width: size * 1.8, height: size * 1.8, borderRadius: size }, glowStyle]} />
-      <Animated.View style={[{ width: size, height: size }, animatedStyle]}>
-        <Image
-          source={{ uri: imageUrl }}
-          style={{ width: size, height: size, borderRadius: size / 2 }}
-          resizeMode="cover"
-        />
-      </Animated.View>
-    </View>
+    <Animated.View style={[styles.planetContainer, { left: x, top: y }, animatedStyle]}>
+      <Image
+        source={{ uri: imageUrl }}
+        style={{ width: size, height: size, borderRadius: size / 2 }}
+        resizeMode="cover"
+      />
+    </Animated.View>
   );
 };
 
