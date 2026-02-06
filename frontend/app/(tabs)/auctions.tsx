@@ -261,11 +261,11 @@ export default function AuctionsScreen() {
       >
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-          <Image source={{ uri: LUNAR_MOON_IMAGE }} style={styles.moonImage} />
+          <RotatingMoon size={60} rotationDuration={30000} />
           <Text style={styles.headerTitle}>LIVE AUCTIONS</Text>
           <View style={styles.headerUnderline} />
           <View style={styles.pointsBadge}>
-            <Ionicons name="star" size={14} color={colors.gold} />
+            <FierySun size={18} />
             <Text style={styles.pointsText}>{user?.points_balance?.toLocaleString() || 0} pts</Text>
           </View>
         </View>
