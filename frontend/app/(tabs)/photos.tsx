@@ -11,7 +11,8 @@ import {
   Image,
   Modal,
 } from 'react-native';
-import { colors } from '../../src/theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { PhotoCard } from '../../src/components/PhotoCard';
