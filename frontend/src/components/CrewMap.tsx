@@ -8,15 +8,28 @@ import {
   Dimensions,
   Platform,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
 import { api } from '../utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
+
+// Conditionally import MapView only on native platforms
+let MapView: any = null;
+let Marker: any = null;
+let PROVIDER_GOOGLE: any = null;
+
+if (Platform.OS !== 'web') {
+  const Maps = require('react-native-maps');
+  MapView = Maps.default;
+  Marker = Maps.Marker;
+  PROVIDER_GOOGLE = Maps.PROVIDER_GOOGLE;
+}
 
 interface CrewMapProps {
   crewId: string;
@@ -35,7 +48,8 @@ interface MemberLocation {
 }
 
 export const CrewMap: React.FC<CrewMapProps> = ({ crewId, crewName, onClose }) => {
-  const mapRef = useRef<MapView>(null);
+  const insets = useSafeAreaInsets();
+  const mapRef = useRef<any>(null);
   const [memberLocations, setMemberLocations] = useState<MemberLocation[]>([]);
   const [myLocation, setMyLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,7 +73,7 @@ export const CrewMap: React.FC<CrewMapProps> = ({ crewId, crewName, onClose }) =
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Location permission is required to show your position on the map.');
+        Alert.alert('Permission Denied', 'Location permission is required to show your position.');
         return;
       }
 
@@ -96,33 +110,22 @@ export const CrewMap: React.FC<CrewMapProps> = ({ crewId, crewName, onClose }) =
   };
 
   const centerOnMember = (member: MemberLocation) => {
-    if (member.latitude && member.longitude && mapRef.current) {
+    if (member.latitude && member.longitude && mapRef.current && Platform.OS !== 'web') {
       mapRef.current.animateToRegion({
         latitude: member.latitude,
         longitude: member.longitude,
         latitudeDelta: 0.005,
         longitudeDelta: 0.005,
       }, 500);
-      setSelectedMember(member);
     }
+    setSelectedMember(member);
   };
 
   const centerOnAll = () => {
+    if (Platform.OS === 'web') return;
+    
     const validLocations = memberLocations.filter(m => m.latitude && m.longitude);
     if (validLocations.length === 0 && !myLocation) return;
-
-    const allLats = validLocations.map(m => m.latitude!);
-    const allLngs = validLocations.map(m => m.longitude!);
-    
-    if (myLocation) {
-      allLats.push(myLocation.latitude);
-      allLngs.push(myLocation.longitude);
-    }
-
-    const minLat = Math.min(...allLats);
-    const maxLat = Math.max(...allLats);
-    const minLng = Math.min(...allLngs);
-    const maxLng = Math.max(...allLngs);
 
     mapRef.current?.fitToCoordinates(
       validLocations.map(m => ({ latitude: m.latitude!, longitude: m.longitude! })),
@@ -149,7 +152,7 @@ export const CrewMap: React.FC<CrewMapProps> = ({ crewId, crewName, onClose }) =
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
           <Text style={styles.loadingText}>Loading crew locations...</Text>
@@ -158,6 +161,70 @@ export const CrewMap: React.FC<CrewMapProps> = ({ crewId, crewName, onClose }) =
     );
   }
 
+  // Web fallback - show list view instead of map
+  if (Platform.OS === 'web') {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <LinearGradient colors={['#000', '#0A0A0A']} style={styles.webContainer}>
+          {/* Header */}
+          <View style={styles.webHeader}>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={28} color={colors.textPrimary} />
+            </TouchableOpacity>
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerTitle}>{crewName}</Text>
+              <Text style={styles.headerSubtitle}>
+                {memberLocations.filter(m => m.is_live).length} live • {memberLocations.length} total
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.refreshButton} onPress={fetchCrewLocations}>
+              <Ionicons name="refresh" size={24} color={colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Web Notice */}
+          <View style={styles.webNotice}>
+            <Ionicons name="phone-portrait-outline" size={24} color={colors.accent} />
+            <Text style={styles.webNoticeText}>
+              Map view is available on the mobile app. Here's your crew's location status:
+            </Text>
+          </View>
+
+          {/* Member List */}
+          <ScrollView style={styles.webMemberList}>
+            {memberLocations.map((member) => (
+              <View key={member.user_id} style={styles.webMemberCard}>
+                <View style={[styles.webMemberAvatar, { borderColor: getMarkerColor(member) }]}>
+                  <Text style={styles.webMemberAvatarText}>{member.name?.charAt(0) || '?'}</Text>
+                </View>
+                <View style={styles.webMemberInfo}>
+                  <Text style={styles.webMemberName}>{member.name}</Text>
+                  <Text style={styles.webMemberStatus}>
+                    {member.is_live ? '🟢 Location live' : member.no_location ? '⚪ No location shared' : '⚪ Last known location'}
+                  </Text>
+                </View>
+                {member.is_live && (
+                  <View style={styles.liveBadgeLarge}>
+                    <Text style={styles.liveBadgeText}>LIVE</Text>
+                  </View>
+                )}
+              </View>
+            ))}
+          </ScrollView>
+
+          {/* Location Sharing Status */}
+          <View style={styles.webSharingStatus}>
+            <View style={[styles.sharingDot, { backgroundColor: isSharingLocation ? '#00FF00' : colors.textMuted }]} />
+            <Text style={styles.sharingText}>
+              {isSharingLocation ? 'Your location is being shared' : 'Location sharing disabled'}
+            </Text>
+          </View>
+        </LinearGradient>
+      </View>
+    );
+  }
+
+  // Native map view
   return (
     <View style={styles.container}>
       {/* Map */}
@@ -194,7 +261,7 @@ export const CrewMap: React.FC<CrewMapProps> = ({ crewId, crewName, onClose }) =
       {/* Header */}
       <LinearGradient
         colors={['rgba(0,0,0,0.9)', 'transparent']}
-        style={styles.header}
+        style={[styles.header, { paddingTop: insets.top + spacing.md }]}
       >
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
           <Ionicons name="close" size={28} color={colors.textPrimary} />
@@ -267,7 +334,7 @@ export const CrewMap: React.FC<CrewMapProps> = ({ crewId, crewName, onClose }) =
       )}
 
       {/* Location Sharing Status */}
-      <View style={styles.sharingStatus}>
+      <View style={[styles.sharingStatus, { paddingBottom: insets.bottom + spacing.md }]}>
         <View style={[styles.sharingDot, { backgroundColor: isSharingLocation ? '#00FF00' : colors.textMuted }]} />
         <Text style={styles.sharingText}>
           {isSharingLocation ? 'Your location is being shared' : 'Location sharing disabled'}
@@ -320,7 +387,6 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 50,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
   },
@@ -421,6 +487,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#000',
   },
+  liveBadgeLarge: {
+    backgroundColor: '#00FF00',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
   marker: {
     width: 40,
     height: 40,
@@ -506,6 +578,82 @@ const styles = StyleSheet.create({
   sharingText: {
     fontSize: 11,
     color: colors.textMuted,
+  },
+  // Web-specific styles
+  webContainer: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+  },
+  webHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  webNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.accent + '15',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginTop: spacing.lg,
+    gap: spacing.md,
+  },
+  webNoticeText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  webMemberList: {
+    flex: 1,
+    marginTop: spacing.lg,
+  },
+  webMemberCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#111',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  webMemberAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#2A2A2A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+  },
+  webMemberAvatarText: {
+    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  webMemberInfo: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  webMemberName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  webMemberStatus: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  webSharingStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.lg,
+    gap: spacing.xs,
   },
 });
 
