@@ -423,22 +423,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     marginHorizontal: spacing.md,
   },
-  quickActionButton: {
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  quickActionGradient: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quickActionLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
   dropdownSection: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,
