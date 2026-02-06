@@ -20,9 +20,7 @@ import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
-import { RotatingMoon } from '../../src/components/RotatingMoon';
-import { FierySun } from '../../src/components/FierySun';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PageHeader } from '../../src/components/PageHeader';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 
 const { width } = Dimensions.get('window');
