@@ -730,6 +730,254 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
+      {/* Invite Member Modal */}
+      <Modal
+        visible={showInviteMember}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setShowInviteMember(false);
+          setInviteEmail('');
+          setInviteName('');
+          setInviteMessage('');
+          setSelectedCrewForInvite(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '70%' }]}>
+            <LinearGradient
+              colors={[colors.backgroundCard, colors.background]}
+              style={styles.modalGradient}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Invite to Crew</Text>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => {
+                    setShowInviteMember(false);
+                    setInviteEmail('');
+                    setInviteName('');
+                    setInviteMessage('');
+                    setSelectedCrewForInvite(null);
+                  }}
+                >
+                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              {selectedCrewForInvite && (
+                <View style={styles.inviteCrewBadge}>
+                  <Ionicons name="people" size={16} color={colors.accent} />
+                  <Text style={styles.inviteCrewName}>{selectedCrewForInvite.name}</Text>
+                </View>
+              )}
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>EMAIL ADDRESS *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={inviteEmail}
+                    onChangeText={setInviteEmail}
+                    placeholder="friend@example.com"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>THEIR NAME (OPTIONAL)</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={inviteName}
+                    onChangeText={setInviteName}
+                    placeholder="Enter their name"
+                    placeholderTextColor={colors.textMuted}
+                    autoCapitalize="words"
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>PERSONAL MESSAGE (OPTIONAL)</Text>
+                  <TextInput
+                    style={[styles.input, styles.messageInput]}
+                    value={inviteMessage}
+                    onChangeText={setInviteMessage}
+                    placeholder="Can't wait to party together!"
+                    placeholderTextColor={colors.textMuted}
+                    multiline
+                    numberOfLines={3}
+                  />
+                </View>
+
+                <View style={styles.inviteInfoBox}>
+                  <Ionicons name="information-circle" size={20} color={colors.accent} />
+                  <Text style={styles.inviteInfoText}>
+                    An email invitation will be sent with a link to join your crew
+                  </Text>
+                </View>
+              </ScrollView>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setShowInviteMember(false);
+                    setInviteEmail('');
+                    setInviteName('');
+                    setInviteMessage('');
+                    setSelectedCrewForInvite(null);
+                  }}
+                  disabled={isInviting}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.confirmButton, isInviting && styles.buttonDisabled]}
+                  onPress={handleInviteMember}
+                  disabled={isInviting}
+                >
+                  <LinearGradient
+                    colors={[colors.success, '#1e7e34']}
+                    style={styles.confirmButtonGradient}
+                  >
+                    {isInviting ? (
+                      <Text style={styles.confirmButtonText}>Sending...</Text>
+                    ) : (
+                      <>
+                        <Ionicons name="send" size={16} color={colors.textPrimary} style={{ marginRight: 6 }} />
+                        <Text style={styles.confirmButtonText}>Send Invite</Text>
+                      </>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Crew Details Modal */}
+      <Modal
+        visible={showCrewDetails}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setShowCrewDetails(false);
+          setSelectedCrewForDetails(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '75%' }]}>
+            <LinearGradient
+              colors={[colors.backgroundCard, colors.background]}
+              style={styles.modalGradient}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {selectedCrewForDetails?.name || 'Crew Details'}
+                </Text>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => {
+                    setShowCrewDetails(false);
+                    setSelectedCrewForDetails(null);
+                  }}
+                >
+                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              {selectedCrewForDetails && (
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {/* Invite Code Section */}
+                  <View style={styles.crewDetailSection}>
+                    <Text style={styles.crewDetailLabel}>INVITE CODE</Text>
+                    <View style={styles.inviteCodeContainer}>
+                      <Text style={styles.inviteCodeLarge}>{selectedCrewForDetails.invite_code}</Text>
+                      <Text style={styles.inviteCodeHint}>Share this code with friends</Text>
+                    </View>
+                  </View>
+
+                  {/* Members Section */}
+                  <View style={styles.crewDetailSection}>
+                    <Text style={styles.crewDetailLabel}>
+                      CREW MEMBERS ({selectedCrewForDetails.members?.length || 1})
+                    </Text>
+                    {selectedCrewForDetails.members?.map((member: any, index: number) => (
+                      <View key={member.user_id || index} style={styles.memberCard}>
+                        <View style={styles.memberAvatar}>
+                          <Ionicons 
+                            name={member.role === 'owner' ? 'star' : 'person'} 
+                            size={20} 
+                            color={member.role === 'owner' ? colors.gold : colors.accent} 
+                          />
+                        </View>
+                        <View style={styles.memberInfo}>
+                          <Text style={styles.memberName}>{member.name}</Text>
+                          <Text style={styles.memberRole}>
+                            {member.role === 'owner' ? 'Crew Owner' : 
+                             member.status === 'pending' ? 'Pending...' : 'Member'}
+                          </Text>
+                        </View>
+                        {member.status === 'confirmed' && (
+                          <View style={[styles.statusBadge, { backgroundColor: colors.success + '20' }]}>
+                            <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                          </View>
+                        )}
+                        {member.status === 'pending' && (
+                          <View style={[styles.statusBadge, { backgroundColor: colors.gold + '20' }]}>
+                            <Ionicons name="time" size={14} color={colors.gold} />
+                          </View>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+
+                  {/* Action Buttons */}
+                  <View style={styles.crewDetailActions}>
+                    <TouchableOpacity
+                      style={styles.crewDetailActionButton}
+                      onPress={() => {
+                        setShowCrewDetails(false);
+                        openInviteModal(selectedCrewForDetails);
+                      }}
+                    >
+                      <LinearGradient
+                        colors={[colors.success, '#1e7e34']}
+                        style={styles.crewDetailActionGradient}
+                      >
+                        <Ionicons name="person-add" size={18} color={colors.textPrimary} />
+                        <Text style={styles.crewDetailActionText}>Invite Member</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.crewDetailActionButton}
+                      onPress={() => {
+                        setShowCrewDetails(false);
+                        setSelectedCrewForMap(selectedCrewForDetails);
+                        setShowCrewMap(true);
+                      }}
+                    >
+                      <LinearGradient
+                        colors={[colors.accent, colors.accentDark]}
+                        style={styles.crewDetailActionGradient}
+                      >
+                        <Ionicons name="location" size={18} color={colors.textPrimary} />
+                        <Text style={styles.crewDetailActionText}>Track Crew</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+              )}
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
+
       {/* Safety Alert Component */}
       <SafetyAlert
         visible={showSafety}
