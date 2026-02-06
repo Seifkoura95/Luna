@@ -774,14 +774,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
+    justifyContent: 'center',
   },
   actionCard: {
-    width: (width - spacing.lg * 2 - spacing.sm) / 2,
+    width: (width - spacing.lg * 2 - spacing.sm * 2) / 2,
     backgroundColor: '#0A0A0A',
     borderRadius: radius.md,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
+    alignItems: 'center',
   },
   actionIcon: {
     width: 44,
