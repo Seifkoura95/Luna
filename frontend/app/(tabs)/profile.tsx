@@ -710,6 +710,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  tierCardContainer: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
   tierCardGradient: {
     padding: spacing.lg,
   },
