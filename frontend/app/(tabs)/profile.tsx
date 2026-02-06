@@ -1047,6 +1047,14 @@ const styles = StyleSheet.create({
   },
   tierCardGradient: {
     padding: spacing.lg,
+    position: 'relative',
+  },
+  tierAccentBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
   },
   tierHeader: {
     flexDirection: 'row',
