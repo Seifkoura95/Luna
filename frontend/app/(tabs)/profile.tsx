@@ -290,6 +290,7 @@ export default function ProfileScreen() {
               </View>
             </LinearGradient>
           </View>
+          </View>
 
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
