@@ -626,6 +626,475 @@ async def cancel_booking(request: Request, booking_id: str):
     raise HTTPException(status_code=404, detail="Booking not found")
 
 
+# ====== TICKETS WALLET API ======
+
+@api_router.get("/tickets")
+async def get_user_tickets(request: Request, status: Optional[str] = None):
+    """Get user's tickets - active, upcoming, or history"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    now = datetime.now(timezone.utc)
+    query = {"user_id": current_user["user_id"]}
+    
+    tickets = await db.tickets.find(query).sort("event_date", -1).to_list(100)
+    
+    # Categorize tickets
+    active = []
+    upcoming = []
+    history = []
+    
+    for ticket in tickets:
+        ticket_clean = clean_mongo_doc(ticket)
+        event_date = ticket.get("event_date")
+        
+        if isinstance(event_date, str):
+            event_date = datetime.fromisoformat(event_date.replace('Z', '+00:00'))
+        
+        if ticket.get("status") == "cancelled":
+            history.append(ticket_clean)
+        elif event_date:
+            if event_date.date() == now.date():
+                active.append(ticket_clean)
+            elif event_date > now:
+                upcoming.append(ticket_clean)
+            else:
+                history.append(ticket_clean)
+        else:
+            upcoming.append(ticket_clean)
+    
+    if status == "active":
+        return active
+    elif status == "upcoming":
+        return upcoming
+    elif status == "history":
+        return history
+    
+    return {
+        "active": active,
+        "upcoming": upcoming,
+        "history": history
+    }
+
+class PurchaseTicketRequest(BaseModel):
+    event_id: str
+    quantity: int = 1
+    ticket_type: str = "general"  # general, vip, booth
+
+@api_router.post("/tickets/purchase")
+async def purchase_ticket(request: Request, ticket_req: PurchaseTicketRequest):
+    """Purchase tickets for an event"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Find the event
+    event = await db.events.find_one({"id": ticket_req.event_id})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Create ticket(s)
+    tickets_created = []
+    for i in range(ticket_req.quantity):
+        ticket_id = str(uuid.uuid4())[:8].upper()
+        ticket = {
+            "id": ticket_id,
+            "user_id": current_user["user_id"],
+            "event_id": ticket_req.event_id,
+            "event_title": event.get("title"),
+            "venue_id": event.get("venue_id"),
+            "venue_name": event.get("venue_name"),
+            "event_date": event.get("event_date"),
+            "ticket_type": ticket_req.ticket_type,
+            "qr_code": f"TKT-{ticket_id}-{current_user['user_id'][:8]}",
+            "status": "active",
+            "guests": [],
+            "created_at": datetime.now(timezone.utc),
+            "price": event.get("ticket_price", 0)
+        }
+        await db.tickets.insert_one(ticket)
+        tickets_created.append(clean_mongo_doc(ticket))
+    
+    # Award points
+    points = 50 * ticket_req.quantity
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$inc": {"points_balance": points}}
+    )
+    
+    return {
+        "success": True,
+        "tickets": tickets_created,
+        "points_earned": points,
+        "message": f"Successfully purchased {ticket_req.quantity} ticket(s)!"
+    }
+
+class AddGuestRequest(BaseModel):
+    ticket_id: str
+    guest_name: str
+    guest_email: Optional[str] = None
+
+@api_router.post("/tickets/add-guest")
+async def add_guest_to_ticket(request: Request, guest_req: AddGuestRequest):
+    """Add a guest to a ticket"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    ticket = await db.tickets.find_one({
+        "id": guest_req.ticket_id,
+        "user_id": current_user["user_id"]
+    })
+    
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    guest = {
+        "id": str(uuid.uuid4())[:8],
+        "name": guest_req.guest_name,
+        "email": guest_req.guest_email,
+        "added_at": datetime.now(timezone.utc)
+    }
+    
+    await db.tickets.update_one(
+        {"id": guest_req.ticket_id},
+        {"$push": {"guests": guest}}
+    )
+    
+    return {"success": True, "guest": guest, "message": f"Guest {guest_req.guest_name} added!"}
+
+@api_router.delete("/tickets/{ticket_id}/guest/{guest_id}")
+async def remove_guest(request: Request, ticket_id: str, guest_id: str):
+    """Remove a guest from a ticket"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    result = await db.tickets.update_one(
+        {"id": ticket_id, "user_id": current_user["user_id"]},
+        {"$pull": {"guests": {"id": guest_id}}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Guest not found")
+    
+    return {"success": True, "message": "Guest removed"}
+
+
+# ====== CREW PLAN API ======
+
+class CreateCrewRequest(BaseModel):
+    name: str
+    event_id: Optional[str] = None
+
+@api_router.post("/crews/create")
+async def create_crew(request: Request, crew_req: CreateCrewRequest):
+    """Create a new crew for group planning"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    crew_id = str(uuid.uuid4())[:8].upper()
+    crew = {
+        "id": crew_id,
+        "name": crew_req.name,
+        "owner_id": current_user["user_id"],
+        "owner_name": (await db.users.find_one({"user_id": current_user["user_id"]}))["name"],
+        "event_id": crew_req.event_id,
+        "members": [{
+            "user_id": current_user["user_id"],
+            "name": (await db.users.find_one({"user_id": current_user["user_id"]}))["name"],
+            "role": "owner",
+            "status": "confirmed",
+            "joined_at": datetime.now(timezone.utc)
+        }],
+        "shared_booth_bid": None,
+        "split_payments": [],
+        "invite_code": f"CREW-{crew_id}",
+        "created_at": datetime.now(timezone.utc),
+        "status": "active"
+    }
+    
+    await db.crews.insert_one(crew)
+    return {"success": True, "crew": clean_mongo_doc(crew)}
+
+@api_router.get("/crews")
+async def get_user_crews(request: Request):
+    """Get all crews the user is part of"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    crews = await db.crews.find({
+        "$or": [
+            {"owner_id": current_user["user_id"]},
+            {"members.user_id": current_user["user_id"]}
+        ]
+    }).sort("created_at", -1).to_list(50)
+    
+    return clean_mongo_docs(crews)
+
+@api_router.get("/crews/{crew_id}")
+async def get_crew_detail(request: Request, crew_id: str):
+    """Get detailed crew info"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    crew = await db.crews.find_one({"id": crew_id})
+    if not crew:
+        raise HTTPException(status_code=404, detail="Crew not found")
+    
+    # Get event details if linked
+    event = None
+    if crew.get("event_id"):
+        event = await db.events.find_one({"id": crew["event_id"]})
+    
+    crew_data = clean_mongo_doc(crew)
+    crew_data["event"] = clean_mongo_doc(event) if event else None
+    
+    return crew_data
+
+class InviteToCrewRequest(BaseModel):
+    crew_id: str
+    email: Optional[str] = None
+    user_id: Optional[str] = None
+
+@api_router.post("/crews/invite")
+async def invite_to_crew(request: Request, invite_req: InviteToCrewRequest):
+    """Invite someone to join a crew"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    crew = await db.crews.find_one({"id": invite_req.crew_id})
+    if not crew:
+        raise HTTPException(status_code=404, detail="Crew not found")
+    
+    # Find invitee
+    invitee = None
+    if invite_req.user_id:
+        invitee = await db.users.find_one({"user_id": invite_req.user_id})
+    elif invite_req.email:
+        invitee = await db.users.find_one({"email": invite_req.email})
+    
+    if not invitee:
+        # Create pending invite
+        invite = {
+            "id": str(uuid.uuid4()),
+            "crew_id": invite_req.crew_id,
+            "email": invite_req.email,
+            "invited_by": current_user["user_id"],
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.crew_invites.insert_one(invite)
+        return {"success": True, "message": "Invite sent!", "invite": clean_mongo_doc(invite)}
+    
+    # Add to crew
+    member = {
+        "user_id": invitee["user_id"],
+        "name": invitee["name"],
+        "role": "member",
+        "status": "pending",
+        "joined_at": datetime.now(timezone.utc)
+    }
+    
+    await db.crews.update_one(
+        {"id": invite_req.crew_id},
+        {"$push": {"members": member}}
+    )
+    
+    return {"success": True, "message": f"{invitee['name']} invited to crew!"}
+
+@api_router.post("/crews/{crew_id}/join")
+async def join_crew(request: Request, crew_id: str):
+    """Accept crew invitation"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    
+    await db.crews.update_one(
+        {"id": crew_id, "members.user_id": current_user["user_id"]},
+        {"$set": {"members.$.status": "confirmed"}}
+    )
+    
+    return {"success": True, "message": "You've joined the crew!"}
+
+class CrewBoothBidRequest(BaseModel):
+    crew_id: str
+    auction_id: str
+    total_amount: float
+    contributions: List[Dict[str, Any]]  # [{user_id, amount}]
+
+@api_router.post("/crews/booth-bid")
+async def crew_booth_bid(request: Request, bid_req: CrewBoothBidRequest):
+    """Place a shared booth bid as a crew"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    crew = await db.crews.find_one({"id": bid_req.crew_id})
+    if not crew:
+        raise HTTPException(status_code=404, detail="Crew not found")
+    
+    auction = await db.auctions.find_one({"id": bid_req.auction_id})
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    
+    # Record the shared bid
+    shared_bid = {
+        "auction_id": bid_req.auction_id,
+        "total_amount": bid_req.total_amount,
+        "contributions": bid_req.contributions,
+        "placed_by": current_user["user_id"],
+        "placed_at": datetime.now(timezone.utc),
+        "status": "active"
+    }
+    
+    await db.crews.update_one(
+        {"id": bid_req.crew_id},
+        {"$set": {"shared_booth_bid": shared_bid}}
+    )
+    
+    # Place the actual bid
+    if bid_req.total_amount > auction["current_bid"]:
+        await db.auctions.update_one(
+            {"id": bid_req.auction_id},
+            {"$set": {
+                "current_bid": bid_req.total_amount,
+                "winner_id": f"crew_{bid_req.crew_id}",
+                "winner_name": f"Crew: {crew['name']}"
+            }}
+        )
+    
+    return {"success": True, "message": "Crew bid placed!", "shared_bid": shared_bid}
+
+
+# ====== SAFETY SCREEN API ======
+
+class IncidentReportRequest(BaseModel):
+    venue_id: str
+    incident_type: str  # harassment, emergency, other
+    description: str
+    location_details: Optional[str] = None
+
+@api_router.post("/safety/report-incident")
+async def report_incident(request: Request, report: IncidentReportRequest):
+    """Report a safety incident"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    incident_id = str(uuid.uuid4())[:8].upper()
+    incident = {
+        "id": incident_id,
+        "user_id": current_user["user_id"],
+        "venue_id": report.venue_id,
+        "incident_type": report.incident_type,
+        "description": report.description,
+        "location_details": report.location_details,
+        "status": "reported",
+        "created_at": datetime.now(timezone.utc),
+        "reference_number": f"INC-{incident_id}"
+    }
+    
+    await db.incidents.insert_one(incident)
+    
+    return {
+        "success": True,
+        "reference_number": incident["reference_number"],
+        "message": "Incident reported. Our security team has been notified."
+    }
+
+class LostPropertyRequest(BaseModel):
+    venue_id: str
+    item_description: str
+    date_lost: str
+    contact_phone: Optional[str] = None
+
+@api_router.post("/safety/lost-property")
+async def report_lost_property(request: Request, report: LostPropertyRequest):
+    """Report lost property"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    report_id = str(uuid.uuid4())[:8].upper()
+    lost_item = {
+        "id": report_id,
+        "user_id": current_user["user_id"],
+        "venue_id": report.venue_id,
+        "item_description": report.item_description,
+        "date_lost": report.date_lost,
+        "contact_phone": report.contact_phone,
+        "status": "submitted",
+        "created_at": datetime.now(timezone.utc),
+        "reference_number": f"LP-{report_id}"
+    }
+    
+    await db.lost_property.insert_one(lost_item)
+    
+    return {
+        "success": True,
+        "reference_number": lost_item["reference_number"],
+        "message": "Lost property report submitted. We'll contact you if found."
+    }
+
+@api_router.get("/safety/rideshare-links")
+async def get_rideshare_links(venue_id: str):
+    """Get rideshare deep links for a venue"""
+    if venue_id not in LUNA_VENUES:
+        raise HTTPException(status_code=404, detail="Venue not found")
+    
+    venue = LUNA_VENUES[venue_id]
+    lat = venue["coordinates"]["lat"]
+    lng = venue["coordinates"]["lng"]
+    
+    return {
+        "uber": f"uber://?action=setPickup&pickup=my_location&dropoff[latitude]={lat}&dropoff[longitude]={lng}",
+        "uber_web": f"https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]={lat}&dropoff[longitude]={lng}",
+        "didi": f"https://page.udache.com/ride/order?dlat={lat}&dlng={lng}",
+        "venue_address": venue["address"]
+    }
+
+@api_router.get("/safety/emergency-contacts")
+async def get_emergency_contacts(venue_id: Optional[str] = None):
+    """Get emergency contacts"""
+    contacts = {
+        "emergency": "000",
+        "police_non_emergency": "131 444",
+        "lifeline": "13 11 14",
+        "luna_security": "1800 LUNA 00",
+        "venue_security": None
+    }
+    
+    if venue_id and venue_id in LUNA_VENUES:
+        venue = LUNA_VENUES[venue_id]
+        contacts["venue_name"] = venue["name"]
+        contacts["venue_address"] = venue["address"]
+    
+    return contacts
+
+
+# ====== USER STATS API ======
+
+@api_router.get("/users/stats")
+async def get_user_stats(request: Request):
+    """Get user statistics"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    
+    # Count various stats
+    tickets_count = await db.tickets.count_documents({"user_id": current_user["user_id"]})
+    bookings_count = await db.bookings.count_documents({"user_id": current_user["user_id"]})
+    auctions_won = await db.auctions.count_documents({"winner_id": current_user["user_id"], "status": "ended"})
+    
+    return {
+        "total_visits": user.get("total_visits", 0),
+        "missions_completed": user.get("missions_completed", 0),
+        "current_streak": user.get("current_streak", 0),
+        "auctions_won": auctions_won,
+        "tickets_purchased": tickets_count,
+        "reservations_made": bookings_count,
+        "achievements_earned": user.get("achievements_earned", 0),
+        "member_since": user.get("created_at")
+    }
+
+
 # ====== REAL-TIME AUCTION NOTIFICATIONS ======
 
 # Store for auction subscribers (in-memory for simplicity)
