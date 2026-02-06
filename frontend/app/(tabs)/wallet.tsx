@@ -290,12 +290,10 @@ export default function WalletScreen() {
           )}
         </View>
 
-        {/* QR Code Preview */}
-        <View style={styles.qrPreview}>
-          <View style={styles.qrCode}>
-            <Ionicons name="qr-code" size={32} color={colors.textPrimary} />
-          </View>
-          <Text style={styles.qrText}>Show at entrance</Text>
+        {/* Tap to view QR hint */}
+        <View style={styles.tapHint}>
+          <Ionicons name="hand-left-outline" size={14} color={colors.textMuted} />
+          <Text style={styles.tapHintText}>Tap to view QR code</Text>
         </View>
       </LinearGradient>
     </TouchableOpacity>
