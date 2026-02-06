@@ -58,7 +58,7 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Premium Header */}
+      {/* Premium Header with Custom Lunar Image */}
       <LinearGradient
         colors={[colors.background, colors.backgroundElevated]}
         style={styles.header}
@@ -66,9 +66,11 @@ export default function ExploreScreen() {
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
             <View style={styles.logoGlow} />
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoText}>L</Text>
-            </View>
+            <Image
+              source={{ uri: 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG' }}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>EXPLORE</Text>
