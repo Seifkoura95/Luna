@@ -21,9 +21,7 @@ interface FierySunProps {
 
 export const FierySun: React.FC<FierySunProps> = ({ size = 20 }) => {
   const pulseScale = useSharedValue(1);
-  const glowOpacity = useSharedValue(0.6);
   const rotation = useSharedValue(0);
-  const flareScale = useSharedValue(1);
 
   useEffect(() => {
     // Pulsing effect
@@ -36,31 +34,11 @@ export const FierySun: React.FC<FierySunProps> = ({ size = 20 }) => {
       true
     );
 
-    // Glow breathing
-    glowOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.9, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.5, { duration: 1000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-
     // Slow rotation
     rotation.value = withRepeat(
       withTiming(360, { duration: 20000, easing: Easing.linear }),
       -1,
       false
-    );
-
-    // Flare animation
-    flareScale.value = withRepeat(
-      withSequence(
-        withTiming(1.3, { duration: 600, easing: Easing.out(Easing.ease) }),
-        withTiming(1, { duration: 600, easing: Easing.in(Easing.ease) })
-      ),
-      -1,
-      true
     );
   }, []);
 
@@ -68,18 +46,8 @@ export const FierySun: React.FC<FierySunProps> = ({ size = 20 }) => {
     transform: [{ scale: pulseScale.value }],
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-    transform: [{ scale: interpolate(glowOpacity.value, [0.5, 0.9], [1, 1.2]) }],
-  }));
-
   const rotationStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
-  }));
-
-  const flareStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: flareScale.value }],
-    opacity: interpolate(flareScale.value, [1, 1.3], [0.8, 0.4]),
   }));
 
   const center = size / 2;
