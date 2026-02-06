@@ -377,6 +377,245 @@ async def seed_database():
         "auctions": len(seed_data["auctions"])
     }
 
+
+# ====== SEVENROOMS BOOKING API (MOCK) ======
+
+class BookingRequest(BaseModel):
+    venue_id: str
+    date: str  # YYYY-MM-DD format
+    time: str  # HH:MM format
+    party_size: int
+    special_requests: Optional[str] = None
+    occasion: Optional[str] = None
+
+class GuestlistRequest(BaseModel):
+    venue_id: str
+    date: str  # YYYY-MM-DD format
+    party_size: int
+    arrival_time: Optional[str] = None
+    vip_booth: bool = False
+
+@api_router.get("/bookings/availability")
+async def get_availability(venue_id: str, date: str, party_size: int = 2):
+    """Get available time slots for a venue (SevenRooms mock)"""
+    if venue_id not in LUNA_VENUES:
+        raise HTTPException(status_code=404, detail="Venue not found")
+    
+    venue = LUNA_VENUES[venue_id]
+    
+    # Mock available time slots based on venue type
+    if venue["type"] == "restaurant":
+        time_slots = [
+            {"time": "12:00", "available": True, "tables": 3},
+            {"time": "12:30", "available": True, "tables": 2},
+            {"time": "13:00", "available": True, "tables": 4},
+            {"time": "18:00", "available": True, "tables": 5},
+            {"time": "18:30", "available": True, "tables": 3},
+            {"time": "19:00", "available": party_size <= 4, "tables": 2},
+            {"time": "19:30", "available": True, "tables": 4},
+            {"time": "20:00", "available": party_size <= 6, "tables": 1},
+            {"time": "20:30", "available": True, "tables": 3},
+            {"time": "21:00", "available": True, "tables": 2},
+        ]
+    else:
+        # Nightclub/bar - guestlist slots
+        time_slots = [
+            {"time": "21:00", "available": True, "spots": 50},
+            {"time": "22:00", "available": True, "spots": 30},
+            {"time": "23:00", "available": True, "spots": 20},
+        ]
+    
+    return {
+        "venue_id": venue_id,
+        "venue_name": venue["name"],
+        "date": date,
+        "party_size": party_size,
+        "time_slots": time_slots,
+        "powered_by": "SevenRooms"
+    }
+
+@api_router.post("/bookings/reserve")
+async def create_booking(request: Request, booking: BookingRequest):
+    """Create a restaurant reservation (SevenRooms mock)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    if booking.venue_id not in LUNA_VENUES:
+        raise HTTPException(status_code=404, detail="Venue not found")
+    
+    venue = LUNA_VENUES[booking.venue_id]
+    
+    # Create booking record
+    booking_id = str(uuid.uuid4())[:8].upper()
+    booking_record = {
+        "booking_id": booking_id,
+        "user_id": current_user["user_id"],
+        "venue_id": booking.venue_id,
+        "venue_name": venue["name"],
+        "date": booking.date,
+        "time": booking.time,
+        "party_size": booking.party_size,
+        "special_requests": booking.special_requests,
+        "occasion": booking.occasion,
+        "status": "confirmed",
+        "confirmation_code": f"SR-{booking_id}",
+        "created_at": datetime.now(timezone.utc),
+        "points_earned": 50 * booking.party_size
+    }
+    
+    await db.bookings.insert_one(booking_record)
+    
+    # Award points to user
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$inc": {"points_balance": booking_record["points_earned"]}}
+    )
+    
+    return {
+        "success": True,
+        "booking": clean_mongo_doc(booking_record),
+        "message": f"Your reservation at {venue['name']} is confirmed!",
+        "powered_by": "SevenRooms"
+    }
+
+@api_router.post("/bookings/guestlist")
+async def add_to_guestlist(request: Request, guestlist: GuestlistRequest):
+    """Add to nightclub guestlist (SevenRooms mock)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    if guestlist.venue_id not in LUNA_VENUES:
+        raise HTTPException(status_code=404, detail="Venue not found")
+    
+    venue = LUNA_VENUES[guestlist.venue_id]
+    
+    # Create guestlist record
+    guestlist_id = str(uuid.uuid4())[:8].upper()
+    guestlist_record = {
+        "guestlist_id": guestlist_id,
+        "user_id": current_user["user_id"],
+        "venue_id": guestlist.venue_id,
+        "venue_name": venue["name"],
+        "date": guestlist.date,
+        "party_size": guestlist.party_size,
+        "arrival_time": guestlist.arrival_time or "22:00",
+        "vip_booth": guestlist.vip_booth,
+        "status": "confirmed",
+        "confirmation_code": f"GL-{guestlist_id}",
+        "created_at": datetime.now(timezone.utc),
+        "entry_priority": "VIP" if guestlist.vip_booth else "Priority",
+        "points_earned": 100 if guestlist.vip_booth else 25
+    }
+    
+    await db.guestlist.insert_one(guestlist_record)
+    
+    # Award points
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$inc": {"points_balance": guestlist_record["points_earned"]}}
+    )
+    
+    return {
+        "success": True,
+        "guestlist": clean_mongo_doc(guestlist_record),
+        "message": f"You're on the list for {venue['name']}! Show your QR code at the door.",
+        "powered_by": "SevenRooms"
+    }
+
+@api_router.get("/bookings/my-reservations")
+async def get_my_reservations(request: Request):
+    """Get user's bookings and guestlist entries"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    bookings = await db.bookings.find({"user_id": current_user["user_id"]}).sort("created_at", -1).to_list(50)
+    guestlist = await db.guestlist.find({"user_id": current_user["user_id"]}).sort("created_at", -1).to_list(50)
+    
+    return {
+        "bookings": clean_mongo_docs(bookings),
+        "guestlist": clean_mongo_docs(guestlist)
+    }
+
+@api_router.delete("/bookings/{booking_id}")
+async def cancel_booking(request: Request, booking_id: str):
+    """Cancel a booking or guestlist entry"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Try to find in bookings
+    booking = await db.bookings.find_one({"booking_id": booking_id, "user_id": current_user["user_id"]})
+    if booking:
+        await db.bookings.update_one(
+            {"booking_id": booking_id},
+            {"$set": {"status": "cancelled"}}
+        )
+        return {"success": True, "message": "Reservation cancelled"}
+    
+    # Try guestlist
+    guestlist = await db.guestlist.find_one({"guestlist_id": booking_id, "user_id": current_user["user_id"]})
+    if guestlist:
+        await db.guestlist.update_one(
+            {"guestlist_id": booking_id},
+            {"$set": {"status": "cancelled"}}
+        )
+        return {"success": True, "message": "Guestlist entry cancelled"}
+    
+    raise HTTPException(status_code=404, detail="Booking not found")
+
+
+# ====== REAL-TIME AUCTION NOTIFICATIONS ======
+
+# Store for auction subscribers (in-memory for simplicity)
+auction_subscribers: Dict[str, List[str]] = {}  # auction_id -> list of user_ids
+
+class AuctionSubscribeRequest(BaseModel):
+    auction_id: str
+    notify_outbid: bool = True
+
+@api_router.post("/auctions/subscribe")
+async def subscribe_to_auction(request: Request, sub_request: AuctionSubscribeRequest):
+    """Subscribe to auction notifications"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    auction_id = sub_request.auction_id
+    user_id = current_user["user_id"]
+    
+    if auction_id not in auction_subscribers:
+        auction_subscribers[auction_id] = []
+    
+    if user_id not in auction_subscribers[auction_id]:
+        auction_subscribers[auction_id].append(user_id)
+    
+    return {"success": True, "message": "Subscribed to auction notifications"}
+
+@api_router.get("/auctions/notifications")
+async def get_auction_notifications(request: Request):
+    """Get pending notifications for user's auctions"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    notifications = await db.auction_notifications.find({
+        "user_id": current_user["user_id"],
+        "read": False
+    }).sort("created_at", -1).to_list(20)
+    
+    return {"notifications": clean_mongo_docs(notifications)}
+
+@api_router.post("/auctions/notifications/mark-read")
+async def mark_notifications_read(request: Request):
+    """Mark all auction notifications as read"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.auction_notifications.update_many(
+        {"user_id": current_user["user_id"]},
+        {"$set": {"read": True}}
+    )
+    
+    return {"success": True}
+
+
 # CORS
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
