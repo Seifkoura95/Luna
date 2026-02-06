@@ -294,7 +294,7 @@ async def get_auctions(venue_id: Optional[str] = None, status: Optional[str] = N
     if status:
         query["status"] = status
     auctions = await db.auctions.find(query).sort("start_time", 1).to_list(50)
-    return auctions
+    return clean_mongo_docs(auctions)
 
 @api_router.post("/auctions/bid")
 async def place_bid(request: Request, auction_id: str, amount: float):
