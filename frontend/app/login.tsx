@@ -4,19 +4,23 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   TextInput,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors } from '../src/theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, typography, spacing, radius } from '../src/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../src/utils/api';
 import { useAuthStore } from '../src/store/authStore';
+import * as Haptics from 'expo-haptics';
+
+const { width, height } = Dimensions.get('window');
 
 type AuthMode = 'login' | 'register';
 
@@ -29,9 +33,9 @@ export default function LoginScreen() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    // Validation
     if (!email.trim() || !password.trim()) {
       Alert.alert('Error', 'Please enter email and password');
       return;
@@ -47,6 +51,10 @@ export default function LoginScreen() {
       return;
     }
 
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
     setLoading(true);
     try {
       let result;
@@ -54,6 +62,10 @@ export default function LoginScreen() {
         result = await api.register(email.trim(), password, name.trim());
       } else {
         result = await api.login(email.trim(), password);
+      }
+
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
       await login(
@@ -76,12 +88,25 @@ export default function LoginScreen() {
   };
 
   const toggleMode = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
     setMode(mode === 'login' ? 'register' : 'login');
     setPassword('');
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      {/* Background Gradient */}
+      <LinearGradient
+        colors={['#000000', '#0A0A0A', '#111111']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      {/* Decorative Elements */}
+      <View style={styles.decorativeCircle1} />
+      <View style={styles.decorativeCircle2} />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -91,133 +116,203 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo */}
+          {/* Premium Logo Section */}
           <View style={styles.logoSection}>
-            <Text style={styles.logo}>ECLIPSE</Text>
-            <Text style={styles.location}>BRISBANE</Text>
-            <View style={styles.divider} />
+            <View style={styles.logoGlow} />
+            <Text style={styles.logoText}>ECLIPSE</Text>
+            <View style={styles.locationBadge}>
+              <View style={styles.locationDot} />
+              <Text style={styles.locationText}>BRISBANE</Text>
+            </View>
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <View style={styles.dividerDiamond} />
+              <View style={styles.dividerLine} />
+            </View>
             <Text style={styles.tagline}>Premium VIP Experience</Text>
           </View>
 
-          {/* Auth Form */}
-          <View style={styles.formSection}>
-            <Text style={styles.formTitle}>
-              {mode === 'login' ? 'Welcome Back' : 'Create Account'}
-            </Text>
-            <Text style={styles.formSubtitle}>
-              {mode === 'login'
-                ? 'Sign in to access your VIP benefits'
-                : 'Join Eclipse VIP for exclusive rewards'}
-            </Text>
+          {/* Auth Card */}
+          <View style={styles.authCard}>
+            <LinearGradient
+              colors={['#1A1A1A', '#111111']}
+              style={styles.authCardGradient}
+            >
+              <Text style={styles.formTitle}>
+                {mode === 'login' ? 'Welcome Back' : 'Join the Elite'}
+              </Text>
+              <Text style={styles.formSubtitle}>
+                {mode === 'login'
+                  ? 'Sign in to access exclusive VIP benefits'
+                  : 'Create your account and start earning rewards'}
+              </Text>
 
-            {mode === 'register' && (
-              <View style={styles.inputContainer}>
-                <Ionicons name="person-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
+              {mode === 'register' && (
+                <View style={[
+                  styles.inputContainer,
+                  focusedInput === 'name' && styles.inputContainerFocused
+                ]}>
+                  <View style={styles.inputIconContainer}>
+                    <Ionicons name="person" size={18} color={focusedInput === 'name' ? colors.gold : colors.textMuted} />
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Full Name"
+                    placeholderTextColor={colors.textMuted}
+                    value={name}
+                    onChangeText={setName}
+                    autoCapitalize="words"
+                    onFocus={() => setFocusedInput('name')}
+                    onBlur={() => setFocusedInput(null)}
+                  />
+                </View>
+              )}
+
+              <View style={[
+                styles.inputContainer,
+                focusedInput === 'email' && styles.inputContainerFocused
+              ]}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="mail" size={18} color={focusedInput === 'email' ? colors.gold : colors.textMuted} />
+                </View>
                 <TextInput
                   style={styles.input}
-                  placeholder="Full Name"
+                  placeholder="Email Address"
                   placeholderTextColor={colors.textMuted}
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onFocus={() => setFocusedInput('email')}
+                  onBlur={() => setFocusedInput(null)}
                 />
               </View>
-            )}
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Email Address"
-                placeholderTextColor={colors.textMuted}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+              <View style={[
+                styles.inputContainer,
+                focusedInput === 'password' && styles.inputContainerFocused
+              ]}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="lock-closed" size={18} color={focusedInput === 'password' ? colors.gold : colors.textMuted} />
+                </View>
+                <TextInput
+                  style={[styles.input, styles.passwordInput]}
+                  placeholder="Password"
+                  placeholderTextColor={colors.textMuted}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  onFocus={() => setFocusedInput('password')}
+                  onBlur={() => setFocusedInput(null)}
+                />
+                <TouchableOpacity
+                  style={styles.showPasswordBtn}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color={colors.textMuted}
+                  />
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, styles.passwordInput]}
-                placeholder="Password"
-                placeholderTextColor={colors.textMuted}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
+              {/* Premium Submit Button */}
               <TouchableOpacity
-                style={styles.showPasswordBtn}
-                onPress={() => setShowPassword(!showPassword)}
+                style={styles.submitButtonContainer}
+                onPress={handleSubmit}
+                disabled={loading}
+                activeOpacity={0.8}
               >
-                <Ionicons
-                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={20}
-                  color={colors.textMuted}
-                />
+                <LinearGradient
+                  colors={loading ? ['#333', '#222'] : [colors.accent, colors.accentDark]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.submitButton}
+                >
+                  {loading ? (
+                    <ActivityIndicator color={colors.textPrimary} />
+                  ) : (
+                    <>
+                      <Text style={styles.submitButtonText}>
+                        {mode === 'login' ? 'Sign In' : 'Create Account'}
+                      </Text>
+                      <View style={styles.submitArrow}>
+                        <Ionicons name="arrow-forward" size={18} color={colors.textPrimary} />
+                      </View>
+                    </>
+                  )}
+                </LinearGradient>
               </TouchableOpacity>
-            </View>
 
-            <TouchableOpacity
-              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={colors.textPrimary} />
-              ) : (
-                <>
-                  <Text style={styles.submitButtonText}>
-                    {mode === 'login' ? 'Sign In' : 'Create Account'}
+              {/* Toggle Mode */}
+              <TouchableOpacity style={styles.toggleButton} onPress={toggleMode}>
+                <Text style={styles.toggleText}>
+                  {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+                  <Text style={styles.toggleTextAccent}>
+                    {mode === 'login' ? 'Sign Up' : 'Sign In'}
                   </Text>
-                  <Ionicons name="arrow-forward" size={20} color={colors.textPrimary} />
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.toggleButton} onPress={toggleMode}>
-              <Text style={styles.toggleText}>
-                {mode === 'login'
-                  ? "Don't have an account? "
-                  : 'Already have an account? '}
-                <Text style={styles.toggleTextBold}>
-                  {mode === 'login' ? 'Sign Up' : 'Sign In'}
                 </Text>
-              </Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
 
-          {/* Features */}
-          <View style={styles.featuresSection}>
-            <View style={styles.feature}>
+          {/* Premium Features */}
+          <View style={styles.featuresContainer}>
+            <View style={styles.featureItem}>
+              <LinearGradient
+                colors={[colors.accentGlow, 'transparent']}
+                style={styles.featureGlow}
+              />
               <View style={styles.featureIcon}>
-                <Ionicons name="qr-code" size={20} color={colors.accent} />
+                <Ionicons name="qr-code" size={24} color={colors.accent} />
               </View>
-              <Text style={styles.featureText}>VIP Check-in</Text>
+              <Text style={styles.featureLabel}>VIP Pass</Text>
             </View>
-            <View style={styles.feature}>
-              <View style={styles.featureIcon}>
-                <Ionicons name="star" size={20} color={colors.premiumGold} />
+            <View style={styles.featureItem}>
+              <LinearGradient
+                colors={[colors.goldGlow, 'transparent']}
+                style={styles.featureGlow}
+              />
+              <View style={[styles.featureIcon, styles.featureIconGold]}>
+                <Ionicons name="star" size={24} color={colors.gold} />
               </View>
-              <Text style={styles.featureText}>Earn Rewards</Text>
+              <Text style={styles.featureLabel}>Rewards</Text>
             </View>
-            <View style={styles.feature}>
-              <View style={styles.featureIcon}>
-                <Ionicons name="flash" size={20} color={colors.warning} />
+            <View style={styles.featureItem}>
+              <LinearGradient
+                colors={[colors.warningGlow, 'transparent']}
+                style={styles.featureGlow}
+              />
+              <View style={[styles.featureIcon, styles.featureIconWarning]}>
+                <Ionicons name="flash" size={24} color={colors.warning} />
               </View>
-              <Text style={styles.featureText}>Live Auctions</Text>
+              <Text style={styles.featureLabel}>Auctions</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <LinearGradient
+                colors={[colors.successGlow, 'transparent']}
+                style={styles.featureGlow}
+              />
+              <View style={[styles.featureIcon, styles.featureIconSuccess]}>
+                <Ionicons name="images" size={24} color={colors.success} />
+              </View>
+              <Text style={styles.featureLabel}>Photos</Text>
             </View>
           </View>
 
+          {/* Terms */}
           <Text style={styles.termsText}>
-            By continuing, you agree to our Terms of Service and Privacy Policy
+            By continuing, you agree to our{' '}
+            <Text style={styles.termsLink}>Terms of Service</Text>
+            {' '}and{' '}
+            <Text style={styles.termsLink}>Privacy Policy</Text>
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -226,71 +321,152 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  decorativeCircle1: {
+    position: 'absolute',
+    top: -100,
+    right: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: colors.accentGlow,
+    opacity: 0.3,
+  },
+  decorativeCircle2: {
+    position: 'absolute',
+    bottom: -50,
+    left: -100,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: colors.goldGlow,
+    opacity: 0.2,
+  },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 24,
+    paddingHorizontal: spacing.lg,
+    paddingTop: height * 0.08,
+    paddingBottom: spacing.xl,
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: spacing.xl,
   },
-  logo: {
-    fontSize: 42,
+  logoGlow: {
+    position: 'absolute',
+    top: -20,
+    width: 200,
+    height: 100,
+    backgroundColor: colors.accentGlow,
+    borderRadius: 100,
+    opacity: 0.4,
+  },
+  logoText: {
+    fontSize: 52,
     fontWeight: '800',
     color: colors.textPrimary,
-    letterSpacing: 8,
+    letterSpacing: 12,
+    textShadowColor: colors.accentGlow,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
   },
-  location: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.accent,
-    letterSpacing: 6,
-    marginTop: 4,
+  locationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    backgroundColor: colors.backgroundCard,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  divider: {
-    width: 60,
-    height: 2,
+  locationDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: colors.accent,
-    marginVertical: 16,
+    marginRight: spacing.sm,
+  },
+  locationText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.accent,
+    letterSpacing: 3,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.lg,
+  },
+  dividerLine: {
+    width: 40,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerDiamond: {
+    width: 8,
+    height: 8,
+    backgroundColor: colors.gold,
+    transform: [{ rotate: '45deg' }],
+    marginHorizontal: spacing.sm,
   },
   tagline: {
     fontSize: 14,
     color: colors.textSecondary,
+    letterSpacing: 2,
   },
-  formSection: {
-    marginBottom: 32,
+  authCard: {
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    marginBottom: spacing.xl,
+  },
+  authCardGradient: {
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.xl,
   },
   formTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   formSubtitle: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
+    lineHeight: 20,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    marginBottom: 16,
-    borderWidth: 1,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    marginBottom: spacing.md,
+    borderWidth: 1.5,
     borderColor: colors.border,
+    overflow: 'hidden',
   },
-  inputIcon: {
-    paddingLeft: 16,
+  inputContainerFocused: {
+    borderColor: colors.gold,
+  },
+  inputIconContainer: {
+    width: 50,
+    height: 54,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundElevated,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
   },
   input: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     fontSize: 16,
     color: colors.textPrimary,
   },
@@ -299,66 +475,100 @@ const styles = StyleSheet.create({
   },
   showPasswordBtn: {
     position: 'absolute',
-    right: 16,
-    padding: 4,
+    right: spacing.md,
+    padding: spacing.xs,
+  },
+  submitButtonContainer: {
+    marginTop: spacing.sm,
+    borderRadius: radius.md,
+    overflow: 'hidden',
   },
   submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.accent,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  submitButtonDisabled: {
-    opacity: 0.7,
+    paddingVertical: 18,
+    paddingHorizontal: spacing.lg,
   },
   submitButtonText: {
     color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  submitArrow: {
+    marginLeft: spacing.sm,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   toggleButton: {
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: spacing.lg,
+    paddingVertical: spacing.sm,
   },
   toggleText: {
     color: colors.textSecondary,
     fontSize: 14,
   },
-  toggleTextBold: {
-    color: colors.accent,
+  toggleTextAccent: {
+    color: colors.gold,
     fontWeight: '600',
   },
-  featuresSection: {
+  featuresContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 24,
-    gap: 24,
+    justifyContent: 'space-around',
+    marginBottom: spacing.xl,
   },
-  feature: {
+  featureItem: {
     alignItems: 'center',
+    position: 'relative',
+  },
+  featureGlow: {
+    position: 'absolute',
+    top: -10,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    opacity: 0.5,
   },
   featureIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.card,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.backgroundCard,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.accent + '40',
   },
-  featureText: {
+  featureIconGold: {
+    borderColor: colors.gold + '40',
+  },
+  featureIconWarning: {
+    borderColor: colors.warning + '40',
+  },
+  featureIconSuccess: {
+    borderColor: colors.success + '40',
+  },
+  featureLabel: {
     fontSize: 11,
+    fontWeight: '600',
     color: colors.textSecondary,
-    fontWeight: '500',
+    letterSpacing: 0.5,
   },
   termsText: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textMuted,
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 18,
+  },
+  termsLink: {
+    color: colors.textSecondary,
+    textDecorationLine: 'underline',
   },
 });
