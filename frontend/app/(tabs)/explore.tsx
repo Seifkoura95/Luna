@@ -231,7 +231,7 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "transparent",
   },
   header: {
     paddingTop: spacing.xxxl + spacing.md,

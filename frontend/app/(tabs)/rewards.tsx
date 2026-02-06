@@ -264,7 +264,7 @@ export default function RewardsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "transparent",
   },
   scrollView: {
     flex: 1,
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   codeBox: {
-    backgroundColor: colors.background,
+    backgroundColor: "transparent",
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: radius.md,

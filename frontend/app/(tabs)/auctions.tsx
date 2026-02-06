@@ -533,7 +533,7 @@ export default function AuctionsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "transparent",
   },
   scrollView: {
     flex: 1,
