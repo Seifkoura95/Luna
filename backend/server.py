@@ -190,7 +190,8 @@ async def get_rewards(category: Optional[str] = None, venue_id: Optional[str] = 
     rewards = await db.rewards.find(query).to_list(100)
     if venue_id:
         rewards = [r for r in rewards if r.get("venue_restriction") is None or r.get("venue_restriction") == venue_id]
-    return rewards
+    # Clean MongoDB ObjectIds
+    return clean_mongo_docs(rewards)
 
 @api_router.post("/rewards/redeem")
 async def redeem_reward(request: Request, reward_id: str, venue_id: Optional[str] = None):
