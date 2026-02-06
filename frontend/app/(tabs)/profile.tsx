@@ -213,35 +213,17 @@ export default function ProfileScreen() {
       
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Consistent Header with Points shown */}
-        <PageHeader title="PROFILE" showPoints={true} />
-
-        {/* User Info Section */}
-        <View style={styles.userInfoSection}>
-          <View style={styles.avatarContainer}>
-            <LinearGradient
-              colors={[tierConfig.color + '40', tierConfig.color + '10']}
-              style={styles.avatarGradient}
-            >
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                </Text>
-              </View>
-            </LinearGradient>
-            <View style={[styles.tierBadge, { backgroundColor: tierConfig.color }]}>
-              <Ionicons name={tierConfig.icon as any} size={12} color="#000" />
-            </View>
-          </View>
-
-          <Text style={styles.userName}>{user?.name || 'Luna Member'}</Text>
-          <Text style={styles.userEmail}>{user?.email}</Text>
+        {/* Profile Header - Minimalist with just name and moon */}
+        <View style={styles.profileHeader}>
+          <RotatingMoon size={80} rotationDuration={30000} />
+          <Text style={styles.welcomeText}>Welcome back,</Text>
+          <Text style={styles.userName}>{formatName(user?.name)}</Text>
         </View>
 
         {/* Membership Tier Card */}
@@ -261,7 +243,7 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
                 <View style={styles.pointsDisplay}>
-                  <Ionicons name="star" size={20} color={colors.gold} />
+                  <FierySun size={24} />
                   <Text style={styles.pointsValue}>{currentPoints.toLocaleString()}</Text>
                 </View>
               </View>
