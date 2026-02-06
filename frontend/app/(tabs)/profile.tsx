@@ -38,6 +38,7 @@ const TIER_CONFIG: Record<string, { color: string; icon: string; next: string; p
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
+  const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [reservations, setReservations] = useState<any>(null);
@@ -48,6 +49,14 @@ export default function ProfileScreen() {
   const [crews, setCrews] = useState<any[]>([]);
   const [newCrewName, setNewCrewName] = useState('');
   const [showCreateCrew, setShowCreateCrew] = useState(false);
+
+  // Helper function to capitalize name properly
+  const formatName = (name: string | undefined) => {
+    if (!name) return 'Luna Member';
+    return name.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+  };
 
   const fetchData = async () => {
     try {
