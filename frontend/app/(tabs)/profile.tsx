@@ -638,65 +638,22 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: spacing.xxl,
   },
-  header: {
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
-  },
-  userInfoSection: {
+  profileHeader: {
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg,
   },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: spacing.md,
-  },
-  avatarGradient: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: '#1A1A1A',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#333',
-  },
-  avatarText: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  tierBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#000',
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  userEmail: {
+  welcomeText: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: spacing.lg,
+    marginTop: spacing.md,
+    letterSpacing: 1,
+  },
+  userName: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginTop: spacing.xs,
   },
   tierCard: {
     width: '100%',
