@@ -51,9 +51,12 @@ export default function ProfileScreen() {
   const [showSafety, setShowSafety] = useState(false);
   const [showCrewPlan, setShowCrewPlan] = useState(false);
   const [crews, setCrews] = useState<any[]>([]);
+  const [venues, setVenues] = useState<any[]>([]);
   const [newCrewName, setNewCrewName] = useState('');
   const [showCreateCrew, setShowCreateCrew] = useState(false);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  const [showCrewMap, setShowCrewMap] = useState(false);
+  const [selectedCrewForMap, setSelectedCrewForMap] = useState<any>(null);
 
   // Helper function to capitalize name properly
   const formatName = (name: string | undefined) => {
@@ -65,16 +68,18 @@ export default function ProfileScreen() {
 
   const fetchData = async () => {
     try {
-      const [statsData, reservationsData, crewsData, subData] = await Promise.all([
+      const [statsData, reservationsData, crewsData, subData, venuesData] = await Promise.all([
         api.getUserStats().catch(() => null),
         api.getMyReservations().catch(() => null),
         api.getCrews().catch(() => []),
         api.getMySubscription().catch(() => null),
+        api.getVenues().catch(() => []),
       ]);
       setStats(statsData);
       setReservations(reservationsData);
       setCrews(crewsData || []);
       setSubscriptionData(subData);
+      setVenues(venuesData || []);
     } catch (e) {
       console.error('Failed to fetch profile data:', e);
     }
