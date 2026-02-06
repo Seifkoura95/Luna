@@ -246,6 +246,17 @@ export default function RewardsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Venue Selector Modal */}
+      <VenueSelector
+        visible={showVenueFilter}
+        selectedVenueId={selectedVenueId}
+        onSelectVenue={(venueId) => {
+          setSelectedVenueId(venueId);
+          setShowVenueFilter(false);
+        }}
+        onClose={() => setShowVenueFilter(false)}
+      />
     </View>
   );
 }
