@@ -2,6 +2,8 @@
 
 # Venue logos (uploaded by client)
 VENUE_LOGOS = {
+    "eclipse": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/pr03f9wj_Eclipse.webp",
+    "juju": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/wzf6k0km_Juju.webp",
     "su_casa_brisbane": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/fb4gjnlf_Sucasa2.webp",
     "su_casa_gold_coast": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/w4lbm1ea_Sucasa1.webp",
     "night_market": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/9rmm0g7d_Night%20market.webp",
@@ -20,7 +22,7 @@ LUNA_VENUES = {
         "coordinates": {"lat": -27.4572, "lng": 153.0347},
         "accent_color": "#E31837",
         "tagline": "Discover New Nightlife",
-        "logo_url": None,
+        "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/pr03f9wj_Eclipse.webp",
         "description": "Brisbane's transformative super club with international and domestic headliners across a range of genres. A new phase for the Brisbane entertainment scene unlike anything the city has experienced before.",
         "long_description": "Eclipse is Brisbane's premier destination for world-class nightlife. Featuring state-of-the-art sound systems, immersive lighting installations, and hosting international and domestic headliners across hip hop, RnB, house, and electronic genres. Experience the transformation of Brisbane's entertainment scene in the heart of Fortitude Valley.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos", "vip_tables"],
