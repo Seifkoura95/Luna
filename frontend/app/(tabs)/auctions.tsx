@@ -21,6 +21,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { PageHeader } from '../../src/components/PageHeader';
+import { GlassCard } from '../../src/components/GlassCard';
+import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';
+import { AnimatedCounter, SpringCounter } from '../../src/components/AnimatedCounter';
 
 const { width } = Dimensions.get('window');
 
