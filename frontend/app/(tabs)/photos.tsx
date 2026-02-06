@@ -360,7 +360,7 @@ export default function PhotosScreen() {
         </View>
       )}
 
-      {/* Full Photo Modal */}
+      {/* Premium Full Photo Modal */}
       <Modal
         visible={!!selectedPhoto}
         transparent
@@ -371,19 +371,40 @@ export default function PhotosScreen() {
           <TouchableOpacity
             style={styles.photoModalClose}
             onPress={() => setSelectedPhoto(null)}
+            activeOpacity={0.8}
           >
-            <Ionicons name="close" size={28} color={colors.textPrimary} />
+            <View style={styles.closeButtonContainer}>
+              <Ionicons name="close" size={24} color={colors.textPrimary} />
+            </View>
           </TouchableOpacity>
           {selectedPhoto && (
-            <Image
-              source={{ uri: selectedPhoto.photo_url }}
-              style={styles.fullPhoto}
-              resizeMode="contain"
-            />
+            <View style={styles.photoModalContent}>
+              <Image
+                source={{ uri: selectedPhoto.photo_url }}
+                style={styles.fullPhoto}
+                resizeMode="contain"
+              />
+              <LinearGradient
+                colors={['transparent', colors.background]}
+                style={styles.photoInfoGradient}
+              >
+                <View style={styles.photoInfo}>
+                  {selectedPhoto.event_name && (
+                    <Text style={styles.photoEventName}>{selectedPhoto.event_name}</Text>
+                  )}
+                  {selectedPhoto.ai_enhanced && (
+                    <View style={styles.photoAiBadge}>
+                      <Ionicons name="sparkles" size={14} color={colors.gold} />
+                      <Text style={styles.photoAiText}>AI Enhanced</Text>
+                    </View>
+                  )}
+                </View>
+              </LinearGradient>
+            </View>
           )}
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
