@@ -318,7 +318,7 @@ export default function ProfileScreen() {
               style={styles.tierCardGradient}
             >
               {/* Accent top border */}
-              <View style={[styles.tierAccentBorder, { borderColor: tierConfig.color }]} />
+              <View style={[styles.tierAccentBorder, { borderColor: colors.gold }]} />
               
               <View style={styles.tierHeader}>
                 <View style={styles.tierPointsDisplay}>
@@ -329,7 +329,7 @@ export default function ProfileScreen() {
                   </View>
                 </View>
                 
-                <View style={[styles.tierBadge, { backgroundColor: tierConfig.color }]}>
+                <View style={[styles.tierBadge, { backgroundColor: colors.gold }]}>
                   <Ionicons name="moon" size={14} color="#000" />
                   <Text style={styles.tierBadgeText}>{(user?.tier || 'bronze').toUpperCase()}</Text>
                 </View>
@@ -355,11 +355,11 @@ export default function ProfileScreen() {
 
               {/* Progress to next tier */}
               <TouchableOpacity 
-                style={[styles.tierUpgradeButton, { borderColor: tierConfig.color }]}
+                style={[styles.tierUpgradeButton, { borderColor: colors.gold }]}
                 onPress={() => router.push('/subscriptions')}
               >
-                <Ionicons name="arrow-up-circle" size={18} color={tierConfig.color} />
-                <Text style={[styles.tierUpgradeText, { color: tierConfig.color }]}>
+                <Ionicons name="arrow-up-circle" size={18} color={colors.gold} />
+                <Text style={[styles.tierUpgradeText, { color: colors.gold }]}>
                   {tierConfig.pointsNeeded - currentPoints} POINTS TO {tierConfig.next?.toUpperCase()}
                 </Text>
               </TouchableOpacity>
