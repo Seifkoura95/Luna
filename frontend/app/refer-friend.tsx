@@ -112,7 +112,7 @@ export default function ReferFriendScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.bold }]}>REFER & EARN</Text>
+          <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.display }]}>Refer & Earn</Text>
         </View>
         <View style={{ width: 44 }} />
       </View>

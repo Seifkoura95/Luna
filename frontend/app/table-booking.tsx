@@ -213,7 +213,7 @@ export default function TableBookingScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.bold }]}>VIP TABLES</Text>
+          <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.display }]}>VIP Tables</Text>
           <Text style={[styles.headerSubtitle, fontsLoaded && { fontFamily: fonts.regular }]}>All Venues</Text>
         </View>
         <View style={{ width: 44 }} />

@@ -22,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFonts, fonts } from '../src/hooks/useFonts';
 
 const { width, height } = Dimensions.get('window');
 
