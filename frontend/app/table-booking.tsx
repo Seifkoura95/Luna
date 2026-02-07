@@ -111,6 +111,20 @@ export default function TableBookingScreen() {
     fetchVenues();
   }, []);
 
+  // Fetch venue details for operating hours
+  useEffect(() => {
+    const fetchVenueDetails = async () => {
+      try {
+        const venueData = await api.getVenue(selectedVenue.id);
+        setVenueOperatingHours(venueData?.operating_hours || null);
+      } catch (e) {
+        console.error('Failed to fetch venue details:', e);
+        setVenueOperatingHours(null);
+      }
+    };
+    fetchVenueDetails();
+  }, [selectedVenue]);
+
   useEffect(() => {
     fetchTables();
     setSelectedTable(null); // Reset table selection when venue changes
