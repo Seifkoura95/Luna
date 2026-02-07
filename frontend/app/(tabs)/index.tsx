@@ -123,6 +123,7 @@ export default function TonightScreen() {
       <StarfieldBackground starCount={50} shootingStarCount={2} />
       
       <ScrollView
+        ref={scrollRef}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         refreshControl={
