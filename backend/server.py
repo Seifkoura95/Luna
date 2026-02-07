@@ -2324,6 +2324,79 @@ async def send_test_notification_v2(request: Request):
     return {"success": True, "notification": clean_mongo_doc(notification)}
 
 
+# ====== PUSH NOTIFICATIONS ======
+
+async def send_push_notification(user_id: str, title: str, body: str, data: dict = None):
+    """
+    Send a push notification to a user's device using Expo Push API.
+    Returns True if sent successfully, False otherwise.
+    """
+    user = await db.users.find_one({"user_id": user_id})
+    if not user or not user.get("push_token"):
+        return False
+    
+    push_token = user["push_token"]
+    
+    # Expo Push API endpoint
+    push_url = "https://exp.host/--/api/v2/push/send"
+    
+    message = {
+        "to": push_token,
+        "sound": "default",
+        "title": title,
+        "body": body,
+        "data": data or {},
+    }
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                push_url,
+                json=message,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("data", {}).get("status") == "ok":
+                    logging.info(f"Push notification sent to {user_id}")
+                    return True
+                else:
+                    logging.warning(f"Push notification failed: {result}")
+            else:
+                logging.error(f"Push API error: {response.status_code}")
+    except Exception as e:
+        logging.error(f"Push notification error: {e}")
+    
+    return False
+
+@api_router.post("/push/register")
+async def register_push_token(request: Request, token_request: PushTokenRequest):
+    """Register user's push notification token"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {"push_token": token_request.push_token}}
+    )
+    
+    return {"success": True, "message": "Push token registered"}
+
+@api_router.delete("/push/unregister")
+async def unregister_push_token(request: Request):
+    """Remove user's push notification token"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$unset": {"push_token": ""}}
+    )
+    
+    return {"success": True, "message": "Push token removed"}
+
+
 # ====== NOTIFICATION GENERATION FUNCTIONS ======
 
 async def create_notification(
@@ -2332,9 +2405,10 @@ async def create_notification(
     title: str,
     message: str,
     data: dict = None,
-    priority: str = "normal"
+    priority: str = "normal",
+    send_push: bool = True
 ):
-    """Create and store a notification for a user"""
+    """Create and store a notification for a user, optionally send push"""
     notification = {
         "id": str(uuid.uuid4())[:8],
         "user_id": user_id,
@@ -2347,6 +2421,11 @@ async def create_notification(
         "created_at": datetime.now(timezone.utc)
     }
     await db.notifications.insert_one(notification)
+    
+    # Send push notification for high priority or if explicitly requested
+    if send_push and priority in ["high", "medium"]:
+        await send_push_notification(user_id, title, message, data)
+    
     return notification
 
 async def notify_new_event(event: dict, venue_id: str):
