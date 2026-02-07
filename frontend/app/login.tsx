@@ -383,6 +383,17 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginLeft: spacing.xs,
   },
+  optionalLabel: {
+    color: colors.textMuted,
+    fontWeight: '400',
+    letterSpacing: 0,
+  },
+  referralHint: {
+    fontSize: 11,
+    color: '#00D4AA',
+    marginTop: 4,
+    marginLeft: spacing.xs,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
