@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { colors, spacing, radius } from '../../src/theme/colors';
 import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { PageHeader } from '../../src/components/PageHeader';
 
@@ -23,6 +23,14 @@ export default function ExploreScreen() {
   const [venues, setVenues] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Auto scroll to top when tab gains focus
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   const fetchVenues = async () => {
     try {
