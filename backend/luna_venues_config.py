@@ -27,8 +27,8 @@ LUNA_VENUES = {
         "long_description": "Eclipse is Brisbane's premier destination for world-class nightlife. Featuring state-of-the-art sound systems, immersive lighting installations, and hosting international and domestic headliners across hip hop, RnB, house, and electronic genres. Experience the transformation of Brisbane's entertainment scene in the heart of Fortitude Valley.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos", "vip_tables"],
         "points_rate": 1.0,
-        "image_url": "https://images.unsplash.com/photo-1760865461468-d80681140a63?w=800",
-        "hero_image": "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=1200",
+        "image_url": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
+        "hero_image": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=1200",
         "gallery": [
             "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
             "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800",
