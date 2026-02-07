@@ -3564,12 +3564,48 @@ VIP_TABLES = {
 
 @api_router.get("/venues/{venue_id}/tables")
 async def get_venue_tables(venue_id: str, date: Optional[str] = None):
-    """Get available VIP tables for a venue"""
+    """Get available VIP tables for a venue, respecting opening hours"""
     if venue_id not in VIP_TABLES:
         # Return empty list for venues without table service
         return {"tables": [], "message": "This venue doesn't offer table booking"}
     
-    tables = VIP_TABLES[venue_id]
+    venue = LUNA_VENUES.get(venue_id)
+    tables = VIP_TABLES[venue_id].copy()  # Don't modify original
+    tables = [t.copy() for t in tables]  # Deep copy
+    
+    # Check if venue is open on the selected date
+    venue_closed = False
+    closed_reason = None
+    
+    if date and venue:
+        try:
+            from datetime import datetime
+            booking_date = datetime.strptime(date, "%Y-%m-%d")
+            day_name = booking_date.strftime("%A").lower()
+            
+            operating_hours = venue.get("operating_hours", {})
+            
+            # Check if venue has special status (Coming Soon)
+            if operating_hours.get("status") == "Coming Soon":
+                venue_closed = True
+                closed_reason = f"{venue['name']} is coming soon - table bookings not yet available"
+            # Check if venue is open on this day
+            elif day_name not in operating_hours:
+                venue_closed = True
+                # Find open days for user-friendly message
+                open_days = [d.title() for d in operating_hours.keys() if d != "status"]
+                closed_reason = f"{venue['name']} is closed on {booking_date.strftime('%A')}. Open: {', '.join(open_days)}"
+        except Exception as e:
+            logging.error(f"Date parsing error: {e}")
+    
+    if venue_closed:
+        return {
+            "tables": [],
+            "venue_id": venue_id,
+            "venue_closed": True,
+            "closed_reason": closed_reason,
+            "operating_hours": venue.get("operating_hours", {}) if venue else {}
+        }
     
     # Check availability for specific date
     if date:
@@ -3589,7 +3625,11 @@ async def get_venue_tables(venue_id: str, date: Optional[str] = None):
         for table in tables:
             table["available"] = True
     
-    return {"tables": tables, "venue_id": venue_id}
+    return {
+        "tables": tables,
+        "venue_id": venue_id,
+        "operating_hours": venue.get("operating_hours", {}) if venue else {}
+    }
 
 @api_router.post("/bookings/table")
 async def create_table_booking(request: Request, booking: TableBookingRequest):
