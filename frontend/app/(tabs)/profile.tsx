@@ -48,6 +48,13 @@ export default function ProfileScreen() {
   const fontsLoaded = useFonts();
   const scrollRef = useRef<ScrollView>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Auto scroll to top when tab gains focus
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
   const [stats, setStats] = useState<any>(null);
   const [reservations, setReservations] = useState<any>(null);
   const [showQRPass, setShowQRPass] = useState(false);
