@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://celestial-app-5.preview.emergentagent.com/api"
+BACKEND_URL = "https://vip-experience-hub.preview.emergentagent.com/api"
 AUTH_TOKEN = "auction_test_token_123"
 TEST_USER_ID = "user_auction_test"
 
