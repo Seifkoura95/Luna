@@ -296,32 +296,73 @@ export default function TableBookingScreen() {
         {/* Date Selection */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>SELECT DATE</Text>
+          {venueOperatingHours && (
+            <View style={styles.hoursLegend}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
+                <Text style={[styles.legendText, fontsLoaded && { fontFamily: fonts.regular }]}>Open</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: colors.textMuted }]} />
+                <Text style={[styles.legendText, fontsLoaded && { fontFamily: fonts.regular }]}>Closed</Text>
+              </View>
+            </View>
+          )}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
-            {availableDates.map((date) => (
-              <TouchableOpacity
-                key={date.value}
-                style={[
-                  styles.dateCard,
-                  selectedDate === date.value && [styles.dateCardSelected, { borderColor: selectedVenue.color }]
-                ]}
-                onPress={() => setSelectedDate(date.value)}
-              >
-                <Text style={[
-                  styles.dateDayName,
-                  selectedDate === date.value && styles.dateTextSelected,
-                  fontsLoaded && { fontFamily: fonts.semiBold }
-                ]}>
-                  {date.dayName}
-                </Text>
-                <Text style={[
-                  styles.dateLabel,
-                  selectedDate === date.value && styles.dateTextSelected,
-                  fontsLoaded && { fontFamily: fonts.regular }
-                ]}>
-                  {date.label.split(',')[1]}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {availableDates.map((date) => {
+              const isOpen = isVenueOpenOnDay(date.dayName);
+              const hours = getHoursForDay(date.dayName);
+              return (
+                <TouchableOpacity
+                  key={date.value}
+                  style={[
+                    styles.dateCard,
+                    !isOpen && styles.dateCardClosed,
+                    selectedDate === date.value && [styles.dateCardSelected, { borderColor: selectedVenue.color }]
+                  ]}
+                  onPress={() => {
+                    if (!isOpen) {
+                      Alert.alert(
+                        'Venue Closed',
+                        `${selectedVenue.name} is not open on ${date.dayName}s. Please select another date.`
+                      );
+                    } else {
+                      setSelectedDate(date.value);
+                    }
+                  }}
+                >
+                  {/* Open/Closed indicator */}
+                  <View style={[
+                    styles.dateStatusDot,
+                    { backgroundColor: isOpen ? colors.success : colors.textMuted }
+                  ]} />
+                  
+                  <Text style={[
+                    styles.dateDayName,
+                    !isOpen && styles.dateTextClosed,
+                    selectedDate === date.value && styles.dateTextSelected,
+                    fontsLoaded && { fontFamily: fonts.semiBold }
+                  ]}>
+                    {date.dayName}
+                  </Text>
+                  <Text style={[
+                    styles.dateLabel,
+                    !isOpen && styles.dateTextClosed,
+                    selectedDate === date.value && styles.dateTextSelected,
+                    fontsLoaded && { fontFamily: fonts.regular }
+                  ]}>
+                    {date.label.split(',')[1]}
+                  </Text>
+                  
+                  {/* Show hours if open */}
+                  {isOpen && hours && (
+                    <Text style={[styles.dateHours, fontsLoaded && { fontFamily: fonts.regular }]}>
+                      {hours.split(' - ')[0]}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
 
