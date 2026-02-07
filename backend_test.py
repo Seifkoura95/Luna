@@ -227,14 +227,14 @@ class APITester:
             )
     
     def test_email_verification_api(self):
-        """Test GET /api/auth/verify-email?token=xxx"""
+        """Test POST /api/auth/verify-email with token parameter"""
         print("\n📧 Testing Email Verification Flow API...")
         
         # Test with invalid token (should return error)
         invalid_token = "invalid_token_12345"
         
         try:
-            response = self.session.get(
+            response = self.session.post(
                 f"{BACKEND_URL}/auth/verify-email",
                 params={"token": invalid_token},
                 timeout=10
@@ -270,7 +270,7 @@ class APITester:
         
         # Test with missing token parameter
         try:
-            response = self.session.get(
+            response = self.session.post(
                 f"{BACKEND_URL}/auth/verify-email",
                 timeout=10
             )
