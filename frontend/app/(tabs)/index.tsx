@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { PageHeader } from '../../src/components/PageHeader';
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useFonts, fonts } from '../../src/hooks/useFonts';
 
 const { width } = Dimensions.get('window');
@@ -29,9 +29,17 @@ export default function TonightScreen() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const fontsLoaded = useFonts();
+  const scrollRef = useRef<ScrollView>(null);
   const [venues, setVenues] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Auto scroll to top when tab gains focus
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   const fetchData = async () => {
     try {
