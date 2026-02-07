@@ -370,6 +370,42 @@ frontend:
         agent: "testing"
         comment: "✅ TESTED: POST /api/admin/photos/tag working correctly - successfully tagged photo to user 'Auction Tester'. Admin functionality for photographer workflow operational."
 
+  - task: "Venue Details & Operating Hours API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented GET /api/venues/{venue_id} endpoint that returns venue details including operating_hours for each day"
+
+  - task: "Push Notification Token Registration API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented POST /api/notifications/register-push-token endpoint to store Expo push tokens for users"
+
+  - task: "Email Verification Flow API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented GET /api/auth/verify-email endpoint for email verification flow. Registration now creates verification tokens."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
