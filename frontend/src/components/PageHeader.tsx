@@ -50,12 +50,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 42,
     fontWeight: '700',
     color: colors.textPrimary,
-    letterSpacing: 2,
+    letterSpacing: 4,
     marginTop: spacing.sm,
     textTransform: 'uppercase',
+    textAlign: 'center',
   },
   headerUnderline: {
     width: 50,
