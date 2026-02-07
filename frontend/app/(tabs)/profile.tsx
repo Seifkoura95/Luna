@@ -45,6 +45,8 @@ export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
   const insets = useSafeAreaInsets();
   const navRouter = useRouter();
+  const fontsLoaded = useFonts();
+  const scrollRef = useRef<ScrollView>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [reservations, setReservations] = useState<any>(null);
