@@ -372,39 +372,48 @@ frontend:
 
   - task: "Venue Details & Operating Hours API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented GET /api/venues/{venue_id} endpoint that returns venue details including operating_hours for each day"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: GET /api/venues/{venue_id} working correctly for both 'eclipse' and 'su_casa_brisbane'. Eclipse returns operating_hours with 2 days (friday/saturday: 9:00 PM - 3:00 AM), Su Casa Brisbane returns 5 days (wednesday-sunday with proper time ranges). Operating hours field structure is correct with day->time string format."
 
   - task: "Push Notification Token Registration API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented POST /api/notifications/register-push-token endpoint to store Expo push tokens for users"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: POST /api/notifications/register-push-token working correctly. Successfully registers Expo push tokens with authentication required. Returns success response when valid token provided with auth header. Correctly rejects requests without authentication (401 Unauthorized). Endpoint accepts push_token and device_type parameters as expected."
 
   - task: "Email Verification Flow API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented GET /api/auth/verify-email endpoint for email verification flow. Registration now creates verification tokens."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: POST /api/auth/verify-email working correctly (note: endpoint is POST, not GET as initially documented). Properly validates verification tokens - returns 400 'Invalid verification token' for invalid tokens, returns 422 validation error for missing token parameter. Email verification flow structure is properly implemented."
 
 metadata:
   created_by: "main_agent"
