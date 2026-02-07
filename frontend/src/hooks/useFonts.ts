@@ -29,7 +29,7 @@ export const useFonts = () => {
     'Montserrat-Bold': Montserrat_700Bold,
     'Montserrat-ExtraBold': Montserrat_800ExtraBold,
     'Montserrat-Black': Montserrat_900Black,
-    // Playfair Display for elegant headers (Su Casa style)
+    // Playfair Display for elegant headers
     'Playfair-Regular': PlayfairDisplay_400Regular,
     'Playfair-Medium': PlayfairDisplay_500Medium,
     'Playfair-SemiBold': PlayfairDisplay_600SemiBold,
@@ -38,6 +38,8 @@ export const useFonts = () => {
     'Playfair-Black': PlayfairDisplay_900Black,
     'Playfair-Italic': PlayfairDisplay_400Regular_Italic,
     'Playfair-BoldItalic': PlayfairDisplay_700Bold_Italic,
+    // Victory Striker Sans for page headers (sports/bold style)
+    'VictoryStriker': require('../../assets/fonts/Victory Striker Sans Demo.otf'),
   });
 
   return fontsLoaded;
@@ -53,7 +55,7 @@ export const fonts = {
   bold: 'Montserrat-Bold',
   extraBold: 'Montserrat-ExtraBold',
   black: 'Montserrat-Black',
-  // Display/Header fonts (Playfair - elegant serif like Su Casa logo)
+  // Display/Header fonts (Playfair - elegant serif)
   display: 'Playfair-Bold',
   displayRegular: 'Playfair-Regular',
   displayMedium: 'Playfair-Medium',
@@ -63,6 +65,8 @@ export const fonts = {
   displayBlack: 'Playfair-Black',
   displayItalic: 'Playfair-Italic',
   displayBoldItalic: 'Playfair-BoldItalic',
+  // Victory Striker Sans for page titles (LUNA, EXPLORE, etc.)
+  striker: 'VictoryStriker',
 };
 
 export default useFonts;
