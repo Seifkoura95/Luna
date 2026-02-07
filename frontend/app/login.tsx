@@ -37,6 +37,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
+  const fontsLoaded = useFonts();
 
   const handleAuth = async () => {
     if (!email || !password || (!isLogin && !name)) {
