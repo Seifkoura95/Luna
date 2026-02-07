@@ -124,6 +124,8 @@ const MOCK_TICKETS = {
 export default function WalletScreen() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
+
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [tickets, setTickets] = useState<any>({ active: [], upcoming: [], history: [] });
   const [events, setEvents] = useState<any[]>([]);
@@ -136,6 +138,13 @@ export default function WalletScreen() {
   // Points & Subscription state
   const [pointsData, setPointsData] = useState<any>(null);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
+
+  // Auto scroll to top when tab gains focus
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   const fetchData = useCallback(async () => {
     try {
