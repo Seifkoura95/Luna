@@ -390,6 +390,55 @@ export default function ProfileScreen() {
           </LinearGradient>
         </View>
 
+        {/* Tier Perks */}
+        <View style={styles.tierPerksSection}>
+          <Text style={styles.sectionTitle}>YOUR PERKS</Text>
+          <View style={styles.perksGrid}>
+            {[
+              { icon: 'flash', label: `${subscriptionData?.tier?.points_multiplier || 1}x Points`, active: true },
+              { icon: 'ticket', label: subscriptionData?.subscription?.free_entries_remaining === -1 ? 'Unlimited Entry' : `${subscriptionData?.subscription?.free_entries_remaining || 0} Free Entries`, active: (subscriptionData?.subscription?.free_entries_remaining || 0) > 0 },
+              { icon: 'wine', label: `${subscriptionData?.tier?.benefits?.free_drinks_before_10pm || 0} Free Drinks`, active: (subscriptionData?.tier?.benefits?.free_drinks_before_10pm || 0) > 0 },
+              { icon: 'star', label: subscriptionData?.tier?.benefits?.priority_booking ? 'Priority Booking' : 'No Priority', active: subscriptionData?.tier?.benefits?.priority_booking },
+            ].map((perk, index) => (
+              <View key={index} style={[styles.perkCard, !perk.active && styles.perkCardInactive]}>
+                <Ionicons 
+                  name={perk.icon as any} 
+                  size={20} 
+                  color={perk.active ? (subscriptionData?.tier?.color || colors.gold) : colors.textMuted} 
+                />
+                <Text style={[styles.perkLabel, !perk.active && styles.perkLabelInactive]}>{perk.label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Earned Badges */}
+        <View style={styles.badgesSection}>
+          <View style={styles.badgeHeader}>
+            <Text style={styles.sectionTitle}>EARNED BADGES</Text>
+            <TouchableOpacity onPress={() => router.push('/rewards')}>
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesScroll}>
+            {[
+              { id: 'b1', emoji: '🌟', title: 'First Visit', earned: true },
+              { id: 'b2', emoji: '🎉', title: 'Party Starter', earned: true },
+              { id: 'b3', emoji: '👑', title: 'VIP', earned: currentPoints >= 500 },
+              { id: 'b4', emoji: '⭐', title: 'Rising Star', earned: currentPoints >= 250 },
+              { id: 'b5', emoji: '🏆', title: 'Legend', earned: currentPoints >= 5000 },
+              { id: 'b6', emoji: '🔥', title: 'On Fire', earned: stats?.current_streak >= 3 },
+            ].map((badge) => (
+              <View key={badge.id} style={[styles.badgeItem, !badge.earned && styles.badgeItemLocked]}>
+                <View style={[styles.badgeEmoji, !badge.earned && styles.badgeEmojiLocked]}>
+                  <Text style={styles.badgeEmojiText}>{badge.earned ? badge.emoji : '🔒'}</Text>
+                </View>
+                <Text style={[styles.badgeTitle, !badge.earned && styles.badgeTitleLocked]}>{badge.title}</Text>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
