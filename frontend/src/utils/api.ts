@@ -42,10 +42,19 @@ export const api = {
     apiFetch<any>(`/api/venues/${venueId}`, { auth: false }),
   
   // Auth
-  register: (email: string, password: string, name: string) =>
-    apiFetch<{ user: any; token: string }>(
+  register: (email: string, password: string, name: string, referralCode?: string) =>
+    apiFetch<{ user: any; token: string; referral_bonus?: string }>(
       '/api/auth/register',
-      { method: 'POST', body: JSON.stringify({ email, password, name }), auth: false }
+      { 
+        method: 'POST', 
+        body: JSON.stringify({ 
+          email, 
+          password, 
+          name, 
+          referral_code: referralCode || undefined 
+        }), 
+        auth: false 
+      }
     ),
   
   login: (email: string, password: string) =>
