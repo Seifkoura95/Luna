@@ -52,6 +52,7 @@ interface Auction {
 
 export default function AuctionsScreen() {
   const user = useAuthStore((state) => state.user);
+  const scrollRef = useRef<ScrollView>(null);
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null);
@@ -62,6 +63,13 @@ export default function AuctionsScreen() {
   const [timeLeft, setTimeLeft] = useState<Record<string, string>>({});
   const [isPlacingBid, setIsPlacingBid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Auto scroll to top when tab gains focus
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   const fetchData = useCallback(async () => {
     try {
