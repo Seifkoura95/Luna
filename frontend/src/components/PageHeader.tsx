@@ -9,12 +9,14 @@ import { useFonts, fonts } from '../hooks/useFonts';
 
 interface PageHeaderProps {
   title: string;
+  subtitle?: string;
   description?: string;
   showPoints?: boolean;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ 
   title, 
+  subtitle,
   description,
   showPoints = false 
 }) => {
@@ -26,6 +28,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
       <RotatingMoon size={80} rotationDuration={30000} />
       <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.striker }]}>{title}</Text>
+      {subtitle && (
+        <Text style={[styles.headerSubtitle, fontsLoaded && { fontFamily: fonts.striker }]}>{subtitle}</Text>
+      )}
       <View style={styles.headerUnderline} />
       {description && (
         <Text style={[styles.headerDescription, fontsLoaded && { fontFamily: fonts.regular }]}>{description}</Text>
@@ -55,6 +60,15 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     letterSpacing: 4,
     marginTop: spacing.sm,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  headerSubtitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 3,
+    marginTop: 2,
     textTransform: 'uppercase',
     textAlign: 'center',
   },
