@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { RotatingMoon } from '../../src/components/RotatingMoon';
 import { FierySun } from '../../src/components/FierySun';
