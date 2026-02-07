@@ -105,7 +105,7 @@ export default function LoginScreen() {
                 </View>
 
                 {/* Brand Title - Strong font, one line */}
-                <Text style={styles.brandTitle}>LUNA GROUP</Text>
+                <Text style={[styles.brandTitle, fontsLoaded && { fontFamily: fonts.display }]}>Luna Group</Text>
                 <View style={styles.brandUnderline} />
 
                 {/* Tagline - Replaced cheesy text */}
