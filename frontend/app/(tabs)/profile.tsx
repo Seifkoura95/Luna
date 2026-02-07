@@ -320,63 +320,74 @@ export default function ProfileScreen() {
           showPoints={true}
         />
 
-        {/* Membership Tier Card - Same design as Wallet */}
-        <View style={styles.tierCardContainer}>
-          <View style={styles.tierCard}>
-            <LinearGradient
-              colors={['#1A1A1A', '#0D0D0D']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.tierCardGradient}
-            >
-              {/* Accent top border */}
-              <View style={[styles.tierAccentBorder, { borderColor: colors.gold }]} />
+        {/* Lunar Points Card - Same design as Wallet */}
+        <View style={styles.rewardsCard}>
+          <LinearGradient
+            colors={['#1A1A1A', '#0D0D0D']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.rewardsGradient}
+          >
+            {/* Accent border glow */}
+            <View style={[styles.accentBorder, { borderColor: subscriptionData?.tier?.color || colors.gold }]} />
+            
+            <View style={styles.rewardsHeader}>
+              <View style={styles.pointsDisplay}>
+                <FierySun size={32} />
+                <View>
+                  <Text style={styles.pointsValue}>
+                    {currentPoints.toLocaleString()}
+                  </Text>
+                  <Text style={styles.pointsLabel}>LUNAR POINTS</Text>
+                </View>
+              </View>
               
-              <View style={styles.tierHeader}>
-                <View style={styles.tierPointsDisplay}>
-                  <FierySun size={32} />
-                  <View>
-                    <Text style={styles.tierPointsValue}>{currentPoints.toLocaleString()}</Text>
-                    <Text style={styles.tierPointsLabel}>LUNAR POINTS</Text>
-                  </View>
-                </View>
-                
-                <View style={[styles.tierBadge, { backgroundColor: colors.gold }]}>
-                  <Ionicons name="moon" size={14} color="#000" />
-                  <Text style={styles.tierBadgeText}>{(user?.tier || 'bronze').toUpperCase()}</Text>
-                </View>
-              </View>
-
-              {/* Stats Row */}
-              <View style={styles.tierStatsRow}>
-                <View style={styles.tierStat}>
-                  <Text style={styles.tierStatValue}>{currentPoints.toLocaleString()}</Text>
-                  <Text style={styles.tierStatLabel}>Points</Text>
-                </View>
-                <View style={styles.tierStatDivider} />
-                <View style={styles.tierStat}>
-                  <Text style={styles.tierStatValue}>2x</Text>
-                  <Text style={styles.tierStatLabel}>Multiplier</Text>
-                </View>
-                <View style={styles.tierStatDivider} />
-                <View style={styles.tierStat}>
-                  <Text style={styles.tierStatValue}>VIP</Text>
-                  <Text style={styles.tierStatLabel}>Access</Text>
-                </View>
-              </View>
-
-              {/* Upgrade via subscription */}
               <TouchableOpacity 
-                style={[styles.tierUpgradeButton, { borderColor: colors.gold }]}
+                style={[styles.tierBadge, { backgroundColor: subscriptionData?.tier?.color || colors.gold }]}
                 onPress={() => router.push('/subscriptions')}
               >
-                <Ionicons name="diamond" size={18} color={colors.gold} />
-                <Text style={[styles.tierUpgradeText, { color: colors.gold }]}>
-                  UPGRADE VIA SUBSCRIPTION
+                <Ionicons 
+                  name={subscriptionData?.tier?.id === 'supernova' ? 'star' : subscriptionData?.tier?.id === 'eclipse' ? 'flash' : 'moon'} 
+                  size={14} 
+                  color="#000" 
+                />
+                <Text style={styles.tierBadgeText}>
+                  {subscriptionData?.tier?.name?.toUpperCase() || 'LUNAR'}
                 </Text>
               </TouchableOpacity>
-            </LinearGradient>
-          </View>
+            </View>
+
+            <View style={styles.rewardsInfo}>
+              <View style={styles.rewardsStat}>
+                <Text style={styles.rewardsStatValue}>{subscriptionData?.tier?.points_multiplier || 1}x</Text>
+                <Text style={styles.rewardsStatLabel}>Multiplier</Text>
+              </View>
+              <View style={styles.rewardsDivider} />
+              <View style={styles.rewardsStat}>
+                <Text style={styles.rewardsStatValue}>
+                  {subscriptionData?.subscription?.free_entries_remaining === -1 
+                    ? '∞' 
+                    : subscriptionData?.subscription?.free_entries_remaining || 0}
+                </Text>
+                <Text style={styles.rewardsStatLabel}>Free Entries</Text>
+              </View>
+              <View style={styles.rewardsDivider} />
+              <View style={styles.rewardsStat}>
+                <Text style={styles.rewardsStatValue}>$1</Text>
+                <Text style={styles.rewardsStatLabel}>= 1 Point</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.upgradeButton, { borderColor: subscriptionData?.tier?.color || colors.gold }]}
+              onPress={() => router.push('/subscriptions')}
+            >
+              <Ionicons name="arrow-up-circle" size={18} color={subscriptionData?.tier?.color || colors.gold} />
+              <Text style={[styles.upgradeButtonText, { color: subscriptionData?.tier?.color || colors.gold }]}>
+                {subscriptionData?.is_subscribed ? 'MANAGE SUBSCRIPTION' : 'UPGRADE MEMBERSHIP'}
+              </Text>
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
 
         {/* Stats Grid */}
