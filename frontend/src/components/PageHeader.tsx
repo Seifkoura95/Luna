@@ -25,7 +25,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
       <RotatingMoon size={80} rotationDuration={30000} />
-      <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.black }]}>{title}</Text>
+      <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.display }]}>{title}</Text>
       <View style={styles.headerUnderline} />
       {description && (
         <Text style={[styles.headerDescription, fontsLoaded && { fontFamily: fonts.regular }]}>{description}</Text>
