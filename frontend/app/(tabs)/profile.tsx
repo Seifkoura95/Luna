@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -25,8 +25,10 @@ import { RotatingMoon } from '../../src/components/RotatingMoon';
 import { FierySun } from '../../src/components/FierySun';
 import { SafetyAlert } from '../../src/components/SafetyAlert';
 import { CrewMap } from '../../src/components/CrewMap';
+import { PageHeader } from '../../src/components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useFonts, fonts } from '../../src/hooks/useFonts';
 
 const { width } = Dimensions.get('window');
 const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
