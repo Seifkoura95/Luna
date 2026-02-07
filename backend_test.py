@@ -96,11 +96,12 @@ class APITester:
                         
                         # Verify it has days and hours structure
                         if isinstance(operating_hours, dict) and len(operating_hours) > 0:
-                            # Check if it has day entries
+                            # Check if it has day entries with time strings
                             sample_day = list(operating_hours.keys())[0]
                             day_info = operating_hours[sample_day]
                             
-                            if isinstance(day_info, dict) and ("open" in day_info or "closed" in day_info):
+                            # The format should be day -> time string (e.g., "9:00 PM - 3:00 AM")
+                            if isinstance(day_info, str) and ("-" in day_info or "closed" in day_info.lower()):
                                 self.log_result(
                                     f"Venue Details API - {venue_id}",
                                     True,
@@ -110,7 +111,7 @@ class APITester:
                                 self.log_result(
                                     f"Venue Details API - {venue_id}",
                                     False,
-                                    f"operating_hours exists but invalid structure: {day_info}"
+                                    f"operating_hours exists but invalid format: {day_info} (expected time string)"
                                 )
                         else:
                             self.log_result(
