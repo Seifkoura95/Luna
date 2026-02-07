@@ -17,10 +17,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
+import { useAuthStore } from '../src/store/authStore';
+import { useFonts, fonts } from '../src/hooks/useFonts';
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const fontsLoaded = useFonts();
+  
+  // Get auth state
+  const { isAuthenticated, isLoading: authLoading, token } = useAuthStore();
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -31,8 +37,14 @@ export default function NotificationsScreen() {
   const [showPreferences, setShowPreferences] = useState(false);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    // Only fetch data when auth is ready and user is authenticated
+    if (!authLoading && isAuthenticated && token) {
+      fetchData();
+    } else if (!authLoading && !isAuthenticated) {
+      // Redirect to login if not authenticated
+      router.replace('/login');
+    }
+  }, [authLoading, isAuthenticated, token]);
 
   const fetchData = async () => {
     try {
@@ -48,6 +60,7 @@ export default function NotificationsScreen() {
       setPreferences(prefsResponse || {});
     } catch (e) {
       console.error('Failed to fetch notifications:', e);
+      // If we get an auth error, don't show error - just show empty state
     } finally {
       setLoading(false);
       setRefreshing(false);
