@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -23,7 +23,7 @@ import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { PageHeader } from '../../src/components/PageHeader';
 import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';
 import { FierySun } from '../../src/components/FierySun';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 
 const { width } = Dimensions.get('window');
