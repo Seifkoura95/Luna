@@ -224,6 +224,37 @@ export default function LoginScreen() {
                   </View>
                 </View>
 
+                {/* Referral Code Field (Registration Only) */}
+                {!isLogin && (
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputLabel}>REFERRAL CODE <Text style={styles.optionalLabel}>(Optional)</Text></Text>
+                    <View
+                      style={[
+                        styles.inputContainer,
+                        focusedField === 'referral' && styles.inputContainerFocused,
+                      ]}
+                    >
+                      <Ionicons
+                        name="gift-outline"
+                        size={20}
+                        color={focusedField === 'referral' ? '#00D4AA' : colors.textMuted}
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Enter friend's referral code"
+                        placeholderTextColor={colors.textMuted + '60'}
+                        value={referralCode}
+                        onChangeText={(text) => setReferralCode(text.toUpperCase())}
+                        onFocus={() => setFocusedField('referral')}
+                        onBlur={() => setFocusedField(null)}
+                        autoCapitalize="characters"
+                      />
+                    </View>
+                    <Text style={styles.referralHint}>Both you and your friend earn 10 bonus points!</Text>
+                  </View>
+                )}
+
                 {/* Submit Button */}
                 <TouchableOpacity
                   style={[styles.submitButton, loading && styles.submitButtonDisabled]}
