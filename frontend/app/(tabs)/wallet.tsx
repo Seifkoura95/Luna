@@ -356,7 +356,7 @@ export default function WalletScreen() {
           showPoints={false} 
         />
 
-        {/* Points & Subscription Card */}
+        {/* Points Card - Simplified */}
         <View style={styles.rewardsCard}>
           <LinearGradient
             colors={['#1A1A1A', '#0D0D0D']}
@@ -365,7 +365,7 @@ export default function WalletScreen() {
             style={styles.rewardsGradient}
           >
             {/* Accent border glow */}
-            <View style={[styles.accentBorder, { borderColor: subscriptionData?.tier?.color || colors.gold }]} />
+            <View style={[styles.accentBorder, { borderColor: colors.gold }]} />
             
             <View style={styles.rewardsHeader}>
               <View style={styles.pointsDisplay}>
@@ -379,51 +379,49 @@ export default function WalletScreen() {
               </View>
               
               <TouchableOpacity 
-                style={[styles.tierBadge, { backgroundColor: subscriptionData?.tier?.color || colors.gold }]}
-                onPress={() => router.push('/subscriptions')}
+                style={[styles.rewardsButton, { backgroundColor: colors.gold + '20', borderColor: colors.gold }]}
+                onPress={() => router.push('/rewards')}
               >
-                <Ionicons 
-                  name={subscriptionData?.tier?.id === 'supernova' ? 'star' : subscriptionData?.tier?.id === 'eclipse' ? 'flash' : 'moon'} 
-                  size={14} 
-                  color="#000" 
-                />
-                <Text style={styles.tierBadgeText}>
-                  {subscriptionData?.tier?.name?.toUpperCase() || 'LUNAR'}
-                </Text>
+                <Ionicons name="gift" size={16} color={colors.gold} />
+                <Text style={[styles.rewardsButtonText, { color: colors.gold }]}>REWARDS</Text>
               </TouchableOpacity>
             </View>
+          </LinearGradient>
+        </View>
 
-            <View style={styles.rewardsInfo}>
-              <View style={styles.rewardsStat}>
-                <Text style={styles.rewardsStatValue}>{pointsData?.multiplier || 1}x</Text>
-                <Text style={styles.rewardsStatLabel}>Multiplier</Text>
+        {/* Active Missions */}
+        <View style={styles.missionsSection}>
+          <View style={styles.missionHeader}>
+            <Text style={styles.sectionTitle}>ACTIVE MISSIONS</Text>
+            <TouchableOpacity onPress={() => router.push('/rewards')}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {[
+            { id: 'm1', title: 'Weekend Warrior', description: 'Visit 3 venues this weekend', progress: 1, total: 3, points: 50, icon: 'location', color: colors.accent },
+            { id: 'm2', title: 'First Timer', description: 'Buy your first ticket', progress: 0, total: 1, points: 25, icon: 'ticket', color: '#8B5CF6' },
+            { id: 'm3', title: 'Social Butterfly', description: 'Refer 2 friends', progress: 0, total: 2, points: 100, icon: 'people', color: '#00D4AA' },
+          ].map((mission) => (
+            <View key={mission.id} style={styles.missionCard}>
+              <View style={[styles.missionIcon, { backgroundColor: mission.color + '20' }]}>
+                <Ionicons name={mission.icon as any} size={20} color={mission.color} />
               </View>
-              <View style={styles.rewardsDivider} />
-              <View style={styles.rewardsStat}>
-                <Text style={styles.rewardsStatValue}>
-                  {subscriptionData?.subscription?.free_entries_remaining === -1 
-                    ? '∞' 
-                    : subscriptionData?.subscription?.free_entries_remaining || 0}
-                </Text>
-                <Text style={styles.rewardsStatLabel}>Free Entries</Text>
+              <View style={styles.missionContent}>
+                <Text style={styles.missionTitle}>{mission.title}</Text>
+                <Text style={styles.missionDescription}>{mission.description}</Text>
+                <View style={styles.missionProgress}>
+                  <View style={styles.missionProgressBar}>
+                    <View style={[styles.missionProgressFill, { width: `${(mission.progress / mission.total) * 100}%`, backgroundColor: mission.color }]} />
+                  </View>
+                  <Text style={styles.missionProgressText}>{mission.progress}/{mission.total}</Text>
+                </View>
               </View>
-              <View style={styles.rewardsDivider} />
-              <View style={styles.rewardsStat}>
-                <Text style={styles.rewardsStatValue}>$1</Text>
-                <Text style={styles.rewardsStatLabel}>= 1 Point</Text>
+              <View style={[styles.missionPoints, { backgroundColor: mission.color + '20' }]}>
+                <Text style={[styles.missionPointsText, { color: mission.color }]}>+{mission.points}</Text>
               </View>
             </View>
-
-            <TouchableOpacity 
-              style={[styles.upgradeButton, { borderColor: subscriptionData?.tier?.color || colors.gold }]}
-              onPress={() => router.push('/subscriptions')}
-            >
-              <Ionicons name="arrow-up-circle" size={18} color={subscriptionData?.tier?.color || colors.gold} />
-              <Text style={[styles.upgradeButtonText, { color: subscriptionData?.tier?.color || colors.gold }]}>
-                {subscriptionData?.is_subscribed ? 'MANAGE SUBSCRIPTION' : 'UPGRADE MEMBERSHIP'}
-              </Text>
-            </TouchableOpacity>
-          </LinearGradient>
+          ))}
         </View>
 
         {/* Tab Selector */}
