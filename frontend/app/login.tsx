@@ -324,11 +324,10 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   brandTitle: {
-    fontSize: 28,
-    fontWeight: '900',
+    fontSize: 32,
+    fontWeight: '700',
     color: colors.textPrimary,
-    letterSpacing: 6,
-    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
   brandUnderline: {
     width: 60,
