@@ -60,6 +60,7 @@ export default function AuctionsScreen() {
   const [bidAmount, setBidAmount] = useState('');
   const [maxBidAmount, setMaxBidAmount] = useState('');
   const [showMaxBid, setShowMaxBid] = useState(false);
+  const [notifyOutbid, setNotifyOutbid] = useState(true);
   const [timeLeft, setTimeLeft] = useState<Record<string, string>>({});
   const [isPlacingBid, setIsPlacingBid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
