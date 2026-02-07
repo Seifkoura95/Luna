@@ -512,10 +512,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '700',
     color: colors.textPrimary,
-    letterSpacing: 2,
+    letterSpacing: 1,
   },
   headerSubtitle: {
     fontSize: 12,
