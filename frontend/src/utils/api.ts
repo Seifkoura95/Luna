@@ -562,4 +562,29 @@ export const api = {
     apiFetch<{ success: boolean; message: string; referral: any }>(`/api/referral/apply?referral_code=${code}`, {
       method: 'POST'
     }),
+
+  // ====== PUSH NOTIFICATIONS ======
+  registerPushToken: (token: string) =>
+    apiFetch<{ success: boolean }>('/api/push/register', {
+      method: 'POST',
+      body: JSON.stringify({ push_token: token })
+    }),
+  
+  unregisterPushToken: () =>
+    apiFetch<{ success: boolean }>('/api/push/unregister', {
+      method: 'DELETE'
+    }),
+
+  // ====== EMAIL VERIFICATION ======
+  verifyEmail: (token: string) =>
+    apiFetch<{ success: boolean; message: string; referral_bonus?: string }>(
+      `/api/auth/verify-email?token=${token}`,
+      { method: 'POST', auth: false }
+    ),
+  
+  resendVerificationEmail: () =>
+    apiFetch<{ success: boolean; message: string; demo_verification_link?: string }>(
+      '/api/auth/resend-verification',
+      { method: 'POST' }
+    ),
 };
