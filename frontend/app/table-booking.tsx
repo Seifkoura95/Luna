@@ -92,7 +92,17 @@ export default function TableBookingScreen() {
     setLoading(true);
     try {
       const response = await api.getVenueTables(selectedVenue.id, selectedDate || undefined);
-      setTables(response.tables || []);
+      
+      // Check if venue is closed on this date
+      if (response.venue_closed) {
+        setTables([]);
+        // Show closed message
+        if (response.closed_reason) {
+          Alert.alert('Venue Closed', response.closed_reason);
+        }
+      } else {
+        setTables(response.tables || []);
+      }
     } catch (e) {
       console.error('Failed to fetch tables:', e);
       setTables([]);
