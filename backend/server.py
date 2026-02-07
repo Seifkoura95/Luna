@@ -302,6 +302,35 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+class PushTokenRequest(BaseModel):
+    push_token: str
+
+# Email verification token expiry (24 hours)
+EMAIL_VERIFICATION_EXPIRY_HOURS = 24
+
+def generate_verification_token():
+    """Generate a secure verification token"""
+    return secrets.token_urlsafe(32)
+
+async def send_verification_email(email: str, name: str, token: str):
+    """
+    Send verification email to user.
+    In production, this would use SendGrid, AWS SES, or similar service.
+    For now, we log the verification link.
+    """
+    verification_link = f"https://lunagroup.app/verify-email?token={token}"
+    logging.info(f"📧 Verification email for {email}:")
+    logging.info(f"   Link: {verification_link}")
+    
+    # In production, integrate with email service:
+    # await sendgrid.send_email(
+    #     to=email,
+    #     subject="Verify your Luna Group account",
+    #     html=f"Hi {name}, click here to verify: {verification_link}"
+    # )
+    
+    return verification_link
+
 @api_router.post("/auth/register")
 async def register(request: RegisterRequest):
     existing = await db.users.find_one({"email": request.email})
@@ -317,6 +346,11 @@ async def register(request: RegisterRequest):
     
     hashed = bcrypt.hashpw(request.password.encode(), bcrypt.gensalt())
     user_id = str(uuid.uuid4())
+    
+    # Generate email verification token
+    verification_token = generate_verification_token()
+    verification_expiry = datetime.now(timezone.utc) + timedelta(hours=EMAIL_VERIFICATION_EXPIRY_HOURS)
+    
     user = {
         "user_id": user_id,
         "email": request.email,
@@ -327,15 +361,16 @@ async def register(request: RegisterRequest):
         "home_region": "brisbane",
         "favorite_venues": [],
         "referred_by": referrer["user_id"] if referrer else None,
-        "email_verified": True,  # Auto-verify for now (would be False in production)
+        "email_verified": False,  # Requires verification
+        "email_verification_token": verification_token,
+        "email_verification_expiry": verification_expiry,
+        "push_token": None,  # Set when user enables push notifications
         "created_at": datetime.now(timezone.utc)
     }
     await db.users.insert_one(user)
     
-    # Process referral if code was provided
-    referral_bonus_message = None
+    # Create referral record if code was provided (pending until email verified)
     if referrer:
-        # Create referral record
         referral = {
             "id": str(uuid.uuid4())[:8],
             "referrer_user_id": referrer["user_id"],
@@ -347,10 +382,9 @@ async def register(request: RegisterRequest):
             "created_at": datetime.now(timezone.utc)
         }
         await db.referrals.insert_one(referral)
-        
-        # Auto-complete the referral since user is verified on registration
-        await complete_referral(user_id)
-        referral_bonus_message = f"You and {referrer.get('name', 'your friend')} each earned {REFERRAL_POINTS_REWARD} points!"
+    
+    # Send verification email
+    verification_link = await send_verification_email(request.email, request.name, verification_token)
     
     token_payload = {
         "user_id": user_id,
@@ -358,14 +392,98 @@ async def register(request: RegisterRequest):
         "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRY_DAYS)
     }
     token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-    # Remove MongoDB _id and hashed_password
-    user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id"]}
     
-    response = {"user": user_copy, "token": token}
-    if referral_bonus_message:
-        response["referral_bonus"] = referral_bonus_message
+    # Remove sensitive fields
+    user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id", "email_verification_token"]}
+    
+    return {
+        "user": user_copy,
+        "token": token,
+        "verification_required": True,
+        "message": "Please check your email to verify your account",
+        # Include link for demo purposes (remove in production)
+        "demo_verification_link": verification_link
+    }
+
+@api_router.post("/auth/verify-email")
+async def verify_email(token: str):
+    """Verify user's email address using the token sent via email"""
+    user = await db.users.find_one({"email_verification_token": token})
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+    
+    # Check if token has expired
+    expiry = user.get("email_verification_expiry")
+    if expiry and datetime.now(timezone.utc) > expiry:
+        raise HTTPException(status_code=400, detail="Verification token has expired. Please request a new one.")
+    
+    # Already verified
+    if user.get("email_verified"):
+        return {"success": True, "message": "Email already verified"}
+    
+    # Mark email as verified
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {
+            "$set": {
+                "email_verified": True,
+                "email_verified_at": datetime.now(timezone.utc)
+            },
+            "$unset": {
+                "email_verification_token": "",
+                "email_verification_expiry": ""
+            }
+        }
+    )
+    
+    # Complete any pending referral
+    referral_completed = await complete_referral(user["user_id"])
+    
+    response = {
+        "success": True,
+        "message": "Email verified successfully! Welcome to Luna Group.",
+        "user_id": user["user_id"]
+    }
+    
+    if referral_completed:
+        response["referral_bonus"] = f"You and your friend each earned {REFERRAL_POINTS_REWARD} points!"
     
     return response
+
+@api_router.post("/auth/resend-verification")
+async def resend_verification_email(request: Request):
+    """Resend verification email for unverified users"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.get("email_verified"):
+        return {"success": True, "message": "Email already verified"}
+    
+    # Generate new verification token
+    verification_token = generate_verification_token()
+    verification_expiry = datetime.now(timezone.utc) + timedelta(hours=EMAIL_VERIFICATION_EXPIRY_HOURS)
+    
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {
+            "email_verification_token": verification_token,
+            "email_verification_expiry": verification_expiry
+        }}
+    )
+    
+    # Send new verification email
+    verification_link = await send_verification_email(user["email"], user["name"], verification_token)
+    
+    return {
+        "success": True,
+        "message": "Verification email sent",
+        "demo_verification_link": verification_link  # Remove in production
+    }
 
 @api_router.post("/auth/login")
 async def login(request: LoginRequest):
