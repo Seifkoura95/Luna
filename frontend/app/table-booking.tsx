@@ -52,6 +52,32 @@ export default function TableBookingScreen() {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [createdBooking, setCreatedBooking] = useState<any>(null);
+  const [venueOperatingHours, setVenueOperatingHours] = useState<Record<string, string> | null>(null);
+
+  // Map day name to lowercase key for operating hours lookup
+  const dayNameToKey: Record<string, string> = {
+    'Sun': 'sunday',
+    'Mon': 'monday', 
+    'Tue': 'tuesday',
+    'Wed': 'wednesday',
+    'Thu': 'thursday',
+    'Fri': 'friday',
+    'Sat': 'saturday',
+  };
+
+  // Check if venue is open on a specific day
+  const isVenueOpenOnDay = (dayName: string) => {
+    if (!venueOperatingHours) return true; // Assume open if no data
+    const dayKey = dayNameToKey[dayName];
+    return dayKey && venueOperatingHours[dayKey];
+  };
+
+  // Get operating hours for a day
+  const getHoursForDay = (dayName: string) => {
+    if (!venueOperatingHours) return null;
+    const dayKey = dayNameToKey[dayName];
+    return dayKey ? venueOperatingHours[dayKey] : null;
+  };
 
   // Generate next 14 days
   const getAvailableDates = () => {
@@ -59,10 +85,12 @@ export default function TableBookingScreen() {
     for (let i = 1; i <= 14; i++) {
       const date = new Date();
       date.setDate(date.getDate() + i);
+      const dayName = date.toLocaleDateString('en-AU', { weekday: 'short' });
       dates.push({
         value: date.toISOString().split('T')[0],
         label: date.toLocaleDateString('en-AU', { weekday: 'short', month: 'short', day: 'numeric' }),
-        dayName: date.toLocaleDateString('en-AU', { weekday: 'short' })
+        dayName: dayName,
+        isOpen: isVenueOpenOnDay(dayName),
       });
     }
     return dates;
