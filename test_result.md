@@ -413,10 +413,13 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Venue Details & Operating Hours API"
+    - "Push Notification Token Registration API"
+    - "Email Verification Flow API"
   stuck_tasks: []
-  test_all: true
-  test_priority: "completed"
+  test_all: false
+  test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
@@ -427,3 +430,5 @@ agent_communication:
     message: "✅ AUCTION & PHOTO APIs TESTING COMPLETE: All 13 new APIs tested successfully with 100% pass rate (13/13 tests). Auction APIs: GET /api/auctions, GET /api/auctions?status=active, GET /api/auctions/{id}, POST /api/auctions/bid, GET /api/auctions/user/won, POST /api/auctions/{id}/claim all working. Photo APIs: GET /api/photos, GET /api/photos/pending, POST /api/photos/approve, POST /api/photos/purchase, GET /api/photos/purchased, GET /api/photos/recap all working. Admin API: POST /api/admin/photos/tag working. Fixed KeyError issues with ai_enhanced field and datetime comparison. All auction and photo management features are production-ready."
   - agent: "testing"
     message: "✅ FRONTEND UI TESTING COMPLETE: Comprehensive end-to-end testing completed for Luna Group VIP app. All major features tested successfully: (1) Login flow with demo@luna.com/test123 works perfectly with ENTER LUNA button and redirect to Tonight page. (2) Tonight page displays rotating lunar moon animation and fiery sun in points badge, venue dropdown selector functions, news/events content loads. (3) Wallet tab shows mock ticket data for 'Saturday Night Takeover' and 'R&B & Hip-Hop Fridays', tab switching works, ticket detail modals open correctly. (4) Auctions tab displays 6 active auctions with countdown timers, bid controls (+$10/+$25/+$50/+$100), max bid toggle, deposit rules. (5) Profile tab shows Demo User info, Bronze membership tier with progress bar, stats grid, Quick Actions including functional Safety and Crew Plan modals. (6) Visual polish confirmed: starfield background with twinkling stars, consistent black background, smooth animations, mobile-optimized for iPhone 12/13 (390x844). All core functionality working as specified. App is production-ready."
+  - agent: "main"
+    message: "Implemented production readiness features: 1) Venue hours UI in date picker showing open/closed status with visual indicators and opening times, 2) Integrated useFonts and usePushNotifications hooks into root _layout.tsx, 3) Added Playfair Display font for elegant page headers. Please test the new venue API endpoint (GET /api/venues/{venue_id}) and push notification token registration (POST /api/notifications/register-push-token)."
