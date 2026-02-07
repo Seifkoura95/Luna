@@ -78,6 +78,7 @@ export default function ExploreScreen() {
       />
 
       <ScrollView
+        ref={scrollRef}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         refreshControl={
