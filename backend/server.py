@@ -296,6 +296,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     name: str
+    referral_code: Optional[str] = None  # Optional referral code
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -306,6 +307,14 @@ async def register(request: RegisterRequest):
     existing = await db.users.find_one({"email": request.email})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Validate referral code if provided
+    referrer = None
+    if request.referral_code:
+        referrer = await db.users.find_one({"referral_code": request.referral_code.upper()})
+        if not referrer:
+            raise HTTPException(status_code=400, detail="Invalid referral code")
+    
     hashed = bcrypt.hashpw(request.password.encode(), bcrypt.gensalt())
     user_id = str(uuid.uuid4())
     user = {
@@ -317,9 +326,32 @@ async def register(request: RegisterRequest):
         "points_balance": 500,
         "home_region": "brisbane",
         "favorite_venues": [],
+        "referred_by": referrer["user_id"] if referrer else None,
+        "email_verified": True,  # Auto-verify for now (would be False in production)
         "created_at": datetime.now(timezone.utc)
     }
     await db.users.insert_one(user)
+    
+    # Process referral if code was provided
+    referral_bonus_message = None
+    if referrer:
+        # Create referral record
+        referral = {
+            "id": str(uuid.uuid4())[:8],
+            "referrer_user_id": referrer["user_id"],
+            "referrer_name": referrer.get("name", "Luna Member"),
+            "referred_user_id": user_id,
+            "referred_name": request.name,
+            "referral_code": request.referral_code.upper(),
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.referrals.insert_one(referral)
+        
+        # Auto-complete the referral since user is verified on registration
+        await complete_referral(user_id)
+        referral_bonus_message = f"You and {referrer.get('name', 'your friend')} each earned {REFERRAL_POINTS_REWARD} points!"
+    
     token_payload = {
         "user_id": user_id,
         "email": request.email,
@@ -328,7 +360,12 @@ async def register(request: RegisterRequest):
     token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     # Remove MongoDB _id and hashed_password
     user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id"]}
-    return {"user": user_copy, "token": token}
+    
+    response = {"user": user_copy, "token": token}
+    if referral_bonus_message:
+        response["referral_bonus"] = referral_bonus_message
+    
+    return response
 
 @api_router.post("/auth/login")
 async def login(request: LoginRequest):
