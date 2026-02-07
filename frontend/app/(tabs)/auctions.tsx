@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { PageHeader } from '../../src/components/PageHeader';
 import { GlassCard } from '../../src/components/GlassCard';
 import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';
 import { AnimatedCounter, SpringCounter } from '../../src/components/AnimatedCounter';
+import { useFocusEffect } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
