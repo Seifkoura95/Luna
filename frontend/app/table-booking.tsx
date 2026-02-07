@@ -682,11 +682,24 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(227,24,55,0.1)',
     borderWidth: 2,
   },
+  dateCardClosed: {
+    opacity: 0.5,
+    backgroundColor: 'rgba(50,50,50,0.5)',
+  },
+  dateStatusDot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   dateDayName: {
     fontSize: 12,
     fontWeight: '600',
     color: colors.textSecondary,
     marginBottom: 2,
+    marginTop: 4,
   },
   dateLabel: {
     fontSize: 11,
@@ -694,6 +707,35 @@ const styles = StyleSheet.create({
   },
   dateTextSelected: {
     color: colors.textPrimary,
+  },
+  dateTextClosed: {
+    color: colors.textMuted,
+    textDecorationLine: 'line-through',
+  },
+  dateHours: {
+    fontSize: 9,
+    color: colors.success,
+    marginTop: 4,
+  },
+  hoursLegend: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  legendDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  legendText: {
+    fontSize: 10,
+    color: colors.textMuted,
   },
   
   // Tables
