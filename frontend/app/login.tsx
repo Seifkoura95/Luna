@@ -32,6 +32,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
@@ -48,8 +49,15 @@ export default function LoginScreen() {
         const result = await api.login(email, password);
         useAuthStore.getState().login(result.user, result.token);
       } else {
-        const result = await api.register(email, password, name);
+        const result = await api.register(email, password, name, referralCode || undefined);
         useAuthStore.getState().login(result.user, result.token);
+        
+        // Show referral bonus message if applicable
+        if (result.referral_bonus) {
+          setTimeout(() => {
+            Alert.alert('🎉 Welcome Bonus!', result.referral_bonus);
+          }, 500);
+        }
       }
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
