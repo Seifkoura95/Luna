@@ -1226,6 +1226,90 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
   },
+  // Tier Perks Section
+  tierPerksSection: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  perksGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  perkCard: {
+    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0A0A0A',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  perkCardInactive: {
+    opacity: 0.5,
+  },
+  perkLabel: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  perkLabelInactive: {
+    color: colors.textMuted,
+  },
+  // Badges Section
+  badgesSection: {
+    marginBottom: spacing.lg,
+  },
+  badgeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  viewAllText: {
+    fontSize: 12,
+    color: colors.accent,
+    fontWeight: '600',
+  },
+  badgesScroll: {
+    paddingLeft: spacing.lg,
+  },
+  badgeItem: {
+    alignItems: 'center',
+    marginRight: spacing.md,
+    width: 70,
+  },
+  badgeItemLocked: {
+    opacity: 0.4,
+  },
+  badgeEmoji: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.gold + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
+  badgeEmojiLocked: {
+    backgroundColor: colors.border,
+  },
+  badgeEmojiText: {
+    fontSize: 28,
+  },
+  badgeTitle: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  badgeTitleLocked: {
+    color: colors.textMuted,
+  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
