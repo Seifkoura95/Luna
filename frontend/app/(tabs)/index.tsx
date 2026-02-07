@@ -124,7 +124,7 @@ export default function TonightScreen() {
       >
         {/* Header */}
         <PageHeader 
-          title="LUNA" 
+          title="LUNA GROUP HOSPITALITY" 
           description="Premium nightlife & dining across Brisbane & Gold Coast"
           showPoints={false} 
         />
