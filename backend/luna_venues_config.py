@@ -65,8 +65,8 @@ LUNA_VENUES = {
         "long_description": "After Dark transforms the Eclipse space into Brisbane's ultimate destination for urban music. Every Saturday night, experience the best in hip hop, RnB, Afrobeats, and global sounds across multiple rooms. Premium bottle service, VIP booths, and an incredible atmosphere await. The best crowd, best sound, and best vibes in Brisbane.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos", "bottle_service"],
         "points_rate": 1.0,
-        "image_url": "https://images.unsplash.com/photo-1640287328467-972983417090?w=800",
-        "hero_image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200",
+        "image_url": "https://images.unsplash.com/photo-1767979258275-490abc4f51c7?w=800",
+        "hero_image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1200",
         "gallery": [
             "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=800",
             "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
