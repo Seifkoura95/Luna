@@ -298,19 +298,20 @@ export default function ProfileScreen() {
       <StarfieldBackground starCount={50} shootingStarCount={2} />
       
       <ScrollView
+        ref={scrollRef}
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
+        contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile Header - Minimalist with just name and moon */}
-        <View style={styles.profileHeader}>
-          <RotatingMoon size={80} rotationDuration={30000} />
-          <Text style={styles.welcomeText}>Welcome back,</Text>
-          <Text style={styles.userName}>{formatName(user?.name)}</Text>
-        </View>
+        {/* Profile Header - Same style as Home */}
+        <PageHeader 
+          title="PROFILE" 
+          description={`Welcome back, ${formatName(user?.name)}`}
+          showPoints={true}
+        />
 
         {/* Membership Tier Card - Same design as Wallet */}
         <View style={styles.tierCardContainer}>
