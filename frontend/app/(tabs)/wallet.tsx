@@ -341,6 +341,7 @@ export default function WalletScreen() {
       <StarfieldBackground starCount={60} shootingStarCount={2} />
       
       <ScrollView
+        ref={scrollRef}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         refreshControl={
