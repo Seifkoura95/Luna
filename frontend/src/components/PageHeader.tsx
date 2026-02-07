@@ -50,10 +50,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   headerTitle: {
-    fontSize: 42,
+    fontSize: 24,
     fontWeight: '700',
     color: colors.textPrimary,
-    letterSpacing: 4,
+    letterSpacing: 2,
     marginTop: spacing.sm,
     textTransform: 'uppercase',
   },
