@@ -8,8 +8,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-// Blood moon with transparent background
-const LUNAR_MOON_IMAGE = 'https://static.vecteezy.com/system/resources/previews/066/667/228/non_2x/blood-moon-isolated-on-transparent-background-png.png';
+// Blood moon with transparent background - full red moon
+const LUNAR_MOON_IMAGE = 'https://static.vecteezy.com/system/resources/previews/021/357/755/non_2x/full-red-moon-free-png.png';
 
 interface RotatingMoonProps {
   size?: number;
