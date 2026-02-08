@@ -8,7 +8,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-// Use the original Luna moon but scale it so only the moon shows
+// Use the original Luna moon
 const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
 
 interface RotatingMoonProps {
@@ -22,8 +22,9 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
 }) => {
   const rotation = useSharedValue(0);
   // The moon in the image is centered but smaller than the canvas
-  // Scale up to fill the container and crop out the black background
-  const scale = 2.5;
+  // Scale up significantly to fill the container and crop out the black background
+  const scale = 2.8;
+  const innerSize = size * scale;
 
   useEffect(() => {
     // Simple continuous spin - like a planet rotating on its axis
@@ -37,20 +38,26 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
     );
   }, [rotationDuration]);
 
-  // Smooth spinning rotation with scale
+  // Smooth spinning rotation
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: scale },
-      { rotate: `${rotation.value}deg` },
-    ],
+    transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
+    <View 
+      style={[
+        styles.container, 
+        { 
+          width: size, 
+          height: size, 
+          borderRadius: size / 2,
+        }
+      ]}
+    >
       <Animated.View style={[animatedStyle, styles.imageContainer]}>
         <Image
           source={{ uri: LUNAR_MOON_IMAGE }}
-          style={{ width: size, height: size }}
+          style={{ width: innerSize, height: innerSize }}
           resizeMode="contain"
         />
       </Animated.View>
@@ -64,7 +71,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: 1000, // Circular clip
+    // Extra web-specific circular clip
+    ...Platform.select({
+      web: {
+        clipPath: 'circle(50%)',
+      },
+      default: {},
+    }),
   },
   imageContainer: {
     justifyContent: 'center',
