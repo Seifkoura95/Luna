@@ -16,7 +16,7 @@ import { api } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
-import { LunaMoonIcon } from '../src/components/LunaMoonIcon';
+import { GoldStarIcon } from '../src/components/GoldStarIcon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts, fonts } from '../src/hooks/useFonts';
 import * as Haptics from 'expo-haptics';
@@ -186,7 +186,7 @@ export default function RewardsScreen() {
             <View style={[styles.accentBorder, { borderColor: colors.gold }]} />
             
             <View style={styles.pointsRow}>
-              <LunaMoonIcon size={48} />
+              <GoldStarIcon size={48} />
               <View>
                 <Text style={[styles.pointsValue, fontsLoaded && { fontFamily: fonts.bold }]}>
                   {currentPoints.toLocaleString()}
