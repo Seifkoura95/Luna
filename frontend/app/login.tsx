@@ -307,10 +307,10 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   logoContainer: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
   },
   logoImage: {
     width: 100,
