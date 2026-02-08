@@ -40,10 +40,10 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
-      <Animated.View style={animatedStyle}>
+      <Animated.View style={[animatedStyle, { width: size, height: size }]}>
         <Image
           source={{ uri: LUNAR_MOON_IMAGE }}
-          style={[styles.moon, { width: size, height: size }]}
+          style={{ width: size, height: size, borderWidth: 0, borderColor: 'transparent' }}
           resizeMode="contain"
         />
       </Animated.View>
@@ -56,9 +56,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-  },
-  moon: {
-    // Clean look - no border, no effects
+    overflow: 'visible',
   },
 });
 
