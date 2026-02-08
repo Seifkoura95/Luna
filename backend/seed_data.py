@@ -374,7 +374,7 @@ def get_seed_data():
             "event_end_date": now + timedelta(days=7, hours=6),
             "ticket_url": "https://eclipsebrisbane.com.au/tickets",
             "ticket_price": 35.00,
-            "image_url": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
+            "image_url": "https://images.unsplash.com/photo-1680416124175-f70a22323763?w=800",
             "category": "club_night",
             "featured": True,
             "featured_artist": {
@@ -461,7 +461,7 @@ def get_seed_data():
             "event_end_date": now + timedelta(days=2, hours=6),
             "ticket_url": None,
             "ticket_price": 20.00,
-            "image_url": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
+            "image_url": "https://images.unsplash.com/photo-1713885462557-12b5c41f22cd?w=800",
             "category": "club_night",
             "featured": False,
             "featured_artist": None
