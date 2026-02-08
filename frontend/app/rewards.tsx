@@ -51,7 +51,7 @@ const POINT_MILESTONES = [
   {
     id: 'milestone_1000',
     points: 1000,
-    title: 'Lunar Elite',
+    title: 'Luna Elite',
     icon: 'diamond',
     color: colors.gold,
     rewards: [
