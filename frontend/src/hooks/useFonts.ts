@@ -40,6 +40,8 @@ export const useFonts = () => {
     'Playfair-BoldItalic': PlayfairDisplay_700Bold_Italic,
     // Victory Striker Sans for page headers (sports/bold style)
     'VictoryStriker': require('../../assets/fonts/Victory Striker Sans Demo.otf'),
+    // Milker font for luxury titles
+    'Milker': require('../../assets/fonts/Milker.otf'),
   });
 
   return fontsLoaded;
@@ -65,8 +67,10 @@ export const fonts = {
   displayBlack: 'Playfair-Black',
   displayItalic: 'Playfair-Italic',
   displayBoldItalic: 'Playfair-BoldItalic',
-  // Victory Striker Sans for page titles (LUNA, EXPLORE, etc.)
+  // Victory Striker Sans for page titles (legacy)
   striker: 'VictoryStriker',
+  // Milker - luxury display font for all page titles
+  milker: 'Milker',
 };
 
 export default useFonts;
