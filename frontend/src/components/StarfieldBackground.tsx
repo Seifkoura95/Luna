@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
-import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, Dimensions, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,128 +19,21 @@ interface StarfieldBackgroundProps {
   showAurora?: boolean;
   showGalaxies?: boolean;
   showPlanets?: boolean;
+  overlayOpacity?: number;
 }
 
-interface BokehOrb {
-  x: number;
-  y: number;
-  size: number;
-  color: string;
-  opacity: number;
-  delay: number;
-  driftSpeed: number;
-  pulseSpeed: number;
-  blur: number;
-}
-
-// Nightclub/bar ambient light colors
-const BOKEH_COLORS = [
-  '#E31837',    // Luna Red
-  '#8B5CF6',    // Purple
-  '#FF6B9D',    // Pink
-  '#FFB800',    // Gold
-  '#00D4AA',    // Teal
-  '#3B82F6',    // Blue
-  '#FF4D6D',    // Coral
-  '#C084FC',    // Light Purple
-];
-
-// Individual Bokeh Orb Component
-const BokehOrbComponent = ({ orb }: { orb: BokehOrb }) => {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const translateX = useSharedValue(0);
-  const scale = useSharedValue(0.8);
-
-  useEffect(() => {
-    // Fade in
-    opacity.value = withDelay(
-      orb.delay,
-      withTiming(orb.opacity, { duration: 2000, easing: Easing.out(Easing.ease) })
-    );
-
-    // Gentle pulse
-    scale.value = withDelay(
-      orb.delay,
-      withRepeat(
-        withSequence(
-          withTiming(1.15, { duration: orb.pulseSpeed, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.85, { duration: orb.pulseSpeed, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        true
-      )
-    );
-
-    // Slow drift up/down
-    translateY.value = withDelay(
-      orb.delay,
-      withRepeat(
-        withSequence(
-          withTiming(-20, { duration: orb.driftSpeed, easing: Easing.inOut(Easing.ease) }),
-          withTiming(20, { duration: orb.driftSpeed, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        true
-      )
-    );
-
-    // Slow drift left/right
-    translateX.value = withDelay(
-      orb.delay + 1000,
-      withRepeat(
-        withSequence(
-          withTiming(15, { duration: orb.driftSpeed * 1.2, easing: Easing.inOut(Easing.ease) }),
-          withTiming(-15, { duration: orb.driftSpeed * 1.2, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        true
-      )
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateY: translateY.value },
-      { translateX: translateX.value },
-      { scale: scale.value },
-    ],
-  }));
-
-  return (
-    <Animated.View
-      style={[
-        styles.bokehOrb,
-        {
-          left: orb.x,
-          top: orb.y,
-          width: orb.size,
-          height: orb.size,
-          borderRadius: orb.size / 2,
-          backgroundColor: orb.color,
-          shadowColor: orb.color,
-          shadowRadius: orb.blur,
-          shadowOpacity: 0.8,
-        },
-        animatedStyle,
-      ]}
-    />
-  );
-};
-
-// Ambient glow layer component
+// Ambient glow layer component - subtle pulsing colored lights
 const AmbientGlowLayer = ({ index, color }: { index: number; color: string }) => {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(0);
 
   useEffect(() => {
     opacity.value = withDelay(
-      index * 500,
+      index * 800,
       withRepeat(
         withSequence(
-          withTiming(0.12 + index * 0.02, { duration: 8000 + index * 2000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.04, { duration: 8000 + index * 2000, easing: Easing.inOut(Easing.ease) })
+          withTiming(0.12 + index * 0.02, { duration: 6000 + index * 1500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.04, { duration: 6000 + index * 1500, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
         true
@@ -149,8 +42,8 @@ const AmbientGlowLayer = ({ index, color }: { index: number; color: string }) =>
 
     translateY.value = withRepeat(
       withSequence(
-        withTiming(-30, { duration: 12000 + index * 1500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(30, { duration: 12000 + index * 1500, easing: Easing.inOut(Easing.ease) })
+        withTiming(-25, { duration: 10000 + index * 1000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(25, { duration: 10000 + index * 1000, easing: Easing.inOut(Easing.ease) })
       ),
       -1,
       true
@@ -163,9 +56,9 @@ const AmbientGlowLayer = ({ index, color }: { index: number; color: string }) =>
   }));
 
   return (
-    <Animated.View style={[styles.glowLayer, { top: 50 + index * 200 }, animatedStyle]}>
+    <Animated.View style={[styles.glowLayer, { top: 100 + index * 250 }, animatedStyle]}>
       <LinearGradient
-        colors={['transparent', color + '15', color + '25', color + '15', 'transparent']}
+        colors={['transparent', color + '18', color + '28', color + '18', 'transparent']}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
         style={StyleSheet.absoluteFill}
@@ -174,59 +67,71 @@ const AmbientGlowLayer = ({ index, color }: { index: number; color: string }) =>
   );
 };
 
-// Light streak component (like club lasers but subtle)
-const LightStreak = ({ index }: { index: number }) => {
+// Subtle bokeh orb for ambiance
+const BokehOrb = ({ x, y, size, color, delay }: { x: number; y: number; size: number; color: string; delay: number }) => {
   const opacity = useSharedValue(0);
-  const rotation = useSharedValue(-30 + index * 15);
+  const scale = useSharedValue(0.8);
 
   useEffect(() => {
     opacity.value = withDelay(
-      index * 800,
+      delay,
       withRepeat(
         withSequence(
-          withTiming(0.06, { duration: 4000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0, { duration: 4000, easing: Easing.inOut(Easing.ease) })
+          withTiming(0.2, { duration: 4000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.06, { duration: 4000, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
         true
       )
     );
 
-    rotation.value = withRepeat(
-      withSequence(
-        withTiming(-30 + index * 15 + 10, { duration: 15000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(-30 + index * 15 - 10, { duration: 15000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
+    scale.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(1.1, { duration: 5000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.9, { duration: 5000, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      )
     );
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [{ rotate: `${rotation.value}deg` }],
+    transform: [{ scale: scale.value }],
   }));
 
-  const colors = ['#E31837', '#8B5CF6', '#FFB800', '#00D4AA'];
-
   return (
-    <Animated.View style={[styles.lightStreak, animatedStyle]}>
-      <LinearGradient
-        colors={['transparent', colors[index % colors.length] + '25', 'transparent']}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-        style={StyleSheet.absoluteFill}
-      />
-    </Animated.View>
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          left: x,
+          top: y,
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: color,
+          shadowColor: color,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.8,
+          shadowRadius: size / 3,
+          elevation: 8,
+        },
+        animatedStyle,
+      ]}
+    />
   );
 };
 
 /**
- * StarfieldBackground - Now renders Ambient Light Bokeh
- * A premium nightclub/bar themed background with:
- * - Soft, blurred colorful light orbs (bokeh effect)
- * - Deep purple/magenta/gold gradient backdrop
- * - Subtle floating bokeh circles that drift slowly
+ * StarfieldBackground - Now renders Eclipse Brisbane-inspired background
+ * A premium nightclub themed background with:
+ * - High-quality nightclub photograph from Eclipse Brisbane
+ * - Dark overlay for text readability
+ * - Subtle animated bokeh lights
  * - Ambient glow layers for atmosphere
  */
 export const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
@@ -235,40 +140,46 @@ export const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
   showAurora = true,
   showGalaxies = true,
   showPlanets = true,
+  overlayOpacity = 0.55,
 }) => {
-  // Map starCount to bokeh count (roughly similar visual density)
-  const bokehCount = Math.min(Math.max(starCount / 2, 15), 30);
+  // Eclipse Brisbane nightclub background image
+  const backgroundImage = 'https://images.squarespace-cdn.com/content/v1/67f8ccf353df004660928ccc/ddb6daa6-eee7-4027-a2c0-ad54f6b324ed/%40CUTBYJACK-69.jpg';
 
-  // Generate bokeh orbs
-  const bokehOrbs = useMemo<BokehOrb[]>(() => {
-    return Array.from({ length: bokehCount }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height * 1.3,
-      size: 40 + Math.random() * 100,
-      color: BOKEH_COLORS[Math.floor(Math.random() * BOKEH_COLORS.length)],
-      opacity: 0.12 + Math.random() * 0.2,
-      delay: Math.random() * 3000,
-      driftSpeed: 8000 + Math.random() * 6000,
-      pulseSpeed: 4000 + Math.random() * 4000,
-      blur: 25 + Math.random() * 45,
-    }));
-  }, [bokehCount]);
+  // Generate a few bokeh orbs for ambient nightclub feel
+  const bokehOrbs = [
+    { x: width * 0.1, y: height * 0.12, size: 70, color: '#E31837', delay: 0 },
+    { x: width * 0.85, y: height * 0.2, size: 50, color: '#8B5CF6', delay: 600 },
+    { x: width * 0.25, y: height * 0.45, size: 85, color: '#FFB800', delay: 1200 },
+    { x: width * 0.75, y: height * 0.55, size: 60, color: '#00D4AA', delay: 1800 },
+    { x: width * 0.1, y: height * 0.75, size: 75, color: '#C084FC', delay: 2400 },
+    { x: width * 0.9, y: height * 0.85, size: 45, color: '#FF6B9D', delay: 3000 },
+  ];
 
   return (
     <View style={styles.container} pointerEvents="none">
-      {/* Deep dark gradient base */}
+      {/* Background Image from Eclipse Brisbane */}
+      <Image
+        source={{ uri: backgroundImage }}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+        blurRadius={1.5}
+      />
+
+      {/* Dark overlay for text readability */}
+      <View style={[styles.overlay, { backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }]} />
+
+      {/* Gradient vignette for depth */}
       <LinearGradient
-        colors={['#000000', '#050508', '#0A0A12', '#050508', '#000000']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        colors={['rgba(0,0,0,0.35)', 'transparent', 'transparent', 'rgba(0,0,0,0.5)']}
+        locations={[0, 0.15, 0.75, 1]}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Subtle vignette effect */}
+      {/* Side vignettes */}
       <LinearGradient
-        colors={['transparent', 'transparent', '#00000040']}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
+        colors={['rgba(0,0,0,0.4)', 'transparent', 'transparent', 'rgba(0,0,0,0.4)']}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
         style={StyleSheet.absoluteFill}
       />
 
@@ -281,18 +192,9 @@ export const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
         </>
       )}
 
-      {/* Light streaks (subtle club laser effect) */}
-      {showGalaxies && (
-        <>
-          <LightStreak index={0} />
-          <LightStreak index={1} />
-          <LightStreak index={2} />
-        </>
-      )}
-
-      {/* Bokeh orbs */}
+      {/* Bokeh orbs for nightclub ambiance */}
       {bokehOrbs.map((orb, index) => (
-        <BokehOrbComponent key={`bokeh-${index}`} orb={orb} />
+        <BokehOrb key={index} {...orb} />
       ))}
     </View>
   );
@@ -304,25 +206,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     overflow: 'hidden',
   },
-  bokehOrb: {
-    position: 'absolute',
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 10,
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
   },
   glowLayer: {
     position: 'absolute',
     left: -100,
     right: -100,
-    height: 200,
-    borderRadius: 100,
-  },
-  lightStreak: {
-    position: 'absolute',
-    top: 0,
-    left: -width,
-    right: -width,
-    height: 3,
-    transformOrigin: 'center',
+    height: 160,
+    borderRadius: 80,
   },
 });
 
