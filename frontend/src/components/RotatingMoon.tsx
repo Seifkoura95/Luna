@@ -20,9 +20,9 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   rotationDuration = 30000 // 30 seconds for full rotation
 }) => {
   const rotation = useSharedValue(0);
-  // Make the image slightly larger than the container to crop out any edge artifacts
-  const imageSize = size * 1.15;
-  const offset = (imageSize - size) / 2;
+  // Scale the image up significantly to crop out the black background edges
+  const imageScale = 1.4;
+  const imageSize = size * imageScale;
 
   useEffect(() => {
     // Simple continuous spin - like a planet rotating on its axis
@@ -42,8 +42,8 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   }));
 
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
-      <Animated.View style={[animatedStyle, { width: imageSize, height: imageSize, marginLeft: -offset, marginTop: -offset }]}>
+    <View style={[styles.container, { width: size, height: size, borderRadius: size / 2 }]}>
+      <Animated.View style={[animatedStyle, styles.imageWrapper]}>
         <Image
           source={{ uri: LUNAR_MOON_IMAGE }}
           style={{ width: imageSize, height: imageSize }}
@@ -60,7 +60,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: 1000,
+  },
+  imageWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
