@@ -1,39 +1,16 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
 import { api } from '../src/utils/api';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import { RotatingMoon } from '../src/components/RotatingMoon';
 
 const { width, height } = Dimensions.get('window');
 const MOON_SIZE = Math.min(width, height) * 0.45;
 
-const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
-
 export default function Index() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
-  
-  // Simple spinning animation
-  const rotation = useSharedValue(0);
-  
-  useEffect(() => {
-    // Continuous spin like a planet
-    rotation.value = withRepeat(
-      withTiming(360, {
-        duration: 20000, // 20 seconds for full rotation
-        easing: Easing.linear,
-      }),
-      -1, // Infinite
-      false // Don't reverse
-    );
-  }, []);
 
   useEffect(() => {
     // Seed data on app start
@@ -53,21 +30,10 @@ export default function Index() {
     }
   }, [isLoading, isAuthenticated]);
 
-  // Smooth spinning rotation
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
-
   return (
     <View style={styles.container}>
-      {/* Spinning Moon */}
-      <Animated.View style={[styles.moonContainer, animatedStyle]}>
-        <Image
-          source={{ uri: LUNAR_MOON_IMAGE }}
-          style={styles.moonImage}
-          resizeMode="contain"
-        />
-      </Animated.View>
+      {/* Spinning Moon - using the gradient-based component */}
+      <RotatingMoon size={MOON_SIZE} rotationDuration={20000} />
     </View>
   );
 }
@@ -78,16 +44,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  moonContainer: {
-    width: MOON_SIZE,
-    height: MOON_SIZE,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  moonImage: {
-    width: MOON_SIZE,
-    height: MOON_SIZE,
-    borderRadius: MOON_SIZE / 2,
   },
 });
