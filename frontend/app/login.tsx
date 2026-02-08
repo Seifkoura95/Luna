@@ -93,9 +93,9 @@ export default function LoginScreen() {
             <View style={styles.content}>
               {/* Header Section */}
               <View style={styles.header}>
-                {/* Lunar Moon Logo - No border */}
+                {/* Lunar Moon Logo - Smaller for login */}
                 <View style={styles.logoContainer}>
-                  <RotatingMoon size={100} rotationDuration={25000} />
+                  <RotatingMoon size={80} rotationDuration={25000} />
                 </View>
 
                 {/* Brand Title - Using Victory Striker font like other pages */}
