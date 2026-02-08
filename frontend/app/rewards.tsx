@@ -173,7 +173,7 @@ export default function RewardsScreen() {
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.striker }]}>REWARDS</Text>
+          <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.milker }]}>REWARDS</Text>
           <View style={{ width: 40 }} />
         </View>
 
