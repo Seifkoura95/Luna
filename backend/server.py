@@ -2372,6 +2372,39 @@ async def send_test_notification_v2(request: Request):
 
 # ====== PUSH NOTIFICATIONS ======
 
+async def send_push_notification_to_token(token: str, title: str, body: str, data: dict = None):
+    """
+    Send a push notification to a specific Expo push token.
+    Returns True if sent successfully, False otherwise.
+    """
+    push_url = "https://exp.host/--/api/v2/push/send"
+    
+    message = {
+        "to": token,
+        "sound": "default",
+        "title": title,
+        "body": body,
+        "data": data or {},
+    }
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                push_url,
+                json=message,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("data", {}).get("status") == "ok":
+                    logging.info(f"Push notification sent to token")
+                    return True
+        return False
+    except Exception as e:
+        logging.error(f"Failed to send push notification: {e}")
+        return False
+
 async def send_push_notification(user_id: str, title: str, body: str, data: dict = None):
     """
     Send a push notification to a user's device using Expo Push API.
