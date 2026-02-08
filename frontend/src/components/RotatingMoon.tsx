@@ -43,8 +43,8 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
       <Animated.View style={animatedStyle}>
         <Image
           source={{ uri: LUNAR_MOON_IMAGE }}
-          style={[styles.moon, { width: size, height: size, borderRadius: size / 2 }]}
-          resizeMode="cover"
+          style={[styles.moon, { width: size, height: size }]}
+          resizeMode="contain"
         />
       </Animated.View>
     </View>
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   moon: {
-    // Clean look - no glow
+    // Clean look - no border, no effects
   },
 });
 
