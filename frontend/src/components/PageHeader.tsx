@@ -2,8 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '../theme/colors';
-import { RotatingMoon } from './RotatingMoon';
-import { FierySun } from './FierySun';
+import { LunaMoonIcon } from './LunaMoonIcon';
 import { useAuthStore } from '../store/authStore';
 import { useFonts, fonts } from '../hooks/useFonts';
 
@@ -26,7 +25,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-      <RotatingMoon size={60} rotationDuration={30000} />
       <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.striker }]}>{title}</Text>
       {subtitle && (
         <Text style={[styles.headerSubtitle, fontsLoaded && { fontFamily: fonts.striker }]}>{subtitle}</Text>
@@ -38,7 +36,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       
       {showPoints && (
         <View style={styles.pointsBadge}>
-          <FierySun size={18} />
+          <LunaMoonIcon size={18} />
           <Text style={[styles.pointsText, fontsLoaded && { fontFamily: fonts.bold }]}>
             {user?.points_balance?.toLocaleString() || 0} pts
           </Text>
