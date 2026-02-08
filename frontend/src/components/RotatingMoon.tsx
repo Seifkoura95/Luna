@@ -7,7 +7,6 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 
 // Original Luna moon image
 const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
@@ -22,6 +21,9 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   rotationDuration = 30000 // 30 seconds for full rotation
 }) => {
   const rotation = useSharedValue(0);
+  // Scale up the image to crop out the black background
+  const scale = 2.5;
+  const innerSize = size * scale;
 
   useEffect(() => {
     // Simple continuous spin - like a planet rotating on its axis
@@ -41,25 +43,26 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   }));
 
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
-      <Animated.View style={[animatedStyle, { width: size, height: size }]}>
-        {/* Moon image */}
+    <View style={[styles.container, { width: size, height: size, borderRadius: size / 2 }]}>
+      <Animated.View style={[animatedStyle, styles.imageWrapper]}>
+        {/* Moon image scaled up to fill container */}
         <Image
           source={{ uri: LUNAR_MOON_IMAGE }}
-          style={{ width: size, height: size }}
+          style={{ width: innerSize, height: innerSize }}
           resizeMode="contain"
         />
-        {/* White tint overlay to make it look like a real lunar moon */}
-        <View 
-          style={[
-            StyleSheet.absoluteFill, 
-            { 
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              borderRadius: size / 2,
-            }
-          ]} 
-        />
       </Animated.View>
+      {/* White tint overlay to make it look like a real lunar moon */}
+      <View 
+        style={[
+          styles.whiteTint, 
+          { 
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+          }
+        ]} 
+      />
     </View>
   );
 };
@@ -68,6 +71,15 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  imageWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  whiteTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
 });
 
