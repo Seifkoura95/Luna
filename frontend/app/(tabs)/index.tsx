@@ -135,7 +135,8 @@ export default function TonightScreen() {
         <PageHeader 
           title="LUNA GROUP" 
           description="Premium nightlife & dining across Brisbane & Gold Coast"
-          showPoints={false} 
+          showPoints={false}
+          showLogo={true}
         />
 
         {/* Quick Actions - Premium Redesigned */}
