@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,9 +7,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-
-// High quality blood moon with true transparent background
-const LUNAR_MOON_IMAGE = 'https://www.pngall.com/wp-content/uploads/13/Red-Moon-PNG-Clipart.png';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface RotatingMoonProps {
   size?: number;
@@ -39,14 +37,23 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
+  // Create a stylized blood moon using gradients
   return (
     <View style={[styles.container, { width: size, height: size }]}>
       <Animated.View style={[animatedStyle, { width: size, height: size }]}>
-        <Image
-          source={{ uri: LUNAR_MOON_IMAGE }}
-          style={{ width: size, height: size }}
-          resizeMode="contain"
-        />
+        <LinearGradient
+          colors={['#8B0000', '#DC143C', '#CD5C5C', '#B22222', '#8B0000']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.moon, { width: size, height: size, borderRadius: size / 2 }]}
+        >
+          {/* Moon texture overlay */}
+          <View style={[styles.crater, { top: size * 0.15, left: size * 0.25, width: size * 0.15, height: size * 0.15 }]} />
+          <View style={[styles.crater, { top: size * 0.4, left: size * 0.55, width: size * 0.2, height: size * 0.2 }]} />
+          <View style={[styles.crater, { top: size * 0.6, left: size * 0.2, width: size * 0.12, height: size * 0.12 }]} />
+          <View style={[styles.craterSmall, { top: size * 0.3, left: size * 0.7, width: size * 0.08, height: size * 0.08 }]} />
+          <View style={[styles.craterSmall, { top: size * 0.75, left: size * 0.6, width: size * 0.1, height: size * 0.1 }]} />
+        </LinearGradient>
       </Animated.View>
     </View>
   );
@@ -56,6 +63,25 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  moon: {
+    position: 'relative',
+    overflow: 'hidden',
+    shadowColor: '#DC143C',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  crater: {
+    position: 'absolute',
+    borderRadius: 100,
+    backgroundColor: 'rgba(80, 0, 0, 0.4)',
+  },
+  craterSmall: {
+    position: 'absolute',
+    borderRadius: 100,
+    backgroundColor: 'rgba(60, 0, 0, 0.3)',
   },
 });
 
