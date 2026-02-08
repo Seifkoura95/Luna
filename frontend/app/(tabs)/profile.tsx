@@ -23,7 +23,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { RotatingMoon } from '../../src/components/RotatingMoon';
 import { FierySun } from '../../src/components/FierySun';
-import { LunaMoonIcon } from '../../src/components/LunaMoonIcon';
+import { GoldStarIcon } from '../../src/components/GoldStarIcon';
 import { SafetyAlert } from '../../src/components/SafetyAlert';
 import { CrewMap } from '../../src/components/CrewMap';
 import { PageHeader } from '../../src/components/PageHeader';
