@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,8 +21,8 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   rotationDuration = 30000 // 30 seconds for full rotation
 }) => {
   const rotation = useSharedValue(0);
-  // Scale up the image to crop out the black background
-  const scale = 2.5;
+  // Scale up the image significantly to ensure moon fills the container
+  const scale = 3.5;
   const innerSize = size * scale;
 
   useEffect(() => {
@@ -42,8 +42,16 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
+  // Use clip-path for web, overflow hidden for native
+  const containerStyle = Platform.select({
+    web: {
+      clipPath: 'circle(50%)',
+    },
+    default: {},
+  });
+
   return (
-    <View style={[styles.container, { width: size, height: size, borderRadius: size / 2 }]}>
+    <View style={[styles.container, { width: size, height: size, borderRadius: size / 2 }, containerStyle]}>
       <Animated.View style={[animatedStyle, styles.imageWrapper]}>
         {/* Moon image scaled up to fill container */}
         <Image
@@ -79,7 +87,7 @@ const styles = StyleSheet.create({
   },
   whiteTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
 });
 
