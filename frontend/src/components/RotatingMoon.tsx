@@ -21,8 +21,9 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   rotationDuration = 30000 // 30 seconds for full rotation
 }) => {
   const rotation = useSharedValue(0);
-  // Scale up the image significantly to ensure moon fills the container
-  const scale = 4;
+  // Scale up the image significantly - the actual moon in the image is only ~30% of the canvas
+  // We need to scale by about 5x to make just the moon visible
+  const scale = 5;
   const innerSize = size * scale;
 
   useEffect(() => {
@@ -40,19 +41,18 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   // Smooth spinning rotation - only rotate the image
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
+    width: innerSize,
+    height: innerSize,
   }));
 
   return (
     <View style={[styles.outerContainer, { width: size, height: size }]}>
       <View style={[styles.clipContainer, { width: size, height: size, borderRadius: size / 2 }]}>
-        <Animated.View style={[animatedStyle, styles.imageWrapper]}>
-          {/* Moon image scaled up to fill container */}
-          <Image
-            source={{ uri: LUNAR_MOON_IMAGE }}
-            style={{ width: innerSize, height: innerSize }}
-            resizeMode="contain"
-          />
-        </Animated.View>
+        <Animated.Image
+          source={{ uri: LUNAR_MOON_IMAGE }}
+          style={[styles.moonImage, animatedStyle]}
+          resizeMode="contain"
+        />
         {/* White tint overlay to make it look like a real lunar moon */}
         <View style={styles.whiteTint} />
       </View>
@@ -70,13 +70,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     overflow: 'hidden',
   },
-  imageWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
+  moonImage: {
+    // Style is applied dynamically
   },
   whiteTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 1000,
   },
 });
