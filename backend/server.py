@@ -763,7 +763,7 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
                 push_tokens = prev_user.get("push_tokens", [])
                 for token in push_tokens:
                     try:
-                        await send_push_notification(
+                        await send_push_notification_to_token(
                             token,
                             title="🔔 You've Been Outbid!",
                             body=f"Someone bid ${bid_request.amount} on {auction['title']}. Bid now to stay ahead!",
