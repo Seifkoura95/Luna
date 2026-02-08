@@ -22,7 +22,7 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
 }) => {
   const rotation = useSharedValue(0);
   // Scale up the image significantly to ensure moon fills the container
-  const scale = 3.5;
+  const scale = 4;
   const innerSize = size * scale;
 
   useEffect(() => {
@@ -37,46 +37,35 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
     );
   }, [rotationDuration]);
 
-  // Smooth spinning rotation
+  // Smooth spinning rotation - only rotate the image
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
-  // Use clip-path for web, overflow hidden for native
-  const containerStyle = Platform.select({
-    web: {
-      clipPath: 'circle(50%)',
-    },
-    default: {},
-  });
-
   return (
-    <View style={[styles.container, { width: size, height: size, borderRadius: size / 2 }, containerStyle]}>
-      <Animated.View style={[animatedStyle, styles.imageWrapper]}>
-        {/* Moon image scaled up to fill container */}
-        <Image
-          source={{ uri: LUNAR_MOON_IMAGE }}
-          style={{ width: innerSize, height: innerSize }}
-          resizeMode="contain"
-        />
-      </Animated.View>
-      {/* White tint overlay to make it look like a real lunar moon */}
-      <View 
-        style={[
-          styles.whiteTint, 
-          { 
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-          }
-        ]} 
-      />
+    <View style={[styles.outerContainer, { width: size, height: size }]}>
+      <View style={[styles.clipContainer, { width: size, height: size, borderRadius: size / 2 }]}>
+        <Animated.View style={[animatedStyle, styles.imageWrapper]}>
+          {/* Moon image scaled up to fill container */}
+          <Image
+            source={{ uri: LUNAR_MOON_IMAGE }}
+            style={{ width: innerSize, height: innerSize }}
+            resizeMode="contain"
+          />
+        </Animated.View>
+        {/* White tint overlay to make it look like a real lunar moon */}
+        <View style={styles.whiteTint} />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  outerContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clipContainer: {
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -87,7 +76,8 @@ const styles = StyleSheet.create({
   },
   whiteTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 1000,
   },
 });
 
