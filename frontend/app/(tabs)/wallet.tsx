@@ -370,12 +370,12 @@ export default function WalletScreen() {
             
             <View style={styles.rewardsHeader}>
               <View style={styles.pointsDisplay}>
-                <FierySun size={32} />
+                <LunaMoonIcon size={32} />
                 <View>
                   <Text style={styles.pointsValue}>
                     {(pointsData?.balance || user?.points_balance || 0).toLocaleString()}
                   </Text>
-                  <Text style={styles.pointsLabel}>LUNAR POINTS</Text>
+                  <Text style={styles.pointsLabel}>LUNA POINTS</Text>
                 </View>
               </View>
               
