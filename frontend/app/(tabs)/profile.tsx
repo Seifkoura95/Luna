@@ -334,7 +334,7 @@ export default function ProfileScreen() {
             
             <View style={styles.rewardsHeader}>
               <View style={styles.pointsDisplay}>
-                <LunaMoonIcon size={32} />
+                <GoldStarIcon size={32} />
                 <View>
                   <Text style={styles.pointsValue}>
                     {currentPoints.toLocaleString()}
