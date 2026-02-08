@@ -186,12 +186,12 @@ export default function RewardsScreen() {
             <View style={[styles.accentBorder, { borderColor: colors.gold }]} />
             
             <View style={styles.pointsRow}>
-              <FierySun size={48} />
+              <LunaMoonIcon size={48} />
               <View>
                 <Text style={[styles.pointsValue, fontsLoaded && { fontFamily: fonts.bold }]}>
                   {currentPoints.toLocaleString()}
                 </Text>
-                <Text style={styles.pointsLabel}>LUNAR POINTS</Text>
+                <Text style={styles.pointsLabel}>LUNA POINTS</Text>
               </View>
             </View>
 
