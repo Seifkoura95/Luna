@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '../theme/colors';
 import { RotatingMoon } from './RotatingMoon';
@@ -7,18 +7,23 @@ import { GoldStarIcon } from './GoldStarIcon';
 import { useAuthStore } from '../store/authStore';
 import { useFonts, fonts } from '../hooks/useFonts';
 
+// Luna Group Logo URL
+const LUNA_GROUP_LOGO = 'https://customer-assets.emergentagent.com/job_c826baa4-6640-40ce-9e0d-38132d9944fc/artifacts/2k76js5m_luna-group-logo-2.webp';
+
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
   description?: string;
   showPoints?: boolean;
+  showLogo?: boolean;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ 
   title, 
   subtitle,
   description,
-  showPoints = false 
+  showPoints = false,
+  showLogo = false
 }) => {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
@@ -29,7 +34,17 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       <View style={styles.moonContainer}>
         <RotatingMoon size={60} rotationDuration={30000} />
       </View>
-      <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.milker }]}>{title}</Text>
+      
+      {showLogo ? (
+        <Image 
+          source={{ uri: LUNA_GROUP_LOGO }} 
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      ) : (
+        <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.milker }]}>{title}</Text>
+      )}
+      
       {subtitle && (
         <Text style={[styles.headerSubtitle, fontsLoaded && { fontFamily: fonts.milker }]}>{subtitle}</Text>
       )}
@@ -59,6 +74,11 @@ const styles = StyleSheet.create({
   moonContainer: {
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
+  },
+  logo: {
+    width: 200,
+    height: 60,
+    marginTop: spacing.xs,
   },
   headerTitle: {
     fontSize: 28,
