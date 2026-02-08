@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -37,7 +37,7 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
-  // Create a stylized blood moon using gradients
+  // Create a stylized blood moon using gradients - no borders, no shadows
   return (
     <View style={[styles.container, { width: size, height: size }]}>
       <Animated.View style={[animatedStyle, { width: size, height: size }]}>
@@ -47,7 +47,7 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
           end={{ x: 1, y: 1 }}
           style={[styles.moon, { width: size, height: size, borderRadius: size / 2 }]}
         >
-          {/* Moon texture overlay */}
+          {/* Moon texture overlay - subtle craters */}
           <View style={[styles.crater, { top: size * 0.15, left: size * 0.25, width: size * 0.15, height: size * 0.15 }]} />
           <View style={[styles.crater, { top: size * 0.4, left: size * 0.55, width: size * 0.2, height: size * 0.2 }]} />
           <View style={[styles.crater, { top: size * 0.6, left: size * 0.2, width: size * 0.12, height: size * 0.12 }]} />
@@ -67,11 +67,7 @@ const styles = StyleSheet.create({
   moon: {
     position: 'relative',
     overflow: 'hidden',
-    shadowColor: '#DC143C',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 15,
-    elevation: 10,
+    // No shadow, no border - clean moon
   },
   crater: {
     position: 'absolute',
