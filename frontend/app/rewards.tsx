@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: colors.textPrimary,
-    letterSpacing: 2,
+    letterSpacing: 3,
   },
   pointsCard: {
     marginHorizontal: spacing.lg,
