@@ -20,8 +20,8 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   rotationDuration = 30000 // 30 seconds for full rotation
 }) => {
   const rotation = useSharedValue(0);
-  // Scale the image up significantly to crop out the black background edges
-  const imageScale = 1.4;
+  // Scale the image up aggressively to crop out all black background
+  const imageScale = 1.8;
   const imageSize = size * imageScale;
 
   useEffect(() => {
