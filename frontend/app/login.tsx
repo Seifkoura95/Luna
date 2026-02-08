@@ -11,6 +11,7 @@ import {
   Dimensions,
   StatusBar,
   ScrollView,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
@@ -23,6 +24,11 @@ import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import { RotatingMoon } from '../src/components/RotatingMoon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts, fonts } from '../src/hooks/useFonts';
+
+const { width, height } = Dimensions.get('window');
+
+// Luna Group Logo URL
+const LUNA_GROUP_LOGO = 'https://customer-assets.emergentagent.com/job_c826baa4-6640-40ce-9e0d-38132d9944fc/artifacts/2k76js5m_luna-group-logo-2.webp';
 
 const { width, height } = Dimensions.get('window');
 
@@ -98,8 +104,12 @@ export default function LoginScreen() {
                   <RotatingMoon size={80} rotationDuration={25000} />
                 </View>
 
-                {/* Brand Title - Using Milker font for luxury look */}
-                <Text style={[styles.brandTitle, fontsLoaded && { fontFamily: fonts.milker }]}>LUNA GROUP</Text>
+                {/* Brand Logo Image */}
+                <Image 
+                  source={{ uri: LUNA_GROUP_LOGO }} 
+                  style={styles.brandLogo}
+                  resizeMode="contain"
+                />
                 <View style={styles.brandUnderline} />
 
                 {/* Tagline */}
