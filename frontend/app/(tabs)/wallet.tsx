@@ -23,6 +23,7 @@ import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { PageHeader } from '../../src/components/PageHeader';
 import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';
 import { FierySun } from '../../src/components/FierySun';
+import { LunaMoonIcon } from '../../src/components/LunaMoonIcon';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 
