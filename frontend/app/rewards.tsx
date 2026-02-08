@@ -16,7 +16,7 @@ import { api } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
-import { FierySun } from '../src/components/FierySun';
+import { LunaMoonIcon } from '../src/components/LunaMoonIcon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts, fonts } from '../src/hooks/useFonts';
 import * as Haptics from 'expo-haptics';
