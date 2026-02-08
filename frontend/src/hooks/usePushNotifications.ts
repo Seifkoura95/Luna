@@ -54,11 +54,19 @@ export function usePushNotifications() {
     );
 
     return () => {
-      if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(notificationListener.current);
+      if (notificationListener.current && Notifications.removeNotificationSubscription) {
+        try {
+          Notifications.removeNotificationSubscription(notificationListener.current);
+        } catch (e) {
+          // Ignore cleanup errors on web
+        }
       }
-      if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
+      if (responseListener.current && Notifications.removeNotificationSubscription) {
+        try {
+          Notifications.removeNotificationSubscription(responseListener.current);
+        } catch (e) {
+          // Ignore cleanup errors on web
+        }
       }
     };
   }, []);
