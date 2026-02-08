@@ -115,10 +115,10 @@ export const api = {
     apiFetch<any>(`/api/auctions/${auctionId}`, { auth: false }),
   getAuctionBids: (auctionId: string) =>
     apiFetch<any[]>(`/api/auctions/${auctionId}/bids`, { auth: false }),
-  placeBid: (auctionId: string, amount: number, maxBid?: number) =>
+  placeBid: (auctionId: string, amount: number, maxBid?: number, notifyOutbid: boolean = true) =>
     apiFetch<any>('/api/auctions/bid', { 
       method: 'POST', 
-      body: JSON.stringify({ auction_id: auctionId, amount, max_bid: maxBid }) 
+      body: JSON.stringify({ auction_id: auctionId, amount, max_bid: maxBid, notify_outbid: notifyOutbid }) 
     }),
   getUserWonAuctions: () => apiFetch<any[]>('/api/auctions/user/won'),
   claimAuctionPrize: (auctionId: string) =>
