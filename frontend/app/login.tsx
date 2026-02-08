@@ -30,8 +30,6 @@ const { width, height } = Dimensions.get('window');
 // Luna Group Logo URL
 const LUNA_GROUP_LOGO = 'https://customer-assets.emergentagent.com/job_c826baa4-6640-40ce-9e0d-38132d9944fc/artifacts/2k76js5m_luna-group-logo-2.webp';
 
-const { width, height } = Dimensions.get('window');
-
 export default function LoginScreen() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
