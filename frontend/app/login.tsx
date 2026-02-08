@@ -10,7 +10,6 @@ import {
   Alert,
   Dimensions,
   StatusBar,
-  Image,
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,12 +20,11 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
+import { RotatingMoon } from '../src/components/RotatingMoon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts, fonts } from '../src/hooks/useFonts';
 
 const { width, height } = Dimensions.get('window');
-
-const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
 
 export default function LoginScreen() {
   const [isLogin, setIsLogin] = useState(true);
