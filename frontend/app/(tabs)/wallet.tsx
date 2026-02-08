@@ -23,7 +23,7 @@ import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { PageHeader } from '../../src/components/PageHeader';
 import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';
 import { FierySun } from '../../src/components/FierySun';
-import { LunaMoonIcon } from '../../src/components/LunaMoonIcon';
+import { GoldStarIcon } from '../../src/components/GoldStarIcon';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 
@@ -370,7 +370,7 @@ export default function WalletScreen() {
             
             <View style={styles.rewardsHeader}>
               <View style={styles.pointsDisplay}>
-                <LunaMoonIcon size={32} />
+                <GoldStarIcon size={32} />
                 <View>
                   <Text style={styles.pointsValue}>
                     {(pointsData?.balance || user?.points_balance || 0).toLocaleString()}
