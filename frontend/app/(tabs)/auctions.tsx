@@ -162,13 +162,15 @@ export default function AuctionsScreen() {
     setIsPlacingBid(true);
     try {
       const maxBid = showMaxBid && maxBidAmount ? parseFloat(maxBidAmount) : undefined;
-      const result = await api.placeBid(selectedAuction.id, amount, maxBid);
+      const result = await api.placeBid(selectedAuction.id, amount, maxBid, notifyOutbid);
       
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       
-      Alert.alert('Bid Placed!', 'You are now the highest bidder!');
+      Alert.alert('Bid Placed!', notifyOutbid 
+        ? 'You are now the highest bidder! We\'ll notify you if someone outbids you.' 
+        : 'You are now the highest bidder!');
       
       // Refresh auction data
       await fetchAuctionDetail(selectedAuction.id);
