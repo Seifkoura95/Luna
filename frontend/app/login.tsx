@@ -93,13 +93,9 @@ export default function LoginScreen() {
             <View style={styles.content}>
               {/* Header Section */}
               <View style={styles.header}>
-                {/* Lunar Moon Logo - No glow */}
+                {/* Lunar Moon Logo - No border */}
                 <View style={styles.logoContainer}>
-                  <Image
-                    source={{ uri: LUNAR_MOON_IMAGE }}
-                    style={styles.logoImage}
-                    resizeMode="contain"
-                  />
+                  <RotatingMoon size={100} rotationDuration={25000} />
                 </View>
 
                 {/* Brand Title - Strong font, one line */}
