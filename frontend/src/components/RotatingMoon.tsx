@@ -21,9 +21,9 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   rotationDuration = 30000 // 30 seconds for full rotation
 }) => {
   const rotation = useSharedValue(0);
-  // The moon in the image takes up roughly 40% of the canvas, 
-  // so scale by ~3.5x to have the moon fill the container completely
-  const scale = 3.5;
+  // Very aggressive scale - the moon is small in the original image
+  // Need to scale up enough that the black background is completely hidden
+  const scale = 4.2;
   const innerSize = size * scale;
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   }));
 
   // The container clips to circular shape, and the image is scaled up
-  // so the moon itself fills the circle
+  // so the moon itself fills the circle completely
   return (
     <View 
       style={[
