@@ -84,7 +84,7 @@ export default function SubscriptionsScreen() {
     Alert.alert(
       `Subscribe to ${tier.name}`,
       tier.price === 0 
-        ? 'Switch to the free Lunar plan?'
+        ? 'Switch to the free Luna plan?'
         : `Subscribe for $${tier.price}/month?\n\nThis is a demo - no real payment will be processed.`,
       [
         { text: 'Cancel', style: 'cancel' },
