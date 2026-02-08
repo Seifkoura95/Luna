@@ -8,8 +8,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-// Blood moon with transparent background - full red moon
-const LUNAR_MOON_IMAGE = 'https://static.vecteezy.com/system/resources/previews/021/357/755/non_2x/full-red-moon-free-png.png';
+// Use the original Luna moon but scale it so only the moon shows
+const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
 
 interface RotatingMoonProps {
   size?: number;
@@ -21,6 +21,9 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   rotationDuration = 30000 // 30 seconds for full rotation
 }) => {
   const rotation = useSharedValue(0);
+  // The moon in the image is centered but smaller than the canvas
+  // Scale up to fill the container and crop out the black background
+  const scale = 2.5;
 
   useEffect(() => {
     // Simple continuous spin - like a planet rotating on its axis
@@ -34,14 +37,17 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
     );
   }, [rotationDuration]);
 
-  // Smooth spinning rotation
+  // Smooth spinning rotation with scale
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
+    transform: [
+      { scale: scale },
+      { rotate: `${rotation.value}deg` },
+    ],
   }));
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
-      <Animated.View style={[animatedStyle, { width: size, height: size }]}>
+      <Animated.View style={[animatedStyle, styles.imageContainer]}>
         <Image
           source={{ uri: LUNAR_MOON_IMAGE }}
           style={{ width: size, height: size }}
@@ -57,6 +63,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    overflow: 'hidden',
+    borderRadius: 1000, // Circular clip
+  },
+  imageContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
