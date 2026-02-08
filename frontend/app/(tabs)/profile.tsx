@@ -321,7 +321,7 @@ export default function ProfileScreen() {
           showPoints={true}
         />
 
-        {/* Lunar Points Card - Same design as Wallet */}
+        {/* Luna Points Card - Same design as Wallet */}
         <View style={styles.rewardsCard}>
           <LinearGradient
             colors={['#1A1A1A', '#0D0D0D']}
@@ -334,12 +334,12 @@ export default function ProfileScreen() {
             
             <View style={styles.rewardsHeader}>
               <View style={styles.pointsDisplay}>
-                <FierySun size={32} />
+                <LunaMoonIcon size={32} />
                 <View>
                   <Text style={styles.pointsValue}>
                     {currentPoints.toLocaleString()}
                   </Text>
-                  <Text style={styles.pointsLabel}>LUNAR POINTS</Text>
+                  <Text style={styles.pointsLabel}>LUNA POINTS</Text>
                 </View>
               </View>
               
