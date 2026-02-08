@@ -334,6 +334,11 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     textTransform: 'uppercase',
   },
+  brandLogo: {
+    width: 220,
+    height: 65,
+    marginBottom: spacing.xs,
+  },
   brandUnderline: {
     width: 50,
     height: 2,
