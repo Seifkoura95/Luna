@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,6 +20,9 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
   rotationDuration = 30000 // 30 seconds for full rotation
 }) => {
   const rotation = useSharedValue(0);
+  // Make the image slightly larger than the container to crop out any edge artifacts
+  const imageSize = size * 1.15;
+  const offset = (imageSize - size) / 2;
 
   useEffect(() => {
     // Simple continuous spin - like a planet rotating on its axis
@@ -40,10 +43,10 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
-      <Animated.View style={[animatedStyle, { width: size, height: size }]}>
+      <Animated.View style={[animatedStyle, { width: imageSize, height: imageSize, marginLeft: -offset, marginTop: -offset }]}>
         <Image
           source={{ uri: LUNAR_MOON_IMAGE }}
-          style={{ width: size, height: size, borderWidth: 0, borderColor: 'transparent' }}
+          style={{ width: imageSize, height: imageSize }}
           resizeMode="contain"
         />
       </Animated.View>
@@ -56,7 +59,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    overflow: 'visible',
+    overflow: 'hidden',
+    borderRadius: 1000,
   },
 });
 
