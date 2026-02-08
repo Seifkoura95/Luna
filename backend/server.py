@@ -671,6 +671,7 @@ class PlaceBidRequest(BaseModel):
     auction_id: str
     amount: float
     max_bid: Optional[float] = None  # For auto-bidding
+    notify_outbid: bool = True  # Opt-in for outbid notifications
 
 @api_router.post("/auctions/bid")
 async def place_bid(request: Request, bid_request: PlaceBidRequest):
@@ -706,7 +707,7 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
         }}
     )
     
-    # Record bid
+    # Record bid with notification preference
     await db.bids.insert_one({
         "id": str(uuid.uuid4()),
         "auction_id": bid_request.auction_id,
@@ -714,22 +715,67 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
         "user_name": user["name"],
         "amount": bid_request.amount,
         "max_bid": bid_request.max_bid,
+        "notify_outbid": bid_request.notify_outbid,
         "timestamp": datetime.now(timezone.utc)
     })
     
+    # Store user's notification preference for this auction
+    if bid_request.notify_outbid:
+        await db.auction_notification_preferences.update_one(
+            {"user_id": user["user_id"], "auction_id": bid_request.auction_id},
+            {"$set": {
+                "user_id": user["user_id"],
+                "auction_id": bid_request.auction_id,
+                "notify_outbid": True,
+                "updated_at": datetime.now(timezone.utc)
+            }},
+            upsert=True
+        )
+    
     # Notify previous winner they've been outbid
     if previous_winner_id and previous_winner_id != user["user_id"]:
-        await db.auction_notifications.insert_one({
-            "id": str(uuid.uuid4()),
+        # Check if previous winner wants notifications
+        prev_user_pref = await db.auction_notification_preferences.find_one({
             "user_id": previous_winner_id,
-            "auction_id": bid_request.auction_id,
-            "auction_title": auction["title"],
-            "type": "outbid",
-            "message": f"You've been outbid on {auction['title']}! Current bid: ${bid_request.amount}",
-            "new_bid": bid_request.amount,
-            "read": False,
-            "created_at": datetime.now(timezone.utc)
+            "auction_id": bid_request.auction_id
         })
+        
+        should_notify = prev_user_pref.get("notify_outbid", True) if prev_user_pref else True
+        
+        if should_notify:
+            # Create notification record
+            notification_id = str(uuid.uuid4())
+            await db.auction_notifications.insert_one({
+                "id": notification_id,
+                "user_id": previous_winner_id,
+                "auction_id": bid_request.auction_id,
+                "auction_title": auction["title"],
+                "type": "outbid",
+                "message": f"You've been outbid on {auction['title']}! Current bid: ${bid_request.amount}",
+                "new_bid": bid_request.amount,
+                "read": False,
+                "created_at": datetime.now(timezone.utc)
+            })
+            
+            # Send push notification to outbid user
+            prev_user = await db.users.find_one({"user_id": previous_winner_id})
+            if prev_user and prev_user.get("push_tokens"):
+                push_tokens = prev_user.get("push_tokens", [])
+                for token in push_tokens:
+                    try:
+                        await send_push_notification(
+                            token,
+                            title="🔔 You've Been Outbid!",
+                            body=f"Someone bid ${bid_request.amount} on {auction['title']}. Bid now to stay ahead!",
+                            data={
+                                "type": "outbid",
+                                "auction_id": bid_request.auction_id,
+                                "new_bid": bid_request.amount
+                            }
+                        )
+                        logging.info(f"Sent outbid push notification to {previous_winner_id}")
+                    except Exception as e:
+                        logging.error(f"Failed to send push notification: {e}")
     
     updated_auction = await db.auctions.find_one({"id": bid_request.auction_id})
     return {"message": "Bid placed successfully!", "auction": clean_mongo_doc(updated_auction)}
