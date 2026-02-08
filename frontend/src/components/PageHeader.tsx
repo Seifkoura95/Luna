@@ -25,8 +25,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const fontsLoaded = useFonts();
 
   return (
-    <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-      <RotatingMoon size={80} rotationDuration={30000} />
+    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+      <RotatingMoon size={60} rotationDuration={30000} />
       <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.striker }]}>{title}</Text>
       {subtitle && (
         <Text style={[styles.headerSubtitle, fontsLoaded && { fontFamily: fonts.striker }]}>{subtitle}</Text>
@@ -38,7 +38,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       
       {showPoints && (
         <View style={styles.pointsBadge}>
-          <FierySun size={22} />
+          <FierySun size={18} />
           <Text style={[styles.pointsText, fontsLoaded && { fontFamily: fonts.bold }]}>
             {user?.points_balance?.toLocaleString() || 0} pts
           </Text>
@@ -51,55 +51,55 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   headerTitle: {
-    fontSize: 42,
+    fontSize: 28,
     fontWeight: '700',
     color: colors.textPrimary,
-    letterSpacing: 4,
-    marginTop: spacing.sm,
+    letterSpacing: 3,
+    marginTop: spacing.xs,
     textTransform: 'uppercase',
     textAlign: 'center',
   },
   headerSubtitle: {
-    fontSize: 28,
+    fontSize: 18,
     fontWeight: '700',
     color: colors.textSecondary,
-    letterSpacing: 3,
+    letterSpacing: 2,
     marginTop: 2,
     textTransform: 'uppercase',
     textAlign: 'center',
   },
   headerUnderline: {
-    width: 50,
-    height: 3,
+    width: 40,
+    height: 2,
     backgroundColor: colors.accent,
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   headerDescription: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
     letterSpacing: 0.3,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
   pointsBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.goldGlow,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 20,
-    gap: 6,
-    marginTop: spacing.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 16,
+    gap: 4,
+    marginTop: spacing.sm,
   },
   pointsText: {
     color: colors.gold,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 12,
   },
 });
 

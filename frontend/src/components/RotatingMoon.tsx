@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,6 +8,9 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+
+// Original Luna moon image
+const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
 
 interface RotatingMoonProps {
   size?: number;
@@ -37,23 +40,25 @@ export const RotatingMoon: React.FC<RotatingMoonProps> = ({
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
-  // Create a stylized blood moon using gradients - no borders, no shadows
   return (
     <View style={[styles.container, { width: size, height: size }]}>
       <Animated.View style={[animatedStyle, { width: size, height: size }]}>
-        <LinearGradient
-          colors={['#8B0000', '#DC143C', '#CD5C5C', '#B22222', '#8B0000']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.moon, { width: size, height: size, borderRadius: size / 2 }]}
-        >
-          {/* Moon texture overlay - subtle craters */}
-          <View style={[styles.crater, { top: size * 0.15, left: size * 0.25, width: size * 0.15, height: size * 0.15 }]} />
-          <View style={[styles.crater, { top: size * 0.4, left: size * 0.55, width: size * 0.2, height: size * 0.2 }]} />
-          <View style={[styles.crater, { top: size * 0.6, left: size * 0.2, width: size * 0.12, height: size * 0.12 }]} />
-          <View style={[styles.craterSmall, { top: size * 0.3, left: size * 0.7, width: size * 0.08, height: size * 0.08 }]} />
-          <View style={[styles.craterSmall, { top: size * 0.75, left: size * 0.6, width: size * 0.1, height: size * 0.1 }]} />
-        </LinearGradient>
+        {/* Moon image */}
+        <Image
+          source={{ uri: LUNAR_MOON_IMAGE }}
+          style={{ width: size, height: size }}
+          resizeMode="contain"
+        />
+        {/* White tint overlay to make it look like a real lunar moon */}
+        <View 
+          style={[
+            StyleSheet.absoluteFill, 
+            { 
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              borderRadius: size / 2,
+            }
+          ]} 
+        />
       </Animated.View>
     </View>
   );
@@ -63,21 +68,6 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  moon: {
-    position: 'relative',
-    overflow: 'hidden',
-    // No shadow, no border - clean moon
-  },
-  crater: {
-    position: 'absolute',
-    borderRadius: 100,
-    backgroundColor: 'rgba(80, 0, 0, 0.4)',
-  },
-  craterSmall: {
-    position: 'absolute',
-    borderRadius: 100,
-    backgroundColor: 'rgba(60, 0, 0, 0.3)',
   },
 });
 
