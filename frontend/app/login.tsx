@@ -98,8 +98,8 @@ export default function LoginScreen() {
                   <RotatingMoon size={80} rotationDuration={25000} />
                 </View>
 
-                {/* Brand Title - Using Victory Striker font like other pages */}
-                <Text style={[styles.brandTitle, fontsLoaded && { fontFamily: fonts.striker }]}>LUNA GROUP</Text>
+                {/* Brand Title - Using Milker font for luxury look */}
+                <Text style={[styles.brandTitle, fontsLoaded && { fontFamily: fonts.milker }]}>LUNA GROUP</Text>
                 <View style={styles.brandUnderline} />
 
                 {/* Tagline */}
