@@ -10,6 +10,7 @@ This service handles:
 import os
 import httpx
 import logging
+import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
@@ -21,6 +22,9 @@ CHERRYHUB_CLIENT_ID = os.environ.get('CHERRYHUB_CLIENT_ID', '4884860603804c33b52
 CHERRYHUB_CLIENT_SECRET = os.environ.get('CHERRYHUB_CLIENT_SECRET', 'MdGxQK0gtEM8wlsFAbRUcQqWm3SkOrDf')
 CHERRYHUB_BUSINESS_ID = os.environ.get('CHERRYHUB_BUSINESS_ID', '81654767334')
 CHERRYHUB_INTEGRATION_ID = os.environ.get('CHERRYHUB_INTEGRATION_ID', '81654767334.0')
+
+# Mock mode - set to True for local testing when CherryHub API is not reachable
+CHERRYHUB_MOCK_MODE = os.environ.get('CHERRYHUB_MOCK_MODE', 'true').lower() == 'true'
 
 # CherryHub API Base URLs
 # Staging/Test environment
