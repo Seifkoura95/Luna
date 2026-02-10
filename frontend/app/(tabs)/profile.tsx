@@ -1734,11 +1734,81 @@ const styles = StyleSheet.create({
   qrHelp: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.md,
+    textAlign: 'center',
   },
   qrExpiry: {
     fontSize: 12,
     color: colors.textMuted,
+  },
+  // Digital Pass Styles
+  digitalPassCard: {
+    width: '100%',
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    marginBottom: spacing.lg,
+  },
+  passGradient: {
+    padding: spacing.xl,
+    alignItems: 'center',
+  },
+  passHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  passTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.gold,
+    letterSpacing: 2,
+  },
+  passMemberKey: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    letterSpacing: 1,
+    marginBottom: spacing.sm,
+  },
+  passName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  walletPassButton: {
+    width: '100%',
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  walletPassGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  walletPassText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.background,
+  },
+  notConnectedContainer: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  notConnectedTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  notConnectedSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
   },
   emergencyButton: {
     flexDirection: 'row',
