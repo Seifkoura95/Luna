@@ -105,10 +105,21 @@ export default function VenueDetailScreen() {
     }
   };
 
+  // SevenRooms booking URL for Eclipse
+  const ECLIPSE_SEVENROOMS_URL = 'https://www.sevenrooms.com/experiences/eclipse/premium-vip-bottle-service-booths-5574712301027328?client_id=9a6725615e01c1c71a38e373415f579964fc17c876dc9ef7349ad95490c3a4aa37960e1306cc86075d6b1e75db0fe9791cc0ec8e102dfccd2619b942ca2d3801';
+
   const handleBooking = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
+    
+    // For Eclipse venue, open SevenRooms directly
+    if (venue?.id === 'eclipse' || venue?.name?.toLowerCase().includes('eclipse')) {
+      Linking.openURL(ECLIPSE_SEVENROOMS_URL);
+      return;
+    }
+    
+    // For other venues, show the booking modal
     setBookingType(venue?.type === 'restaurant' ? 'reservation' : 'guestlist');
     setShowBookingModal(true);
   };
