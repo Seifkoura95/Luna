@@ -140,6 +140,9 @@ export default function WalletScreen() {
   // Points & Subscription state
   const [pointsData, setPointsData] = useState<any>(null);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  // CherryHub state
+  const [cherryHubStatus, setCherryHubStatus] = useState<{registered: boolean, member_key: string | null}>({registered: false, member_key: null});
+  const [cherryHubPoints, setCherryHubPoints] = useState<number>(0);
 
   // Auto scroll to top when tab gains focus
   useFocusEffect(
@@ -150,11 +153,12 @@ export default function WalletScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [ticketsData, eventsData, pointsRes, subRes] = await Promise.all([
+      const [ticketsData, eventsData, pointsRes, subRes, cherryStatus] = await Promise.all([
         api.getTickets().catch(() => null),
         api.getEvents(),
         api.getPointsBalance().catch(() => null),
         api.getMySubscription().catch(() => null),
+        api.cherryHubStatus().catch(() => ({registered: false, member_key: null})),
       ]);
       // Merge mock data with API data for demonstration
       if (ticketsData && (ticketsData.active?.length > 0 || ticketsData.upcoming?.length > 0 || ticketsData.history?.length > 0)) {
@@ -166,6 +170,17 @@ export default function WalletScreen() {
       setEvents(eventsData || []);
       setPointsData(pointsRes);
       setSubscriptionData(subRes);
+      setCherryHubStatus(cherryStatus);
+      
+      // Fetch CherryHub points if registered
+      if (cherryStatus?.registered) {
+        try {
+          const chPoints = await api.cherryHubGetPoints();
+          setCherryHubPoints(chPoints.points || 0);
+        } catch (e) {
+          console.log('Failed to fetch CherryHub points');
+        }
+      }
     } catch (e) {
       console.error('Failed to fetch wallet data:', e);
       // Use mock data on error
