@@ -775,6 +775,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1,
   },
+  membershipSection: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+  },
   missionsSection: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,
