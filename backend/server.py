@@ -4660,7 +4660,7 @@ async def cherryhub_register_member(
     user_id = user_data.get("user_id")
     
     # Get user from database
-    user = await db.users.find_one({"id": user_id})
+    user = await db.users.find_one({"user_id": user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
