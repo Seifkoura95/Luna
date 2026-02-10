@@ -587,4 +587,48 @@ export const api = {
       '/api/auth/resend-verification',
       { method: 'POST' }
     ),
+
+  // ====== CHERRYHUB INTEGRATION ======
+  // Register user with CherryHub membership system
+  cherryHubRegister: (syncExisting: boolean = false) =>
+    apiFetch<{
+      status: string;
+      member_key: string | null;
+      cherryhub_data?: any;
+      message: string;
+    }>('/api/cherryhub/register', {
+      method: 'POST',
+      body: JSON.stringify({ sync_existing: syncExisting })
+    }),
+
+  // Get CherryHub membership status
+  cherryHubStatus: () =>
+    apiFetch<{
+      registered: boolean;
+      member_key: string | null;
+      registered_at?: string;
+      member_data?: any;
+      message: string;
+    }>('/api/cherryhub/status'),
+
+  // Get digital wallet pass (Apple Wallet or Google Wallet)
+  cherryHubGetWalletPass: (platform: 'ios' | 'android') =>
+    apiFetch<{
+      platform: string;
+      pass_type: string;
+      pass_content_base64?: string;  // For iOS
+      google_wallet_url?: string;    // For Android
+      message: string;
+    }>('/api/cherryhub/wallet-pass', {
+      method: 'POST',
+      body: JSON.stringify({ platform })
+    }),
+
+  // Get CherryHub loyalty points balance
+  cherryHubGetPoints: () =>
+    apiFetch<{
+      member_key: string;
+      points: number;
+      points_data?: any;
+    }>('/api/cherryhub/points'),
 };
