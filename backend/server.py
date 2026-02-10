@@ -4628,6 +4628,227 @@ async def get_scheduler_status():
         "sync_interval": "12 hours"
     }
 
+
+# ====== CHERRYHUB INTEGRATION API ======
+
+from cherryhub_service import (
+    cherryhub_service, 
+    MemberRegistrationRequest,
+    register_cherryhub_member,
+    get_wallet_pass
+)
+
+class CherryHubRegisterRequest(BaseModel):
+    """Request to register user with CherryHub"""
+    sync_existing: bool = False  # If true, sync existing user data to CherryHub
+
+class WalletPassRequest(BaseModel):
+    """Request to get digital wallet pass"""
+    platform: str  # "ios" or "android"
+
+@api_router.post("/cherryhub/register")
+async def cherryhub_register_member(
+    request: Request,
+    body: CherryHubRegisterRequest
+):
+    """
+    Register the current user with CherryHub.
+    Creates a new member in CherryHub and stores the member key.
+    """
+    auth_header = request.headers.get("Authorization")
+    user_data = get_current_user(auth_header)
+    user_id = user_data.get("user_id")
+    
+    # Get user from database
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if already registered with CherryHub
+    if user.get("cherryhub_member_key") and not body.sync_existing:
+        return {
+            "status": "already_registered",
+            "member_key": user["cherryhub_member_key"],
+            "message": "User is already registered with CherryHub"
+        }
+    
+    try:
+        # Parse name into first/last
+        name_parts = user.get("name", "").split(" ", 1)
+        first_name = name_parts[0] if name_parts else "Member"
+        last_name = name_parts[1] if len(name_parts) > 1 else ""
+        
+        # Register with CherryHub
+        result = await register_cherryhub_member(
+            email=user["email"],
+            first_name=first_name,
+            last_name=last_name,
+            phone=user.get("phone"),
+            date_of_birth=user.get("date_of_birth"),
+            marketing_opt_in=user.get("marketing_opt_in", False)
+        )
+        
+        # Extract member key from response
+        member_key = result.get("memberKey") or result.get("MemberKey") or result.get("member_key")
+        
+        if member_key:
+            # Store CherryHub member key in user record
+            await db.users.update_one(
+                {"id": user_id},
+                {
+                    "$set": {
+                        "cherryhub_member_key": member_key,
+                        "cherryhub_registered_at": datetime.now(timezone.utc).isoformat(),
+                        "cherryhub_data": result
+                    }
+                }
+            )
+        
+        logger.info(f"User {user_id} registered with CherryHub, member_key: {member_key}")
+        
+        return {
+            "status": "success",
+            "member_key": member_key,
+            "cherryhub_data": result,
+            "message": "Successfully registered with CherryHub"
+        }
+        
+    except Exception as e:
+        logger.error(f"CherryHub registration failed for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"CherryHub registration failed: {str(e)}")
+
+
+@api_router.get("/cherryhub/status")
+async def cherryhub_get_status(request: Request):
+    """
+    Get the user's CherryHub membership status and info
+    """
+    auth_header = request.headers.get("Authorization")
+    user_data = get_current_user(auth_header)
+    user_id = user_data.get("user_id")
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    member_key = user.get("cherryhub_member_key")
+    
+    if not member_key:
+        return {
+            "registered": False,
+            "member_key": None,
+            "message": "Not registered with CherryHub"
+        }
+    
+    # Optionally fetch latest data from CherryHub
+    try:
+        member_data = await cherryhub_service.get_member_by_key(member_key)
+        return {
+            "registered": True,
+            "member_key": member_key,
+            "registered_at": user.get("cherryhub_registered_at"),
+            "member_data": member_data,
+            "message": "CherryHub member found"
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch CherryHub member data: {e}")
+        return {
+            "registered": True,
+            "member_key": member_key,
+            "registered_at": user.get("cherryhub_registered_at"),
+            "member_data": user.get("cherryhub_data"),
+            "message": "Using cached CherryHub data"
+        }
+
+
+@api_router.post("/cherryhub/wallet-pass")
+async def cherryhub_get_wallet_pass(
+    request: Request,
+    body: WalletPassRequest
+):
+    """
+    Get digital wallet pass (Apple Wallet or Google Wallet) for the user's CherryHub membership
+    
+    Returns:
+    - For iOS: Base64-encoded .pkpass file content
+    - For Android: Google Wallet URL to open
+    """
+    auth_header = request.headers.get("Authorization")
+    user_data = get_current_user(auth_header)
+    user_id = user_data.get("user_id")
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    member_key = user.get("cherryhub_member_key")
+    if not member_key:
+        raise HTTPException(
+            status_code=400, 
+            detail="User not registered with CherryHub. Please register first."
+        )
+    
+    platform = body.platform.lower()
+    if platform not in ["ios", "android"]:
+        raise HTTPException(status_code=400, detail="Platform must be 'ios' or 'android'")
+    
+    try:
+        pass_data = await get_wallet_pass(member_key, platform)
+        
+        if platform == "ios":
+            # Return base64-encoded .pkpass content
+            return {
+                "platform": "ios",
+                "pass_type": "IosPassKit",
+                "pass_content_base64": pass_data.get("IosPassContentBase64"),
+                "message": "Save this pass to Apple Wallet"
+            }
+        else:
+            # Return Google Wallet URL
+            return {
+                "platform": "android",
+                "pass_type": "GooglePayPass",
+                "google_wallet_url": pass_data.get("GooglePassUrl"),
+                "message": "Open this URL to add to Google Wallet"
+            }
+            
+    except Exception as e:
+        logger.error(f"Failed to get wallet pass for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get wallet pass: {str(e)}")
+
+
+@api_router.get("/cherryhub/points")
+async def cherryhub_get_points(request: Request):
+    """
+    Get the user's CherryHub loyalty points balance
+    """
+    auth_header = request.headers.get("Authorization")
+    user_data = get_current_user(auth_header)
+    user_id = user_data.get("user_id")
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    member_key = user.get("cherryhub_member_key")
+    if not member_key:
+        raise HTTPException(
+            status_code=400, 
+            detail="User not registered with CherryHub"
+        )
+    
+    try:
+        points_data = await cherryhub_service.get_member_points_balance(member_key)
+        return {
+            "member_key": member_key,
+            "points": points_data.get("points", points_data.get("balance", 0)),
+            "points_data": points_data
+        }
+    except Exception as e:
+        logger.error(f"Failed to get CherryHub points for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get points: {str(e)}")
+
+
 # CORS
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
