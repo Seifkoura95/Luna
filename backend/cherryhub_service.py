@@ -258,6 +258,21 @@ class CherryHubService:
         if pass_type not in ["GooglePayPass", "IosPassKit"]:
             raise ValueError(f"Invalid pass type: {pass_type}. Must be 'GooglePayPass' or 'IosPassKit'")
         
+        # Mock mode for testing
+        if CHERRYHUB_MOCK_MODE:
+            logger.info(f"[MOCK] Getting digital member card for {member_key} ({pass_type})")
+            if pass_type == "GooglePayPass":
+                return {
+                    "GooglePassUrl": f"https://pay.google.com/gp/v/save/mock_luna_pass_{member_key}",
+                    "mock": True
+                }
+            else:
+                # Return a mock base64 string (would be actual .pkpass content in production)
+                return {
+                    "IosPassContentBase64": "UEsDBBQAAAAIAMockLunaPassContentBase64==",
+                    "mock": True
+                }
+        
         endpoint = f"/{self.business_id}/members/{member_key}/dmc/passtype/{pass_type}"
         
         try:
