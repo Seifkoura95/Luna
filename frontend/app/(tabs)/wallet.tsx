@@ -389,7 +389,7 @@ export default function WalletScreen() {
                 <GoldStarIcon size={32} />
                 <View>
                   <Text style={styles.pointsValue}>
-                    {(pointsData?.balance || user?.points_balance || 0).toLocaleString()}
+                    {(cherryHubStatus.registered ? cherryHubPoints : (pointsData?.balance || user?.points_balance || 0)).toLocaleString()}
                   </Text>
                   <Text style={styles.pointsLabel}>LUNA POINTS</Text>
                 </View>
