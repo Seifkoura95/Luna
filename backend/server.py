@@ -4826,7 +4826,7 @@ async def cherryhub_get_points(request: Request):
     user_data = get_current_user(auth_header)
     user_id = user_data.get("user_id")
     
-    user = await db.users.find_one({"id": user_id})
+    user = await db.users.find_one({"user_id": user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
