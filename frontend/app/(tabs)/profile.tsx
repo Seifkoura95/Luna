@@ -160,12 +160,73 @@ export default function ProfileScreen() {
   };
 
   const handleGetQR = async () => {
+    // Check if user is connected to CherryHub
+    if (!cherryHubStatus.registered) {
+      Alert.alert(
+        'Connect CherryHub',
+        'You need to activate your membership to get your digital pass.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Activate Now', 
+            onPress: async () => {
+              try {
+                const result = await api.cherryHubRegister(false);
+                if (result.status === 'success' || result.status === 'already_registered') {
+                  setCherryHubStatus({registered: true, member_key: result.member_key});
+                  // Now show the pass
+                  setShowQRPass(true);
+                }
+              } catch (e: any) {
+                Alert.alert('Error', e.message || 'Failed to activate membership');
+              }
+            }
+          }
+        ]
+      );
+      return;
+    }
+    setShowQRPass(true);
+  };
+
+  const handleAddToWallet = async () => {
+    if (!cherryHubStatus.registered) {
+      Alert.alert('Error', 'Please activate your membership first');
+      return;
+    }
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    const platform = Platform.OS === 'ios' ? 'ios' : 'android';
+    
     try {
-      const data = await api.getQRData('eclipse'); // Default venue
-      setQrData(data);
-      setShowQRPass(true);
+      setWalletPassLoading(true);
+      const result = await api.cherryHubGetWalletPass(platform);
+      
+      if (platform === 'ios' && result.pass_content_base64) {
+        Alert.alert(
+          'Apple Wallet',
+          'Your membership pass is ready to be added to Apple Wallet.',
+          [{ text: 'OK' }]
+        );
+      } else if (result.google_wallet_url) {
+        const canOpen = await Linking.canOpenURL(result.google_wallet_url);
+        if (canOpen) {
+          await Linking.openURL(result.google_wallet_url);
+        } else {
+          Alert.alert(
+            'Google Wallet',
+            'Please install Google Wallet to add your membership card.',
+            [{ text: 'OK' }]
+          );
+        }
+      }
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to generate QR code');
+      Alert.alert('Error', e.message || 'Failed to get wallet pass');
+    } finally {
+      setWalletPassLoading(false);
     }
   };
 
