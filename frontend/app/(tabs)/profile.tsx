@@ -93,18 +93,30 @@ export default function ProfileScreen() {
 
   const fetchData = async () => {
     try {
-      const [statsData, reservationsData, crewsData, subData, venuesData] = await Promise.all([
+      const [statsData, reservationsData, crewsData, subData, venuesData, cherryStatus] = await Promise.all([
         api.getUserStats().catch(() => null),
         api.getMyReservations().catch(() => null),
         api.getCrews().catch(() => []),
         api.getMySubscription().catch(() => null),
         api.getVenues().catch(() => []),
+        api.cherryHubStatus().catch(() => ({registered: false, member_key: null})),
       ]);
       setStats(statsData);
       setReservations(reservationsData);
       setCrews(crewsData || []);
       setSubscriptionData(subData);
       setVenues(venuesData || []);
+      setCherryHubStatus(cherryStatus);
+      
+      // Fetch CherryHub points if registered
+      if (cherryStatus?.registered) {
+        try {
+          const pointsData = await api.cherryHubGetPoints();
+          setCherryHubPoints(pointsData.points || 0);
+        } catch (e) {
+          console.log('Failed to fetch CherryHub points');
+        }
+      }
     } catch (e) {
       console.error('Failed to fetch profile data:', e);
     }
