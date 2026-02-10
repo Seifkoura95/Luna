@@ -3180,6 +3180,18 @@ async def award_points(user_id: str, amount_spent: float, source: str, source_id
         {"$inc": {"points_balance": total_points}}
     )
     
+    # Sync points to CherryHub if member is registered
+    try:
+        user = await db.users.find_one({"user_id": user_id})
+        if user and user.get("cherryhub_member_key"):
+            member_key = user["cherryhub_member_key"]
+            reason = f"Luna Group App: {source} ({source_id})"
+            await cherryhub_service.add_points(member_key, total_points, reason)
+            logger.info(f"Synced {total_points} points to CherryHub for user {user_id}")
+    except Exception as e:
+        logger.error(f"Failed to sync points to CherryHub: {e}")
+        # Don't fail the transaction if CherryHub sync fails
+    
     return {
         "base_points": base_points,
         "bonus_points": bonus_points,
