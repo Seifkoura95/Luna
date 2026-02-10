@@ -27,6 +27,7 @@ import { GoldStarIcon } from '../../src/components/GoldStarIcon';
 import { SafetyAlert } from '../../src/components/SafetyAlert';
 import { CrewMap } from '../../src/components/CrewMap';
 import { PageHeader } from '../../src/components/PageHeader';
+import { MembershipCard } from '../../src/components/MembershipCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useFonts, fonts } from '../../src/hooks/useFonts';
@@ -389,6 +390,12 @@ export default function ProfileScreen() {
               </Text>
             </TouchableOpacity>
           </LinearGradient>
+        </View>
+
+        {/* Digital Membership Card - CherryHub Integration */}
+        <View style={styles.membershipSection}>
+          <Text style={styles.sectionTitle}>MEMBERSHIP CARD</Text>
+          <MembershipCard compact={false} />
         </View>
 
         {/* Tier Perks */}
