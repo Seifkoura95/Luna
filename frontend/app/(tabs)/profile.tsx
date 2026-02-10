@@ -78,6 +78,10 @@ export default function ProfileScreen() {
   const [isInviting, setIsInviting] = useState(false);
   const [showCrewDetails, setShowCrewDetails] = useState(false);
   const [selectedCrewForDetails, setSelectedCrewForDetails] = useState<any>(null);
+  // CherryHub state
+  const [cherryHubStatus, setCherryHubStatus] = useState<{registered: boolean, member_key: string | null}>({registered: false, member_key: null});
+  const [cherryHubPoints, setCherryHubPoints] = useState<number>(0);
+  const [walletPassLoading, setWalletPassLoading] = useState(false);
 
   // Helper function to capitalize name properly
   const formatName = (name: string | undefined) => {
