@@ -301,6 +301,17 @@ class CherryHubService:
         """
         Get member's loyalty points balance
         """
+        # Mock mode for testing
+        if CHERRYHUB_MOCK_MODE:
+            logger.info(f"[MOCK] Getting points balance for {member_key}")
+            return {
+                "points": 1250,
+                "balance": 1250,
+                "tier": "Gold",
+                "lifetimePoints": 5000,
+                "mock": True
+            }
+        
         endpoint = f"/{self.business_id}/members/{member_key}/points"
         
         try:
