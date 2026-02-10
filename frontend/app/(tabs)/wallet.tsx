@@ -391,6 +391,12 @@ export default function WalletScreen() {
           </LinearGradient>
         </View>
 
+        {/* Digital Membership Card */}
+        <View style={styles.membershipSection}>
+          <Text style={styles.sectionTitle}>MEMBERSHIP CARD</Text>
+          <MembershipCard compact={true} />
+        </View>
+
         {/* Active Missions */}
         <View style={styles.missionsSection}>
           <View style={styles.missionHeader}>
