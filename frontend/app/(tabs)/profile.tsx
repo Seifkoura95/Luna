@@ -1234,6 +1234,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
   },
+  // Membership Card Section
+  membershipSection: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+  },
   // Tier Perks Section
   tierPerksSection: {
     paddingHorizontal: spacing.lg,
