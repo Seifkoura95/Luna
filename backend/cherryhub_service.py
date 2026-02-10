@@ -320,6 +320,74 @@ class CherryHubService:
         except Exception as e:
             logger.error(f"Failed to get member points balance: {e}")
             return {"points": 0, "error": str(e)}
+    
+    async def add_points(self, member_key: str, points: int, reason: str = "Luna Group App") -> Dict[str, Any]:
+        """
+        Add loyalty points to a member's account
+        
+        Args:
+            member_key: CherryHub member key
+            points: Number of points to add
+            reason: Description of why points are being added
+        
+        Returns:
+            Updated points balance
+        """
+        # Mock mode for testing
+        if CHERRYHUB_MOCK_MODE:
+            logger.info(f"[MOCK] Adding {points} points to member {member_key} - {reason}")
+            return {
+                "success": True,
+                "pointsAdded": points,
+                "newBalance": 1250 + points,
+                "reason": reason,
+                "mock": True
+            }
+        
+        endpoint = f"/{self.business_id}/members/{member_key}/points/add"
+        data = {
+            "points": points,
+            "reason": reason,
+            "source": "LunaGroupApp"
+        }
+        
+        try:
+            result = await self._make_request("POST", endpoint, data=data)
+            logger.info(f"Added {points} points to CherryHub member {member_key}")
+            return result
+        except Exception as e:
+            logger.error(f"Failed to add points to CherryHub: {e}")
+            raise
+    
+    async def deduct_points(self, member_key: str, points: int, reason: str = "Redemption") -> Dict[str, Any]:
+        """
+        Deduct loyalty points from a member's account
+        """
+        # Mock mode for testing
+        if CHERRYHUB_MOCK_MODE:
+            logger.info(f"[MOCK] Deducting {points} points from member {member_key} - {reason}")
+            return {
+                "success": True,
+                "pointsDeducted": points,
+                "newBalance": max(0, 1250 - points),
+                "reason": reason,
+                "mock": True
+            }
+        
+        endpoint = f"/{self.business_id}/members/{member_key}/points/deduct"
+        data = {
+            "points": points,
+            "reason": reason,
+            "source": "LunaGroupApp"
+        }
+        
+        try:
+            result = await self._make_request("POST", endpoint, data=data)
+            logger.info(f"Deducted {points} points from CherryHub member {member_key}")
+            return result
+        except Exception as e:
+            logger.error(f"Failed to deduct points from CherryHub: {e}")
+            raise
 
 
 # Global service instance
