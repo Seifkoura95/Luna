@@ -4694,7 +4694,7 @@ async def cherryhub_register_member(
         if member_key:
             # Store CherryHub member key in user record
             await db.users.update_one(
-                {"id": user_id},
+                {"user_id": user_id},
                 {
                     "$set": {
                         "cherryhub_member_key": member_key,
