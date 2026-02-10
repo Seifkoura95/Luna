@@ -170,6 +170,20 @@ class CherryHubService:
         
         Returns member data including MemberKey (SwiftPOS Member Number)
         """
+        # Mock mode for testing
+        if CHERRYHUB_MOCK_MODE:
+            member_key = f"LUNA-{str(uuid.uuid4())[:8].upper()}"
+            logger.info(f"[MOCK] Registering CherryHub member: {request.email} -> {member_key}")
+            return {
+                "memberKey": member_key,
+                "email": request.email,
+                "firstName": request.first_name,
+                "lastName": request.last_name,
+                "status": "active",
+                "created": datetime.now(timezone.utc).isoformat(),
+                "mock": True
+            }
+        
         # Build registration data
         member_data = {
             "email": request.email,
