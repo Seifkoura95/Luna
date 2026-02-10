@@ -640,7 +640,7 @@ export default function ProfileScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* QR Pass Modal */}
+      {/* CherryHub Digital Pass Modal */}
       <Modal
         visible={showQRPass}
         transparent
@@ -654,7 +654,7 @@ export default function ProfileScreen() {
               style={styles.modalGradient}
             >
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Tonight's Pass</Text>
+                <Text style={styles.modalTitle}>Digital Pass</Text>
                 <TouchableOpacity
                   style={styles.closeButton}
                   onPress={() => setShowQRPass(false)}
@@ -664,12 +664,60 @@ export default function ProfileScreen() {
               </View>
 
               <View style={styles.qrSection}>
-                <View style={styles.qrCodeLarge}>
-                  <Ionicons name="qr-code" size={180} color={colors.textPrimary} />
-                </View>
-                <Text style={styles.qrVenue}>{qrData?.venue_name || 'Luna Group'}</Text>
-                <Text style={styles.qrHelp}>Show this QR code at the entrance</Text>
-                <Text style={styles.qrExpiry}>Valid for 60 seconds</Text>
+                {cherryHubStatus.registered ? (
+                  <>
+                    {/* Member Card Display */}
+                    <View style={styles.digitalPassCard}>
+                      <LinearGradient
+                        colors={['rgba(212, 175, 55, 0.3)', 'rgba(212, 175, 55, 0.1)']}
+                        style={styles.passGradient}
+                      >
+                        <View style={styles.passHeader}>
+                          <Ionicons name="checkmark-circle" size={24} color={colors.gold} />
+                          <Text style={styles.passTitle}>LUNA GROUP MEMBER</Text>
+                        </View>
+                        <Text style={styles.passMemberKey}>#{cherryHubStatus.member_key}</Text>
+                        <Text style={styles.passName}>{user?.name || 'Member'}</Text>
+                      </LinearGradient>
+                    </View>
+                    
+                    <Text style={styles.qrHelp}>Add to your digital wallet for easy access</Text>
+                    
+                    {/* Add to Wallet Button */}
+                    <TouchableOpacity
+                      style={styles.walletPassButton}
+                      onPress={handleAddToWallet}
+                      disabled={walletPassLoading}
+                      activeOpacity={0.85}
+                    >
+                      <LinearGradient
+                        colors={[colors.gold, '#B8960D']}
+                        style={styles.walletPassGradient}
+                      >
+                        {walletPassLoading ? (
+                          <Text style={styles.walletPassText}>Loading...</Text>
+                        ) : (
+                          <>
+                            <Ionicons name="wallet" size={20} color={colors.background} />
+                            <Text style={styles.walletPassText}>
+                              {Platform.OS === 'ios' ? 'Add to Apple Wallet' : 'Add to Google Wallet'}
+                            </Text>
+                          </>
+                        )}
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.notConnectedContainer}>
+                      <Ionicons name="card-outline" size={80} color={colors.textMuted} />
+                      <Text style={styles.notConnectedTitle}>No Pass Connected</Text>
+                      <Text style={styles.notConnectedSubtitle}>
+                        Activate your membership to get your digital pass
+                      </Text>
+                    </View>
+                  </>
+                )}
               </View>
             </LinearGradient>
           </View>
