@@ -333,7 +333,8 @@ export default function ProfileScreen() {
   };
 
   const tierConfig = TIER_CONFIG[user?.tier || 'bronze'];
-  const currentPoints = user?.points_balance || 0;
+  // Use CherryHub points if available, otherwise fall back to local points
+  const currentPoints = cherryHubStatus.registered ? cherryHubPoints : (user?.points_balance || 0);
   const progressToNext = Math.min((currentPoints / tierConfig.pointsNeeded) * 100, 100);
 
   const quickActions = [
