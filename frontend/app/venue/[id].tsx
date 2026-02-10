@@ -105,21 +105,49 @@ export default function VenueDetailScreen() {
     }
   };
 
-  // SevenRooms booking URL for Eclipse
-  const ECLIPSE_SEVENROOMS_URL = 'https://www.sevenrooms.com/experiences/eclipse/premium-vip-bottle-service-booths-5574712301027328?client_id=9a6725615e01c1c71a38e373415f579964fc17c876dc9ef7349ad95490c3a4aa37960e1306cc86075d6b1e75db0fe9791cc0ec8e102dfccd2619b942ca2d3801';
+  // Venue booking URLs - SevenRooms and direct booking links
+  const VENUE_BOOKING_URLS: { [key: string]: string } = {
+    // Eclipse - VIP Bottle Service Booths
+    'eclipse': 'https://www.sevenrooms.com/experiences/eclipse/premium-vip-bottle-service-booths-5574712301027328?client_id=9a6725615e01c1c71a38e373415f579964fc17c876dc9ef7349ad95490c3a4aa37960e1306cc86075d6b1e75db0fe9791cc0ec8e102dfccd2619b942ca2d3801',
+    // After Dark - VIP Booths
+    'after_dark': 'https://www.sevenrooms.com/experiences/afterdark/booths-9346943547',
+    // Su Casa Brisbane - Rooftop Reservations
+    'su_casa_brisbane': 'https://www.sevenrooms.com/reservations/sucasarooftop',
+    // Su Casa Gold Coast - VIP Experience
+    'su_casa_gold_coast': 'https://www.sucasagc.com.au',
+    // Juju Mermaid Beach - Restaurant Reservations
+    'juju': 'https://www.sevenrooms.com/reservations/jujumermaidbeach',
+    // Night Market - Direct Bookings
+    'night_market': 'https://www.nightmarketbrisbane.com.au/bookings',
+    // Ember & Ash - Coming Soon (website)
+    'ember_and_ash': 'https://www.emberandashbrisbane.com.au',
+  };
+
+  // Get booking button text based on venue
+  const getBookingButtonText = (venueId: string, venueType: string): string => {
+    // Venues with direct booking links
+    if (VENUE_BOOKING_URLS[venueId]) {
+      if (venueId === 'ember_and_ash') return 'Coming Soon';
+      if (venueId === 'juju' || venueId === 'night_market') return 'Book a Table';
+      return 'Bookings';
+    }
+    // Default text based on venue type
+    return venueType === 'restaurant' ? 'Book a Table' : 'Get on the List';
+  };
 
   const handleBooking = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     
-    // For Eclipse venue, open SevenRooms directly
-    if (venue?.id === 'eclipse' || venue?.name?.toLowerCase().includes('eclipse')) {
-      Linking.openURL(ECLIPSE_SEVENROOMS_URL);
+    // Check if venue has a direct booking URL
+    const bookingUrl = VENUE_BOOKING_URLS[venue?.id];
+    if (bookingUrl) {
+      Linking.openURL(bookingUrl);
       return;
     }
     
-    // For other venues, show the booking modal
+    // For venues without direct booking, show the booking modal
     setBookingType(venue?.type === 'restaurant' ? 'reservation' : 'guestlist');
     setShowBookingModal(true);
   };
