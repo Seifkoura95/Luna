@@ -3057,11 +3057,23 @@ async def subscribe_to_tier(request: Request, sub_req: SubscribeRequest):
         {"$set": {"subscription_tier": sub_req.tier_id}}
     )
     
+    # Award points for subscription purchase (1 point per $1)
+    subscription_amount = tier["price"]
+    if subscription_amount > 0:
+        points_result = await award_points(
+            user_id=current_user["user_id"],
+            amount_spent=subscription_amount,
+            source="subscription",
+            source_id=subscription["id"]
+        )
+        logger.info(f"Awarded {points_result['total_points']} points for subscription purchase")
+    
     return {
         "success": True,
         "message": f"Welcome to {tier['name']}! 🌙",
         "subscription": clean_mongo_doc(subscription),
         "tier": tier,
+        "points_earned": points_result.get("total_points", 0) if subscription_amount > 0 else 0,
         "mock": True
     }
 
