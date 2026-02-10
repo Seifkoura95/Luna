@@ -519,7 +519,11 @@ export default function VenueDetailScreen() {
         >
           <TouchableOpacity style={styles.ctaButtonInner} onPress={handleBooking}>
             <Text style={styles.ctaButtonText}>
-              {venue.type === 'restaurant' ? 'Book a Table' : 'Get on the List'}
+              {venue.id === 'eclipse' || venue.name?.toLowerCase().includes('eclipse')
+                ? 'Bookings'
+                : venue.type === 'restaurant' 
+                  ? 'Book a Table' 
+                  : 'Get on the List'}
             </Text>
             <Ionicons name="arrow-forward" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
