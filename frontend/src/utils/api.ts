@@ -190,6 +190,10 @@ export const api = {
   // Photos
   getUserPhotos: (venueId?: string) => 
     apiFetch<any[]>(`/api/photos${venueId ? `?venue_id=${venueId}` : ''}`),
+  getVenueGalleries: () => 
+    apiFetch<any[]>('/api/photos/venues', { auth: false }),
+  getVenuePhotos: (venueId: string) =>
+    apiFetch<any[]>(`/api/photos/venue/${venueId}`, { auth: false }),
   getPendingPhotos: () => apiFetch<any[]>('/api/photos/pending'),
   approvePhoto: (tagId: string, approved: boolean) =>
     apiFetch<any>('/api/photos/approve', { 
