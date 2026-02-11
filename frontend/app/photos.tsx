@@ -13,6 +13,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
