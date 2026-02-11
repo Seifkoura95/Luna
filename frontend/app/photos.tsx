@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Dimensions,
   Modal,
-  FlatList,
   RefreshControl,
   Share,
   Platform,
