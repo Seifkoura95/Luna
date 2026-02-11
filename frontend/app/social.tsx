@@ -4,248 +4,333 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
+  Dimensions,
   RefreshControl,
   Platform,
-  Dimensions,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeIn, FadeInDown, SlideInRight } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  FadeIn,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { PageHeader } from '../src/components/PageHeader';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import { GlassCard } from '../src/components/GlassCard';
-import { LiveIndicator } from '../src/components/LiveIndicator';
 import { useAuthStore } from '../src/store/authStore';
 import { useFonts, fonts } from '../src/hooks/useFonts';
 
 const { width } = Dimensions.get('window');
 
-// Mock friends data
+// Mock data for friends activity
 const MOCK_FRIENDS = [
+  { id: '1', name: 'Sarah M.', avatar: 'https://randomuser.me/api/portraits/women/1.jpg', username: '@sarahm' },
+  { id: '2', name: 'James T.', avatar: 'https://randomuser.me/api/portraits/men/2.jpg', username: '@jamest' },
+  { id: '3', name: 'Emily R.', avatar: 'https://randomuser.me/api/portraits/women/3.jpg', username: '@emilyr' },
+  { id: '4', name: 'Michael K.', avatar: 'https://randomuser.me/api/portraits/men/4.jpg', username: '@michaelk' },
+  { id: '5', name: 'Jessica L.', avatar: 'https://randomuser.me/api/portraits/women/5.jpg', username: '@jessical' },
+];
+
+const MOCK_VENUES = [
+  { id: 'eclipse', name: 'Eclipse', hashtag: '#EclipseBrisbane', color: '#E31837' },
+  { id: 'after_dark', name: 'After Dark', hashtag: '#AfterDarkBrisbane', color: '#9333EA' },
+  { id: 'su_casa_brisbane', name: 'Su Casa Brisbane', hashtag: '#SucasaBrisbane', color: '#FF6B35' },
+  { id: 'su_casa_gold_coast', name: 'Su Casa Gold Coast', hashtag: '#SucasaGoldcoast', color: '#FF6B35' },
+  { id: 'night_market', name: 'Night Market', hashtag: '#NightMarket', color: '#3B82F6' },
+];
+
+const ACTIVITY_TYPES = {
+  CHECK_IN: 'check_in',
+  RSVP: 'rsvp',
+  LIKE: 'like',
+  PHOTO: 'photo',
+  EARNED_POINTS: 'earned_points',
+  VIP_UPGRADE: 'vip_upgrade',
+};
+
+// Generate mock activity feed
+const generateMockActivities = () => {
+  const activities = [];
+  const now = Date.now();
+  
+  const activityTemplates = [
+    { type: ACTIVITY_TYPES.CHECK_IN, verb: 'checked in at', icon: 'location' },
+    { type: ACTIVITY_TYPES.RSVP, verb: 'is going to', icon: 'calendar' },
+    { type: ACTIVITY_TYPES.LIKE, verb: 'liked a post at', icon: 'heart' },
+    { type: ACTIVITY_TYPES.PHOTO, verb: 'shared a photo at', icon: 'camera' },
+    { type: ACTIVITY_TYPES.EARNED_POINTS, verb: 'earned 50 Luna Points at', icon: 'star' },
+    { type: ACTIVITY_TYPES.VIP_UPGRADE, verb: 'upgraded to VIP at', icon: 'diamond' },
+  ];
+  
+  for (let i = 0; i < 15; i++) {
+    const friend = MOCK_FRIENDS[Math.floor(Math.random() * MOCK_FRIENDS.length)];
+    const venue = MOCK_VENUES[Math.floor(Math.random() * MOCK_VENUES.length)];
+    const template = activityTemplates[Math.floor(Math.random() * activityTemplates.length)];
+    const timeAgo = Math.floor(Math.random() * 24 * 60);
+    
+    activities.push({
+      id: `activity-${i}`,
+      friend,
+      venue,
+      type: template.type,
+      verb: template.verb,
+      icon: template.icon,
+      timestamp: now - (timeAgo * 60 * 1000),
+      likes: Math.floor(Math.random() * 50),
+      hasImage: template.type === ACTIVITY_TYPES.PHOTO || Math.random() > 0.7,
+    });
+  }
+  
+  return activities.sort((a, b) => b.timestamp - a.timestamp);
+};
+
+// Mock Instagram posts data
+const MOCK_INSTAGRAM_POSTS = [
   {
-    id: 'f1',
-    name: 'Sarah Mitchell',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
-    status: 'going_out',
-    venue: 'Eclipse',
-    mutualFriends: 5,
+    id: 'ig1',
+    image: 'https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400',
+    venue: MOCK_VENUES[0],
+    hashtag: '#EclipseBrisbane',
+    likes: 234,
+    caption: 'Amazing night at Eclipse! 🌙✨',
   },
   {
-    id: 'f2',
-    name: 'Mike Rodriguez',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
-    status: 'at_venue',
-    venue: 'Su Casa Brisbane',
-    mutualFriends: 3,
+    id: 'ig2',
+    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400',
+    venue: MOCK_VENUES[1],
+    hashtag: '#AfterDarkBrisbane',
+    likes: 189,
+    caption: 'The vibes at After Dark are unreal 🔥',
   },
   {
-    id: 'f3',
-    name: 'Emma Chen',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200',
-    status: 'checked_in',
-    venue: 'After Dark',
-    mutualFriends: 8,
-  },
-  {
-    id: 'f4',
-    name: 'James Wilson',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200',
-    status: 'offline',
-    venue: null,
-    mutualFriends: 2,
+    id: 'ig3',
+    image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400',
+    venue: MOCK_VENUES[2],
+    hashtag: '#SucasaBrisbane',
+    likes: 312,
+    caption: 'Su Casa never disappoints 🎉',
   },
 ];
 
-// Mock activity feed
-const MOCK_ACTIVITY = [
-  {
-    id: 'a1',
-    type: 'check_in',
-    user: { name: 'Sarah Mitchell', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200' },
-    venue: 'Eclipse',
-    timestamp: '5 mins ago',
-    message: 'Just arrived! 🔥',
-  },
-  {
-    id: 'a2',
-    type: 'going_out',
-    user: { name: 'Mike Rodriguez', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200' },
-    venue: 'Su Casa Brisbane',
-    timestamp: '15 mins ago',
-    message: 'Who else is heading to Su Casa tonight?',
-  },
-  {
-    id: 'a3',
-    type: 'photo_tagged',
-    user: { name: 'Emma Chen', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200' },
-    photo: 'https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=400',
-    timestamp: '1 hour ago',
-    message: 'Tagged you in a photo',
-  },
-  {
-    id: 'a4',
-    type: 'booth_booked',
-    user: { name: 'James Wilson', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200' },
-    venue: 'Eclipse',
-    timestamp: '2 hours ago',
-    message: 'Booked VIP booth for Saturday! Who wants in?',
-  },
-  {
-    id: 'a5',
-    type: 'points_earned',
-    user: { name: 'You', avatar: null },
-    points: 250,
-    timestamp: '3 hours ago',
-    message: 'Earned 250 Luna Points at Eclipse',
-  },
-];
+const formatTimeAgo = (timestamp: number) => {
+  const minutes = Math.floor((Date.now() - timestamp) / 60000);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+};
 
-// Tonight's Plans
-const TONIGHTS_PLANS = [
-  { venue: 'Eclipse', count: 12, time: '10 PM' },
-  { venue: 'Su Casa Brisbane', count: 5, time: '9 PM' },
-  { venue: 'After Dark', count: 3, time: '11 PM' },
-];
-
-export default function SocialScreen() {
+export default function SocialFeedScreen() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const fontsLoaded = useFonts();
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'feed' | 'friends'>('feed');
+  const [loading, setLoading] = useState(true);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [selectedTab, setSelectedTab] = useState<'friends' | 'trending'>('friends');
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1500);
+  useEffect(() => {
+    loadActivities();
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'at_venue':
-      case 'checked_in':
-        return colors.success;
-      case 'going_out':
-        return colors.gold;
-      default:
-        return colors.textMuted;
-    }
+  const loadActivities = async () => {
+    setLoading(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setActivities(generateMockActivities());
+    setLoading(false);
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'at_venue':
-        return 'At venue';
-      case 'checked_in':
-        return 'Checked in';
-      case 'going_out':
-        return 'Going out';
-      default:
-        return 'Offline';
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadActivities();
+    setRefreshing(false);
+  }, []);
+
+  const handleLike = (activityId: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+    setActivities(prev => 
+      prev.map(a => a.id === activityId ? { ...a, likes: a.likes + 1, liked: true } : a)
+    );
   };
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'check_in':
-        return 'location';
-      case 'going_out':
-        return 'moon';
-      case 'photo_tagged':
-        return 'camera';
-      case 'booth_booked':
-        return 'wine';
-      case 'points_earned':
-        return 'star';
-      default:
-        return 'ellipse';
+  const handleFollow = (friendId: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
+    Alert.alert('Following!', 'You are now following this user');
+  };
+
+  const getActivityIcon = (iconName: string) => {
+    const iconMap: { [key: string]: string } = {
+      location: 'location',
+      calendar: 'calendar',
+      heart: 'heart',
+      camera: 'camera',
+      star: 'star',
+      diamond: 'diamond',
+    };
+    return iconMap[iconName] || 'ellipse';
   };
 
   const renderActivityItem = (activity: any, index: number) => (
-    <Animated.View
+    <Animated.View 
       key={activity.id}
-      entering={FadeInDown.delay(index * 100).duration(400)}
+      entering={FadeInDown.delay(index * 50).duration(300)}
     >
       <GlassCard style={styles.activityCard}>
         <View style={styles.activityHeader}>
-          {activity.user.avatar ? (
-            <Image source={{ uri: activity.user.avatar }} style={styles.activityAvatar} />
-          ) : (
-            <View style={[styles.activityAvatar, styles.selfAvatar]}>
-              <Ionicons name="person" size={20} color={colors.gold} />
+          <TouchableOpacity 
+            style={styles.userInfo}
+            onPress={() => handleFollow(activity.friend.id)}
+          >
+            <Image 
+              source={{ uri: activity.friend.avatar }} 
+              style={styles.avatar}
+              contentFit="cover"
+            />
+            <View style={styles.userText}>
+              <Text style={[styles.userName, fontsLoaded && { fontFamily: fonts.bold }]}>
+                {activity.friend.name}
+              </Text>
+              <Text style={styles.userHandle}>{activity.friend.username}</Text>
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.timeAgo}>{formatTimeAgo(activity.timestamp)}</Text>
+        </View>
+        
+        <View style={styles.activityContent}>
+          <View style={styles.activityTextRow}>
+            <Ionicons 
+              name={getActivityIcon(activity.icon) as any} 
+              size={16} 
+              color={activity.venue.color} 
+            />
+            <Text style={styles.activityText}>
+              {activity.verb}{' '}
+              <Text style={[styles.venueName, { color: activity.venue.color }]}>
+                {activity.venue.name}
+              </Text>
+            </Text>
+          </View>
+          
+          {activity.hasImage && (
+            <View style={styles.activityImageContainer}>
+              <Image 
+                source={{ uri: `https://source.unsplash.com/400x300/?nightclub,party&sig=${activity.id}` }}
+                style={styles.activityImage}
+                contentFit="cover"
+              />
             </View>
           )}
-          <View style={styles.activityInfo}>
-            <Text style={[styles.activityUser, fontsLoaded && { fontFamily: fonts.semiBold }]}>
-              {activity.user.name}
-            </Text>
-            <Text style={styles.activityTime}>{activity.timestamp}</Text>
-          </View>
-          <View style={[styles.activityIcon, { backgroundColor: colors.accentGlow }]}>
-            <Ionicons name={getActivityIcon(activity.type)} size={16} color={colors.accent} />
-          </View>
         </View>
-
-        <Text style={styles.activityMessage}>{activity.message}</Text>
-
-        {activity.venue && (
-          <TouchableOpacity style={styles.activityVenue}>
-            <Ionicons name="location" size={14} color={colors.textSecondary} />
-            <Text style={styles.activityVenueText}>{activity.venue}</Text>
+        
+        <View style={styles.activityActions}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => handleLike(activity.id)}
+          >
+            <Ionicons 
+              name={activity.liked ? 'heart' : 'heart-outline'} 
+              size={20} 
+              color={activity.liked ? '#E31837' : colors.textSecondary} 
+            />
+            <Text style={styles.actionText}>{activity.likes}</Text>
           </TouchableOpacity>
-        )}
-
-        {activity.photo && (
-          <Image source={{ uri: activity.photo }} style={styles.activityPhoto} />
-        )}
-
-        {activity.points && (
-          <View style={styles.pointsBadge}>
-            <Ionicons name="star" size={16} color={colors.gold} />
-            <Text style={styles.pointsText}>+{activity.points} pts</Text>
-          </View>
-        )}
+          
+          <TouchableOpacity style={styles.actionButton}>
+            <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
+            <Text style={styles.actionText}>Comment</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.actionButton}>
+            <Ionicons name="share-outline" size={20} color={colors.textSecondary} />
+            <Text style={styles.actionText}>Share</Text>
+          </TouchableOpacity>
+        </View>
       </GlassCard>
     </Animated.View>
   );
 
-  const renderFriendItem = (friend: any, index: number) => (
-    <Animated.View
-      key={friend.id}
-      entering={SlideInRight.delay(index * 80).duration(400)}
-    >
-      <TouchableOpacity activeOpacity={0.85}>
-        <GlassCard style={styles.friendCard}>
-          <Image source={{ uri: friend.avatar }} style={styles.friendAvatar} />
-          <View style={styles.friendInfo}>
-            <Text style={[styles.friendName, fontsLoaded && { fontFamily: fonts.semiBold }]}>
-              {friend.name}
+  const renderTrendingHashtags = () => (
+    <View style={styles.trendingSection}>
+      <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+        Trending Hashtags
+      </Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {MOCK_VENUES.map((venue, index) => (
+          <TouchableOpacity 
+            key={venue.id}
+            style={[styles.hashtagChip, { borderColor: venue.color }]}
+          >
+            <Text style={[styles.hashtagText, { color: venue.color }]}>
+              {venue.hashtag}
             </Text>
-            <View style={styles.friendStatus}>
-              <View style={[styles.statusDot, { backgroundColor: getStatusColor(friend.status) }]} />
-              <Text style={[styles.statusText, { color: getStatusColor(friend.status) }]}>
-                {getStatusText(friend.status)}
-              </Text>
-            </View>
-            {friend.venue && (
-              <View style={styles.friendVenue}>
-                <Ionicons name="location-outline" size={12} color={colors.textMuted} />
-                <Text style={styles.friendVenueText}>{friend.venue}</Text>
-              </View>
-            )}
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-        </GlassCard>
-      </TouchableOpacity>
-    </Animated.View>
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity 
+          style={[styles.hashtagChip, { borderColor: colors.accent }]}
+        >
+          <Text style={[styles.hashtagText, { color: colors.accent }]}>
+            #LunaGroup
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+      
+      {/* Instagram Preview Section */}
+      <View style={styles.instagramPreview}>
+        <View style={styles.instagramHeader}>
+          <Ionicons name="logo-instagram" size={20} color="#E4405F" />
+          <Text style={styles.instagramTitle}>From Instagram</Text>
+          <Text style={styles.instagramSubtitle}>Coming Soon</Text>
+        </View>
+        
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {MOCK_INSTAGRAM_POSTS.map((post) => (
+            <TouchableOpacity key={post.id} style={styles.instagramPost}>
+              <Image 
+                source={{ uri: post.image }}
+                style={styles.instagramImage}
+                contentFit="cover"
+              />
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.8)']}
+                style={styles.instagramOverlay}
+              >
+                <Text style={styles.instagramHashtag}>{post.hashtag}</Text>
+                <View style={styles.instagramLikes}>
+                  <Ionicons name="heart" size={12} color="#fff" />
+                  <Text style={styles.instagramLikesText}>{post.likes}</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    </View>
   );
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <StarfieldBackground starCount={30} />
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={styles.loadingText}>Loading social feed...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -260,85 +345,55 @@ export default function SocialScreen() {
       >
         <PageHeader 
           title="SOCIAL"
-          description="See what your crew is up to"
+          description="See what your friends are up to"
           showLogo={false}
         />
 
-        {/* Tonight's Plans Summary */}
-        <View style={styles.tonightSection}>
-          <View style={styles.sectionHeader}>
-            <LiveIndicator text="TONIGHT" color={colors.accent} />
-            <Text style={styles.tonightCount}>20 friends going out</Text>
-          </View>
-          
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tonightScroll}>
-            {TONIGHTS_PLANS.map((plan, index) => (
-              <Animated.View key={plan.venue} entering={FadeIn.delay(index * 100)}>
-                <TouchableOpacity style={styles.venueChip}>
-                  <LinearGradient
-                    colors={['rgba(227,24,55,0.2)', 'rgba(227,24,55,0.05)']}
-                    style={styles.venueChipGradient}
-                  >
-                    <Text style={styles.venueChipName}>{plan.venue}</Text>
-                    <View style={styles.venueChipMeta}>
-                      <Ionicons name="people" size={12} color={colors.textSecondary} />
-                      <Text style={styles.venueChipCount}>{plan.count}</Text>
-                      <Text style={styles.venueChipTime}>@ {plan.time}</Text>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </Animated.View>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Tabs */}
-        <View style={styles.tabs}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'feed' && styles.tabActive]}
-            onPress={() => setActiveTab('feed')}
+        {/* Tab Selector */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, selectedTab === 'friends' && styles.tabActive]}
+            onPress={() => setSelectedTab('friends')}
           >
             <Ionicons 
-              name="newspaper-outline" 
+              name="people" 
               size={18} 
-              color={activeTab === 'feed' ? colors.accent : colors.textSecondary} 
+              color={selectedTab === 'friends' ? colors.accent : colors.textSecondary} 
             />
-            <Text style={[styles.tabText, activeTab === 'feed' && styles.tabTextActive]}>
-              Activity
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'friends' && styles.tabActive]}
-            onPress={() => setActiveTab('friends')}
-          >
-            <Ionicons 
-              name="people-outline" 
-              size={18} 
-              color={activeTab === 'friends' ? colors.accent : colors.textSecondary} 
-            />
-            <Text style={[styles.tabText, activeTab === 'friends' && styles.tabTextActive]}>
+            <Text style={[styles.tabText, selectedTab === 'friends' && styles.tabTextActive]}>
               Friends
             </Text>
           </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.tab, selectedTab === 'trending' && styles.tabActive]}
+            onPress={() => setSelectedTab('trending')}
+          >
+            <Ionicons 
+              name="trending-up" 
+              size={18} 
+              color={selectedTab === 'trending' ? colors.accent : colors.textSecondary} 
+            />
+            <Text style={[styles.tabText, selectedTab === 'trending' && styles.tabTextActive]}>
+              Trending
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Content */}
-        {activeTab === 'feed' ? (
-          <View style={styles.feedContainer}>
-            {MOCK_ACTIVITY.map((activity, index) => renderActivityItem(activity, index))}
-          </View>
-        ) : (
-          <View style={styles.friendsContainer}>
-            {/* Online Friends Section */}
-            <Text style={styles.friendsSection}>Active Now</Text>
-            {MOCK_FRIENDS.filter(f => f.status !== 'offline').map((friend, index) => 
-              renderFriendItem(friend, index)
-            )}
-            
-            <Text style={[styles.friendsSection, { marginTop: spacing.lg }]}>Offline</Text>
-            {MOCK_FRIENDS.filter(f => f.status === 'offline').map((friend, index) => 
-              renderFriendItem(friend, index)
-            )}
+        {selectedTab === 'trending' && renderTrendingHashtags()}
+
+        {/* Activity Feed */}
+        <View style={styles.feedContainer}>
+          {activities.slice(0, selectedTab === 'friends' ? 10 : 5).map((activity, index) => 
+            renderActivityItem(activity, index)
+          )}
+        </View>
+
+        {activities.length === 0 && (
+          <View style={styles.emptyState}>
+            <Ionicons name="people-outline" size={64} color={colors.textMuted} />
+            <Text style={styles.emptyText}>No activity yet</Text>
+            <Text style={styles.emptySubtext}>Follow friends to see their activity</Text>
           </View>
         )}
       </ScrollView>
@@ -351,64 +406,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
   },
-  // Tonight Section
-  tonightSection: {
-    marginBottom: spacing.lg,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  tonightCount: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  tonightScroll: {
-    marginHorizontal: -spacing.lg,
-    paddingHorizontal: spacing.lg,
-  },
-  venueChip: {
-    marginRight: spacing.sm,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-  },
-  venueChipGradient: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-  },
-  venueChipName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  venueChipMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  venueChipCount: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  venueChipTime: {
-    fontSize: 11,
-    color: colors.textMuted,
-  },
   // Tabs
-  tabs: {
+  tabContainer: {
     flexDirection: 'row',
     backgroundColor: colors.glass,
     borderRadius: radius.lg,
@@ -422,20 +436,93 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
+    gap: spacing.xs,
   },
   tabActive: {
-    backgroundColor: colors.accentGlow,
+    backgroundColor: colors.backgroundCard,
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '600',
     color: colors.textSecondary,
   },
   tabTextActive: {
     color: colors.accent,
+    fontWeight: '600',
+  },
+  // Trending Section
+  trendingSection: {
+    marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  hashtagChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    marginRight: spacing.sm,
+    backgroundColor: colors.glass,
+  },
+  hashtagText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  // Instagram Preview
+  instagramPreview: {
+    marginTop: spacing.lg,
+  },
+  instagramHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  instagramTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  instagramSubtitle: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginLeft: 'auto',
+  },
+  instagramPost: {
+    width: 150,
+    height: 150,
+    borderRadius: radius.md,
+    marginRight: spacing.sm,
+    overflow: 'hidden',
+  },
+  instagramImage: {
+    width: '100%',
+    height: '100%',
+  },
+  instagramOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    padding: spacing.sm,
+  },
+  instagramHashtag: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  instagramLikes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  instagramLikesText: {
+    fontSize: 11,
+    color: '#fff',
   },
   // Activity Feed
   feedContainer: {
@@ -446,131 +533,94 @@ const styles = StyleSheet.create({
   },
   activityHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: spacing.sm,
   },
-  activityAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: spacing.sm,
-  },
-  selfAvatar: {
-    backgroundColor: colors.goldGlow,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activityInfo: {
-    flex: 1,
-  },
-  activityUser: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  activityTime: {
-    fontSize: 11,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  activityIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activityMessage: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: spacing.sm,
-  },
-  activityVenue: {
+  userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.sm,
   },
-  activityVenueText: {
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.accent,
+  },
+  userText: {
+    gap: 2,
+  },
+  userName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  userHandle: {
     fontSize: 12,
-    color: colors.textSecondary,
+    color: colors.textMuted,
   },
-  activityPhoto: {
-    width: '100%',
-    height: 160,
-    borderRadius: radius.md,
-    marginTop: spacing.sm,
+  timeAgo: {
+    fontSize: 12,
+    color: colors.textMuted,
   },
-  pointsBadge: {
+  activityContent: {
+    marginBottom: spacing.sm,
+  },
+  activityTextRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: colors.goldGlow,
-    alignSelf: 'flex-start',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.full,
-    marginTop: spacing.sm,
   },
-  pointsText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.gold,
-  },
-  // Friends
-  friendsContainer: {
-    gap: spacing.sm,
-  },
-  friendsSection: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textMuted,
-    letterSpacing: 1,
-    marginBottom: spacing.sm,
-    textTransform: 'uppercase',
-  },
-  friendCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-  },
-  friendAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: spacing.md,
-  },
-  friendInfo: {
+  activityText: {
+    fontSize: 14,
+    color: colors.textSecondary,
     flex: 1,
   },
-  friendName: {
-    fontSize: 15,
+  venueName: {
+    fontWeight: '600',
+  },
+  activityImageContainer: {
+    marginTop: spacing.sm,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  activityImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: radius.md,
+  },
+  activityActions: {
+    flexDirection: 'row',
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    gap: spacing.lg,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  actionText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  // Empty State
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: spacing.xxl,
+  },
+  emptyText: {
+    marginTop: spacing.md,
+    fontSize: 16,
     fontWeight: '600',
     color: colors.textPrimary,
-    marginBottom: 4,
   },
-  friendStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  friendVenue: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-  },
-  friendVenueText: {
-    fontSize: 11,
+  emptySubtext: {
+    marginTop: spacing.xs,
+    fontSize: 14,
     color: colors.textMuted,
   },
 });
