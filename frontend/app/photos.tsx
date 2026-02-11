@@ -492,15 +492,17 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
+  photoGridContainer: {
+    width: '100%',
+    paddingHorizontal: spacing.xs,
+  },
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: spacing.xs,
     justifyContent: 'flex-start',
+    width: '100%',
   },
   photoItem: {
-    width: PHOTO_SIZE,
-    height: PHOTO_SIZE,
     margin: spacing.xs / 2,
     borderRadius: radius.sm,
     overflow: 'hidden',
