@@ -481,6 +481,8 @@ const styles = StyleSheet.create({
   },
   photoGrid: {
     padding: spacing.xs,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   photoItem: {
     width: PHOTO_SIZE,
