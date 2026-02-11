@@ -281,7 +281,11 @@ export default function PhotoGalleryScreen() {
                     onPress={() => setSelectedPhoto(photo)}
                     activeOpacity={0.8}
                   >
-                    <Image source={{ uri: `${API_BASE}${photo.url}` }} style={styles.photoImage} />
+                    <Image 
+                      source={{ uri: `${API_BASE}${photo.url}` }} 
+                      style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }} 
+                      resizeMode="cover"
+                    />
                   </TouchableOpacity>
                 ))}
               </View>
