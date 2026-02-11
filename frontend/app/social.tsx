@@ -336,6 +336,17 @@ export default function SocialFeedScreen() {
     <View style={styles.container}>
       <StarfieldBackground starCount={60} />
       
+      {/* Back Button */}
+      <View style={[styles.backButtonContainer, { paddingTop: insets.top + spacing.sm }]}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
+      </View>
+      
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
