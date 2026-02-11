@@ -791,9 +791,9 @@ async def get_auction_bids(auction_id: str):
 # Venue folder mapping
 VENUE_PHOTO_FOLDERS = {
     "eclipse": "eclipse",
-    "afterdark": "afterdark",
-    "su-casa-brisbane": "sucasa-brisbane",
-    "su-casa-gold-coast": "sucasa-goldcoast",
+    "after_dark": "afterdark",
+    "su_casa_brisbane": "sucasa-brisbane",
+    "su_casa_gold_coast": "sucasa-goldcoast",
 }
 
 @api_router.get("/photos")
