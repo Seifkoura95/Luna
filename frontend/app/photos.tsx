@@ -279,15 +279,14 @@ export default function PhotoGalleryScreen() {
                     key={photo.id}
                     onPress={() => setSelectedPhoto(photo)}
                     activeOpacity={0.8}
+                    style={styles.photoItemWrapper}
                   >
-                    <View style={styles.photoItemContainer}>
-                      <Image 
-                        source={{ uri: `${API_BASE}${photo.url}` }} 
-                        style={styles.photoThumbnail}
-                        contentFit="cover"
-                        transition={200}
-                      />
-                    </View>
+                    <Image 
+                      source={{ uri: `${API_BASE}${photo.url}` }} 
+                      style={styles.photoThumbnail}
+                      contentFit="cover"
+                      transition={200}
+                    />
                   </TouchableOpacity>
                 ))}
               </View>
