@@ -35,6 +35,9 @@ import { api } from '../src/utils/api';
 const { width } = Dimensions.get('window');
 const PHOTO_SIZE = (width - spacing.lg * 2 - spacing.sm * 2) / 3;
 
+// API URL for image loading
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+
 interface VenueGallery {
   venue_id: string;
   venue_name: string;
