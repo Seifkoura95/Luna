@@ -113,12 +113,12 @@ export default function VenueDetailScreen() {
     'after_dark': 'https://www.sevenrooms.com/experiences/afterdark/booths-9346943547',
     // Su Casa Brisbane - Rooftop Reservations
     'su_casa_brisbane': 'https://www.sevenrooms.com/reservations/sucasarooftop',
-    // Su Casa Gold Coast - VIP Experience
-    'su_casa_gold_coast': 'https://www.sucasagc.com.au',
+    // Su Casa Gold Coast - VIP Booth Service
+    'su_casa_gold_coast': 'https://www.sevenrooms.com/experiences/sucasanightclubgoldcoast/vip-booth-service-4677012007960576?client_id=28f98bb2136b9d33bef7de90c28db27f3f27c4c422da6c935ac3a5e1bf2eb53509fe491b7691bff48278640cd894c896064c12c37320654cad8d913993564427',
     // Juju Mermaid Beach - Restaurant Reservations
     'juju': 'https://www.sevenrooms.com/reservations/jujumermaidbeach',
-    // Night Market - Direct Bookings
-    'night_market': 'https://www.nightmarketbrisbane.com.au/bookings',
+    // Night Market - SevenRooms Reservations
+    'night_market': 'https://www.sevenrooms.com/explore/nightmarket/reservations/create/search',
     // Ember & Ash - Coming Soon (website)
     'ember_and_ash': 'https://www.emberandashbrisbane.com.au',
   };
