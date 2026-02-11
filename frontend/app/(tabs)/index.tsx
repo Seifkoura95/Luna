@@ -206,6 +206,37 @@ export default function TonightScreen() {
               </LinearGradient>
             </TouchableOpacity>
           </View>
+
+          {/* New Quick Access Row */}
+          <View style={styles.quickAccessRow}>
+            <TouchableOpacity 
+              style={styles.quickAccessItem}
+              onPress={() => { handleHaptic(); router.push('/photos'); }}
+              activeOpacity={0.85}
+            >
+              <LinearGradient 
+                colors={['rgba(255,107,107,0.15)', 'rgba(255,107,107,0.05)']}
+                style={styles.quickAccessGradient}
+              >
+                <Ionicons name="images" size={20} color="#FF6B6B" />
+                <Text style={[styles.quickAccessText, fontsLoaded && { fontFamily: fonts.semiBold }]}>Photos</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.quickAccessItem}
+              onPress={() => { handleHaptic(); router.push('/social'); }}
+              activeOpacity={0.85}
+            >
+              <LinearGradient 
+                colors={['rgba(0,163,255,0.15)', 'rgba(0,163,255,0.05)']}
+                style={styles.quickAccessGradient}
+              >
+                <Ionicons name="people" size={20} color="#00A3FF" />
+                <Text style={[styles.quickAccessText, fontsLoaded && { fontFamily: fonts.semiBold }]}>Social</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Featured Events Section */}
