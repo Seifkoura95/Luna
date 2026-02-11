@@ -6,6 +6,12 @@ export const colors = {
   backgroundCard: '#111111',
   backgroundCardHover: '#161616',
   
+  // Glassmorphism backgrounds
+  glass: 'rgba(17, 17, 17, 0.7)',
+  glassLight: 'rgba(255, 255, 255, 0.05)',
+  glassBorder: 'rgba(255, 255, 255, 0.1)',
+  glassHighlight: 'rgba(255, 255, 255, 0.15)',
+  
   // Text - High contrast with hierarchy
   textPrimary: '#FFFFFF',
   textSecondary: '#A0A0A0',
@@ -32,6 +38,7 @@ export const colors = {
   error: '#FF3B5C',
   errorGlow: 'rgba(255, 59, 92, 0.2)',
   info: '#00A3FF',
+  infoGlow: 'rgba(0, 163, 255, 0.2)',
   
   // Tier Colors - Premium Metallic Feel
   bronze: '#CD7F32',
@@ -62,6 +69,7 @@ export const colors = {
   gradientGold: ['#F4CF57', '#D4AF37', '#B4952F'],
   gradientDark: ['#1A1A1A', '#0A0A0A', '#000000'],
   gradientCard: ['#161616', '#111111'],
+  gradientGlass: ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.02)'],
 };
 
 export const tierColors: Record<string, string> = {
