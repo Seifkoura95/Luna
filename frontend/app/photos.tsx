@@ -138,7 +138,7 @@ export default function PhotoGalleryScreen() {
         <GlassCard noPadding>
           {gallery.cover_image ? (
             <Image 
-              source={{ uri: gallery.cover_image }} 
+              source={{ uri: `${API_BASE}${gallery.cover_image}` }} 
               style={styles.galleryCover}
               resizeMode="cover"
             />
@@ -173,7 +173,7 @@ export default function PhotoGalleryScreen() {
       onPress={() => setSelectedPhoto(photo)}
       activeOpacity={0.8}
     >
-      <Image source={{ uri: photo.url }} style={styles.photoImage} />
+      <Image source={{ uri: `${API_BASE}${photo.url}` }} style={styles.photoImage} />
     </TouchableOpacity>
   );
 
