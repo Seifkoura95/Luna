@@ -13,93 +13,104 @@ import {
   Share,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
   FadeIn,
-  FadeOut,
-  SlideInRight,
+  FadeInDown,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { PageHeader } from '../src/components/PageHeader';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import { GlassCard } from '../src/components/GlassCard';
-import { LiveIndicator } from '../src/components/LiveIndicator';
 import { useAuthStore } from '../src/store/authStore';
 import { useFonts, fonts } from '../src/hooks/useFonts';
+import { api } from '../src/utils/api';
 
 const { width } = Dimensions.get('window');
 const PHOTO_SIZE = (width - spacing.lg * 2 - spacing.sm * 2) / 3;
 
-// Mock photo data - In production, this would come from the API
-const MOCK_EVENTS_WITH_PHOTOS = [
-  {
-    id: 'event1',
-    name: 'Saturday Night Takeover',
-    venue: 'Eclipse',
-    date: '2026-02-08',
-    coverImage: 'https://images.unsplash.com/photo-1713885462557-12b5c41f22cd?w=800',
-    photos: [
-      { id: 'p1', url: 'https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=600', likes: 124, tagged: ['John D.', 'Sarah M.'] },
-      { id: 'p2', url: 'https://images.unsplash.com/photo-1680416124175-f70a22323763?w=600', likes: 89, tagged: [] },
-      { id: 'p3', url: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600', likes: 203, tagged: ['Mike R.'] },
-      { id: 'p4', url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', likes: 156, tagged: [] },
-      { id: 'p5', url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600', likes: 78, tagged: ['You'] },
-      { id: 'p6', url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', likes: 234, tagged: [] },
-    ],
-  },
-  {
-    id: 'event2',
-    name: 'S2O Pre-Party',
-    venue: 'Eclipse',
-    date: '2026-02-01',
-    coverImage: 'https://images.unsplash.com/photo-1680416124175-f70a22323763?w=800',
-    photos: [
-      { id: 'p7', url: 'https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=600', likes: 312, tagged: [] },
-      { id: 'p8', url: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600', likes: 187, tagged: ['You', 'Lisa K.'] },
-      { id: 'p9', url: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600', likes: 145, tagged: [] },
-    ],
-  },
-  {
-    id: 'event3',
-    name: 'VIP Launch Night',
-    venue: 'Su Casa Brisbane',
-    date: '2026-01-25',
-    coverImage: 'https://images.unsplash.com/photo-1541532713592-79a0317b6b77?w=800',
-    photos: [
-      { id: 'p10', url: 'https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=600', likes: 98, tagged: [] },
-      { id: 'p11', url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', likes: 167, tagged: ['You'] },
-    ],
-  },
-];
+interface VenueGallery {
+  venue_id: string;
+  venue_name: string;
+  folder: string;
+  photo_count: number;
+  cover_image: string | null;
+  accent_color: string;
+}
+
+interface Photo {
+  id: string;
+  filename: string;
+  url: string;
+  venue_id: string;
+  likes: number;
+  tagged: string[];
+}
 
 export default function PhotoGalleryScreen() {
   const user = useAuthStore((state) => state.user);
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const fontsLoaded = useFonts();
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
-  const [filter, setFilter] = useState<'all' | 'tagged'>('all');
+  const [loading, setLoading] = useState(true);
+  const [galleries, setGalleries] = useState<VenueGallery[]>([]);
+  const [selectedGallery, setSelectedGallery] = useState<VenueGallery | null>(null);
+  const [galleryPhotos, setGalleryPhotos] = useState<Photo[]>([]);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1500);
+  const fetchGalleries = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getVenueGalleries();
+      setGalleries(data);
+    } catch (e) {
+      console.error('Failed to fetch galleries:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGalleries();
   }, []);
 
-  const handleShare = async (photo: any) => {
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchGalleries();
+    setRefreshing(false);
+  }, []);
+
+  const openGallery = async (gallery: VenueGallery) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setSelectedGallery(gallery);
+    setLoadingPhotos(true);
+    try {
+      const photos = await api.getVenuePhotos(gallery.venue_id);
+      setGalleryPhotos(photos);
+    } catch (e) {
+      console.error('Failed to fetch photos:', e);
+    } finally {
+      setLoadingPhotos(false);
+    }
+  };
+
+  const handleShare = async (photo: Photo) => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     try {
       await Share.share({
-        message: `Check out this photo from Luna Group! 🌙`,
+        message: `Check out this photo from ${selectedGallery?.venue_name || 'Luna Group'}! 🌙`,
         url: photo.url,
       });
     } catch (e) {
@@ -107,65 +118,71 @@ export default function PhotoGalleryScreen() {
     }
   };
 
-  const handleLike = (photo: any) => {
+  const handleLike = (photo: Photo) => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    // In production, this would call the API
     Alert.alert('Liked!', 'Photo added to your favorites');
   };
 
-  const handleTagSelf = (photo: any) => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    Alert.alert('Tag Yourself', 'You have been tagged in this photo!');
-  };
-
-  const filteredEvents = filter === 'tagged' 
-    ? MOCK_EVENTS_WITH_PHOTOS.map(event => ({
-        ...event,
-        photos: event.photos.filter(p => p.tagged.includes('You'))
-      })).filter(event => event.photos.length > 0)
-    : MOCK_EVENTS_WITH_PHOTOS;
-
-  const renderEventCard = ({ item: event }: { item: any }) => (
-    <Animated.View entering={FadeIn.duration(400)}>
+  const renderGalleryCard = ({ item: gallery, index }: { item: VenueGallery; index: number }) => (
+    <Animated.View entering={FadeInDown.delay(index * 100).duration(400)}>
       <TouchableOpacity 
-        style={styles.eventCard}
-        onPress={() => setSelectedEvent(event)}
+        style={styles.galleryCard}
+        onPress={() => openGallery(gallery)}
         activeOpacity={0.9}
       >
         <GlassCard noPadding>
-          <Image source={{ uri: event.coverImage }} style={styles.eventCover} />
+          {gallery.cover_image ? (
+            <Image 
+              source={{ uri: gallery.cover_image }} 
+              style={styles.galleryCover}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.galleryCover, styles.placeholderCover]}>
+              <Ionicons name="images" size={40} color={colors.textMuted} />
+            </View>
+          )}
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.9)']}
-            style={styles.eventOverlay}
+            style={styles.galleryOverlay}
           >
-            <View style={styles.eventInfo}>
-              <Text style={[styles.eventName, fontsLoaded && { fontFamily: fonts.bold }]}>
-                {event.name}
+            <View style={styles.galleryInfo}>
+              <Text style={[styles.galleryName, fontsLoaded && { fontFamily: fonts.bold }]}>
+                {gallery.venue_name}
               </Text>
-              <View style={styles.eventMeta}>
-                <Text style={styles.eventVenue}>{event.venue}</Text>
-                <Text style={styles.eventDate}>{event.date}</Text>
-              </View>
               <View style={styles.photoCount}>
                 <Ionicons name="images" size={14} color={colors.textSecondary} />
-                <Text style={styles.photoCountText}>{event.photos.length} photos</Text>
+                <Text style={styles.photoCountText}>{gallery.photo_count} photos</Text>
               </View>
             </View>
           </LinearGradient>
-          {event.photos.some((p: any) => p.tagged.includes('You')) && (
-            <View style={styles.taggedBadge}>
-              <Ionicons name="person" size={10} color={colors.textPrimary} />
-              <Text style={styles.taggedText}>You're tagged</Text>
-            </View>
-          )}
+          <View style={[styles.accentBar, { backgroundColor: gallery.accent_color }]} />
         </GlassCard>
       </TouchableOpacity>
     </Animated.View>
   );
+
+  const renderPhotoItem = ({ item: photo, index }: { item: Photo; index: number }) => (
+    <TouchableOpacity
+      style={styles.photoItem}
+      onPress={() => setSelectedPhoto(photo)}
+      activeOpacity={0.8}
+    >
+      <Image source={{ uri: photo.url }} style={styles.photoImage} />
+    </TouchableOpacity>
+  );
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <StarfieldBackground starCount={30} />
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={styles.loadingText}>Loading galleries...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -180,51 +197,50 @@ export default function PhotoGalleryScreen() {
       >
         <PageHeader 
           title="PHOTOS"
-          description="Relive your nights out"
+          description="Browse venue photo galleries"
           showLogo={false}
         />
 
-        {/* Filter Tabs */}
-        <View style={styles.filterTabs}>
-          <TouchableOpacity
-            style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
-            onPress={() => setFilter('all')}
-          >
-            <Text style={[styles.filterTabText, filter === 'all' && styles.filterTabTextActive]}>
-              All Events
+        {/* Gallery Stats */}
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, fontsLoaded && { fontFamily: fonts.bold }]}>
+              {galleries.length}
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterTab, filter === 'tagged' && styles.filterTabActive]}
-            onPress={() => setFilter('tagged')}
-          >
-            <Ionicons 
-              name="person" 
-              size={14} 
-              color={filter === 'tagged' ? colors.accent : colors.textSecondary} 
-            />
-            <Text style={[styles.filterTabText, filter === 'tagged' && styles.filterTabTextActive]}>
-              Tagged
+            <Text style={styles.statLabel}>Venues</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, fontsLoaded && { fontFamily: fonts.bold }]}>
+              {galleries.reduce((sum, g) => sum + g.photo_count, 0)}
             </Text>
-          </TouchableOpacity>
+            <Text style={styles.statLabel}>Total Photos</Text>
+          </View>
         </View>
 
-        {/* Events List */}
-        <View style={styles.eventsContainer}>
-          {filteredEvents.map((event) => (
-            <View key={event.id}>
-              {renderEventCard({ item: event })}
+        {/* Venue Galleries */}
+        <View style={styles.galleriesContainer}>
+          {galleries.map((gallery, index) => (
+            <View key={gallery.venue_id}>
+              {renderGalleryCard({ item: gallery, index })}
             </View>
           ))}
         </View>
+
+        {galleries.length === 0 && (
+          <View style={styles.emptyState}>
+            <Ionicons name="images-outline" size={64} color={colors.textMuted} />
+            <Text style={styles.emptyText}>No photo galleries available yet</Text>
+          </View>
+        )}
       </ScrollView>
 
-      {/* Event Photos Modal */}
+      {/* Gallery Photos Modal */}
       <Modal
-        visible={!!selectedEvent}
+        visible={!!selectedGallery}
         animationType="slide"
         transparent={false}
-        onRequestClose={() => setSelectedEvent(null)}
+        onRequestClose={() => setSelectedGallery(null)}
       >
         <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
           <LinearGradient
@@ -234,45 +250,35 @@ export default function PhotoGalleryScreen() {
           
           {/* Modal Header */}
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setSelectedEvent(null)} style={styles.backButton}>
+            <TouchableOpacity onPress={() => setSelectedGallery(null)} style={styles.backButton}>
               <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
             <View style={styles.modalHeaderText}>
               <Text style={[styles.modalTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
-                {selectedEvent?.name}
+                {selectedGallery?.venue_name}
               </Text>
               <Text style={styles.modalSubtitle}>
-                {selectedEvent?.venue} • {selectedEvent?.date}
+                {galleryPhotos.length} photos
               </Text>
             </View>
             <View style={{ width: 40 }} />
           </View>
 
           {/* Photo Grid */}
-          <FlatList
-            data={selectedEvent?.photos || []}
-            numColumns={3}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.photoGrid}
-            renderItem={({ item: photo }) => (
-              <TouchableOpacity
-                style={styles.photoItem}
-                onPress={() => setSelectedPhoto(photo)}
-                activeOpacity={0.8}
-              >
-                <Image source={{ uri: photo.url }} style={styles.photoImage} />
-                {photo.tagged.includes('You') && (
-                  <View style={styles.photoTagBadge}>
-                    <Ionicons name="person" size={10} color={colors.textPrimary} />
-                  </View>
-                )}
-                <View style={styles.photoLikes}>
-                  <Ionicons name="heart" size={10} color={colors.accent} />
-                  <Text style={styles.photoLikesText}>{photo.likes}</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
+          {loadingPhotos ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.accent} />
+            </View>
+          ) : (
+            <FlatList
+              data={galleryPhotos}
+              numColumns={3}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.photoGrid}
+              renderItem={renderPhotoItem}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
         </View>
       </Modal>
 
@@ -285,7 +291,7 @@ export default function PhotoGalleryScreen() {
       >
         <View style={styles.photoDetailModal}>
           <TouchableOpacity
-            style={styles.photoDetailClose}
+            style={[styles.photoDetailClose, { top: insets.top + 20 }]}
             onPress={() => setSelectedPhoto(null)}
           >
             <Ionicons name="close" size={28} color={colors.textPrimary} />
@@ -298,30 +304,28 @@ export default function PhotoGalleryScreen() {
           />
 
           {/* Photo Actions */}
-          <View style={styles.photoActions}>
-            <TouchableOpacity style={styles.photoAction} onPress={() => handleLike(selectedPhoto)}>
+          <View style={[styles.photoActions, { paddingBottom: insets.bottom + 20 }]}>
+            <TouchableOpacity style={styles.photoAction} onPress={() => selectedPhoto && handleLike(selectedPhoto)}>
               <Ionicons name="heart-outline" size={28} color={colors.textPrimary} />
-              <Text style={styles.photoActionText}>{selectedPhoto?.likes}</Text>
+              <Text style={styles.photoActionText}>Like</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.photoAction} onPress={() => handleTagSelf(selectedPhoto)}>
-              <Ionicons name="person-add-outline" size={28} color={colors.textPrimary} />
-              <Text style={styles.photoActionText}>Tag</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.photoAction} onPress={() => handleShare(selectedPhoto)}>
+            <TouchableOpacity style={styles.photoAction} onPress={() => selectedPhoto && handleShare(selectedPhoto)}>
               <Ionicons name="share-outline" size={28} color={colors.textPrimary} />
               <Text style={styles.photoActionText}>Share</Text>
             </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.photoAction}
+              onPress={() => {
+                if (Platform.OS !== 'web') {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                Alert.alert('Download', 'Photo download feature coming soon!');
+              }}
+            >
+              <Ionicons name="download-outline" size={28} color={colors.textPrimary} />
+              <Text style={styles.photoActionText}>Save</Text>
+            </TouchableOpacity>
           </View>
-
-          {/* Tagged People */}
-          {selectedPhoto?.tagged.length > 0 && (
-            <View style={styles.taggedPeople}>
-              <Text style={styles.taggedPeopleTitle}>Tagged:</Text>
-              <Text style={styles.taggedPeopleList}>
-                {selectedPhoto.tagged.join(', ')}
-              </Text>
-            </View>
-          )}
         </View>
       </Modal>
     </View>
@@ -333,103 +337,111 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
   },
-  filterTabs: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  filterTab: {
+  // Stats
+  statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.full,
+    justifyContent: 'center',
     backgroundColor: colors.glass,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
     borderWidth: 1,
     borderColor: colors.glassBorder,
   },
-  filterTabActive: {
-    backgroundColor: colors.accentGlow,
-    borderColor: colors.accent,
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
   },
-  filterTabText: {
-    fontSize: 13,
-    fontWeight: '600',
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  statLabel: {
+    fontSize: 12,
     color: colors.textSecondary,
+    marginTop: 2,
   },
-  filterTabTextActive: {
-    color: colors.accent,
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.lg,
   },
-  eventsContainer: {
+  // Galleries
+  galleriesContainer: {
     gap: spacing.md,
   },
-  eventCard: {
+  galleryCard: {
     marginBottom: spacing.sm,
   },
-  eventCover: {
+  galleryCover: {
     width: '100%',
     height: 180,
     borderRadius: radius.lg,
   },
-  eventOverlay: {
+  placeholderCover: {
+    backgroundColor: colors.backgroundCard,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  galleryOverlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: radius.lg,
     justifyContent: 'flex-end',
     padding: spacing.md,
   },
-  eventInfo: {
+  galleryInfo: {
     gap: spacing.xs,
   },
-  eventName: {
-    fontSize: 18,
+  galleryName: {
+    fontSize: 20,
     fontWeight: '700',
     color: colors.textPrimary,
-  },
-  eventMeta: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  eventVenue: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  eventDate: {
-    fontSize: 13,
-    color: colors.textMuted,
   },
   photoCount: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    marginTop: spacing.xs,
   },
   photoCountText: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textSecondary,
   },
-  taggedBadge: {
+  accentBar: {
     position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.accent,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: radius.sm,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    borderBottomLeftRadius: radius.lg,
+    borderBottomRightRadius: radius.lg,
   },
-  taggedText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.textPrimary,
+  // Empty state
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: spacing.xxl,
+  },
+  emptyText: {
+    marginTop: spacing.md,
+    fontSize: 14,
+    color: colors.textMuted,
   },
   // Modal styles
   modalContainer: {
@@ -478,30 +490,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  photoTagBadge: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: colors.accent,
-    padding: 4,
-    borderRadius: radius.full,
-  },
-  photoLikes: {
-    position: 'absolute',
-    bottom: 4,
-    left: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: radius.sm,
-  },
-  photoLikesText: {
-    fontSize: 10,
-    color: colors.textPrimary,
-  },
   // Photo Detail Modal
   photoDetailModal: {
     flex: 1,
@@ -511,19 +499,26 @@ const styles = StyleSheet.create({
   },
   photoDetailClose: {
     position: 'absolute',
-    top: 60,
     right: 20,
     zIndex: 10,
     padding: spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: radius.full,
   },
   photoDetailImage: {
     width: width,
     height: width,
   },
   photoActions: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    gap: spacing.xl,
-    marginTop: spacing.xl,
+    justifyContent: 'center',
+    gap: spacing.xxl,
+    paddingTop: spacing.xl,
+    backgroundColor: 'rgba(0,0,0,0.7)',
   },
   photoAction: {
     alignItems: 'center',
@@ -532,18 +527,5 @@ const styles = StyleSheet.create({
   photoActionText: {
     fontSize: 12,
     color: colors.textSecondary,
-  },
-  taggedPeople: {
-    marginTop: spacing.lg,
-    alignItems: 'center',
-  },
-  taggedPeopleTitle: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginBottom: spacing.xs,
-  },
-  taggedPeopleList: {
-    fontSize: 14,
-    color: colors.textPrimary,
   },
 });
