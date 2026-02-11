@@ -301,7 +301,7 @@ export default function PhotoGalleryScreen() {
           </TouchableOpacity>
           
           <Image
-            source={{ uri: selectedPhoto?.url }}
+            source={{ uri: selectedPhoto ? `${API_BASE}${selectedPhoto.url}` : '' }}
             style={styles.photoDetailImage}
             resizeMode="contain"
           />
