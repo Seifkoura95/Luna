@@ -485,9 +485,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   photoGrid: {
-    padding: spacing.xs,
     flexDirection: 'row',
     flexWrap: 'wrap',
+    padding: spacing.xs,
+    justifyContent: 'flex-start',
   },
   photoItem: {
     width: PHOTO_SIZE,
@@ -495,10 +496,12 @@ const styles = StyleSheet.create({
     margin: spacing.xs / 2,
     borderRadius: radius.sm,
     overflow: 'hidden',
+    backgroundColor: colors.backgroundCard,
   },
   photoImage: {
     width: '100%',
     height: '100%',
+    resizeMode: 'cover',
   },
   // Photo Detail Modal
   photoDetailModal: {
