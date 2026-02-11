@@ -370,6 +370,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
   },
+  // Back Button
+  backButtonContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: colors.textPrimary,
+  },
   scrollView: {
     flex: 1,
   },
