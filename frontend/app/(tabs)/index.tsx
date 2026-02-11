@@ -851,4 +851,31 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 4,
   },
+  
+  // Quick Access Row for Photos & Social
+  quickAccessRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 2,
+  },
+  quickAccessItem: {
+    flex: 1,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  quickAccessGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 8,
+  },
+  quickAccessText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    letterSpacing: 0.3,
+  },
 });
