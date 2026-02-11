@@ -498,6 +498,14 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 2,
   },
+  photoItemWrapper: {
+    width: '32%',
+    aspectRatio: 1,
+    margin: '0.5%',
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    backgroundColor: colors.backgroundCard,
+  },
   photoItemContainer: {
     width: PHOTO_SIZE,
     height: PHOTO_SIZE,
@@ -506,8 +514,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundCard,
   },
   photoThumbnail: {
-    width: PHOTO_SIZE,
-    height: PHOTO_SIZE,
+    width: '100%',
+    height: '100%',
   },
   photoItem: {
     margin: spacing.xs / 2,
