@@ -273,14 +273,18 @@ export default function PhotoGalleryScreen() {
               <ActivityIndicator size="large" color={colors.accent} />
             </View>
           ) : (
-            <FlatList
-              data={galleryPhotos}
-              numColumns={3}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.photoGrid}
-              renderItem={renderPhotoItem}
-              showsVerticalScrollIndicator={false}
-            />
+            <ScrollView contentContainerStyle={styles.photoGrid}>
+              {galleryPhotos.map((photo) => (
+                <TouchableOpacity
+                  key={photo.id}
+                  style={styles.photoItem}
+                  onPress={() => setSelectedPhoto(photo)}
+                  activeOpacity={0.8}
+                >
+                  <Image source={{ uri: `${API_BASE}${photo.url}` }} style={styles.photoImage} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           )}
         </View>
       </Modal>
