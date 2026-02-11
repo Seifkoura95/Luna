@@ -273,21 +273,25 @@ export default function PhotoGalleryScreen() {
             </View>
           ) : (
             <ScrollView>
-              <View style={styles.photoGrid}>
-                {galleryPhotos.map((photo) => (
-                  <TouchableOpacity
-                    key={photo.id}
-                    style={styles.photoItem}
-                    onPress={() => setSelectedPhoto(photo)}
-                    activeOpacity={0.8}
-                  >
-                    <Image 
-                      source={{ uri: `${API_BASE}${photo.url}` }} 
-                      style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }} 
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.photoGridContainer}>
+                <View style={styles.photoGrid}>
+                  {galleryPhotos.map((photo) => (
+                    <TouchableOpacity
+                      key={photo.id}
+                      style={[styles.photoItem, { width: PHOTO_SIZE, height: PHOTO_SIZE }]}
+                      onPress={() => setSelectedPhoto(photo)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={{ width: PHOTO_SIZE, height: PHOTO_SIZE, overflow: 'hidden' }}>
+                        <Image 
+                          source={{ uri: `${API_BASE}${photo.url}` }} 
+                          style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }} 
+                          resizeMode="cover"
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             </ScrollView>
           )}
