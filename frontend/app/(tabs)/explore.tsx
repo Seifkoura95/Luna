@@ -18,12 +18,29 @@ import * as Haptics from 'expo-haptics';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { PageHeader } from '../../src/components/PageHeader';
+import { useFonts, fonts } from '../../src/hooks/useFonts';
 
-export default function ExploreScreen() {
+// Venue categories
+const VENUE_CATEGORIES = {
+  ALL: 'all',
+  NIGHTCLUB: 'nightclub',
+  RESTAURANT: 'restaurant',
+};
+
+// Category labels
+const CATEGORY_LABELS: Record<string, string> = {
+  all: 'All Venues',
+  nightclub: 'Nightclubs',
+  restaurant: 'Restaurants & Bars',
+};
+
+export default function VenuesScreen() {
   const [venues, setVenues] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(VENUE_CATEGORIES.ALL);
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
+  const fontsLoaded = useFonts();
 
   // Auto scroll to top when tab gains focus
   useFocusEffect(
@@ -63,19 +80,103 @@ export default function ExploreScreen() {
     Linking.openURL(url);
   };
 
-  const brisbaneVenues = venues.filter(v => v.region === 'brisbane');
-  const goldCoastVenues = venues.filter(v => v.region === 'gold_coast');
+  const handleCategoryChange = (category: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setSelectedCategory(category);
+  };
+
+  // Filter venues by category
+  const getFilteredVenues = () => {
+    if (selectedCategory === VENUE_CATEGORIES.ALL) {
+      return venues;
+    }
+    return venues.filter(v => v.type === selectedCategory);
+  };
+
+  const filteredVenues = getFilteredVenues();
+  const brisbaneVenues = filteredVenues.filter(v => v.region === 'brisbane');
+  const goldCoastVenues = filteredVenues.filter(v => v.region === 'gold_coast');
+
+  // Get venue counts by category
+  const nightclubCount = venues.filter(v => v.type === 'nightclub').length;
+  const restaurantCount = venues.filter(v => v.type === 'restaurant').length;
 
   return (
     <View style={styles.container}>
       <StarfieldBackground starCount={60} shootingStarCount={2} />
       
-      {/* Consistent Header - No Points */}
+      {/* Header with Logo */}
       <PageHeader 
-        title="EXPLORE" 
-        description="7 premier venues across Brisbane & Gold Coast"
-        showPoints={false} 
+        title="VENUES" 
+        description={`${venues.length} premier venues across Brisbane & Gold Coast`}
+        showPoints={false}
+        compactLogo={true}
       />
+
+      {/* Category Tabs */}
+      <View style={styles.categoryTabs}>
+        <TouchableOpacity 
+          style={[
+            styles.categoryTab, 
+            selectedCategory === VENUE_CATEGORIES.ALL && styles.categoryTabActive
+          ]}
+          onPress={() => handleCategoryChange(VENUE_CATEGORIES.ALL)}
+        >
+          <Ionicons 
+            name="grid" 
+            size={16} 
+            color={selectedCategory === VENUE_CATEGORIES.ALL ? colors.accent : colors.textMuted} 
+          />
+          <Text style={[
+            styles.categoryTabText,
+            selectedCategory === VENUE_CATEGORIES.ALL && styles.categoryTabTextActive
+          ]}>
+            All ({venues.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[
+            styles.categoryTab, 
+            selectedCategory === VENUE_CATEGORIES.NIGHTCLUB && styles.categoryTabActive
+          ]}
+          onPress={() => handleCategoryChange(VENUE_CATEGORIES.NIGHTCLUB)}
+        >
+          <Ionicons 
+            name="musical-notes" 
+            size={16} 
+            color={selectedCategory === VENUE_CATEGORIES.NIGHTCLUB ? colors.accent : colors.textMuted} 
+          />
+          <Text style={[
+            styles.categoryTabText,
+            selectedCategory === VENUE_CATEGORIES.NIGHTCLUB && styles.categoryTabTextActive
+          ]}>
+            Nightclubs ({nightclubCount})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[
+            styles.categoryTab, 
+            selectedCategory === VENUE_CATEGORIES.RESTAURANT && styles.categoryTabActive
+          ]}
+          onPress={() => handleCategoryChange(VENUE_CATEGORIES.RESTAURANT)}
+        >
+          <Ionicons 
+            name="restaurant" 
+            size={16} 
+            color={selectedCategory === VENUE_CATEGORIES.RESTAURANT ? colors.accent : colors.textMuted} 
+          />
+          <Text style={[
+            styles.categoryTabText,
+            selectedCategory === VENUE_CATEGORIES.RESTAURANT && styles.categoryTabTextActive
+          ]}>
+            Dining ({restaurantCount})
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <ScrollView
         ref={scrollRef}
@@ -91,136 +192,167 @@ export default function ExploreScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Brisbane Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.regionBadge}>
-              <Ionicons name="location" size={14} color={colors.accent} />
-              <Text style={styles.regionText}>BRISBANE</Text>
+        {brisbaneVenues.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.regionBadge}>
+                <Ionicons name="location" size={14} color={colors.accent} />
+                <Text style={styles.regionText}>BRISBANE</Text>
+              </View>
+              <Text style={styles.venueCount}>{brisbaneVenues.length} venues</Text>
             </View>
-            <Text style={styles.venueCount}>{brisbaneVenues.length} venues</Text>
-          </View>
 
-          {brisbaneVenues.map((venue) => (
-            <TouchableOpacity
-              key={venue.id}
-              style={styles.venueCard}
-              onPress={() => handleVenuePress(venue)}
-              activeOpacity={0.9}
-            >
-              <Image source={{ uri: venue.image_url }} style={styles.venueImage} />
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.9)']}
-                style={styles.venueOverlay}
+            {brisbaneVenues.map((venue) => (
+              <TouchableOpacity
+                key={venue.id}
+                style={styles.venueCard}
+                onPress={() => handleVenuePress(venue)}
+                activeOpacity={0.9}
               >
-                <View style={styles.venueContent}>
-                  <View style={styles.venueInfo}>
-                    <Text style={styles.venueName}>{venue.name}</Text>
-                    <View style={styles.venueMetaRow}>
-                      <View style={[styles.venueTypeBadge, { borderColor: venue.accent_color }]}>
-                        <Text style={[styles.venueType, { color: venue.accent_color }]}>
-                          {venue.type.toUpperCase()}
-                        </Text>
+                <Image source={{ uri: venue.image_url }} style={styles.venueImage} />
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.9)']}
+                  style={styles.venueOverlay}
+                >
+                  <View style={styles.venueContent}>
+                    <View style={styles.venueInfo}>
+                      <Text style={[styles.venueName, fontsLoaded && { fontFamily: fonts.bold }]}>
+                        {venue.name}
+                      </Text>
+                      <View style={styles.venueMetaRow}>
+                        <View style={[styles.venueTypeBadge, { borderColor: venue.accent_color }]}>
+                          <Ionicons 
+                            name={venue.type === 'nightclub' ? 'musical-notes' : 'restaurant'} 
+                            size={10} 
+                            color={venue.accent_color} 
+                          />
+                          <Text style={[styles.venueType, { color: venue.accent_color }]}>
+                            {venue.type.toUpperCase()}
+                          </Text>
+                        </View>
+                        <Text style={styles.venueLocation}>{venue.location}</Text>
                       </View>
-                      <Text style={styles.venueLocation}>{venue.location}</Text>
+                      <Text style={styles.venueDescription} numberOfLines={2}>
+                        {venue.description}
+                      </Text>
                     </View>
-                    <Text style={styles.venueDescription} numberOfLines={2}>
-                      {venue.description}
-                    </Text>
-                  </View>
 
-                  <View style={styles.venueActions}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleGetDirections(venue)}
-                    >
-                      <View style={[styles.actionIcon, { backgroundColor: venue.accent_color + '20' }]}>
-                        <Ionicons name="navigate" size={18} color={venue.accent_color} />
-                      </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.actionButtonPrimary]}
-                      onPress={() => handleVenuePress(venue)}
-                    >
-                      <LinearGradient
-                        colors={[venue.accent_color, venue.accent_color + 'CC']}
-                        style={styles.actionButtonGradient}
+                    <View style={styles.venueActions}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => handleGetDirections(venue)}
                       >
-                        <Text style={styles.actionButtonText}>View</Text>
-                        <Ionicons name="arrow-forward" size={16} color={colors.textPrimary} />
-                      </LinearGradient>
-                    </TouchableOpacity>
+                        <View style={[styles.actionIcon, { backgroundColor: venue.accent_color + '20' }]}>
+                          <Ionicons name="navigate" size={18} color={venue.accent_color} />
+                        </View>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.actionButtonPrimary]}
+                        onPress={() => handleVenuePress(venue)}
+                      >
+                        <LinearGradient
+                          colors={[venue.accent_color, venue.accent_color + 'CC']}
+                          style={styles.actionButtonGradient}
+                        >
+                          <Text style={styles.actionButtonText}>View</Text>
+                          <Ionicons name="arrow-forward" size={16} color={colors.textPrimary} />
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
-        </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {/* Gold Coast Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.regionBadge}>
-              <Ionicons name="location" size={14} color={colors.gold} />
-              <Text style={[styles.regionText, { color: colors.gold }]}>GOLD COAST</Text>
+        {goldCoastVenues.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.regionBadge}>
+                <Ionicons name="location" size={14} color={colors.gold} />
+                <Text style={[styles.regionText, { color: colors.gold }]}>GOLD COAST</Text>
+              </View>
+              <Text style={styles.venueCount}>{goldCoastVenues.length} venues</Text>
             </View>
-            <Text style={styles.venueCount}>{goldCoastVenues.length} venues</Text>
-          </View>
 
-          {goldCoastVenues.map((venue) => (
-            <TouchableOpacity
-              key={venue.id}
-              style={styles.venueCard}
-              onPress={() => handleVenuePress(venue)}
-              activeOpacity={0.9}
-            >
-              <Image source={{ uri: venue.image_url }} style={styles.venueImage} />
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.9)']}
-                style={styles.venueOverlay}
+            {goldCoastVenues.map((venue) => (
+              <TouchableOpacity
+                key={venue.id}
+                style={styles.venueCard}
+                onPress={() => handleVenuePress(venue)}
+                activeOpacity={0.9}
               >
-                <View style={styles.venueContent}>
-                  <View style={styles.venueInfo}>
-                    <Text style={styles.venueName}>{venue.name}</Text>
-                    <View style={styles.venueMetaRow}>
-                      <View style={[styles.venueTypeBadge, { borderColor: venue.accent_color }]}>
-                        <Text style={[styles.venueType, { color: venue.accent_color }]}>
-                          {venue.type.toUpperCase()}
-                        </Text>
+                <Image source={{ uri: venue.image_url }} style={styles.venueImage} />
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.9)']}
+                  style={styles.venueOverlay}
+                >
+                  <View style={styles.venueContent}>
+                    <View style={styles.venueInfo}>
+                      <Text style={[styles.venueName, fontsLoaded && { fontFamily: fonts.bold }]}>
+                        {venue.name}
+                      </Text>
+                      <View style={styles.venueMetaRow}>
+                        <View style={[styles.venueTypeBadge, { borderColor: venue.accent_color }]}>
+                          <Ionicons 
+                            name={venue.type === 'nightclub' ? 'musical-notes' : 'restaurant'} 
+                            size={10} 
+                            color={venue.accent_color} 
+                          />
+                          <Text style={[styles.venueType, { color: venue.accent_color }]}>
+                            {venue.type.toUpperCase()}
+                          </Text>
+                        </View>
+                        <Text style={styles.venueLocation}>{venue.location}</Text>
                       </View>
-                      <Text style={styles.venueLocation}>{venue.location}</Text>
+                      <Text style={styles.venueDescription} numberOfLines={2}>
+                        {venue.description}
+                      </Text>
                     </View>
-                    <Text style={styles.venueDescription} numberOfLines={2}>
-                      {venue.description}
-                    </Text>
-                  </View>
 
-                  <View style={styles.venueActions}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleGetDirections(venue)}
-                    >
-                      <View style={[styles.actionIcon, { backgroundColor: venue.accent_color + '20' }]}>
-                        <Ionicons name="navigate" size={18} color={venue.accent_color} />
-                      </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.actionButtonPrimary]}
-                      onPress={() => handleVenuePress(venue)}
-                    >
-                      <LinearGradient
-                        colors={[venue.accent_color, venue.accent_color + 'CC']}
-                        style={styles.actionButtonGradient}
+                    <View style={styles.venueActions}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => handleGetDirections(venue)}
                       >
-                        <Text style={styles.actionButtonText}>View</Text>
-                        <Ionicons name="arrow-forward" size={16} color={colors.textPrimary} />
-                      </LinearGradient>
-                    </TouchableOpacity>
+                        <View style={[styles.actionIcon, { backgroundColor: venue.accent_color + '20' }]}>
+                          <Ionicons name="navigate" size={18} color={venue.accent_color} />
+                        </View>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.actionButtonPrimary]}
+                        onPress={() => handleVenuePress(venue)}
+                      >
+                        <LinearGradient
+                          colors={[venue.accent_color, venue.accent_color + 'CC']}
+                          style={styles.actionButtonGradient}
+                        >
+                          <Text style={styles.actionButtonText}>View</Text>
+                          <Ionicons name="arrow-forward" size={16} color={colors.textPrimary} />
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
-        </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Empty state */}
+        {filteredVenues.length === 0 && (
+          <View style={styles.emptyState}>
+            <Ionicons name="location-outline" size={48} color={colors.textMuted} />
+            <Text style={styles.emptyText}>No venues found</Text>
+            <Text style={styles.emptySubtext}>
+              {selectedCategory === VENUE_CATEGORIES.RESTAURANT 
+                ? 'More restaurants coming soon!'
+                : 'Check back for new venues'}
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -236,6 +368,38 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: spacing.xxl,
+  },
+  // Category Tabs
+  categoryTabs: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.xs,
+  },
+  categoryTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radius.md,
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 4,
+  },
+  categoryTabActive: {
+    backgroundColor: colors.accent + '20',
+    borderColor: colors.accent,
+  },
+  categoryTabText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  categoryTabTextActive: {
+    color: colors.accent,
   },
   section: {
     paddingHorizontal: spacing.md,
@@ -306,11 +470,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   venueTypeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: radius.sm,
     borderWidth: 1,
     marginRight: spacing.sm,
+    gap: 4,
   },
   venueType: {
     fontSize: 10,
@@ -359,5 +526,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  // Empty state
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xxl,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginTop: spacing.md,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
   },
 });
