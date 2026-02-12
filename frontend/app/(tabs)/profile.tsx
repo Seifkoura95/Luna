@@ -514,6 +514,11 @@ export default function ProfileScreen() {
               { id: 'b4', emoji: '⭐', title: 'Rising Star', earned: currentPoints >= 250 },
               { id: 'b5', emoji: '🏆', title: 'Legend', earned: currentPoints >= 5000 },
               { id: 'b6', emoji: '🔥', title: 'On Fire', earned: stats?.current_streak >= 3 },
+              { id: 'b7', emoji: '👑', title: 'Promo King', earned: stats?.referral_count >= 10 },
+              { id: 'b8', emoji: '👸', title: 'Promo Queen', earned: stats?.referral_count >= 10 },
+              { id: 'b9', emoji: '📣', title: 'Ambassador', earned: stats?.referral_count >= 20 },
+              { id: 'b10', emoji: '⭐', title: 'Review Star', earned: stats?.reviews_count >= 5 },
+              { id: 'b11', emoji: '📸', title: 'Influencer', earned: stats?.instagram_tags >= 20 },
             ].map((badge) => (
               <View key={badge.id} style={[styles.badgeItem, !badge.earned && styles.badgeItemLocked]}>
                 <View style={[styles.badgeEmoji, !badge.earned && styles.badgeEmojiLocked]}>
