@@ -79,10 +79,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
+          title: 'Venues',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="compass" color={color} focused={focused} />
+            <TabBarIcon name="business" color={color} focused={focused} />
           ),
         }}
       />
