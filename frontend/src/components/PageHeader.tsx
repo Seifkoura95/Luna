@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet, Platform, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '../theme/colors';
-import { RotatingMoon } from './RotatingMoon';
 import { GoldStarIcon } from './GoldStarIcon';
 import { useAuthStore } from '../store/authStore';
 import { useFonts, fonts } from '../hooks/useFonts';
@@ -16,6 +15,7 @@ interface PageHeaderProps {
   description?: string;
   showPoints?: boolean;
   showLogo?: boolean;
+  compactLogo?: boolean;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ 
@@ -23,7 +23,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   subtitle,
   description,
   showPoints = false,
-  showLogo = false
+  showLogo = true,
+  compactLogo = false
 }) => {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
@@ -31,24 +32,28 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-      <View style={styles.moonContainer}>
-        <RotatingMoon size={60} rotationDuration={30000} />
-      </View>
+      {/* Prominent Luna Group Logo */}
+      <Image 
+        source={{ uri: LUNA_GROUP_LOGO }} 
+        style={compactLogo ? styles.logoCompact : styles.logo}
+        resizeMode="contain"
+      />
       
-      {showLogo ? (
-        <Image 
-          source={{ uri: LUNA_GROUP_LOGO }} 
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      ) : (
+      {/* Page Title - shown below logo */}
+      {title && !showLogo && (
         <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.milker }]}>{title}</Text>
+      )}
+      
+      {title && showLogo && (
+        <Text style={[styles.pageTitle, fontsLoaded && { fontFamily: fonts.bold }]}>{title}</Text>
       )}
       
       {subtitle && (
         <Text style={[styles.headerSubtitle, fontsLoaded && { fontFamily: fonts.milker }]}>{subtitle}</Text>
       )}
+      
       <View style={styles.headerUnderline} />
+      
       {description && (
         <Text style={[styles.headerDescription, fontsLoaded && { fontFamily: fonts.regular }]}>{description}</Text>
       )}
@@ -71,14 +76,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
   },
-  moonContainer: {
+  logo: {
+    width: 240,
+    height: 70,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
-  logo: {
-    width: 200,
-    height: 60,
+  logoCompact: {
+    width: 180,
+    height: 50,
     marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  pageTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 3,
+    marginTop: spacing.xs,
+    textTransform: 'uppercase',
+    textAlign: 'center',
   },
   headerTitle: {
     fontSize: 28,
