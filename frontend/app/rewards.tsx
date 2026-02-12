@@ -8,6 +8,9 @@ import {
   RefreshControl,
   Alert,
   Dimensions,
+  TextInput,
+  Modal,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
@@ -90,6 +93,106 @@ const POINT_MILESTONES = [
   },
 ];
 
+// Active Missions
+const ACTIVE_MISSIONS = [
+  {
+    id: 'm1',
+    title: 'Leave a Review',
+    description: 'Rate us on Google or Facebook',
+    points: 50,
+    icon: 'star',
+    color: '#FFD700',
+    type: 'review',
+    progress: 0,
+    target: 1,
+  },
+  {
+    id: 'm2',
+    title: 'Instagram Tag',
+    description: 'Tag us in a story or post',
+    points: 25,
+    icon: 'camera',
+    color: '#E4405F',
+    type: 'social',
+    progress: 0,
+    target: 1,
+  },
+  {
+    id: 'm3',
+    title: 'Squad Night',
+    description: 'Check in with 3+ friends',
+    points: 100,
+    icon: 'people',
+    color: '#8B5CF6',
+    type: 'group',
+    progress: 0,
+    target: 3,
+  },
+  {
+    id: 'm4',
+    title: 'Venue Explorer',
+    description: 'Visit 3 different Luna venues',
+    points: 75,
+    icon: 'compass',
+    color: '#00D4AA',
+    type: 'exploration',
+    progress: 1,
+    target: 3,
+  },
+  {
+    id: 'm5',
+    title: 'Weekly Regular',
+    description: 'Visit same venue 3 weeks in a row',
+    points: 50,
+    icon: 'calendar',
+    color: '#4ECDC4',
+    type: 'loyalty',
+    progress: 2,
+    target: 3,
+  },
+  {
+    id: 'm6',
+    title: 'VIP Experience',
+    description: 'Book a VIP table',
+    points: 150,
+    icon: 'diamond',
+    color: colors.gold,
+    type: 'booking',
+    progress: 0,
+    target: 1,
+  },
+  {
+    id: 'm7',
+    title: 'Photo Star',
+    description: 'Get tagged in 5 venue photos',
+    points: 40,
+    icon: 'images',
+    color: '#FF6B6B',
+    type: 'photos',
+    progress: 2,
+    target: 5,
+  },
+  {
+    id: 'm8',
+    title: 'Promo Champion',
+    description: 'Refer 5 friends who sign up',
+    points: 200,
+    icon: 'megaphone',
+    color: colors.accent,
+    type: 'referral',
+    progress: 1,
+    target: 5,
+  },
+];
+
+// Point Packages for Purchase
+const POINT_PACKAGES = [
+  { id: 'p1', points: 100, price: 10, bonus: 0, popular: false },
+  { id: 'p2', points: 500, price: 45, bonus: 50, popular: true },
+  { id: 'p3', points: 1000, price: 80, bonus: 150, popular: false },
+  { id: 'p4', points: 2500, price: 180, bonus: 500, popular: false },
+];
+
 export default function RewardsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -98,12 +201,16 @@ export default function RewardsScreen() {
   
   const [refreshing, setRefreshing] = useState(false);
   const [claimedMilestones, setClaimedMilestones] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<'missions' | 'milestones' | 'shop'>('missions');
+  const [promoCode, setPromoCode] = useState('');
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<typeof POINT_PACKAGES[0] | null>(null);
   
   const currentPoints = user?.points_balance || 0;
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Refresh user data
     try {
       const userData = await api.getMe();
       useAuthStore.getState().setUser(userData);
@@ -125,8 +232,9 @@ export default function RewardsScreen() {
     }
 
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // In production, this would call an API to claim the reward
+      if (Platform.OS !== 'web') {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       setClaimedMilestones([...claimedMilestones, milestone.id]);
       Alert.alert(
         '🎉 Reward Claimed!',
@@ -136,6 +244,45 @@ export default function RewardsScreen() {
     } catch (e) {
       Alert.alert('Error', 'Failed to claim reward. Please try again.');
     }
+  };
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) {
+      Alert.alert('Error', 'Please enter a promo code');
+      return;
+    }
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    
+    // Simulate promo code validation
+    if (promoCode.toUpperCase() === 'LUNA50' || promoCode.toUpperCase() === 'WELCOME') {
+      Alert.alert('🎉 Success!', 'Promo code applied! 50 bonus points added to your account.');
+      setPromoCode('');
+      setShowPromoModal(false);
+    } else {
+      Alert.alert('Invalid Code', 'This promo code is not valid or has expired.');
+    }
+  };
+
+  const handleBuyPoints = (pkg: typeof POINT_PACKAGES[0]) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setSelectedPackage(pkg);
+    setShowBuyModal(true);
+  };
+
+  const confirmPurchase = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    Alert.alert(
+      '✅ Purchase Complete',
+      `${selectedPackage?.points} points${selectedPackage?.bonus ? ` + ${selectedPackage.bonus} bonus` : ''} added to your account!`,
+      [{ text: 'Great!', onPress: () => setShowBuyModal(false) }]
+    );
   };
 
   const getProgressToNext = () => {
@@ -174,7 +321,9 @@ export default function RewardsScreen() {
             <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.milker }]}>REWARDS</Text>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity style={styles.promoButton} onPress={() => setShowPromoModal(true)}>
+            <Ionicons name="gift" size={20} color={colors.gold} />
+          </TouchableOpacity>
         </View>
 
         {/* Current Points Card */}
@@ -193,6 +342,18 @@ export default function RewardsScreen() {
                 </Text>
                 <Text style={styles.pointsLabel}>LUNA POINTS</Text>
               </View>
+              <TouchableOpacity 
+                style={styles.buyPointsButton}
+                onPress={() => setActiveTab('shop')}
+              >
+                <LinearGradient
+                  colors={[colors.gold, colors.goldDark]}
+                  style={styles.buyPointsGradient}
+                >
+                  <Ionicons name="add" size={16} color="#000" />
+                  <Text style={styles.buyPointsText}>Buy</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
 
             {/* Progress to next milestone */}
@@ -213,107 +374,241 @@ export default function RewardsScreen() {
           </LinearGradient>
         </View>
 
-        {/* Milestones */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>POINT MILESTONES</Text>
-          
-          {POINT_MILESTONES.map((milestone, index) => {
-            const isUnlocked = currentPoints >= milestone.points;
-            const isClaimed = claimedMilestones.includes(milestone.id);
+        {/* Tab Selector */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'missions' && styles.tabActive]}
+            onPress={() => setActiveTab('missions')}
+          >
+            <Ionicons name="flag" size={16} color={activeTab === 'missions' ? colors.accent : colors.textMuted} />
+            <Text style={[styles.tabText, activeTab === 'missions' && styles.tabTextActive]}>Missions</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'milestones' && styles.tabActive]}
+            onPress={() => setActiveTab('milestones')}
+          >
+            <Ionicons name="trophy" size={16} color={activeTab === 'milestones' ? colors.accent : colors.textMuted} />
+            <Text style={[styles.tabText, activeTab === 'milestones' && styles.tabTextActive]}>Milestones</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'shop' && styles.tabActive]}
+            onPress={() => setActiveTab('shop')}
+          >
+            <Ionicons name="cart" size={16} color={activeTab === 'shop' ? colors.gold : colors.textMuted} />
+            <Text style={[styles.tabText, activeTab === 'shop' && { color: colors.gold }]}>Buy Points</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Missions Tab */}
+        {activeTab === 'missions' && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>ACTIVE MISSIONS</Text>
+            <Text style={styles.sectionSubtitle}>Complete quests to earn bonus points</Text>
             
-            return (
-              <TouchableOpacity
-                key={milestone.id}
-                style={[
-                  styles.milestoneCard,
-                  isUnlocked && styles.milestoneUnlocked,
-                  isClaimed && styles.milestoneClaimed,
-                ]}
-                onPress={() => handleClaimReward(milestone)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={isUnlocked ? [milestone.color + '20', '#0D0D0D'] : ['#1A1A1A', '#0D0D0D']}
-                  style={styles.milestoneGradient}
+            {ACTIVE_MISSIONS.map((mission) => {
+              const isComplete = mission.progress >= mission.target;
+              const progressPercent = (mission.progress / mission.target) * 100;
+              
+              return (
+                <TouchableOpacity
+                  key={mission.id}
+                  style={[styles.missionCard, isComplete && styles.missionComplete]}
+                  activeOpacity={0.8}
                 >
-                  {/* Badge/Icon */}
-                  <View style={[
-                    styles.milestoneIcon,
-                    { backgroundColor: isUnlocked ? milestone.color + '30' : colors.border }
-                  ]}>
-                    {isUnlocked ? (
-                      <Text style={styles.milestoneBadge}>{milestone.badge}</Text>
+                  <View style={[styles.missionIcon, { backgroundColor: mission.color + '20' }]}>
+                    {isComplete ? (
+                      <Ionicons name="checkmark-circle" size={28} color={colors.success} />
                     ) : (
-                      <Ionicons name="lock-closed" size={24} color={colors.textMuted} />
+                      <Ionicons name={mission.icon as any} size={24} color={mission.color} />
                     )}
                   </View>
-
-                  {/* Content */}
-                  <View style={styles.milestoneContent}>
-                    <View style={styles.milestoneHeader}>
-                      <Text style={[
-                        styles.milestoneTitle,
-                        { color: isUnlocked ? milestone.color : colors.textMuted },
-                        fontsLoaded && { fontFamily: fonts.semiBold }
-                      ]}>
-                        {milestone.title}
+                  
+                  <View style={styles.missionContent}>
+                    <View style={styles.missionHeader}>
+                      <Text style={[styles.missionTitle, fontsLoaded && { fontFamily: fonts.semiBold }]}>
+                        {mission.title}
                       </Text>
-                      <Text style={[
-                        styles.milestonePoints,
-                        { color: isUnlocked ? colors.textPrimary : colors.textMuted }
-                      ]}>
-                        {milestone.points.toLocaleString()} pts
-                      </Text>
-                    </View>
-                    
-                    {/* Rewards */}
-                    <View style={styles.milestoneRewards}>
-                      {milestone.rewards.map((reward, rIndex) => (
-                        <View key={rIndex} style={styles.rewardTag}>
-                          <Ionicons 
-                            name={reward.type === 'drinks' ? 'wine' : 
-                                  reward.type === 'entries' ? 'ticket' : 
-                                  reward.type === 'booth' ? 'people' : 
-                                  reward.type === 'fastlane' ? 'flash' : 'gift'}
-                            size={12}
-                            color={isUnlocked ? milestone.color : colors.textMuted}
-                          />
-                          <Text style={[
-                            styles.rewardText,
-                            { color: isUnlocked ? colors.textSecondary : colors.textMuted }
-                          ]}>
-                            {reward.label}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-
-                  {/* Status */}
-                  <View style={styles.milestoneStatus}>
-                    {isClaimed ? (
-                      <View style={[styles.statusBadge, { backgroundColor: colors.success + '30' }]}>
-                        <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                        <Text style={[styles.statusText, { color: colors.success }]}>Claimed</Text>
-                      </View>
-                    ) : isUnlocked ? (
-                      <View style={[styles.statusBadge, { backgroundColor: milestone.color + '30' }]}>
-                        <Ionicons name="gift" size={16} color={milestone.color} />
-                        <Text style={[styles.statusText, { color: milestone.color }]}>Claim</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.lockedBadge}>
-                        <Text style={styles.lockedText}>
-                          {(milestone.points - currentPoints).toLocaleString()} pts
+                      <View style={[styles.missionPoints, { backgroundColor: mission.color + '20' }]}>
+                        <Text style={[styles.missionPointsText, { color: mission.color }]}>
+                          +{mission.points} pts
                         </Text>
                       </View>
-                    )}
+                    </View>
+                    <Text style={styles.missionDescription}>{mission.description}</Text>
+                    
+                    {/* Progress bar */}
+                    <View style={styles.missionProgressContainer}>
+                      <View style={styles.missionProgressBar}>
+                        <View 
+                          style={[
+                            styles.missionProgressFill, 
+                            { width: `${progressPercent}%`, backgroundColor: mission.color }
+                          ]} 
+                        />
+                      </View>
+                      <Text style={styles.missionProgressText}>
+                        {mission.progress}/{mission.target}
+                      </Text>
+                    </View>
                   </View>
-                </LinearGradient>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Milestones Tab */}
+        {activeTab === 'milestones' && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>POINT MILESTONES</Text>
+            
+            {POINT_MILESTONES.map((milestone, index) => {
+              const isUnlocked = currentPoints >= milestone.points;
+              const isClaimed = claimedMilestones.includes(milestone.id);
+              
+              return (
+                <TouchableOpacity
+                  key={milestone.id}
+                  style={[
+                    styles.milestoneCard,
+                    isUnlocked && styles.milestoneUnlocked,
+                    isClaimed && styles.milestoneClaimed,
+                  ]}
+                  onPress={() => handleClaimReward(milestone)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={isUnlocked ? [milestone.color + '20', '#0D0D0D'] : ['#1A1A1A', '#0D0D0D']}
+                    style={styles.milestoneGradient}
+                  >
+                    <View style={[
+                      styles.milestoneIcon,
+                      { backgroundColor: isUnlocked ? milestone.color + '30' : colors.border }
+                    ]}>
+                      {isUnlocked ? (
+                        <Text style={styles.milestoneBadge}>{milestone.badge}</Text>
+                      ) : (
+                        <Ionicons name="lock-closed" size={24} color={colors.textMuted} />
+                      )}
+                    </View>
+
+                    <View style={styles.milestoneContent}>
+                      <View style={styles.milestoneHeader}>
+                        <Text style={[
+                          styles.milestoneTitle,
+                          { color: isUnlocked ? milestone.color : colors.textMuted },
+                          fontsLoaded && { fontFamily: fonts.semiBold }
+                        ]}>
+                          {milestone.title}
+                        </Text>
+                        <Text style={[
+                          styles.milestonePoints,
+                          { color: isUnlocked ? colors.textPrimary : colors.textMuted }
+                        ]}>
+                          {milestone.points.toLocaleString()} pts
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.milestoneRewards}>
+                        {milestone.rewards.map((reward, rIndex) => (
+                          <View key={rIndex} style={styles.rewardTag}>
+                            <Ionicons 
+                              name={reward.type === 'drinks' ? 'wine' : 
+                                    reward.type === 'entries' ? 'ticket' : 
+                                    reward.type === 'booth' ? 'people' : 
+                                    reward.type === 'fastlane' ? 'flash' : 'gift'}
+                              size={12}
+                              color={isUnlocked ? milestone.color : colors.textMuted}
+                            />
+                            <Text style={[
+                              styles.rewardText,
+                              { color: isUnlocked ? colors.textSecondary : colors.textMuted }
+                            ]}>
+                              {reward.label}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+
+                    <View style={styles.milestoneStatus}>
+                      {isClaimed ? (
+                        <View style={[styles.statusBadge, { backgroundColor: colors.success + '30' }]}>
+                          <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                          <Text style={[styles.statusText, { color: colors.success }]}>Claimed</Text>
+                        </View>
+                      ) : isUnlocked ? (
+                        <View style={[styles.statusBadge, { backgroundColor: milestone.color + '30' }]}>
+                          <Ionicons name="gift" size={16} color={milestone.color} />
+                          <Text style={[styles.statusText, { color: milestone.color }]}>Claim</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.lockedBadge}>
+                          <Text style={styles.lockedText}>
+                            {(milestone.points - currentPoints).toLocaleString()} pts
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Shop Tab - Buy Points */}
+        {activeTab === 'shop' && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>BUY LUNA POINTS</Text>
+            <Text style={styles.sectionSubtitle}>Boost your rewards instantly</Text>
+            
+            {POINT_PACKAGES.map((pkg) => (
+              <TouchableOpacity
+                key={pkg.id}
+                style={[styles.packageCard, pkg.popular && styles.packagePopular]}
+                onPress={() => handleBuyPoints(pkg)}
+                activeOpacity={0.8}
+              >
+                {pkg.popular && (
+                  <View style={styles.popularBadge}>
+                    <Text style={styles.popularText}>BEST VALUE</Text>
+                  </View>
+                )}
+                
+                <View style={styles.packageContent}>
+                  <View style={styles.packageLeft}>
+                    <GoldStarIcon size={32} />
+                    <View>
+                      <Text style={[styles.packagePoints, fontsLoaded && { fontFamily: fonts.bold }]}>
+                        {pkg.points.toLocaleString()} pts
+                      </Text>
+                      {pkg.bonus > 0 && (
+                        <Text style={styles.packageBonus}>+{pkg.bonus} bonus</Text>
+                      )}
+                    </View>
+                  </View>
+                  
+                  <View style={styles.packageRight}>
+                    <Text style={[styles.packagePrice, fontsLoaded && { fontFamily: fonts.bold }]}>
+                      ${pkg.price}
+                    </Text>
+                    <Text style={styles.packagePer}>
+                      ${(pkg.price / (pkg.points + pkg.bonus) * 100).toFixed(1)}¢/pt
+                    </Text>
+                  </View>
+                </View>
               </TouchableOpacity>
-            );
-          })}
-        </View>
+            ))}
+
+            <View style={styles.cherryHubNote}>
+              <Ionicons name="information-circle" size={16} color={colors.textMuted} />
+              <Text style={styles.cherryHubNoteText}>
+                Points are synced with CherryHub rewards system
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* How to Earn Points */}
         <View style={styles.section}>
@@ -322,11 +617,11 @@ export default function RewardsScreen() {
           <View style={styles.earnGrid}>
             {[
               { icon: 'wallet', label: 'Spend $1', points: '1 pt', color: colors.gold },
-              { icon: 'ticket', label: 'Buy Ticket', points: '50 pts', color: colors.accent },
-              { icon: 'people', label: 'Book Booth', points: '200 pts', color: '#8B5CF6' },
+              { icon: 'star', label: 'Leave Review', points: '50 pts', color: '#FFD700' },
+              { icon: 'camera', label: 'Tag on IG', points: '25 pts', color: '#E4405F' },
               { icon: 'person-add', label: 'Refer Friend', points: '100 pts', color: '#00D4AA' },
-              { icon: 'checkmark-circle', label: 'Complete Mission', points: '25-100 pts', color: '#FF6B6B' },
-              { icon: 'calendar', label: 'Weekly Visit', points: '10 pts', color: '#4ECDC4' },
+              { icon: 'flag', label: 'Mission', points: '25-200 pts', color: '#FF6B6B' },
+              { icon: 'people', label: 'Squad Night', points: '100 pts', color: '#8B5CF6' },
             ].map((item, index) => (
               <View key={index} style={styles.earnCard}>
                 <View style={[styles.earnIcon, { backgroundColor: item.color + '20' }]}>
@@ -341,6 +636,121 @@ export default function RewardsScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Promo Code Modal */}
+      <Modal
+        visible={showPromoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPromoModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity 
+              style={styles.modalClose}
+              onPress={() => setShowPromoModal(false)}
+            >
+              <Ionicons name="close" size={24} color={colors.textPrimary} />
+            </TouchableOpacity>
+            
+            <View style={styles.modalIcon}>
+              <Ionicons name="gift" size={40} color={colors.gold} />
+            </View>
+            
+            <Text style={[styles.modalTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+              Enter Promo Code
+            </Text>
+            <Text style={styles.modalSubtitle}>
+              Got a promo code? Enter it below for bonus points!
+            </Text>
+            
+            <TextInput
+              style={styles.promoInput}
+              value={promoCode}
+              onChangeText={setPromoCode}
+              placeholder="Enter code..."
+              placeholderTextColor={colors.textMuted}
+              autoCapitalize="characters"
+            />
+            
+            <TouchableOpacity 
+              style={styles.applyButton}
+              onPress={handleApplyPromo}
+            >
+              <LinearGradient
+                colors={[colors.gold, colors.goldDark]}
+                style={styles.applyButtonGradient}
+              >
+                <Text style={styles.applyButtonText}>Apply Code</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Buy Points Confirmation Modal */}
+      <Modal
+        visible={showBuyModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowBuyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity 
+              style={styles.modalClose}
+              onPress={() => setShowBuyModal(false)}
+            >
+              <Ionicons name="close" size={24} color={colors.textPrimary} />
+            </TouchableOpacity>
+            
+            <GoldStarIcon size={48} />
+            
+            <Text style={[styles.modalTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+              Confirm Purchase
+            </Text>
+            
+            {selectedPackage && (
+              <>
+                <View style={styles.purchaseSummary}>
+                  <Text style={styles.purchasePoints}>
+                    {selectedPackage.points.toLocaleString()} points
+                  </Text>
+                  {selectedPackage.bonus > 0 && (
+                    <Text style={styles.purchaseBonus}>
+                      + {selectedPackage.bonus} bonus points
+                    </Text>
+                  )}
+                  <Text style={styles.purchaseTotal}>
+                    Total: {(selectedPackage.points + selectedPackage.bonus).toLocaleString()} points
+                  </Text>
+                </View>
+                
+                <Text style={styles.purchasePrice}>
+                  ${selectedPackage.price} AUD
+                </Text>
+              </>
+            )}
+            
+            <TouchableOpacity 
+              style={styles.confirmButton}
+              onPress={confirmPurchase}
+            >
+              <LinearGradient
+                colors={[colors.success, '#00A855']}
+                style={styles.confirmButtonGradient}
+              >
+                <Ionicons name="checkmark" size={20} color="#fff" />
+                <Text style={styles.confirmButtonText}>Confirm Purchase</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <Text style={styles.paymentNote}>
+              Powered by CherryHub • Secure Payment
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -377,6 +787,14 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     letterSpacing: 3,
   },
+  promoButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.goldGlow,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pointsCard: {
     marginHorizontal: spacing.lg,
     marginBottom: spacing.lg,
@@ -412,6 +830,23 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     letterSpacing: 2,
   },
+  buyPointsButton: {
+    marginLeft: 'auto',
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  buyPointsGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: 4,
+  },
+  buyPointsText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#000',
+  },
   progressSection: {
     marginTop: spacing.sm,
   },
@@ -439,6 +874,35 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 4,
   },
+  // Tab Container
+  tabContainer: {
+    flexDirection: 'row',
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: radius.lg,
+    padding: spacing.xs,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    gap: 6,
+  },
+  tabActive: {
+    backgroundColor: colors.accent + '20',
+  },
+  tabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  tabTextActive: {
+    color: colors.accent,
+  },
   section: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.xl,
@@ -448,8 +912,86 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textMuted,
     letterSpacing: 2,
+    marginBottom: spacing.xs,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    color: colors.textMuted,
     marginBottom: spacing.md,
   },
+  // Mission Cards
+  missionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundCard,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.md,
+  },
+  missionComplete: {
+    opacity: 0.6,
+    borderColor: colors.success + '40',
+  },
+  missionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  missionContent: {
+    flex: 1,
+  },
+  missionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  missionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  missionPoints: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  missionPointsText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  missionDescription: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginBottom: spacing.xs,
+  },
+  missionProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  missionProgressBar: {
+    flex: 1,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  missionProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  missionProgressText: {
+    fontSize: 10,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  // Milestone Cards
   milestoneCard: {
     borderRadius: radius.lg,
     overflow: 'hidden',
@@ -540,6 +1082,78 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontWeight: '600',
   },
+  // Package Cards
+  packageCard: {
+    backgroundColor: colors.backgroundCard,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  packagePopular: {
+    borderColor: colors.gold,
+    borderWidth: 2,
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: -10,
+    right: spacing.md,
+    backgroundColor: colors.gold,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+  },
+  popularText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#000',
+    letterSpacing: 1,
+  },
+  packageContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  packageLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  packagePoints: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  packageBonus: {
+    fontSize: 12,
+    color: colors.success,
+    fontWeight: '600',
+  },
+  packageRight: {
+    alignItems: 'flex-end',
+  },
+  packagePrice: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: colors.gold,
+  },
+  packagePer: {
+    fontSize: 10,
+    color: colors.textMuted,
+  },
+  cherryHubNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+  },
+  cherryHubNoteText: {
+    fontSize: 11,
+    color: colors.textMuted,
+  },
+  // Earn Grid
   earnGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -571,5 +1185,119 @@ const styles = StyleSheet.create({
   earnPoints: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: colors.backgroundCard,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+  },
+  modalClose: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    padding: spacing.xs,
+  },
+  modalIcon: {
+    marginBottom: spacing.md,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  promoInput: {
+    width: '100%',
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    fontSize: 16,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    letterSpacing: 2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+  },
+  applyButton: {
+    width: '100%',
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  applyButtonGradient: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  applyButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#000',
+  },
+  purchaseSummary: {
+    alignItems: 'center',
+    marginVertical: spacing.md,
+  },
+  purchasePoints: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  purchaseBonus: {
+    fontSize: 14,
+    color: colors.success,
+    fontWeight: '600',
+  },
+  purchaseTotal: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  purchasePrice: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: colors.gold,
+    marginBottom: spacing.md,
+  },
+  confirmButton: {
+    width: '100%',
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    marginBottom: spacing.sm,
+  },
+  confirmButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    gap: spacing.xs,
+  },
+  confirmButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  paymentNote: {
+    fontSize: 10,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 });
