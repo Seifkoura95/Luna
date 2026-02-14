@@ -139,7 +139,7 @@ export default function PhotoGalleryScreen() {
             <Image 
               source={{ uri: `${API_BASE}${gallery.cover_image}` }} 
               style={styles.galleryCover}
-              resizeMode="cover"
+              contentFit="cover"
             />
           ) : (
             <View style={[styles.galleryCover, styles.placeholderCover]}>
