@@ -160,7 +160,10 @@ export default function HomeScreen() {
   };
 
   const formatEventDate = (dateStr: string) => {
+    if (!dateStr) return '';
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -171,10 +174,24 @@ export default function HomeScreen() {
     return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
   };
 
+  const getEventTime = (event: any) => {
+    if (event.time) return event.time;
+    if (event.event_date) {
+      const date = new Date(event.event_date);
+      return date.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+    return '';
+  };
+
+  const getEventDateStr = (event: any) => {
+    return event.date || event.event_date || '';
+  };
+
   const groupEventsByDate = () => {
     const grouped: { [key: string]: any[] } = {};
     events.forEach(event => {
-      const dateKey = formatEventDate(event.date);
+      const dateKey = formatEventDate(getEventDateStr(event));
+      if (!dateKey) return;
       if (!grouped[dateKey]) grouped[dateKey] = [];
       grouped[dateKey].push(event);
     });
