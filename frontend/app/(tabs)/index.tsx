@@ -8,18 +8,14 @@ import {
   Dimensions,
   RefreshControl,
   Platform,
-  ImageBackground,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import Animated, {
   FadeIn,
   FadeInDown,
-  FadeInRight,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withRepeat,
   withTiming,
   interpolate,
@@ -32,64 +28,37 @@ import { colors, spacing, radius } from '../../src/theme/colors';
 import { api } from '../../src/utils/api';
 import { useAuthStore } from '../../src/store/authStore';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
-import { GoldStarIcon } from '../../src/components/GoldStarIcon';
-import { useFonts, fonts } from '../../src/hooks/useFonts';
 
-const { width, height } = Dimensions.get('window');
-const VENUE_CARD_WIDTH = width * 0.75;
-const VENUE_CARD_HEIGHT = 200;
+const { width } = Dimensions.get('window');
+const VENUE_CARD_WIDTH = width * 0.72;
 
 // Luna Group Logo
 const LUNA_LOGO = 'https://customer-assets.emergentagent.com/job_c826baa4-6640-40ce-9e0d-38132d9944fc/artifacts/2k76js5m_luna-group-logo-2.webp';
 
-// Venue order as specified
-const VENUE_ORDER = [
-  'eclipse',
-  'after_dark', 
-  'su_casa_brisbane',
-  'su_casa_gold_coast',
-  'juju',
-  'ember_and_ash',
-  'night_market',
-];
-
-// Crowd levels for demo
-const CROWD_LEVELS = ['Quiet', 'Moderate', 'Busy', 'Packed'];
+// Venue order
+const VENUE_ORDER = ['eclipse', 'after_dark', 'su_casa_brisbane', 'su_casa_gold_coast', 'juju', 'ember_and_ash', 'night_market'];
 
 export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useFonts();
   const scrollRef = useRef<ScrollView>(null);
   
   const [refreshing, setRefreshing] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
   const [venues, setVenues] = useState<any[]>([]);
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
-  const [trendingEvents, setTrendingEvents] = useState<any[]>([]);
 
-  // Animation values
+  // Pulse animation
   const pulseAnim = useSharedValue(1);
-  const liveIndicator = useSharedValue(0);
 
   useEffect(() => {
-    // Pulse animation for live indicator
-    pulseAnim.value = withRepeat(
-      withTiming(1.2, { duration: 1000 }),
-      -1,
-      true
-    );
-    liveIndicator.value = withRepeat(
-      withTiming(1, { duration: 1500 }),
-      -1,
-      true
-    );
+    pulseAnim.value = withRepeat(withTiming(1.3, { duration: 1200 }), -1, true);
   }, []);
 
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseAnim.value }],
-    opacity: interpolate(pulseAnim.value, [1, 1.2], [1, 0.6]),
+    opacity: interpolate(pulseAnim.value, [1, 1.3], [1, 0.4]),
   }));
 
   useFocusEffect(
@@ -107,7 +76,6 @@ export default function HomeScreen() {
       
       setEvents(eventsData);
       
-      // Sort venues by our preferred order
       const sortedVenues = venuesData.sort((a: any, b: any) => {
         const aIndex = VENUE_ORDER.indexOf(a.id);
         const bIndex = VENUE_ORDER.indexOf(b.id);
@@ -115,12 +83,8 @@ export default function HomeScreen() {
       });
       setVenues(sortedVenues);
       
-      // Set featured event (Eclipse events first, or first upcoming)
       const eclipseEvent = eventsData.find((e: any) => e.venue_id === 'eclipse');
       setFeaturedEvent(eclipseEvent || eventsData[0]);
-      
-      // Set trending events (top 5 by interest)
-      setTrendingEvents(eventsData.slice(0, 5));
     } catch (e) {
       console.error('Failed to fetch data:', e);
     }
@@ -142,232 +106,118 @@ export default function HomeScreen() {
     }
   };
 
-  const isVenueOpen = () => {
-    const hour = new Date().getHours();
-    return hour >= 20 || hour < 4; // 8 PM to 4 AM
-  };
-
-  const getRandomCrowd = () => CROWD_LEVELS[Math.floor(Math.random() * CROWD_LEVELS.length)];
-  
-  const getCrowdColor = (level: string) => {
-    switch (level) {
-      case 'Quiet': return '#00D4AA';
-      case 'Moderate': return '#FFD700';
-      case 'Busy': return '#FF9500';
-      case 'Packed': return '#E31837';
-      default: return colors.textMuted;
-    }
-  };
-
-  const formatEventDate = (event: any) => {
-    // Try event_date first, then date
+  const formatDate = (event: any) => {
     const dateStr = event?.event_date || event?.date;
     if (!dateStr) return 'Tonight';
-    
     try {
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return 'Tonight';
-      
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      
       const eventDay = new Date(date);
       eventDay.setHours(0, 0, 0, 0);
-      
       if (eventDay.getTime() === today.getTime()) return 'Tonight';
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       if (eventDay.getTime() === tomorrow.getTime()) return 'Tomorrow';
-      
       return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
     } catch {
       return 'Tonight';
     }
   };
 
-  const getEventTime = (event: any) => {
+  const getTime = (event: any) => {
     if (event?.time) return event.time;
-    const dateStr = event?.event_date || event?.date;
-    if (dateStr) {
-      try {
-        const date = new Date(dateStr);
-        if (!isNaN(date.getTime())) {
-          return date.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
-        }
-      } catch {}
-    }
     return '9:00 PM';
   };
 
-  const groupEventsByDate = () => {
-    const grouped: { [key: string]: any[] } = {};
-    events.forEach(event => {
-      const dateKey = formatEventDate(event);
-      if (!dateKey) return;
-      if (!grouped[dateKey]) grouped[dateKey] = [];
-      grouped[dateKey].push(event);
-    });
-    return grouped;
+  const isOpen = () => {
+    const hour = new Date().getHours();
+    return hour >= 20 || hour < 4;
   };
-
-  const groupedEvents = groupEventsByDate();
 
   return (
     <View style={styles.container}>
-      <StarfieldBackground starCount={80} shootingStarCount={3} />
+      <StarfieldBackground starCount={60} shootingStarCount={2} />
       
       <ScrollView
         ref={scrollRef}
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 24 }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Header with Logo */}
-        <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
+        {/* Logo & Status */}
+        <Animated.View entering={FadeIn.duration(500)} style={styles.header}>
           <Image source={{ uri: LUNA_LOGO }} style={styles.logo} contentFit="contain" />
           
-          {/* Live Status */}
-          {isVenueOpen() && (
-            <View style={styles.liveContainer}>
+          {isOpen() && (
+            <View style={styles.liveStatus}>
               <Animated.View style={[styles.liveDot, pulseStyle]} />
-              <Text style={styles.liveText}>VENUES OPEN NOW</Text>
+              <Text style={styles.liveText}>LIVE NOW</Text>
             </View>
           )}
         </Animated.View>
 
-        {/* ============ HERO SECTION - Tonight at Luna ============ */}
+        {/* Hero Event */}
         {featuredEvent && (
-          <Animated.View entering={FadeInDown.delay(100).duration(500)}>
+          <Animated.View entering={FadeInDown.delay(100).duration(400)}>
             <TouchableOpacity 
-              style={styles.heroSection}
+              style={styles.heroCard}
               onPress={() => { handleHaptic(); router.push(`/event/${featuredEvent.id}`); }}
-              activeOpacity={0.95}
+              activeOpacity={0.9}
             >
-              <ImageBackground
-                source={{ uri: featuredEvent.image_url }}
-                style={styles.heroImage}
-                imageStyle={{ borderRadius: radius.xl }}
-              >
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']}
-                  style={styles.heroGradient}
-                >
-                  {/* Tonight Badge */}
-                  <View style={styles.tonightBadge}>
-                    <Animated.View style={[styles.tonightDot, pulseStyle]} />
-                    <Text style={styles.tonightText}>TONIGHT AT LUNA</Text>
-                  </View>
-                  
-                  {/* Event Details */}
-                  <View style={styles.heroContent}>
-                    <Text style={[styles.heroVenue, { color: featuredEvent.accent_color || colors.accent }]}>
-                      {featuredEvent.venue_name?.toUpperCase()}
-                    </Text>
-                    <Text style={[styles.heroTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
-                      {featuredEvent.title}
-                    </Text>
-                    <Text style={styles.heroMeta}>
-                      {formatEventDate(featuredEvent)} • {getEventTime(featuredEvent)}
-                    </Text>
-                    
-                    {/* CTA Row */}
-                    <View style={styles.heroCTA}>
-                      <TouchableOpacity 
-                        style={[styles.heroButton, { backgroundColor: featuredEvent.accent_color || colors.accent }]}
-                        onPress={() => { handleHaptic(); router.push(`/event/${featuredEvent.id}`); }}
-                      >
-                        <Text style={styles.heroButtonText}>Get Tickets</Text>
-                        <Ionicons name="arrow-forward" size={16} color="#fff" />
-                      </TouchableOpacity>
-                      
-                      <View style={styles.heroStats}>
-                        <Ionicons name="people" size={14} color={colors.textSecondary} />
-                        <Text style={styles.heroStatsText}>
-                          {Math.floor(Math.random() * 200) + 50} going
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </LinearGradient>
-              </ImageBackground>
+              <Image source={{ uri: featuredEvent.image_url }} style={styles.heroImage} contentFit="cover" />
+              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={styles.heroOverlay}>
+                <View style={styles.heroBadge}>
+                  <Text style={styles.heroBadgeText}>FEATURED</Text>
+                </View>
+                <View style={styles.heroContent}>
+                  <Text style={styles.heroVenue}>{featuredEvent.venue_name}</Text>
+                  <Text style={styles.heroTitle}>{featuredEvent.title}</Text>
+                  <Text style={styles.heroMeta}>{formatDate(featuredEvent)} · {getTime(featuredEvent)}</Text>
+                </View>
+              </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
         )}
 
-        {/* ============ WHAT'S ON - Event Timeline ============ */}
-        <Animated.View entering={FadeInDown.delay(200).duration(500)} style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
-                WHAT'S ON
-              </Text>
-              <Text style={styles.sectionSubtitle}>Next 7 days across all venues</Text>
-            </View>
-            <TouchableOpacity onPress={() => router.push('/events')} style={styles.seeAllButton}>
+        {/* What's On */}
+        <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.section}>
+          <View style={styles.sectionHead}>
+            <Text style={styles.sectionTitle}>What's On</Text>
+            <TouchableOpacity onPress={() => router.push('/events')} style={styles.seeAll}>
               <Text style={styles.seeAllText}>See All</Text>
               <Ionicons name="chevron-forward" size={14} color={colors.accent} />
             </TouchableOpacity>
           </View>
 
-          {/* Event Timeline */}
-          <View style={styles.timeline}>
-            {Object.entries(groupedEvents).slice(0, 4).map(([date, dateEvents], dateIndex) => (
-              <View key={date} style={styles.timelineGroup}>
-                {/* Date Header */}
-                <View style={styles.dateHeader}>
-                  <View style={[styles.dateBadge, date === 'Tonight' && styles.dateBadgeTonight]}>
-                    <Text style={[styles.dateText, date === 'Tonight' && styles.dateTextTonight]}>
-                      {date}
-                    </Text>
-                  </View>
-                  <View style={styles.dateLine} />
+          <View style={styles.eventsList}>
+            {events.slice(0, 4).map((event, index) => (
+              <TouchableOpacity
+                key={event.id}
+                style={styles.eventRow}
+                onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
+                activeOpacity={0.8}
+              >
+                <Image source={{ uri: event.image_url }} style={styles.eventThumb} contentFit="cover" />
+                <View style={styles.eventInfo}>
+                  <Text style={styles.eventDate}>{formatDate(event)}</Text>
+                  <Text style={styles.eventName} numberOfLines={1}>{event.title}</Text>
+                  <Text style={styles.eventVenue}>{event.venue_name}</Text>
                 </View>
-                
-                {/* Events for this date */}
-                {dateEvents.slice(0, 2).map((event: any, eventIndex: number) => (
-                  <TouchableOpacity
-                    key={event.id}
-                    style={styles.timelineEvent}
-                    onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
-                    activeOpacity={0.85}
-                  >
-                    <Image 
-                      source={{ uri: event.image_url }} 
-                      style={styles.timelineEventImage}
-                      contentFit="cover"
-                    />
-                    <View style={styles.timelineEventContent}>
-                      <Text style={[styles.timelineEventVenue, { color: event.accent_color || colors.accent }]}>
-                        {event.venue_name}
-                      </Text>
-                      <Text style={styles.timelineEventTitle} numberOfLines={1}>
-                        {event.title}
-                      </Text>
-                      <Text style={styles.timelineEventTime}>{getEventTime(event)}</Text>
-                    </View>
-                    <View style={styles.timelineEventAction}>
-                      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
             ))}
           </View>
         </Animated.View>
 
-        {/* ============ YOUR VENUES - Horizontal Scroll ============ */}
-        <Animated.View entering={FadeInDown.delay(300).duration(500)} style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
-                YOUR VENUES
-              </Text>
-              <Text style={styles.sectionSubtitle}>Explore Luna Group locations</Text>
-            </View>
+        {/* Venues */}
+        <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.section}>
+          <View style={styles.sectionHead}>
+            <Text style={styles.sectionTitle}>Our Venues</Text>
           </View>
 
           <ScrollView
@@ -375,152 +225,81 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.venueScroll}
             decelerationRate="fast"
-            snapToInterval={VENUE_CARD_WIDTH + spacing.md}
+            snapToInterval={VENUE_CARD_WIDTH + 16}
           >
-            {venues.map((venue, index) => {
-              const crowdLevel = getRandomCrowd();
-              const crowdColor = getCrowdColor(crowdLevel);
-              
-              return (
-                <Animated.View
-                  key={venue.id}
-                  entering={FadeInRight.delay(index * 100).duration(400)}
-                >
-                  <TouchableOpacity
-                    style={styles.venueCard}
-                    onPress={() => { handleHaptic(); router.push(`/venue/${venue.id}`); }}
-                    activeOpacity={0.9}
-                  >
-                    <ImageBackground
-                      source={{ uri: venue.image_url }}
-                      style={styles.venueCardImage}
-                      imageStyle={{ borderRadius: radius.lg }}
-                    >
-                      <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.85)']}
-                        style={styles.venueCardGradient}
-                      >
-                        {/* Live Crowd Indicator */}
-                        {isVenueOpen() && (
-                          <View style={[styles.crowdBadge, { backgroundColor: crowdColor + '30', borderColor: crowdColor }]}>
-                            <View style={[styles.crowdDot, { backgroundColor: crowdColor }]} />
-                            <Text style={[styles.crowdText, { color: crowdColor }]}>{crowdLevel}</Text>
-                          </View>
-                        )}
-                        
-                        {/* Venue Info */}
-                        <View style={styles.venueCardContent}>
-                          <View style={[styles.venueTypePill, { backgroundColor: venue.accent_color + '30' }]}>
-                            <Text style={[styles.venueTypeText, { color: venue.accent_color }]}>
-                              {venue.type?.toUpperCase()}
-                            </Text>
-                          </View>
-                          <Text style={[styles.venueCardName, fontsLoaded && { fontFamily: fonts.bold }]}>
-                            {venue.name}
-                          </Text>
-                          <Text style={styles.venueCardLocation}>{venue.location}</Text>
-                          
-                          {/* Quick Book Button */}
-                          <TouchableOpacity 
-                            style={[styles.quickBookButton, { backgroundColor: venue.accent_color }]}
-                            onPress={(e) => {
-                              e.stopPropagation();
-                              handleHaptic();
-                              router.push(`/venue/${venue.id}`);
-                            }}
-                          >
-                            <Text style={styles.quickBookText}>View Venue</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </LinearGradient>
-                    </ImageBackground>
-                  </TouchableOpacity>
-                </Animated.View>
-              );
-            })}
+            {venues.map((venue) => (
+              <TouchableOpacity
+                key={venue.id}
+                style={styles.venueCard}
+                onPress={() => { handleHaptic(); router.push(`/venue/${venue.id}`); }}
+                activeOpacity={0.9}
+              >
+                <Image source={{ uri: venue.image_url }} style={styles.venueImage} contentFit="cover" />
+                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={styles.venueOverlay}>
+                  <Text style={styles.venueType}>{venue.type?.toUpperCase()}</Text>
+                  <Text style={styles.venueName}>{venue.name}</Text>
+                  <Text style={styles.venueLocation}>{venue.location}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
         </Animated.View>
 
-        {/* ============ TRENDING NOW ============ */}
-        <Animated.View entering={FadeInDown.delay(400).duration(500)} style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
-                🔥 TRENDING NOW
-              </Text>
-              <Text style={styles.sectionSubtitle}>Popular events this week</Text>
-            </View>
+        {/* Trending */}
+        <Animated.View entering={FadeInDown.delay(400).duration(400)} style={styles.section}>
+          <View style={styles.sectionHead}>
+            <Text style={styles.sectionTitle}>Trending</Text>
           </View>
 
           <View style={styles.trendingGrid}>
-            {trendingEvents.slice(0, 4).map((event, index) => (
+            {events.slice(0, 4).map((event, index) => (
               <TouchableOpacity
                 key={event.id}
                 style={styles.trendingCard}
                 onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
                 activeOpacity={0.85}
               >
-                <Image 
-                  source={{ uri: event.image_url }} 
-                  style={styles.trendingImage}
-                  contentFit="cover"
-                />
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.9)']}
-                  style={styles.trendingGradient}
-                >
+                <Image source={{ uri: event.image_url }} style={styles.trendingImage} contentFit="cover" />
+                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={styles.trendingOverlay}>
                   <View style={styles.trendingRank}>
-                    <Text style={styles.trendingRankText}>#{index + 1}</Text>
+                    <Text style={styles.trendingRankText}>{index + 1}</Text>
                   </View>
                   <Text style={styles.trendingTitle} numberOfLines={2}>{event.title}</Text>
-                  <Text style={[styles.trendingVenue, { color: event.accent_color || colors.accent }]}>
-                    {event.venue_name}
-                  </Text>
+                  <Text style={styles.trendingVenue}>{event.venue_name}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             ))}
           </View>
         </Animated.View>
 
-        {/* ============ FRIENDS GOING OUT (Simple) ============ */}
-        <Animated.View entering={FadeInDown.delay(500).duration(500)} style={styles.section}>
-          <View style={styles.friendsSection}>
-            <View style={styles.friendsHeader}>
-              <Ionicons name="people" size={20} color={colors.accent} />
-              <Text style={[styles.friendsTitle, fontsLoaded && { fontFamily: fonts.semiBold }]}>
-                Friends Going Out
-              </Text>
-            </View>
-            <View style={styles.friendsContent}>
-              <View style={styles.friendAvatars}>
-                {[1, 2, 3, 4].map((i) => (
-                  <Image
-                    key={i}
-                    source={{ uri: `https://randomuser.me/api/portraits/${i % 2 === 0 ? 'women' : 'men'}/${i + 10}.jpg` }}
-                    style={[styles.friendAvatar, { marginLeft: i === 1 ? 0 : -12 }]}
-                  />
-                ))}
-                <View style={styles.friendsMore}>
-                  <Text style={styles.friendsMoreText}>+12</Text>
-                </View>
+        {/* Friends */}
+        <Animated.View entering={FadeInDown.delay(500).duration(400)} style={[styles.section, { marginBottom: 40 }]}>
+          <TouchableOpacity 
+            style={styles.friendsCard}
+            onPress={() => { handleHaptic(); router.push('/social'); }}
+            activeOpacity={0.85}
+          >
+            <View style={styles.friendsAvatars}>
+              {[1, 2, 3, 4].map((i) => (
+                <Image
+                  key={i}
+                  source={{ uri: `https://randomuser.me/api/portraits/${i % 2 === 0 ? 'women' : 'men'}/${i + 10}.jpg` }}
+                  style={[styles.friendAvatar, { marginLeft: i === 1 ? 0 : -10 }]}
+                />
+              ))}
+              <View style={styles.friendsMore}>
+                <Text style={styles.friendsMoreText}>+8</Text>
               </View>
-              <Text style={styles.friendsText}>
-                <Text style={{ fontWeight: '700' }}>Sarah, James</Text> and{' '}
-                <Text style={{ fontWeight: '700' }}>14 others</Text> are heading out tonight
-              </Text>
             </View>
-            <TouchableOpacity 
-              style={styles.friendsCTA}
-              onPress={() => { handleHaptic(); router.push('/social'); }}
-            >
-              <Text style={styles.friendsCTAText}>See Activity</Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.accent} />
-            </TouchableOpacity>
-          </View>
+            <View style={styles.friendsInfo}>
+              <Text style={styles.friendsText}>Friends are heading out tonight</Text>
+              <Text style={styles.friendsSubtext}>See what they're up to</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+          </TouchableOpacity>
         </Animated.View>
 
-        {/* Bottom Padding */}
-        <View style={{ height: 120 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
     </View>
   );
@@ -535,382 +314,250 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: spacing.xl,
+    paddingHorizontal: 20,
   },
-  
+
   // Header
   header: {
     alignItems: 'center',
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
+    marginBottom: 24,
   },
   logo: {
-    width: 200,
-    height: 55,
+    width: 180,
+    height: 50,
+    marginBottom: 12,
   },
-  liveContainer: {
+  liveStatus: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.sm,
-    backgroundColor: 'rgba(0,212,170,0.15)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.full,
-    gap: spacing.xs,
+    backgroundColor: 'rgba(0,212,170,0.12)',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
   },
   liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#00D4AA',
   },
   liveText: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '600',
     color: '#00D4AA',
     letterSpacing: 1,
   },
 
-  // Hero Section
-  heroSection: {
-    marginHorizontal: spacing.md,
-    marginTop: spacing.md,
-    borderRadius: radius.xl,
+  // Hero
+  heroCard: {
+    height: 260,
+    borderRadius: 16,
     overflow: 'hidden',
+    marginBottom: 32,
   },
   heroImage: {
-    height: 320,
-    justifyContent: 'flex-end',
+    ...StyleSheet.absoluteFillObject,
   },
-  heroGradient: {
+  heroOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    padding: spacing.lg,
-    borderRadius: radius.xl,
+    padding: 20,
   },
-  tonightBadge: {
+  heroBadge: {
     position: 'absolute',
-    top: spacing.lg,
-    left: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(227,24,55,0.9)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.full,
-    gap: spacing.xs,
+    top: 16,
+    left: 16,
+    backgroundColor: colors.accent,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 4,
   },
-  tonightDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#fff',
-  },
-  tonightText: {
+  heroBadgeText: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#fff',
     letterSpacing: 1,
   },
   heroContent: {
-    gap: spacing.xs,
+    gap: 4,
   },
   heroVenue: {
     fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
+    fontWeight: '600',
+    color: colors.accent,
+    letterSpacing: 0.5,
   },
   heroTitle: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#fff',
-    lineHeight: 32,
+    lineHeight: 26,
   },
   heroMeta: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: spacing.sm,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 2,
   },
-  heroCTA: {
+
+  // Sections
+  section: {
+    marginBottom: 32,
+  },
+  sectionHead: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.xs,
-  },
-  heroButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
-    gap: spacing.xs,
+    marginBottom: 16,
   },
-  heroButtonText: {
-    fontSize: 14,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#fff',
   },
-  heroStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  heroStatsText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-
-  // Section
-  section: {
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#fff',
-    letterSpacing: 1,
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  seeAllButton: {
+  seeAll: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
   },
   seeAllText: {
     fontSize: 13,
-    color: colors.accent,
     fontWeight: '600',
+    color: colors.accent,
   },
 
-  // Timeline
-  timeline: {
-    gap: spacing.lg,
+  // Events List
+  eventsList: {
+    gap: 12,
   },
-  timelineGroup: {
-    gap: spacing.sm,
-  },
-  dateHeader: {
+  eventRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+    padding: 12,
+    gap: 14,
   },
-  dateBadge: {
-    backgroundColor: colors.backgroundCard,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.full,
+  eventThumb: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
   },
-  dateBadgeTonight: {
-    backgroundColor: colors.accent,
-  },
-  dateText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    letterSpacing: 0.5,
-  },
-  dateTextTonight: {
-    color: '#fff',
-  },
-  dateLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  timelineEvent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundCard,
-    borderRadius: radius.lg,
-    padding: spacing.sm,
-    gap: spacing.md,
-  },
-  timelineEventImage: {
-    width: 60,
-    height: 60,
-    borderRadius: radius.md,
-  },
-  timelineEventContent: {
+  eventInfo: {
     flex: 1,
     gap: 2,
   },
-  timelineEventVenue: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
+  eventDate: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.accent,
+    letterSpacing: 0.3,
   },
-  timelineEventTitle: {
-    fontSize: 14,
+  eventName: {
+    fontSize: 15,
     fontWeight: '600',
     color: '#fff',
   },
-  timelineEventTime: {
+  eventVenue: {
     fontSize: 12,
-    color: colors.textMuted,
-  },
-  timelineEventAction: {
-    padding: spacing.sm,
+    color: 'rgba(255,255,255,0.5)',
   },
 
-  // Venue Cards
+  // Venues
   venueScroll: {
-    paddingRight: spacing.md,
+    paddingRight: 20,
   },
   venueCard: {
     width: VENUE_CARD_WIDTH,
-    height: VENUE_CARD_HEIGHT,
-    marginRight: spacing.md,
-    borderRadius: radius.lg,
+    height: 180,
+    borderRadius: 14,
     overflow: 'hidden',
+    marginRight: 16,
   },
-  venueCardImage: {
-    flex: 1,
+  venueImage: {
+    ...StyleSheet.absoluteFillObject,
   },
-  venueCardGradient: {
+  venueOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    padding: spacing.md,
+    padding: 16,
   },
-  crowdBadge: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    gap: 4,
-  },
-  crowdDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  crowdText: {
+  venueType: {
     fontSize: 10,
     fontWeight: '700',
-  },
-  venueCardContent: {
-    gap: spacing.xs,
-  },
-  venueTypePill: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
-  },
-  venueTypeText: {
-    fontSize: 9,
-    fontWeight: '700',
+    color: 'rgba(255,255,255,0.5)',
     letterSpacing: 1,
+    marginBottom: 4,
   },
-  venueCardName: {
+  venueName: {
     fontSize: 20,
-    fontWeight: '800',
-    color: '#fff',
-  },
-  venueCardLocation: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  quickBookButton: {
-    marginTop: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    alignSelf: 'flex-start',
-  },
-  quickBookText: {
-    fontSize: 12,
     fontWeight: '700',
     color: '#fff',
+  },
+  venueLocation: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.5)',
+    marginTop: 2,
   },
 
   // Trending
   trendingGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: 12,
   },
   trendingCard: {
-    width: (width - spacing.md * 2 - spacing.sm) / 2,
-    height: 140,
-    borderRadius: radius.lg,
+    width: (width - 40 - 12) / 2,
+    height: 130,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   trendingImage: {
     ...StyleSheet.absoluteFillObject,
   },
-  trendingGradient: {
+  trendingOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    padding: spacing.sm,
+    padding: 12,
   },
   trendingRank: {
     position: 'absolute',
-    top: spacing.sm,
-    left: spacing.sm,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
+    top: 10,
+    left: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   trendingRankText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.gold,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fff',
   },
   trendingTitle: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#fff',
     lineHeight: 16,
   },
   trendingVenue: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.5)',
     marginTop: 2,
   },
 
   // Friends
-  friendsSection: {
-    backgroundColor: colors.backgroundCard,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  friendsHeader: {
+  friendsCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 14,
+    padding: 16,
+    gap: 14,
   },
-  friendsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  friendsContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  friendAvatars: {
+  friendsAvatars: {
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -919,7 +566,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: colors.background,
+    borderColor: '#000',
   },
   friendsMore: {
     width: 36,
@@ -928,34 +575,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: -12,
+    marginLeft: -10,
     borderWidth: 2,
-    borderColor: colors.background,
+    borderColor: '#000',
   },
   friendsMoreText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     color: '#fff',
   },
-  friendsText: {
+  friendsInfo: {
     flex: 1,
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
   },
-  friendsCTA: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    gap: spacing.xs,
-  },
-  friendsCTAText: {
-    fontSize: 13,
+  friendsText: {
+    fontSize: 14,
     fontWeight: '600',
-    color: colors.accent,
+    color: '#fff',
+  },
+  friendsSubtext: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.5)',
+    marginTop: 2,
   },
 });
