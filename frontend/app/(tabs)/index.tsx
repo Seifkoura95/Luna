@@ -1,40 +1,97 @@
-import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  RefreshControl,
-  Dimensions,
   TouchableOpacity,
-  Image,
+  Dimensions,
+  RefreshControl,
   Platform,
-  ActivityIndicator,
+  ImageBackground,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, spacing, radius } from '../../src/theme/colors';
-import { useAuthStore } from '../../src/store/authStore';
-import { api } from '../../src/utils/api';
+import { BlurView } from 'expo-blur';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  FadeInRight,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withRepeat,
+  withTiming,
+  interpolate,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { StarfieldBackground } from '../../src/components/StarfieldBackground';
-import { PageHeader } from '../../src/components/PageHeader';
 import * as Haptics from 'expo-haptics';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, spacing, radius } from '../../src/theme/colors';
+import { api } from '../../src/utils/api';
+import { useAuthStore } from '../../src/store/authStore';
+import { StarfieldBackground } from '../../src/components/StarfieldBackground';
+import { GoldStarIcon } from '../../src/components/GoldStarIcon';
 import { useFonts, fonts } from '../../src/hooks/useFonts';
 
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = width - 40;
+const { width, height } = Dimensions.get('window');
+const VENUE_CARD_WIDTH = width * 0.75;
+const VENUE_CARD_HEIGHT = 200;
 
-export default function TonightScreen() {
+// Luna Group Logo
+const LUNA_LOGO = 'https://customer-assets.emergentagent.com/job_c826baa4-6640-40ce-9e0d-38132d9944fc/artifacts/2k76js5m_luna-group-logo-2.webp';
+
+// Venue order as specified
+const VENUE_ORDER = [
+  'eclipse',
+  'after_dark', 
+  'su_casa_brisbane',
+  'su_casa_gold_coast',
+  'juju',
+  'ember_and_ash',
+  'night_market',
+];
+
+// Crowd levels for demo
+const CROWD_LEVELS = ['Quiet', 'Moderate', 'Busy', 'Packed'];
+
+export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const fontsLoaded = useFonts();
   const scrollRef = useRef<ScrollView>(null);
-  const [venues, setVenues] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  
   const [refreshing, setRefreshing] = useState(false);
+  const [events, setEvents] = useState<any[]>([]);
+  const [venues, setVenues] = useState<any[]>([]);
+  const [featuredEvent, setFeaturedEvent] = useState<any>(null);
+  const [trendingEvents, setTrendingEvents] = useState<any[]>([]);
 
-  // Auto scroll to top when tab gains focus
+  // Animation values
+  const pulseAnim = useSharedValue(1);
+  const liveIndicator = useSharedValue(0);
+
+  useEffect(() => {
+    // Pulse animation for live indicator
+    pulseAnim.value = withRepeat(
+      withTiming(1.2, { duration: 1000 }),
+      -1,
+      true
+    );
+    liveIndicator.value = withRepeat(
+      withTiming(1, { duration: 1500 }),
+      -1,
+      true
+    );
+  }, []);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseAnim.value }],
+    opacity: interpolate(pulseAnim.value, [1, 1.2], [1, 0.6]),
+  }));
+
   useFocusEffect(
     useCallback(() => {
       scrollRef.current?.scrollTo({ y: 0, animated: false });
@@ -43,12 +100,27 @@ export default function TonightScreen() {
 
   const fetchData = async () => {
     try {
-      const [venuesData, eventsData] = await Promise.all([
-        api.getVenues(),
+      const [eventsData, venuesData] = await Promise.all([
         api.getEvents(),
+        api.getVenues(),
       ]);
-      setVenues(venuesData || []);
-      setEvents(eventsData || []);
+      
+      setEvents(eventsData);
+      
+      // Sort venues by our preferred order
+      const sortedVenues = venuesData.sort((a: any, b: any) => {
+        const aIndex = VENUE_ORDER.indexOf(a.id);
+        const bIndex = VENUE_ORDER.indexOf(b.id);
+        return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+      });
+      setVenues(sortedVenues);
+      
+      // Set featured event (Eclipse events first, or first upcoming)
+      const eclipseEvent = eventsData.find((e: any) => e.venue_id === 'eclipse');
+      setFeaturedEvent(eclipseEvent || eventsData[0]);
+      
+      // Set trending events (top 5 by interest)
+      setTrendingEvents(eventsData.slice(0, 5));
     } catch (e) {
       console.error('Failed to fetch data:', e);
     }
@@ -64,335 +136,360 @@ export default function TonightScreen() {
     setRefreshing(false);
   };
 
-  // Group events by venue
-  const eventsByVenue = useMemo(() => {
-    const grouped: Record<string, any[]> = {};
-    events.forEach(event => {
-      const venueId = event.venue_id;
-      if (!grouped[venueId]) {
-        grouped[venueId] = [];
-      }
-      grouped[venueId].push(event);
-    });
-    return grouped;
-  }, [events]);
-
-  // Featured events (first 5)
-  const featuredEvents = useMemo(() => {
-    return events.filter(e => e.featured).slice(0, 5);
-  }, [events]);
-
-  // Tonight's events
-  const tonightsEvents = useMemo(() => {
-    const now = new Date();
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    return events.filter(e => {
-      const eventDate = new Date(e.event_date);
-      return eventDate >= now && eventDate <= tomorrow;
-    }).slice(0, 6);
-  }, [events]);
-
-  const formatEventDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
-  };
-
-  const getVenueForEvent = (venueId: string) => {
-    return venues.find(v => v.id === venueId);
-  };
-
   const handleHaptic = () => {
     if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
-  if (!fontsLoaded) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <StarfieldBackground starCount={30} />
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    );
-  }
+  const isVenueOpen = () => {
+    const hour = new Date().getHours();
+    return hour >= 20 || hour < 4; // 8 PM to 4 AM
+  };
+
+  const getRandomCrowd = () => CROWD_LEVELS[Math.floor(Math.random() * CROWD_LEVELS.length)];
+  
+  const getCrowdColor = (level: string) => {
+    switch (level) {
+      case 'Quiet': return '#00D4AA';
+      case 'Moderate': return '#FFD700';
+      case 'Busy': return '#FF9500';
+      case 'Packed': return '#E31837';
+      default: return colors.textMuted;
+    }
+  };
+
+  const formatEventDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    if (date.toDateString() === today.toDateString()) return 'Tonight';
+    if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+    
+    return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+
+  const groupEventsByDate = () => {
+    const grouped: { [key: string]: any[] } = {};
+    events.forEach(event => {
+      const dateKey = formatEventDate(event.date);
+      if (!grouped[dateKey]) grouped[dateKey] = [];
+      grouped[dateKey].push(event);
+    });
+    return grouped;
+  };
+
+  const groupedEvents = groupEventsByDate();
 
   return (
     <View style={styles.container}>
-      <StarfieldBackground starCount={50} shootingStarCount={2} />
+      <StarfieldBackground starCount={80} shootingStarCount={3} />
       
       <ScrollView
         ref={scrollRef}
         style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <PageHeader 
-          title="LUNA GROUP" 
-          description="Premium nightlife & dining across Brisbane & Gold Coast"
-          showPoints={false}
-          showLogo={true}
-        />
-
-        {/* Quick Actions - Premium Redesigned */}
-        <View style={styles.quickActionsContainer}>
-          <TouchableOpacity 
-            style={styles.primaryAction}
-            onPress={() => { handleHaptic(); router.push('/table-booking'); }}
-            activeOpacity={0.85}
-          >
-            <LinearGradient 
-              colors={['#E31837', '#B8132C', '#8A0F22']} 
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.primaryActionGradient}
-            >
-              <View style={styles.actionIconContainer}>
-                <Ionicons name="restaurant-outline" size={26} color="#FFF" />
-              </View>
-              <View style={styles.actionTextContainer}>
-                <Text style={[styles.actionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>VIP Tables</Text>
-                <Text style={[styles.actionSubtitle, fontsLoaded && { fontFamily: fonts.regular }]}>Book premium booths</Text>
-              </View>
-              <Ionicons name="arrow-forward" size={20} color="rgba(255,255,255,0.6)" />
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-
-        {/* Featured Events Section */}
-        {featuredEvents.length > 0 && (
-          <>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>FEATURED EVENTS</Text>
-              <TouchableOpacity onPress={() => router.push('/events')}>
-                <Text style={[styles.seeAllText, fontsLoaded && { fontFamily: fonts.medium }]}>See All</Text>
-              </TouchableOpacity>
+        {/* Header with Logo */}
+        <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
+          <Image source={{ uri: LUNA_LOGO }} style={styles.logo} contentFit="contain" />
+          
+          {/* Live Status */}
+          {isVenueOpen() && (
+            <View style={styles.liveContainer}>
+              <Animated.View style={[styles.liveDot, pulseStyle]} />
+              <Text style={styles.liveText}>VENUES OPEN NOW</Text>
             </View>
+          )}
+        </Animated.View>
 
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.featuredContainer}
-              pagingEnabled
-              snapToInterval={CARD_WIDTH + 16}
-              decelerationRate="fast"
+        {/* ============ HERO SECTION - Tonight at Luna ============ */}
+        {featuredEvent && (
+          <Animated.View entering={FadeInDown.delay(100).duration(500)}>
+            <TouchableOpacity 
+              style={styles.heroSection}
+              onPress={() => { handleHaptic(); router.push(`/event/${featuredEvent.id}`); }}
+              activeOpacity={0.95}
             >
-              {featuredEvents.map((event) => {
-                const venue = getVenueForEvent(event.venue_id);
-                return (
-                  <TouchableOpacity 
-                    key={event.id}
-                    style={styles.featuredCard}
-                    onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
-                    activeOpacity={0.9}
-                  >
-                    <Image source={{ uri: event.image_url }} style={styles.featuredImage} />
-                    <LinearGradient
-                      colors={['transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']}
-                      locations={[0, 0.4, 1]}
-                      style={styles.featuredOverlay}
-                    >
-                      {venue?.logo_url && (
-                        <Image source={{ uri: venue.logo_url }} style={styles.venueLogo} resizeMode="contain" />
-                      )}
-                      
-                      <View style={styles.featuredContent}>
-                        <View style={styles.eventMeta}>
-                          <View style={[styles.dateBadge, { backgroundColor: venue?.accent_color || colors.accent }]}>
-                            <Text style={[styles.dateBadgeText, fontsLoaded && { fontFamily: fonts.bold }]}>
-                              {formatEventDate(event.event_date)}
-                            </Text>
-                          </View>
-                          {event.ticket_price > 0 && (
-                            <View style={styles.priceBadge}>
-                              <Text style={[styles.priceBadgeText, fontsLoaded && { fontFamily: fonts.bold }]}>
-                                ${event.ticket_price}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                        
-                        <Text style={[styles.featuredTitle, fontsLoaded && { fontFamily: fonts.bold }]} numberOfLines={2}>
-                          {event.title}
-                        </Text>
-                        <Text style={[styles.featuredVenue, fontsLoaded && { fontFamily: fonts.medium }]}>
-                          {venue?.name || event.venue_name}
-                        </Text>
-                        <Text style={[styles.featuredDesc, fontsLoaded && { fontFamily: fonts.regular }]} numberOfLines={2}>
-                          {event.description}
-                        </Text>
-                        
-                        <TouchableOpacity 
-                          style={[styles.ticketButton, { backgroundColor: venue?.accent_color || colors.accent }]}
-                          onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
-                        >
-                          <Ionicons name="ticket" size={18} color="#FFF" />
-                          <Text style={[styles.ticketButtonText, fontsLoaded && { fontFamily: fonts.bold }]}>GET TICKETS</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </>
-        )}
-
-        {/* Tonight's Events */}
-        {tonightsEvents.length > 0 && (
-          <>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <View style={styles.liveDot} />
-                <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>HAPPENING TONIGHT</Text>
-              </View>
-            </View>
-
-            {tonightsEvents.map((event) => {
-              const venue = getVenueForEvent(event.venue_id);
-              return (
-                <TouchableOpacity 
-                  key={event.id}
-                  style={styles.eventListItem}
-                  onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
-                  activeOpacity={0.8}
+              <ImageBackground
+                source={{ uri: featuredEvent.image_url }}
+                style={styles.heroImage}
+                imageStyle={{ borderRadius: radius.xl }}
+              >
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']}
+                  style={styles.heroGradient}
                 >
-                  <Image source={{ uri: event.image_url }} style={styles.eventListImage} />
-                  <View style={styles.eventListContent}>
-                    <View style={styles.eventListHeader}>
-                      <Text style={[styles.eventListTitle, fontsLoaded && { fontFamily: fonts.semiBold }]} numberOfLines={1}>
-                        {event.title}
-                      </Text>
-                      {event.ticket_price > 0 && (
-                        <Text style={[styles.eventListPrice, { color: venue?.accent_color || colors.accent }, fontsLoaded && { fontFamily: fonts.bold }]}>
-                          ${event.ticket_price}
+                  {/* Tonight Badge */}
+                  <View style={styles.tonightBadge}>
+                    <Animated.View style={[styles.tonightDot, pulseStyle]} />
+                    <Text style={styles.tonightText}>TONIGHT AT LUNA</Text>
+                  </View>
+                  
+                  {/* Event Details */}
+                  <View style={styles.heroContent}>
+                    <Text style={[styles.heroVenue, { color: featuredEvent.accent_color || colors.accent }]}>
+                      {featuredEvent.venue_name?.toUpperCase()}
+                    </Text>
+                    <Text style={[styles.heroTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+                      {featuredEvent.title}
+                    </Text>
+                    <Text style={styles.heroMeta}>
+                      {formatEventDate(featuredEvent.date)} • {featuredEvent.time}
+                    </Text>
+                    
+                    {/* CTA Row */}
+                    <View style={styles.heroCTA}>
+                      <TouchableOpacity 
+                        style={[styles.heroButton, { backgroundColor: featuredEvent.accent_color || colors.accent }]}
+                        onPress={() => { handleHaptic(); router.push(`/event/${featuredEvent.id}`); }}
+                      >
+                        <Text style={styles.heroButtonText}>Get Tickets</Text>
+                        <Ionicons name="arrow-forward" size={16} color="#fff" />
+                      </TouchableOpacity>
+                      
+                      <View style={styles.heroStats}>
+                        <Ionicons name="people" size={14} color={colors.textSecondary} />
+                        <Text style={styles.heroStatsText}>
+                          {Math.floor(Math.random() * 200) + 50} going
                         </Text>
-                      )}
-                    </View>
-                    <View style={styles.eventListMeta}>
-                      {venue?.logo_url ? (
-                        <Image source={{ uri: venue.logo_url }} style={styles.eventListLogo} resizeMode="contain" />
-                      ) : (
-                        <View style={[styles.venueDot, { backgroundColor: venue?.accent_color }]} />
-                      )}
-                      <Text style={[styles.eventListVenue, fontsLoaded && { fontFamily: fonts.regular }]}>
-                        {venue?.name || event.venue_name}
-                      </Text>
+                      </View>
                     </View>
                   </View>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                </TouchableOpacity>
-              );
-            })}
-          </>
+                </LinearGradient>
+              </ImageBackground>
+            </TouchableOpacity>
+          </Animated.View>
         )}
 
-        {/* Venues Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>OUR VENUES</Text>
-        </View>
-        
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.venueCardsContainer}
-        >
-          {venues.map((venue) => (
-            <TouchableOpacity
-              key={venue.id}
-              style={styles.venueCard}
-              onPress={() => { handleHaptic(); router.push(`/venue/${venue.id}`); }}
-              activeOpacity={0.9}
-            >
-              <Image source={{ uri: venue.image_url }} style={styles.venueCardImage} />
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.95)']}
-                style={styles.venueCardOverlay}
-              >
-                {venue.logo_url ? (
-                  <Image source={{ uri: venue.logo_url }} style={styles.venueCardLogo} resizeMode="contain" />
-                ) : (
-                  <Text style={[styles.venueCardName, fontsLoaded && { fontFamily: fonts.bold }]}>{venue.name}</Text>
-                )}
-                <Text style={[styles.venueCardType, fontsLoaded && { fontFamily: fonts.regular }]}>
-                  {venue.tagline || venue.type.toUpperCase()}
-                </Text>
-                
-                {eventsByVenue[venue.id]?.length > 0 && (
-                  <View style={[styles.eventsCountBadge, { backgroundColor: venue.accent_color }]}>
-                    <Text style={[styles.eventsCountText, fontsLoaded && { fontFamily: fonts.semiBold }]}>
-                      {eventsByVenue[venue.id].length} Events
+        {/* ============ WHAT'S ON - Event Timeline ============ */}
+        <Animated.View entering={FadeInDown.delay(200).duration(500)} style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+                WHAT'S ON
+              </Text>
+              <Text style={styles.sectionSubtitle}>Next 7 days across all venues</Text>
+            </View>
+            <TouchableOpacity onPress={() => router.push('/events')} style={styles.seeAllButton}>
+              <Text style={styles.seeAllText}>See All</Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.accent} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Event Timeline */}
+          <View style={styles.timeline}>
+            {Object.entries(groupedEvents).slice(0, 4).map(([date, dateEvents], dateIndex) => (
+              <View key={date} style={styles.timelineGroup}>
+                {/* Date Header */}
+                <View style={styles.dateHeader}>
+                  <View style={[styles.dateBadge, date === 'Tonight' && styles.dateBadgeTonight]}>
+                    <Text style={[styles.dateText, date === 'Tonight' && styles.dateTextTonight]}>
+                      {date}
                     </Text>
                   </View>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Venue Events Sections */}
-        {Object.entries(eventsByVenue).slice(0, 3).map(([venueId, venueEvents]) => {
-          const venue = getVenueForEvent(venueId);
-          if (!venue || venueEvents.length === 0) return null;
-          
-          return (
-            <View key={venueId} style={styles.venueEventsSection}>
-              <View style={styles.venueEventHeader}>
-                {venue.logo_url ? (
-                  <Image source={{ uri: venue.logo_url }} style={styles.venueEventLogo} resizeMode="contain" />
-                ) : (
-                  <View style={styles.venueEventNameContainer}>
-                    <View style={[styles.venueDotLarge, { backgroundColor: venue.accent_color }]} />
-                    <Text style={[styles.venueEventName, fontsLoaded && { fontFamily: fonts.bold }]}>{venue.name}</Text>
-                  </View>
-                )}
-                <TouchableOpacity onPress={() => router.push(`/venue/${venueId}`)}>
-                  <Text style={[styles.seeAllText, { color: venue.accent_color }, fontsLoaded && { fontFamily: fonts.medium }]}>
-                    View All
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.venueEventsScroll}
-              >
-                {venueEvents.slice(0, 4).map((event) => (
-                  <TouchableOpacity 
+                  <View style={styles.dateLine} />
+                </View>
+                
+                {/* Events for this date */}
+                {dateEvents.slice(0, 2).map((event: any, eventIndex: number) => (
+                  <TouchableOpacity
                     key={event.id}
-                    style={styles.smallEventCard}
+                    style={styles.timelineEvent}
                     onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
+                    activeOpacity={0.85}
                   >
-                    <Image source={{ uri: event.image_url }} style={styles.smallEventImage} />
-                    <LinearGradient
-                      colors={['transparent', 'rgba(0,0,0,0.9)']}
-                      style={styles.smallEventOverlay}
-                    >
-                      <Text style={[styles.smallEventDate, fontsLoaded && { fontFamily: fonts.medium }]}>
-                        {formatEventDate(event.event_date)}
+                    <Image 
+                      source={{ uri: event.image_url }} 
+                      style={styles.timelineEventImage}
+                      contentFit="cover"
+                    />
+                    <View style={styles.timelineEventContent}>
+                      <Text style={[styles.timelineEventVenue, { color: event.accent_color || colors.accent }]}>
+                        {event.venue_name}
                       </Text>
-                      <Text style={[styles.smallEventTitle, fontsLoaded && { fontFamily: fonts.semiBold }]} numberOfLines={2}>
+                      <Text style={styles.timelineEventTitle} numberOfLines={1}>
                         {event.title}
                       </Text>
-                      {event.ticket_price > 0 && (
-                        <Text style={[styles.smallEventPrice, { color: venue.accent_color }, fontsLoaded && { fontFamily: fonts.bold }]}>
-                          From ${event.ticket_price}
-                        </Text>
-                      )}
-                    </LinearGradient>
+                      <Text style={styles.timelineEventTime}>{event.time}</Text>
+                    </View>
+                    <View style={styles.timelineEventAction}>
+                      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </View>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
-            </View>
-          );
-        })}
+              </View>
+            ))}
+          </View>
+        </Animated.View>
 
+        {/* ============ YOUR VENUES - Horizontal Scroll ============ */}
+        <Animated.View entering={FadeInDown.delay(300).duration(500)} style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+                YOUR VENUES
+              </Text>
+              <Text style={styles.sectionSubtitle}>Explore Luna Group locations</Text>
+            </View>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.venueScroll}
+            decelerationRate="fast"
+            snapToInterval={VENUE_CARD_WIDTH + spacing.md}
+          >
+            {venues.map((venue, index) => {
+              const crowdLevel = getRandomCrowd();
+              const crowdColor = getCrowdColor(crowdLevel);
+              
+              return (
+                <Animated.View
+                  key={venue.id}
+                  entering={FadeInRight.delay(index * 100).duration(400)}
+                >
+                  <TouchableOpacity
+                    style={styles.venueCard}
+                    onPress={() => { handleHaptic(); router.push(`/venue/${venue.id}`); }}
+                    activeOpacity={0.9}
+                  >
+                    <ImageBackground
+                      source={{ uri: venue.image_url }}
+                      style={styles.venueCardImage}
+                      imageStyle={{ borderRadius: radius.lg }}
+                    >
+                      <LinearGradient
+                        colors={['transparent', 'rgba(0,0,0,0.85)']}
+                        style={styles.venueCardGradient}
+                      >
+                        {/* Live Crowd Indicator */}
+                        {isVenueOpen() && (
+                          <View style={[styles.crowdBadge, { backgroundColor: crowdColor + '30', borderColor: crowdColor }]}>
+                            <View style={[styles.crowdDot, { backgroundColor: crowdColor }]} />
+                            <Text style={[styles.crowdText, { color: crowdColor }]}>{crowdLevel}</Text>
+                          </View>
+                        )}
+                        
+                        {/* Venue Info */}
+                        <View style={styles.venueCardContent}>
+                          <View style={[styles.venueTypePill, { backgroundColor: venue.accent_color + '30' }]}>
+                            <Text style={[styles.venueTypeText, { color: venue.accent_color }]}>
+                              {venue.type?.toUpperCase()}
+                            </Text>
+                          </View>
+                          <Text style={[styles.venueCardName, fontsLoaded && { fontFamily: fonts.bold }]}>
+                            {venue.name}
+                          </Text>
+                          <Text style={styles.venueCardLocation}>{venue.location}</Text>
+                          
+                          {/* Quick Book Button */}
+                          <TouchableOpacity 
+                            style={[styles.quickBookButton, { backgroundColor: venue.accent_color }]}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handleHaptic();
+                              router.push(`/venue/${venue.id}`);
+                            }}
+                          >
+                            <Text style={styles.quickBookText}>View Venue</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </LinearGradient>
+                    </ImageBackground>
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            })}
+          </ScrollView>
+        </Animated.View>
+
+        {/* ============ TRENDING NOW ============ */}
+        <Animated.View entering={FadeInDown.delay(400).duration(500)} style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+                🔥 TRENDING NOW
+              </Text>
+              <Text style={styles.sectionSubtitle}>Popular events this week</Text>
+            </View>
+          </View>
+
+          <View style={styles.trendingGrid}>
+            {trendingEvents.slice(0, 4).map((event, index) => (
+              <TouchableOpacity
+                key={event.id}
+                style={styles.trendingCard}
+                onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
+                activeOpacity={0.85}
+              >
+                <Image 
+                  source={{ uri: event.image_url }} 
+                  style={styles.trendingImage}
+                  contentFit="cover"
+                />
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.9)']}
+                  style={styles.trendingGradient}
+                >
+                  <View style={styles.trendingRank}>
+                    <Text style={styles.trendingRankText}>#{index + 1}</Text>
+                  </View>
+                  <Text style={styles.trendingTitle} numberOfLines={2}>{event.title}</Text>
+                  <Text style={[styles.trendingVenue, { color: event.accent_color || colors.accent }]}>
+                    {event.venue_name}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Animated.View>
+
+        {/* ============ FRIENDS GOING OUT (Simple) ============ */}
+        <Animated.View entering={FadeInDown.delay(500).duration(500)} style={styles.section}>
+          <View style={styles.friendsSection}>
+            <View style={styles.friendsHeader}>
+              <Ionicons name="people" size={20} color={colors.accent} />
+              <Text style={[styles.friendsTitle, fontsLoaded && { fontFamily: fonts.semiBold }]}>
+                Friends Going Out
+              </Text>
+            </View>
+            <View style={styles.friendsContent}>
+              <View style={styles.friendAvatars}>
+                {[1, 2, 3, 4].map((i) => (
+                  <Image
+                    key={i}
+                    source={{ uri: `https://randomuser.me/api/portraits/${i % 2 === 0 ? 'women' : 'men'}/${i + 10}.jpg` }}
+                    style={[styles.friendAvatar, { marginLeft: i === 1 ? 0 : -12 }]}
+                  />
+                ))}
+                <View style={styles.friendsMore}>
+                  <Text style={styles.friendsMoreText}>+12</Text>
+                </View>
+              </View>
+              <Text style={styles.friendsText}>
+                <Text style={{ fontWeight: '700' }}>Sarah, James</Text> and{' '}
+                <Text style={{ fontWeight: '700' }}>14 others</Text> are heading out tonight
+              </Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.friendsCTA}
+              onPress={() => { handleHaptic(); router.push('/social'); }}
+            >
+              <Text style={styles.friendsCTAText}>See Activity</Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.accent} />
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+
+        {/* Bottom Padding */}
         <View style={{ height: 120 }} />
       </ScrollView>
     </View>
@@ -402,405 +499,433 @@ export default function TonightScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#000',
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    paddingTop: 0,
+    paddingBottom: spacing.xl,
   },
   
-  // Quick Actions - Premium Redesigned
-  quickActionsContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 28,
-    gap: 12,
+  // Header
+  header: {
+    alignItems: 'center',
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
-  primaryAction: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
+  logo: {
+    width: 200,
+    height: 55,
   },
-  primaryActionGradient: {
+  liveContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    gap: 16,
+    marginTop: spacing.sm,
+    backgroundColor: 'rgba(0,212,170,0.15)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    gap: spacing.xs,
   },
-  actionIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#00D4AA',
   },
-  actionTextContainer: {
-    flex: 1,
-  },
-  actionTitle: {
-    fontSize: 18,
+  liveText: {
+    fontSize: 10,
     fontWeight: '700',
-    color: '#FFF',
-    letterSpacing: 0.5,
+    color: '#00D4AA',
+    letterSpacing: 1,
   },
-  actionSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: 2,
-  },
-  secondaryActionsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  secondaryAction: {
-    flex: 1,
-    borderRadius: radius.md,
+
+  // Hero Section
+  heroSection: {
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    borderRadius: radius.xl,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
-  secondaryActionGradient: {
+  heroImage: {
+    height: 320,
+    justifyContent: 'flex-end',
+  },
+  heroGradient: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: spacing.lg,
+    borderRadius: radius.xl,
+  },
+  tonightBadge: {
+    position: 'absolute',
+    top: spacing.lg,
+    left: spacing.lg,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
+    backgroundColor: 'rgba(227,24,55,0.9)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    gap: spacing.xs,
   },
-  secondaryActionText: {
+  tonightDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#fff',
+  },
+  tonightText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 1,
+  },
+  heroContent: {
+    gap: spacing.xs,
+  },
+  heroVenue: {
     fontSize: 12,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    letterSpacing: 0.3,
+    fontWeight: '700',
+    letterSpacing: 2,
   },
-  
-  // Section Headers
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
+    lineHeight: 32,
+  },
+  heroMeta: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  heroCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.xs,
+  },
+  heroButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    gap: spacing.xs,
+  },
+  heroButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  heroStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  heroStatsText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+
+  // Section
+  section: {
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.md,
+  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    alignItems: 'flex-start',
+    marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    letterSpacing: 2,
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 1,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   seeAllText: {
     fontSize: 13,
     color: colors.accent,
     fontWeight: '600',
   },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.success,
+
+  // Timeline
+  timeline: {
+    gap: spacing.lg,
   },
-  
-  // Featured Events
-  featuredContainer: {
-    paddingHorizontal: 20,
-    gap: 16,
+  timelineGroup: {
+    gap: spacing.sm,
   },
-  featuredCard: {
-    width: CARD_WIDTH,
-    height: 360,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    backgroundColor: colors.backgroundCard,
-  },
-  featuredImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  },
-  featuredOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end',
-    padding: 20,
-  },
-  // Venue Logo - consistent sizing
-  venueLogo: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    width: 70,
-    height: 28,
-    opacity: 0.95,
-  },
-  featuredContent: {
-    gap: 6,
-  },
-  eventMeta: {
+  dateHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 4,
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
   },
   dateBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radius.sm,
+    backgroundColor: colors.backgroundCard,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
   },
-  dateBadgeText: {
+  dateBadgeTonight: {
+    backgroundColor: colors.accent,
+  },
+  dateText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFF',
-    letterSpacing: 0.5,
-  },
-  priceBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radius.sm,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  priceBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFF',
-  },
-  featuredTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    letterSpacing: 0.3,
-  },
-  featuredVenue: {
-    fontSize: 14,
     color: colors.textSecondary,
-    marginTop: -2,
-  },
-  featuredDesc: {
-    fontSize: 13,
-    color: colors.textMuted,
-    lineHeight: 18,
-  },
-  ticketButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: radius.md,
-    marginTop: 10,
-  },
-  ticketButtonText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFF',
     letterSpacing: 0.5,
   },
-  
-  // Tonight's Events List
-  eventListItem: {
+  dateTextTonight: {
+    color: '#fff',
+  },
+  dateLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  timelineEvent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginBottom: 12,
-    padding: 12,
     backgroundColor: colors.backgroundCard,
     borderRadius: radius.lg,
-    gap: 14,
+    padding: spacing.sm,
+    gap: spacing.md,
   },
-  eventListImage: {
+  timelineEventImage: {
     width: 60,
     height: 60,
     borderRadius: radius.md,
   },
-  eventListContent: {
+  timelineEventContent: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
-  eventListHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  eventListTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    flex: 1,
-    marginRight: 8,
-  },
-  eventListPrice: {
-    fontSize: 14,
+  timelineEventVenue: {
+    fontSize: 10,
     fontWeight: '700',
+    letterSpacing: 1,
   },
-  eventListMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  timelineEventTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
-  eventListLogo: {
-    width: 32,
-    height: 14,
-    opacity: 0.9,
+  timelineEventTime: {
+    fontSize: 12,
+    color: colors.textMuted,
   },
-  eventListVenue: {
-    fontSize: 13,
-    color: colors.textSecondary,
+  timelineEventAction: {
+    padding: spacing.sm,
   },
-  venueDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  
+
   // Venue Cards
-  venueCardsContainer: {
-    paddingHorizontal: 20,
-    gap: 12,
-    paddingBottom: 8,
+  venueScroll: {
+    paddingRight: spacing.md,
   },
   venueCard: {
-    width: 155,
-    height: 195,
+    width: VENUE_CARD_WIDTH,
+    height: VENUE_CARD_HEIGHT,
+    marginRight: spacing.md,
     borderRadius: radius.lg,
     overflow: 'hidden',
   },
   venueCardImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
+    flex: 1,
   },
-  venueCardOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  venueCardGradient: {
+    flex: 1,
     justifyContent: 'flex-end',
-    padding: 14,
+    padding: spacing.md,
   },
-  venueCardLogo: {
-    width: 70,
-    height: 28,
-    marginBottom: 4,
-  },
-  venueCardName: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  venueCardType: {
-    fontSize: 10,
-    color: colors.textMuted,
-    letterSpacing: 0.3,
-    marginTop: 2,
-  },
-  eventsCountBadge: {
+  crowdBadge: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    paddingHorizontal: 8,
+    top: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
     paddingVertical: 4,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    gap: 4,
+  },
+  crowdDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  crowdText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  venueCardContent: {
+    gap: spacing.xs,
+  },
+  venueTypePill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
     borderRadius: radius.sm,
   },
-  eventsCountText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#FFF',
-  },
-  
-  // Venue Events Section
-  venueEventsSection: {
-    marginTop: 24,
-  },
-  venueEventHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 14,
-  },
-  venueEventLogo: {
-    width: 90,
-    height: 32,
-  },
-  venueEventNameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  venueDotLarge: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  venueEventName: {
-    fontSize: 17,
+  venueTypeText: {
+    fontSize: 9,
     fontWeight: '700',
-    color: colors.textPrimary,
+    letterSpacing: 1,
   },
-  venueEventsScroll: {
-    paddingHorizontal: 20,
-    gap: 12,
+  venueCardName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#fff',
   },
-  smallEventCard: {
-    width: 145,
-    height: 175,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-  },
-  smallEventImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  },
-  smallEventOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end',
-    padding: 12,
-  },
-  smallEventDate: {
-    fontSize: 10,
-    fontWeight: '500',
+  venueCardLocation: {
+    fontSize: 12,
     color: colors.textSecondary,
-    letterSpacing: 0.3,
-    marginBottom: 4,
   },
-  smallEventTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    lineHeight: 17,
+  quickBookButton: {
+    marginTop: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    alignSelf: 'flex-start',
   },
-  smallEventPrice: {
+  quickBookText: {
     fontSize: 12,
     fontWeight: '700',
-    marginTop: 4,
+    color: '#fff',
   },
-  
-  // Quick Access Row for Photos & Social
-  quickAccessRow: {
+
+  // Trending
+  trendingGrid: {
     flexDirection: 'row',
-    gap: 10,
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  trendingCard: {
+    width: (width - spacing.md * 2 - spacing.sm) / 2,
+    height: 140,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  trendingImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  trendingGradient: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: spacing.sm,
+  },
+  trendingRank: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+  },
+  trendingRankText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.gold,
+  },
+  trendingTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
+    lineHeight: 16,
+  },
+  trendingVenue: {
+    fontSize: 10,
+    fontWeight: '600',
     marginTop: 2,
   },
-  quickAccessItem: {
-    flex: 1,
-    borderRadius: radius.md,
-    overflow: 'hidden',
+
+  // Friends
+  friendsSection: {
+    backgroundColor: colors.backgroundCard,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: colors.border,
   },
-  quickAccessGradient: {
+  friendsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  friendsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  friendsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  friendAvatars: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  friendAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
+  friendsMore: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -12,
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
+  friendsMoreText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  friendsText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 18,
+  },
+  friendsCTA: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    gap: 8,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    gap: spacing.xs,
   },
-  quickAccessText: {
+  friendsCTAText: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textPrimary,
-    letterSpacing: 0.3,
+    color: colors.accent,
   },
 });
