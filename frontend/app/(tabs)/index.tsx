@@ -271,7 +271,7 @@ export default function HomeScreen() {
                       {featuredEvent.title}
                     </Text>
                     <Text style={styles.heroMeta}>
-                      {formatEventDate(getEventDateStr(featuredEvent))} • {getEventTime(featuredEvent)}
+                      {formatEventDate(featuredEvent)} • {getEventTime(featuredEvent)}
                     </Text>
                     
                     {/* CTA Row */}
