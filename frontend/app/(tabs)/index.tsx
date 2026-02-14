@@ -203,7 +203,7 @@ export default function HomeScreen() {
   const groupEventsByDate = () => {
     const grouped: { [key: string]: any[] } = {};
     events.forEach(event => {
-      const dateKey = formatEventDate(getEventDateStr(event));
+      const dateKey = formatEventDate(event);
       if (!dateKey) return;
       if (!grouped[dateKey]) grouped[dateKey] = [];
       grouped[dateKey].push(event);
