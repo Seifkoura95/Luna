@@ -334,7 +334,7 @@ export default function HomeScreen() {
                       <Text style={styles.timelineEventTitle} numberOfLines={1}>
                         {event.title}
                       </Text>
-                      <Text style={styles.timelineEventTime}>{event.time}</Text>
+                      <Text style={styles.timelineEventTime}>{getEventTime(event)}</Text>
                     </View>
                     <View style={styles.timelineEventAction}>
                       <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
