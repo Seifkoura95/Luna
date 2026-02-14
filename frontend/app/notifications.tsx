@@ -189,7 +189,7 @@ export default function NotificationsScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.striker }]}>NOTIFICATIONS</Text>
+          <Text style={[styles.headerTitle, ]}>NOTIFICATIONS</Text>
           {unreadCount > 0 && (
             <View style={styles.unreadBadge}>
               <Text style={styles.unreadText}>{unreadCount}</Text>

@@ -126,10 +126,10 @@ export default function ReferFriendScreen() {
             </LinearGradient>
           </View>
           
-          <Text style={[styles.heroTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+          <Text style={[styles.heroTitle, ]}>
             Invite Friends, Earn Points
           </Text>
-          <Text style={[styles.heroSubtitle, fontsLoaded && { fontFamily: fonts.regular }]}>
+          <Text style={[styles.heroSubtitle, ]}>
             Share your referral code with friends. When they sign up, you both earn{' '}
             <Text style={{ color: '#00D4AA', fontWeight: '700' }}>
               {referralData?.stats?.points_per_referral || 10} points
@@ -142,7 +142,7 @@ export default function ReferFriendScreen() {
         <View style={styles.codeCard}>
           <Text style={[styles.codeLabel, fontsLoaded && { fontFamily: fonts.medium }]}>YOUR REFERRAL CODE</Text>
           <View style={styles.codeContainer}>
-            <Text style={[styles.codeText, fontsLoaded && { fontFamily: fonts.bold }]}>
+            <Text style={[styles.codeText, ]}>
               {referralData?.referral_code || 'LOADING...'}
             </Text>
             <TouchableOpacity 
@@ -170,7 +170,7 @@ export default function ReferFriendScreen() {
             style={styles.shareButtonGradient}
           >
             <Ionicons name="share-social" size={24} color="#FFF" />
-            <Text style={[styles.shareButtonText, fontsLoaded && { fontFamily: fonts.bold }]}>
+            <Text style={[styles.shareButtonText, ]}>
               SHARE WITH FRIENDS
             </Text>
           </LinearGradient>
@@ -179,10 +179,10 @@ export default function ReferFriendScreen() {
         {/* Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, fontsLoaded && { fontFamily: fonts.bold }]}>
+            <Text style={[styles.statValue, ]}>
               {referralData?.stats?.successful_referrals || 0}
             </Text>
-            <Text style={[styles.statLabel, fontsLoaded && { fontFamily: fonts.regular }]}>
+            <Text style={[styles.statLabel, ]}>
               Friends Joined
             </Text>
           </View>
@@ -190,10 +190,10 @@ export default function ReferFriendScreen() {
           <View style={styles.statDivider} />
           
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, fontsLoaded && { fontFamily: fonts.bold }]}>
+            <Text style={[styles.statValue, ]}>
               {referralData?.stats?.pending_referrals || 0}
             </Text>
-            <Text style={[styles.statLabel, fontsLoaded && { fontFamily: fonts.regular }]}>
+            <Text style={[styles.statLabel, ]}>
               Pending
             </Text>
           </View>
@@ -201,10 +201,10 @@ export default function ReferFriendScreen() {
           <View style={styles.statDivider} />
           
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: '#00D4AA' }, fontsLoaded && { fontFamily: fonts.bold }]}>
+            <Text style={[styles.statValue, { color: '#00D4AA' }, ]}>
               {referralData?.stats?.total_points_earned || 0}
             </Text>
-            <Text style={[styles.statLabel, fontsLoaded && { fontFamily: fonts.regular }]}>
+            <Text style={[styles.statLabel, ]}>
               Points Earned
             </Text>
           </View>
@@ -212,15 +212,15 @@ export default function ReferFriendScreen() {
 
         {/* How It Works */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>HOW IT WORKS</Text>
+          <Text style={[styles.sectionTitle, ]}>HOW IT WORKS</Text>
           
           <View style={styles.stepCard}>
             <View style={[styles.stepNumber, { backgroundColor: 'rgba(0,212,170,0.2)' }]}>
-              <Text style={[styles.stepNumberText, { color: '#00D4AA' }, fontsLoaded && { fontFamily: fonts.bold }]}>1</Text>
+              <Text style={[styles.stepNumberText, { color: '#00D4AA' }, ]}>1</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={[styles.stepTitle, fontsLoaded && { fontFamily: fonts.semiBold }]}>Share Your Code</Text>
-              <Text style={[styles.stepDesc, fontsLoaded && { fontFamily: fonts.regular }]}>
+              <Text style={[styles.stepTitle, ]}>Share Your Code</Text>
+              <Text style={[styles.stepDesc, ]}>
                 Send your unique referral code to friends via text, email, or social media
               </Text>
             </View>
@@ -228,11 +228,11 @@ export default function ReferFriendScreen() {
           
           <View style={styles.stepCard}>
             <View style={[styles.stepNumber, { backgroundColor: 'rgba(139,0,255,0.2)' }]}>
-              <Text style={[styles.stepNumberText, { color: '#8B00FF' }, fontsLoaded && { fontFamily: fonts.bold }]}>2</Text>
+              <Text style={[styles.stepNumberText, { color: '#8B00FF' }, ]}>2</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={[styles.stepTitle, fontsLoaded && { fontFamily: fonts.semiBold }]}>Friend Signs Up</Text>
-              <Text style={[styles.stepDesc, fontsLoaded && { fontFamily: fonts.regular }]}>
+              <Text style={[styles.stepTitle, ]}>Friend Signs Up</Text>
+              <Text style={[styles.stepDesc, ]}>
                 Your friend downloads Luna and enters your referral code during signup
               </Text>
             </View>
@@ -240,11 +240,11 @@ export default function ReferFriendScreen() {
           
           <View style={styles.stepCard}>
             <View style={[styles.stepNumber, { backgroundColor: 'rgba(212,175,55,0.2)' }]}>
-              <Text style={[styles.stepNumberText, { color: colors.gold }, fontsLoaded && { fontFamily: fonts.bold }]}>3</Text>
+              <Text style={[styles.stepNumberText, { color: colors.gold }, ]}>3</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={[styles.stepTitle, fontsLoaded && { fontFamily: fonts.semiBold }]}>Both Earn Points</Text>
-              <Text style={[styles.stepDesc, fontsLoaded && { fontFamily: fonts.regular }]}>
+              <Text style={[styles.stepTitle, ]}>Both Earn Points</Text>
+              <Text style={[styles.stepDesc, ]}>
                 Once verified, you both receive {referralData?.stats?.points_per_referral || 10} bonus points!
               </Text>
             </View>
@@ -254,7 +254,7 @@ export default function ReferFriendScreen() {
         {/* Referral History */}
         {referralHistory.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>REFERRAL HISTORY</Text>
+            <Text style={[styles.sectionTitle, ]}>REFERRAL HISTORY</Text>
             
             {referralHistory.map((referral, index) => (
               <View key={referral.id || index} style={styles.historyItem}>
@@ -264,10 +264,10 @@ export default function ReferFriendScreen() {
                     { backgroundColor: referral.status === 'completed' ? '#00D4AA' : colors.gold }
                   ]} />
                   <View>
-                    <Text style={[styles.historyName, fontsLoaded && { fontFamily: fonts.semiBold }]}>
+                    <Text style={[styles.historyName, ]}>
                       Friend #{index + 1}
                     </Text>
-                    <Text style={[styles.historyDate, fontsLoaded && { fontFamily: fonts.regular }]}>
+                    <Text style={[styles.historyDate, ]}>
                       {new Date(referral.created_at).toLocaleDateString('en-AU', {
                         day: 'numeric',
                         month: 'short',

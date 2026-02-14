@@ -256,7 +256,7 @@ export default function TableBookingScreen() {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.display }]}>VIP Tables</Text>
-          <Text style={[styles.headerSubtitle, fontsLoaded && { fontFamily: fonts.regular }]}>All Venues</Text>
+          <Text style={[styles.headerSubtitle, ]}>All Venues</Text>
         </View>
         <View style={{ width: 44 }} />
       </View>
@@ -264,7 +264,7 @@ export default function TableBookingScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Venue Selector */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>SELECT VENUE</Text>
+          <Text style={[styles.sectionTitle, ]}>SELECT VENUE</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.venueScroll}>
             {TABLE_VENUES.map((venue) => {
               const isSelected = selectedVenue.id === venue.id;
@@ -281,9 +281,9 @@ export default function TableBookingScreen() {
                   {logoUrl ? (
                     <Image source={{ uri: logoUrl }} style={styles.venueLogo} resizeMode="contain" />
                   ) : (
-                    <Text style={[styles.venueName, fontsLoaded && { fontFamily: fonts.semiBold }]}>{venue.name}</Text>
+                    <Text style={[styles.venueName, ]}>{venue.name}</Text>
                   )}
-                  <Text style={[styles.venueType, fontsLoaded && { fontFamily: fonts.regular }]}>{venue.type}</Text>
+                  <Text style={[styles.venueType, ]}>{venue.type}</Text>
                   {isSelected && (
                     <View style={[styles.selectedDot, { backgroundColor: venue.color }]} />
                   )}
@@ -295,16 +295,16 @@ export default function TableBookingScreen() {
 
         {/* Date Selection */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>SELECT DATE</Text>
+          <Text style={[styles.sectionTitle, ]}>SELECT DATE</Text>
           {venueOperatingHours && (
             <View style={styles.hoursLegend}>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
-                <Text style={[styles.legendText, fontsLoaded && { fontFamily: fonts.regular }]}>Open</Text>
+                <Text style={[styles.legendText, ]}>Open</Text>
               </View>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: colors.textMuted }]} />
-                <Text style={[styles.legendText, fontsLoaded && { fontFamily: fonts.regular }]}>Closed</Text>
+                <Text style={[styles.legendText, ]}>Closed</Text>
               </View>
             </View>
           )}
@@ -341,7 +341,7 @@ export default function TableBookingScreen() {
                     styles.dateDayName,
                     !isOpen && styles.dateTextClosed,
                     selectedDate === date.value && styles.dateTextSelected,
-                    fontsLoaded && { fontFamily: fonts.semiBold }
+                    
                   ]}>
                     {date.dayName}
                   </Text>
@@ -349,14 +349,14 @@ export default function TableBookingScreen() {
                     styles.dateLabel,
                     !isOpen && styles.dateTextClosed,
                     selectedDate === date.value && styles.dateTextSelected,
-                    fontsLoaded && { fontFamily: fonts.regular }
+                    
                   ]}>
                     {date.label.split(',')[1]}
                   </Text>
                   
                   {/* Show hours if open */}
                   {isOpen && hours && (
-                    <Text style={[styles.dateHours, fontsLoaded && { fontFamily: fonts.regular }]}>
+                    <Text style={[styles.dateHours, ]}>
                       {hours.split(' - ')[0]}
                     </Text>
                   )}
@@ -368,7 +368,7 @@ export default function TableBookingScreen() {
 
         {/* Tables */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+          <Text style={[styles.sectionTitle, ]}>
             AVAILABLE TABLES {tables.length > 0 && `(${tables.length})`}
           </Text>
           
@@ -382,7 +382,7 @@ export default function TableBookingScreen() {
               <Text style={[styles.emptyText, fontsLoaded && { fontFamily: fonts.medium }]}>
                 No tables available at {selectedVenue.name}
               </Text>
-              <Text style={[styles.emptySubtext, fontsLoaded && { fontFamily: fonts.regular }]}>
+              <Text style={[styles.emptySubtext, ]}>
                 Please select a different date or venue
               </Text>
             </View>
@@ -407,8 +407,8 @@ export default function TableBookingScreen() {
                     style={styles.tableGradient}
                   >
                     <View style={styles.tableInfo}>
-                      <Text style={[styles.tableName, fontsLoaded && { fontFamily: fonts.bold }]}>{table.name}</Text>
-                      <Text style={[styles.tableLocation, fontsLoaded && { fontFamily: fonts.regular }]}>{table.location}</Text>
+                      <Text style={[styles.tableName, ]}>{table.name}</Text>
+                      <Text style={[styles.tableLocation, ]}>{table.location}</Text>
                       
                       <View style={styles.tableStats}>
                         <View style={styles.tableStat}>
@@ -431,8 +431,8 @@ export default function TableBookingScreen() {
                     </View>
                     
                     <View style={styles.tableRight}>
-                      <Text style={[styles.depositLabel, fontsLoaded && { fontFamily: fonts.regular }]}>Deposit</Text>
-                      <Text style={[styles.depositAmount, { color: selectedVenue.color }, fontsLoaded && { fontFamily: fonts.bold }]}>
+                      <Text style={[styles.depositLabel, ]}>Deposit</Text>
+                      <Text style={[styles.depositAmount, { color: selectedVenue.color }, ]}>
                         ${table.deposit_amount}
                       </Text>
                       {isSelected && (
@@ -454,7 +454,7 @@ export default function TableBookingScreen() {
         {/* Party Size */}
         {selectedTable && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>PARTY SIZE</Text>
+            <Text style={[styles.sectionTitle, ]}>PARTY SIZE</Text>
             <View style={styles.partySizeContainer}>
               <TouchableOpacity
                 style={styles.partySizeBtn}
@@ -462,7 +462,7 @@ export default function TableBookingScreen() {
               >
                 <Ionicons name="remove" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
-              <Text style={[styles.partySizeText, fontsLoaded && { fontFamily: fonts.bold }]}>{partySize}</Text>
+              <Text style={[styles.partySizeText, ]}>{partySize}</Text>
               <TouchableOpacity
                 style={styles.partySizeBtn}
                 onPress={() => setPartySize(Math.min(selectedTable.capacity, partySize + 1))}
@@ -470,16 +470,16 @@ export default function TableBookingScreen() {
                 <Ionicons name="add" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
-            <Text style={[styles.capacityNote, fontsLoaded && { fontFamily: fonts.regular }]}>Max {selectedTable.capacity} guests</Text>
+            <Text style={[styles.capacityNote, ]}>Max {selectedTable.capacity} guests</Text>
           </View>
         )}
 
         {/* Special Requests */}
         {selectedTable && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>SPECIAL REQUESTS</Text>
+            <Text style={[styles.sectionTitle, ]}>SPECIAL REQUESTS</Text>
             <TextInput
-              style={[styles.textInput, fontsLoaded && { fontFamily: fonts.regular }]}
+              style={[styles.textInput, ]}
               placeholder="Any special requests or celebrations?"
               placeholderTextColor={colors.textMuted}
               value={specialRequests}
@@ -505,7 +505,7 @@ export default function TableBookingScreen() {
               ) : (
                 <>
                   <Ionicons name="checkmark-circle" size={24} color="#FFF" />
-                  <Text style={[styles.bookButtonText, fontsLoaded && { fontFamily: fonts.bold }]}>
+                  <Text style={[styles.bookButtonText, ]}>
                     RESERVE • ${selectedTable.deposit_amount} DEPOSIT
                   </Text>
                 </>
@@ -523,21 +523,21 @@ export default function TableBookingScreen() {
           <View style={styles.modalContent}>
             <View style={[styles.modalHeader, { backgroundColor: selectedVenue.color }]}>
               <Ionicons name="checkmark-circle" size={48} color="#FFF" />
-              <Text style={[styles.modalTitle, fontsLoaded && { fontFamily: fonts.bold }]}>Booking Created!</Text>
+              <Text style={[styles.modalTitle, ]}>Booking Created!</Text>
             </View>
             
             <View style={styles.modalBody}>
-              <Text style={[styles.modalVenue, fontsLoaded && { fontFamily: fonts.bold }]}>{selectedVenue.name}</Text>
-              <Text style={[styles.modalTable, fontsLoaded && { fontFamily: fonts.semiBold }]}>{selectedTable?.name}</Text>
-              <Text style={[styles.modalDate, fontsLoaded && { fontFamily: fonts.regular }]}>{selectedDate}</Text>
-              <Text style={[styles.modalGuests, fontsLoaded && { fontFamily: fonts.regular }]}>{partySize} Guests</Text>
+              <Text style={[styles.modalVenue, ]}>{selectedVenue.name}</Text>
+              <Text style={[styles.modalTable, ]}>{selectedTable?.name}</Text>
+              <Text style={[styles.modalDate, ]}>{selectedDate}</Text>
+              <Text style={[styles.modalGuests, ]}>{partySize} Guests</Text>
               
               <View style={styles.modalDivider} />
               
               <Text style={[styles.modalDeposit, fontsLoaded && { fontFamily: fonts.medium }]}>
                 Deposit Required: <Text style={{ color: selectedVenue.color }}>${selectedTable?.deposit_amount}</Text>
               </Text>
-              <Text style={[styles.modalMinSpend, fontsLoaded && { fontFamily: fonts.regular }]}>
+              <Text style={[styles.modalMinSpend, ]}>
                 Minimum spend: ${selectedTable?.min_spend}
               </Text>
             </View>
@@ -547,13 +547,13 @@ export default function TableBookingScreen() {
                 style={styles.modalSecondaryBtn}
                 onPress={() => setShowConfirmModal(false)}
               >
-                <Text style={[styles.modalSecondaryText, fontsLoaded && { fontFamily: fonts.semiBold }]}>Cancel</Text>
+                <Text style={[styles.modalSecondaryText, ]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalPrimaryBtn, { backgroundColor: selectedVenue.color }]}
                 onPress={handlePayDeposit}
               >
-                <Text style={[styles.modalPrimaryText, fontsLoaded && { fontFamily: fonts.bold }]}>Pay Deposit</Text>
+                <Text style={[styles.modalPrimaryText, ]}>Pay Deposit</Text>
               </TouchableOpacity>
             </View>
           </View>

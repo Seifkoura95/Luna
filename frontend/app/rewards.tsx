@@ -320,7 +320,7 @@ export default function RewardsScreen() {
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.milker }]}>REWARDS</Text>
+          <Text style={[styles.headerTitle, ]}>REWARDS</Text>
           <TouchableOpacity style={styles.promoButton} onPress={() => setShowPromoModal(true)}>
             <Ionicons name="gift" size={20} color={colors.gold} />
           </TouchableOpacity>
@@ -337,7 +337,7 @@ export default function RewardsScreen() {
             <View style={styles.pointsRow}>
               <GoldStarIcon size={48} />
               <View>
-                <Text style={[styles.pointsValue, fontsLoaded && { fontFamily: fonts.bold }]}>
+                <Text style={[styles.pointsValue, ]}>
                   {currentPoints.toLocaleString()}
                 </Text>
                 <Text style={styles.pointsLabel}>LUNA POINTS</Text>
@@ -402,7 +402,7 @@ export default function RewardsScreen() {
         {/* Missions Tab */}
         {activeTab === 'missions' && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>ACTIVE MISSIONS</Text>
+            <Text style={[styles.sectionTitle, ]}>ACTIVE MISSIONS</Text>
             <Text style={styles.sectionSubtitle}>Complete quests to earn bonus points</Text>
             
             {ACTIVE_MISSIONS.map((mission) => {
@@ -425,7 +425,7 @@ export default function RewardsScreen() {
                   
                   <View style={styles.missionContent}>
                     <View style={styles.missionHeader}>
-                      <Text style={[styles.missionTitle, fontsLoaded && { fontFamily: fonts.semiBold }]}>
+                      <Text style={[styles.missionTitle, ]}>
                         {mission.title}
                       </Text>
                       <View style={[styles.missionPoints, { backgroundColor: mission.color + '20' }]}>
@@ -460,7 +460,7 @@ export default function RewardsScreen() {
         {/* Milestones Tab */}
         {activeTab === 'milestones' && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>POINT MILESTONES</Text>
+            <Text style={[styles.sectionTitle, ]}>POINT MILESTONES</Text>
             
             {POINT_MILESTONES.map((milestone, index) => {
               const isUnlocked = currentPoints >= milestone.points;
@@ -497,7 +497,7 @@ export default function RewardsScreen() {
                         <Text style={[
                           styles.milestoneTitle,
                           { color: isUnlocked ? milestone.color : colors.textMuted },
-                          fontsLoaded && { fontFamily: fonts.semiBold }
+                          
                         ]}>
                           {milestone.title}
                         </Text>
@@ -560,7 +560,7 @@ export default function RewardsScreen() {
         {/* Shop Tab - Buy Points */}
         {activeTab === 'shop' && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>BUY LUNA POINTS</Text>
+            <Text style={[styles.sectionTitle, ]}>BUY LUNA POINTS</Text>
             <Text style={styles.sectionSubtitle}>Boost your rewards instantly</Text>
             
             {POINT_PACKAGES.map((pkg) => (
@@ -580,7 +580,7 @@ export default function RewardsScreen() {
                   <View style={styles.packageLeft}>
                     <GoldStarIcon size={32} />
                     <View>
-                      <Text style={[styles.packagePoints, fontsLoaded && { fontFamily: fonts.bold }]}>
+                      <Text style={[styles.packagePoints, ]}>
                         {pkg.points.toLocaleString()} pts
                       </Text>
                       {pkg.bonus > 0 && (
@@ -590,7 +590,7 @@ export default function RewardsScreen() {
                   </View>
                   
                   <View style={styles.packageRight}>
-                    <Text style={[styles.packagePrice, fontsLoaded && { fontFamily: fonts.bold }]}>
+                    <Text style={[styles.packagePrice, ]}>
                       ${pkg.price}
                     </Text>
                     <Text style={styles.packagePer}>
@@ -612,7 +612,7 @@ export default function RewardsScreen() {
 
         {/* How to Earn Points */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>HOW TO EARN POINTS</Text>
+          <Text style={[styles.sectionTitle, ]}>HOW TO EARN POINTS</Text>
           
           <View style={styles.earnGrid}>
             {[
@@ -657,7 +657,7 @@ export default function RewardsScreen() {
               <Ionicons name="gift" size={40} color={colors.gold} />
             </View>
             
-            <Text style={[styles.modalTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+            <Text style={[styles.modalTitle, ]}>
               Enter Promo Code
             </Text>
             <Text style={styles.modalSubtitle}>
@@ -706,7 +706,7 @@ export default function RewardsScreen() {
             
             <GoldStarIcon size={48} />
             
-            <Text style={[styles.modalTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+            <Text style={[styles.modalTitle, ]}>
               Confirm Purchase
             </Text>
             

@@ -216,7 +216,7 @@ export default function VenuesScreen() {
                 >
                   <View style={styles.venueContent}>
                     <View style={styles.venueInfo}>
-                      <Text style={[styles.venueName, fontsLoaded && { fontFamily: fonts.bold }]}>
+                      <Text style={[styles.venueName, ]}>
                         {venue.name}
                       </Text>
                       <View style={styles.venueMetaRow}>
@@ -291,7 +291,7 @@ export default function VenuesScreen() {
                 >
                   <View style={styles.venueContent}>
                     <View style={styles.venueInfo}>
-                      <Text style={[styles.venueName, fontsLoaded && { fontFamily: fonts.bold }]}>
+                      <Text style={[styles.venueName, ]}>
                         {venue.name}
                       </Text>
                       <View style={styles.venueMetaRow}>

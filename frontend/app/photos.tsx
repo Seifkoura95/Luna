@@ -151,7 +151,7 @@ export default function PhotoGalleryScreen() {
             style={styles.galleryOverlay}
           >
             <View style={styles.galleryInfo}>
-              <Text style={[styles.galleryName, fontsLoaded && { fontFamily: fonts.bold }]}>
+              <Text style={[styles.galleryName, ]}>
                 {gallery.venue_name}
               </Text>
               <View style={styles.photoCount}>
@@ -217,14 +217,14 @@ export default function PhotoGalleryScreen() {
         {/* Gallery Stats */}
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, fontsLoaded && { fontFamily: fonts.bold }]}>
+            <Text style={[styles.statValue, ]}>
               {galleries.length}
             </Text>
             <Text style={styles.statLabel}>Venues</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, fontsLoaded && { fontFamily: fonts.bold }]}>
+            <Text style={[styles.statValue, ]}>
               {galleries.reduce((sum, g) => sum + g.photo_count, 0)}
             </Text>
             <Text style={styles.statLabel}>Total Photos</Text>
@@ -267,7 +267,7 @@ export default function PhotoGalleryScreen() {
               <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
             <View style={styles.modalHeaderText}>
-              <Text style={[styles.modalTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+              <Text style={[styles.modalTitle, ]}>
                 {selectedGallery?.venue_name}
               </Text>
               <Text style={styles.modalSubtitle}>

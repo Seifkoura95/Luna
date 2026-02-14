@@ -202,7 +202,7 @@ export default function SocialFeedScreen() {
               contentFit="cover"
             />
             <View style={styles.userText}>
-              <Text style={[styles.userName, fontsLoaded && { fontFamily: fonts.bold }]}>
+              <Text style={[styles.userName, ]}>
                 {activity.friend.name}
               </Text>
               <Text style={styles.userHandle}>{activity.friend.username}</Text>
@@ -266,7 +266,7 @@ export default function SocialFeedScreen() {
 
   const renderTrendingHashtags = () => (
     <View style={styles.trendingSection}>
-      <Text style={[styles.sectionTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
+      <Text style={[styles.sectionTitle, ]}>
         Trending Hashtags
       </Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
