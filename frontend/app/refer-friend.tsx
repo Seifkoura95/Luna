@@ -112,7 +112,7 @@ export default function ReferFriendScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.display }]}>Refer & Earn</Text>
+          <Text style={[styles.headerTitle, ]}>Refer & Earn</Text>
         </View>
         <View style={{ width: 44 }} />
       </View>
@@ -140,7 +140,7 @@ export default function ReferFriendScreen() {
 
         {/* Referral Code Card */}
         <View style={styles.codeCard}>
-          <Text style={[styles.codeLabel, fontsLoaded && { fontFamily: fonts.medium }]}>YOUR REFERRAL CODE</Text>
+          <Text style={[styles.codeLabel, ]}>YOUR REFERRAL CODE</Text>
           <View style={styles.codeContainer}>
             <Text style={[styles.codeText, ]}>
               {referralData?.referral_code || 'LOADING...'}
@@ -157,7 +157,7 @@ export default function ReferFriendScreen() {
             </TouchableOpacity>
           </View>
           {copied && (
-            <Text style={[styles.copiedText, fontsLoaded && { fontFamily: fonts.medium }]}>Copied!</Text>
+            <Text style={[styles.copiedText, ]}>Copied!</Text>
           )}
         </View>
 
@@ -283,7 +283,7 @@ export default function ReferFriendScreen() {
                   <Text style={[
                     styles.historyBadgeText,
                     { color: referral.status === 'completed' ? '#00D4AA' : colors.gold },
-                    fontsLoaded && { fontFamily: fonts.medium }
+                    
                   ]}>
                     {referral.status === 'completed' ? '+10 pts' : 'Pending'}
                   </Text>
