@@ -30,7 +30,7 @@ import { PageHeader } from '../../src/components/PageHeader';
 import { MembershipCard } from '../../src/components/MembershipCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useFonts, fonts } from '../../src/hooks/useFonts';
+
 
 const { width } = Dimensions.get('window');
 const LUNAR_MOON_IMAGE = 'https://customer-assets.emergentagent.com/job_cluboscenexus/artifacts/ekzz65x8_lunar%20moon.PNG';
@@ -47,7 +47,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
   const insets = useSafeAreaInsets();
   const navRouter = useRouter();
-  const fontsLoaded = useFonts();
+  
   const scrollRef = useRef<ScrollView>(null);
   const [refreshing, setRefreshing] = useState(false);
 
