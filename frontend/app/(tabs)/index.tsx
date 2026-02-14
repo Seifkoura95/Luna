@@ -160,31 +160,46 @@ export default function HomeScreen() {
   };
 
   const formatEventDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return '';
+    if (!dateStr) return 'Today';
     
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    if (date.toDateString() === today.toDateString()) return 'Tonight';
-    if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
-    
-    return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return 'Today';
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const eventDay = new Date(date);
+      eventDay.setHours(0, 0, 0, 0);
+      
+      if (eventDay.getTime() === today.getTime()) return 'Tonight';
+      if (eventDay.getTime() === tomorrow.getTime()) return 'Tomorrow';
+      
+      return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+    } catch {
+      return 'Today';
+    }
   };
 
   const getEventTime = (event: any) => {
     if (event.time) return event.time;
     if (event.event_date) {
-      const date = new Date(event.event_date);
-      return date.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
+      try {
+        const date = new Date(event.event_date);
+        if (isNaN(date.getTime())) return '9:00 PM';
+        return date.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
+      } catch {
+        return '9:00 PM';
+      }
     }
-    return '';
+    return '9:00 PM';
   };
 
   const getEventDateStr = (event: any) => {
-    return event.date || event.event_date || '';
+    return event.event_date || event.date || new Date().toISOString();
   };
 
   const groupEventsByDate = () => {
