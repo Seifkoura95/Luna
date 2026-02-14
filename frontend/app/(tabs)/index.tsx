@@ -159,12 +159,14 @@ export default function HomeScreen() {
     }
   };
 
-  const formatEventDate = (dateStr: string) => {
-    if (!dateStr) return 'Today';
+  const formatEventDate = (event: any) => {
+    // Try event_date first, then date
+    const dateStr = event?.event_date || event?.date;
+    if (!dateStr) return 'Tonight';
     
     try {
       const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return 'Today';
+      if (isNaN(date.getTime())) return 'Tonight';
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -180,26 +182,22 @@ export default function HomeScreen() {
       
       return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
     } catch {
-      return 'Today';
+      return 'Tonight';
     }
   };
 
   const getEventTime = (event: any) => {
-    if (event.time) return event.time;
-    if (event.event_date) {
+    if (event?.time) return event.time;
+    const dateStr = event?.event_date || event?.date;
+    if (dateStr) {
       try {
-        const date = new Date(event.event_date);
-        if (isNaN(date.getTime())) return '9:00 PM';
-        return date.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
-      } catch {
-        return '9:00 PM';
-      }
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
+        }
+      } catch {}
     }
     return '9:00 PM';
-  };
-
-  const getEventDateStr = (event: any) => {
-    return event.event_date || event.date || new Date().toISOString();
   };
 
   const groupEventsByDate = () => {
