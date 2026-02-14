@@ -370,6 +370,46 @@ export default function ProfileScreen() {
       color: colors.gold,
       onPress: () => router.push('/(tabs)/wallet'),
     },
+    {
+      id: 'photos',
+      icon: 'images',
+      title: 'Photo Gallery',
+      subtitle: 'Venue photos',
+      color: '#FF6B6B',
+      onPress: () => router.push('/photos'),
+    },
+    {
+      id: 'social',
+      icon: 'chatbubbles',
+      title: 'Social Feed',
+      subtitle: 'Friend activity',
+      color: '#00A3FF',
+      onPress: () => router.push('/social'),
+    },
+    {
+      id: 'rewards',
+      icon: 'star',
+      title: 'Rewards',
+      subtitle: 'Earn & redeem',
+      color: '#8B00FF',
+      onPress: () => router.push('/rewards'),
+    },
+    {
+      id: 'auctions',
+      icon: 'trophy',
+      title: 'Auctions',
+      subtitle: 'Bid on VIP',
+      color: colors.gold,
+      onPress: () => router.push('/auctions'),
+    },
+    {
+      id: 'refer',
+      icon: 'gift',
+      title: 'Refer Friends',
+      subtitle: 'Earn 100 pts',
+      color: '#00D4AA',
+      onPress: () => router.push('/refer-friend'),
+    },
   ];
 
   const settingsItems = [
