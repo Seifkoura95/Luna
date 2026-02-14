@@ -26,7 +26,7 @@ import { PageHeader } from '../src/components/PageHeader';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import { GlassCard } from '../src/components/GlassCard';
 import { useAuthStore } from '../src/store/authStore';
-import { useFonts, fonts } from '../src/hooks/useFonts';
+
 
 const { width } = Dimensions.get('window');
 
@@ -133,7 +133,7 @@ export default function SocialFeedScreen() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useFonts();
+  
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState<any[]>([]);

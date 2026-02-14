@@ -20,7 +20,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import * as Haptics from 'expo-haptics';
-import { useFonts, fonts } from '../src/hooks/useFonts';
+
 
 // Venues that offer table booking
 const TABLE_VENUES = [
@@ -37,7 +37,7 @@ export default function TableBookingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
-  const fontsLoaded = useFonts();
+  
   
   // State
   const [selectedVenue, setSelectedVenue] = useState<any>(TABLE_VENUES[0]);

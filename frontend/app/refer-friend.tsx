@@ -19,12 +19,12 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import * as Haptics from 'expo-haptics';
-import { useFonts, fonts } from '../src/hooks/useFonts';
+
 
 export default function ReferFriendScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useFonts();
+  
   
   const [referralData, setReferralData] = useState<any>(null);
   const [referralHistory, setReferralHistory] = useState<any[]>([]);

@@ -23,7 +23,7 @@ import * as Haptics from 'expo-haptics';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import { RotatingMoon } from '../src/components/RotatingMoon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFonts, fonts } from '../src/hooks/useFonts';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -39,7 +39,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useFonts();
+  
 
   const handleAuth = async () => {
     if (!email || !password || (!isLogin && !name)) {

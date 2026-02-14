@@ -21,7 +21,7 @@ import { useRouter } from 'expo-router';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import { GoldStarIcon } from '../src/components/GoldStarIcon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFonts, fonts } from '../src/hooks/useFonts';
+
 import * as Haptics from 'expo-haptics';
 
 const { width } = Dimensions.get('window');
@@ -196,7 +196,7 @@ const POINT_PACKAGES = [
 export default function RewardsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useFonts();
+  
   const user = useAuthStore((state) => state.user);
   
   const [refreshing, setRefreshing] = useState(false);

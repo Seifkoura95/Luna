@@ -18,12 +18,12 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import { useAuthStore } from '../src/store/authStore';
-import { useFonts, fonts } from '../src/hooks/useFonts';
+
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useFonts();
+  
   
   // Get auth state
   const { isAuthenticated, isLoading: authLoading, token } = useAuthStore();

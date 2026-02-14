@@ -18,7 +18,6 @@ import * as Haptics from 'expo-haptics';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { StarfieldBackground } from '../../src/components/StarfieldBackground';
 import { PageHeader } from '../../src/components/PageHeader';
-import { useFonts, fonts } from '../../src/hooks/useFonts';
 
 // Venue categories
 const VENUE_CATEGORIES = {
@@ -40,7 +39,7 @@ export default function VenuesScreen() {
   const [selectedCategory, setSelectedCategory] = useState(VENUE_CATEGORIES.ALL);
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
-  const fontsLoaded = useFonts();
+  
 
   // Auto scroll to top when tab gains focus
   useFocusEffect(
