@@ -255,7 +255,7 @@ export default function TableBookingScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, fontsLoaded && { fontFamily: fonts.display }]}>VIP Tables</Text>
+          <Text style={[styles.headerTitle, ]}>VIP Tables</Text>
           <Text style={[styles.headerSubtitle, ]}>All Venues</Text>
         </View>
         <View style={{ width: 44 }} />
@@ -379,7 +379,7 @@ export default function TableBookingScreen() {
           ) : tables.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Ionicons name="restaurant-outline" size={48} color={colors.textMuted} />
-              <Text style={[styles.emptyText, fontsLoaded && { fontFamily: fonts.medium }]}>
+              <Text style={[styles.emptyText, ]}>
                 No tables available at {selectedVenue.name}
               </Text>
               <Text style={[styles.emptySubtext, ]}>
@@ -413,18 +413,18 @@ export default function TableBookingScreen() {
                       <View style={styles.tableStats}>
                         <View style={styles.tableStat}>
                           <Ionicons name="people" size={14} color={colors.textSecondary} />
-                          <Text style={[styles.tableStatText, fontsLoaded && { fontFamily: fonts.medium }]}>Up to {table.capacity}</Text>
+                          <Text style={[styles.tableStatText, ]}>Up to {table.capacity}</Text>
                         </View>
                         <View style={styles.tableStat}>
                           <Ionicons name="card" size={14} color={colors.textSecondary} />
-                          <Text style={[styles.tableStatText, fontsLoaded && { fontFamily: fonts.medium }]}>Min ${table.min_spend}</Text>
+                          <Text style={[styles.tableStatText, ]}>Min ${table.min_spend}</Text>
                         </View>
                       </View>
                       
                       <View style={styles.tableFeatures}>
                         {table.features?.slice(0, 3).map((feature: string, i: number) => (
                           <View key={i} style={styles.featureBadge}>
-                            <Text style={[styles.featureText, fontsLoaded && { fontFamily: fonts.medium }]}>{feature}</Text>
+                            <Text style={[styles.featureText, ]}>{feature}</Text>
                           </View>
                         ))}
                       </View>
@@ -441,7 +441,7 @@ export default function TableBookingScreen() {
                         </View>
                       )}
                       {!isAvailable && (
-                        <Text style={[styles.bookedText, fontsLoaded && { fontFamily: fonts.medium }]}>BOOKED</Text>
+                        <Text style={[styles.bookedText, ]}>BOOKED</Text>
                       )}
                     </View>
                   </LinearGradient>
@@ -534,7 +534,7 @@ export default function TableBookingScreen() {
               
               <View style={styles.modalDivider} />
               
-              <Text style={[styles.modalDeposit, fontsLoaded && { fontFamily: fonts.medium }]}>
+              <Text style={[styles.modalDeposit, ]}>
                 Deposit Required: <Text style={{ color: selectedVenue.color }}>${selectedTable?.deposit_amount}</Text>
               </Text>
               <Text style={[styles.modalMinSpend, ]}>
