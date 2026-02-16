@@ -15,7 +15,14 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lunagroup.app"
+      "bundleIdentifier": "com.lunagroup.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Take photos at Luna venues to share with friends",
+        "NSPhotoLibraryUsageDescription": "Share photos from your gallery in the app",
+        "NSLocationWhenInUseUsageDescription": "Find nearby Luna venues and check in",
+        "NSContactsUsageDescription": "Invite friends to join you at Luna venues",
+        "NSFaceIDUsageDescription": "Securely access your Luna account"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +30,16 @@
         "backgroundColor": "#000000"
       },
       "package": "com.lunagroup.app",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_CONTACTS",
+        "VIBRATE"
+      ]
     },
     "web": {
       "bundler": "metro",
