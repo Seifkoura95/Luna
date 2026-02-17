@@ -138,6 +138,13 @@ Premium hospitality VIP operating system for Luna Group venues (Eclipse, After D
   - Replaced video background for better performance
   - Luna red and gold gradient effects in top corners
   - Works on both native (Expo Go) and web preview
+- **Video Background Restored** (Feb 17, 2025)
+  - Uses compressed Darude Recap video (~2.5MB)
+  - Optimized for speed: memoized components, lazy loading
+  - 55% dark overlay for text readability
+  - Muted and looped playback
+  - Black background fallback for web preview
+  - Video only loads on native iOS/Android (Expo Go)
 - **Event Pages Fixed** (Feb 17, 2025)
   - /events page now correctly loads and displays Luna Group events
   - /event/[id] detail page fully functional with event data
