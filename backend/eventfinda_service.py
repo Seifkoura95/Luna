@@ -183,9 +183,28 @@ class EventfindaService:
                 if not image_url and transforms:
                     image_url = transforms[-1].get("url")
         
-        # Default image if none found
+        # Check if image is a sample/placeholder image from Eventfinda
+        # These don't load well and should be replaced with venue-specific images
+        if image_url and "sample-images" in image_url:
+            image_url = None
+        
+        # Default image based on venue or category if none found
         if not image_url:
-            image_url = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800"
+            # Use venue-specific fallback images
+            location_lower = (ef_event.get("location", {}).get("name", "") or "").lower()
+            if "eclipse" in location_lower:
+                image_url = "https://images.unsplash.com/photo-1571266028243-d220c6a68b7f?w=800&q=80"
+            elif "su casa" in location_lower or "sucasa" in location_lower:
+                image_url = "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80"
+            elif "juju" in location_lower:
+                image_url = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80"
+            elif "night market" in location_lower:
+                image_url = "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80"
+            elif "after dark" in location_lower:
+                image_url = "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800&q=80"
+            else:
+                # Generic nightclub image
+                image_url = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80"
         
         # Parse dates
         datetime_start = ef_event.get("datetime_start", "")
