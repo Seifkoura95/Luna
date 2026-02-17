@@ -4,7 +4,7 @@ import { Platform, StyleSheet, View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
-import { AmbientBackground } from '../../src/components/AmbientBackground';
+import { VideoBackground } from '../../src/components/VideoBackground';
 
 const TabBarIcon = ({ name, color, focused }: { name: keyof typeof Ionicons.glyphMap; color: string; focused: boolean }) => (
   <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
