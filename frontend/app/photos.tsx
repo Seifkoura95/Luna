@@ -211,7 +211,8 @@ export default function PhotoGalleryScreen() {
         <PageHeader 
           title="PHOTOS"
           description="Browse venue photo galleries"
-          showLogo={false}
+          showLogo={true}
+          compactLogo={true}
         />
 
         {/* Gallery Stats */}
