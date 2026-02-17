@@ -108,12 +108,13 @@ export default function EventDetailPage() {
         <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
+          <Text style={styles.loadingText}>Loading event...</Text>
         </View>
       </View>
     );
   }
 
-  if (!event) {
+  if (error || !event) {
     return (
       <View style={styles.container}>
         <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
@@ -124,7 +125,7 @@ export default function EventDetailPage() {
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.textMuted} />
-          <Text style={styles.errorText}>Event not found</Text>
+          <Text style={styles.errorText}>{error || 'Event not found'}</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.errorButton}>
             <Text style={styles.errorButtonText}>Go Back</Text>
           </TouchableOpacity>
