@@ -153,12 +153,19 @@ export default function HomeScreen() {
         <Animated.View entering={FadeIn.duration(500)} style={styles.header}>
           <Image source={{ uri: LUNA_LOGO }} style={styles.logo} contentFit="contain" />
           
-          {isOpen() && (
-            <View style={styles.liveStatus}>
-              <Animated.View style={[styles.liveDot, pulseStyle]} />
-              <Text style={styles.liveText}>LIVE NOW</Text>
-            </View>
-          )}
+          <View style={styles.statusRow}>
+            {isOpen() ? (
+              <View style={styles.liveStatus}>
+                <Animated.View style={[styles.liveDot, pulseStyle]} />
+                <Text style={styles.liveText}>LIVE NOW</Text>
+              </View>
+            ) : (
+              <View style={styles.closedStatus}>
+                <Ionicons name="moon-outline" size={12} color={colors.textMuted} />
+                <Text style={styles.closedText}>Opens at 8PM</Text>
+              </View>
+            )}
+          </View>
         </Animated.View>
 
         {/* Hero Event */}
