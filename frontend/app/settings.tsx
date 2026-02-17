@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
-import { StarfieldBackground } from '../src/components/StarfieldBackground';
+import { VideoBackground } from '../src/components/VideoBackground';
 import { useAuthStore } from '../src/store/authStore';
 import { api } from '../src/utils/api';
 

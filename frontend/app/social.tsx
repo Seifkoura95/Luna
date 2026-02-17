@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { PageHeader } from '../src/components/PageHeader';
-import { StarfieldBackground } from '../src/components/StarfieldBackground';
+import { VideoBackground } from '../src/components/VideoBackground';
 import { GlassCard } from '../src/components/GlassCard';
 import { useAuthStore } from '../src/store/authStore';
 import { api } from '../src/utils/api';

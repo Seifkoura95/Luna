@@ -16,7 +16,7 @@ import { api } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { StarfieldBackground } from '../src/components/StarfieldBackground';
+import { VideoBackground } from '../src/components/VideoBackground';
 import { RotatingMoon } from '../src/components/RotatingMoon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

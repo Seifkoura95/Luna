@@ -16,7 +16,7 @@ import { api } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StarfieldBackground } from '../src/components/StarfieldBackground';
+import { VideoBackground } from '../src/components/VideoBackground';
 import { useAuthStore } from '../src/store/authStore';
 
 
