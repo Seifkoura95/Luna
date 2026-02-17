@@ -130,13 +130,27 @@ export default function HomeScreen() {
       if (eventDay.getTime() === tomorrow.getTime()) return 'Tomorrow';
       return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
     } catch {
-      return 'Tonight';
+      return 'Upcoming';
     }
   };
 
   const getTime = (event: any) => {
     if (event?.time) return event.time;
-    return '9:00 PM';
+    // Parse time from datetime_start if available
+    if (event?.datetime_start) {
+      try {
+        const parts = event.datetime_start.split(' ');
+        if (parts.length > 1) {
+          const timePart = parts[1];
+          const [hour, min] = timePart.split(':');
+          const h = parseInt(hour);
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          const h12 = h % 12 || 12;
+          return `${h12}:${min} ${ampm}`;
+        }
+      } catch {}
+    }
+    return '8:00 PM';
   };
 
   const isOpen = () => {
