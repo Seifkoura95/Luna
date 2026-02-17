@@ -1,7 +1,7 @@
-import React, { useEffect, useState, memo } from 'react';
+import React, { useRef, useEffect, useState, memo } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 
 // Compressed video URL
 const VIDEO_URL = 'https://customer-assets.emergentagent.com/job_61cbe233-3cbf-4ea2-80f1-8c789a51854e/artifacts/rg18z6d5_Darude%20Recap%20compressed%20again.mp4';
@@ -13,35 +13,39 @@ interface VideoBackgroundProps {
   overlayOpacity?: number;
 }
 
-// Video layer component for native platforms
+// Video layer component using expo-av (more stable on Expo Go)
 const NativeVideoLayer = memo(() => {
-  const [isReady, setIsReady] = useState(false);
-  
-  // Create video player with correct API - pass source object
-  const player = useVideoPlayer({ uri: VIDEO_URL }, (player) => {
-    player.loop = true;
-    player.muted = true;
-    player.play();
-  });
+  const videoRef = useRef<Video>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // Set ready after a short delay to ensure video is loaded
-    const timer = setTimeout(() => setIsReady(true), 1000);
-    return () => clearTimeout(timer);
+    // Auto-play when component mounts
+    if (videoRef.current) {
+      videoRef.current.playAsync();
+    }
   }, []);
+
+  const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
+    if (status.isLoaded && !isLoaded) {
+      setIsLoaded(true);
+    }
+  };
 
   return (
     <>
-      <VideoView
-        player={player}
+      <Video
+        ref={videoRef}
+        source={{ uri: VIDEO_URL }}
         style={styles.video}
-        contentFit="cover"
-        nativeControls={false}
-        allowsFullscreen={false}
-        allowsPictureInPicture={false}
+        resizeMode={ResizeMode.COVER}
+        shouldPlay={true}
+        isLooping={true}
+        isMuted={true}
+        onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+        useNativeControls={false}
       />
-      {/* Dark overlay for readability - fades in as video loads */}
-      <View style={[styles.overlay, { opacity: 0.55 }]} />
+      {/* Dark overlay for readability */}
+      <View style={[styles.overlay, { opacity: isLoaded ? 0.5 : 1 }]} />
     </>
   );
 });
