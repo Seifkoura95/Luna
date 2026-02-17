@@ -212,7 +212,6 @@ export default function PhotoGalleryScreen() {
           title="PHOTOS"
           description="Browse venue photo galleries"
           showLogo={true}
-          compactLogo={true}
         />
 
         {/* Gallery Stats */}
