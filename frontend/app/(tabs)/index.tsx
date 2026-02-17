@@ -333,8 +333,8 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   logo: {
-    width: 240,
-    height: 70,
+    width: 260,
+    height: 75,
   },
   statusRow: {
     alignItems: 'center',
