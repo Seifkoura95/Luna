@@ -134,26 +134,45 @@ export default function SocialFeedScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
+import { api } from '../src/utils/api';
+  
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState<any[]>([]);
-  const [selectedTab, setSelectedTab] = useState<'friends' | 'trending'>('friends');
+  const [instagramPosts, setInstagramPosts] = useState<any[]>([]);
+  const [instagramLoading, setInstagramLoading] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<'friends' | 'instagram'>('friends');
 
   useEffect(() => {
     loadActivities();
+    loadInstagramFeed();
   }, []);
 
   const loadActivities = async () => {
     setLoading(true);
-    // Simulate API call
+    // Simulate API call for friend activity
     await new Promise(resolve => setTimeout(resolve, 800));
     setActivities(generateMockActivities());
     setLoading(false);
   };
 
+  const loadInstagramFeed = async () => {
+    setInstagramLoading(true);
+    try {
+      const feed = await api.getInstagramFeed(20);
+      setInstagramPosts(feed.posts || []);
+    } catch (error) {
+      console.error('Failed to load Instagram feed:', error);
+      // Fall back to mock data if API fails
+      setInstagramPosts(MOCK_INSTAGRAM_POSTS);
+    } finally {
+      setInstagramLoading(false);
+    }
+  };
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadActivities();
+    await Promise.all([loadActivities(), loadInstagramFeed()]);
     setRefreshing(false);
   }, []);
 
