@@ -646,4 +646,92 @@ export const api = {
     }>('/api/user/delete', {
       method: 'DELETE'
     }),
+
+  // ====== POINTS PURCHASE API ======
+  buyPoints: (packageId: string, points: number, price: number, bonus: number = 0, paymentMethod: string = 'card') =>
+    apiFetch<{
+      success: boolean;
+      transaction_id: string;
+      points_added: number;
+      base_points: number;
+      bonus_points: number;
+      new_balance: number;
+      message: string;
+    }>('/api/cherryhub/buy-points', {
+      method: 'POST',
+      body: JSON.stringify({
+        package_id: packageId,
+        points,
+        price,
+        bonus,
+        payment_method: paymentMethod
+      })
+    }),
+
+  // ====== PROMO CODE API ======
+  validatePromoCode: (code: string) =>
+    apiFetch<{
+      valid: boolean;
+      code?: string;
+      type?: string;
+      description?: string;
+      message: string;
+    }>(`/api/promo/validate/${encodeURIComponent(code)}`),
+
+  applyPromoCode: (code: string) =>
+    apiFetch<{
+      success: boolean;
+      code: string;
+      description: string;
+      rewards: string[];
+      points_added: number;
+      vouchers_added: number;
+      message: string;
+    }>('/api/promo/apply', {
+      method: 'POST',
+      body: JSON.stringify({ code })
+    }),
+
+  // ====== VOUCHERS API ======
+  getVouchers: () =>
+    apiFetch<{
+      vouchers: any[];
+      total: number;
+    }>('/api/vouchers'),
+
+  // ====== INSTAGRAM INTEGRATION API ======
+  getInstagramFeed: (limit: number = 20) =>
+    apiFetch<{
+      posts: any[];
+      total: number;
+      accounts: string[];
+      hashtags: string[];
+      demo_mode: boolean;
+      updated_at: string;
+    }>(`/api/instagram/feed?limit=${limit}`),
+
+  getInstagramAccount: (account: string, limit: number = 10) =>
+    apiFetch<{
+      account: string;
+      account_info: any;
+      posts: any[];
+      total: number;
+    }>(`/api/instagram/account/${account}?limit=${limit}`),
+
+  getInstagramHashtag: (hashtag: string, limit: number = 10) =>
+    apiFetch<{
+      hashtag: string;
+      posts: any[];
+      total: number;
+      is_tracked: boolean;
+    }>(`/api/instagram/hashtag/${hashtag}?limit=${limit}`),
+
+  getInstagramConfig: () =>
+    apiFetch<{
+      demo_mode: boolean;
+      configured: boolean;
+      accounts: Record<string, any>;
+      hashtags: string[];
+      api_connected: boolean;
+    }>('/api/instagram/config'),
 };
