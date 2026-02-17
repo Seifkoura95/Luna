@@ -132,6 +132,8 @@ Premium hospitality VIP operating system for Luna Group venues (Eclipse, After D
 - Header redesign (removed rotating moon, larger logo 260x75)
 - Profile page with Quick Actions hub for Photos, Social, Auctions, Rewards, Referrals
 - **Eventfinda Integration** - Real-time events from Brisbane & Gold Coast
+- **Luna Group Venue Filtering** - Events feed now only shows Luna Group venues (Feb 17, 2025)
+- **Improved Text Readability** - Enhanced gradients and text shadows on event cards (Feb 17, 2025)
 
 ## Eventfinda Integration ✅ COMPLETE (Feb 2025)
 
