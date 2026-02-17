@@ -246,6 +246,9 @@ export default function RewardsScreen() {
     }
   };
 
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) {
       Alert.alert('Error', 'Please enter a promo code');
@@ -256,13 +259,31 @@ export default function RewardsScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     
-    // Simulate promo code validation
-    if (promoCode.toUpperCase() === 'LUNA50' || promoCode.toUpperCase() === 'WELCOME') {
-      Alert.alert('🎉 Success!', 'Promo code applied! 50 bonus points added to your account.');
-      setPromoCode('');
-      setShowPromoModal(false);
-    } else {
-      Alert.alert('Invalid Code', 'This promo code is not valid or has expired.');
+    setIsApplyingPromo(true);
+    
+    try {
+      const result = await api.applyPromoCode(promoCode.trim());
+      
+      if (result.success) {
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        Alert.alert(
+          '🎉 Success!',
+          result.message,
+          [{ text: 'Awesome!', style: 'default' }]
+        );
+        setPromoCode('');
+        setShowPromoModal(false);
+        
+        // Refresh user data to update points balance
+        const userData = await api.getMe();
+        useAuthStore.getState().setUser(userData);
+      }
+    } catch (error: any) {
+      Alert.alert('Invalid Code', error.message || 'This promo code is not valid or has expired.');
+    } finally {
+      setIsApplyingPromo(false);
     }
   };
 
@@ -274,15 +295,39 @@ export default function RewardsScreen() {
     setShowBuyModal(true);
   };
 
-  const confirmPurchase = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const confirmPurchase = async () => {
+    if (!selectedPackage) return;
+    
+    setIsPurchasing(true);
+    
+    try {
+      const result = await api.buyPoints(
+        selectedPackage.id,
+        selectedPackage.points,
+        selectedPackage.price,
+        selectedPackage.bonus,
+        'card'
+      );
+      
+      if (result.success) {
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        Alert.alert(
+          '✅ Purchase Complete',
+          `${result.points_added} Luna Points added to your account!\n\nNew Balance: ${result.new_balance.toLocaleString()} pts`,
+          [{ text: 'Great!', onPress: () => setShowBuyModal(false) }]
+        );
+        
+        // Refresh user data to update points balance
+        const userData = await api.getMe();
+        useAuthStore.getState().setUser(userData);
+      }
+    } catch (error: any) {
+      Alert.alert('Purchase Failed', error.message || 'Failed to complete purchase. Please try again.');
+    } finally {
+      setIsPurchasing(false);
     }
-    Alert.alert(
-      '✅ Purchase Complete',
-      `${selectedPackage?.points} points${selectedPackage?.bonus ? ` + ${selectedPackage.bonus} bonus` : ''} added to your account!`,
-      [{ text: 'Great!', onPress: () => setShowBuyModal(false) }]
-    );
   };
 
   const getProgressToNext = () => {
