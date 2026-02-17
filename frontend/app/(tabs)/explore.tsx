@@ -111,7 +111,6 @@ export default function VenuesScreen() {
         title="VENUES" 
         description={`${venues.length} premier venues across Brisbane & Gold Coast`}
         showPoints={false}
-        compactLogo={true}
       />
 
       {/* Category Tabs */}
