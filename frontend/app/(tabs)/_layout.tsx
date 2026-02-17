@@ -40,13 +40,8 @@ const HeaderRight = () => {
 export default function TabLayout() {
   return (
     <View style={styles.rootContainer}>
-      {/* Global Ambient Background with Aurora + Stars */}
-      <AmbientBackground 
-        starCount={60} 
-        shootingStarCount={2}
-        showAurora={true}
-        auroraIntensity="subtle"
-      />
+      {/* Global Video Background */}
+      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       <Tabs
         screenOptions={{
