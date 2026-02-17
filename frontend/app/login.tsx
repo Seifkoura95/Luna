@@ -77,8 +77,8 @@ export default function LoginScreen() {
     <>
       <StatusBar barStyle="light-content" />
       <View style={styles.container}>
-        {/* Starfield Background */}
-        <StarfieldBackground starCount={100} shootingStarCount={3} />
+        {/* Video Background with Frosted Glass */}
+        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
