@@ -83,7 +83,7 @@ class EventfindaService:
         self.password = EVENTFINDA_PASSWORD
         self._cache: Dict[str, Any] = {}
         self._cache_expiry: Dict[str, datetime] = {}
-        self._last_request_time: datetime = datetime.min
+        self._last_request_time: Optional[datetime] = None
         self._rate_limit_seconds = 1.0  # 1 request per second
     
     def _get_auth_header(self) -> str:
