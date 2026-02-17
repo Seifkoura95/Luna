@@ -69,13 +69,13 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   logo: {
-    width: 200,
-    height: 55,
+    width: 240,
+    height: 70,
     marginBottom: 12,
   },
   logoCompact: {
-    width: 160,
-    height: 45,
+    width: 200,
+    height: 55,
     marginBottom: 10,
   },
   pageTitle: {
