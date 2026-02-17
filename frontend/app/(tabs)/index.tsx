@@ -76,18 +76,23 @@ export default function HomeScreen() {
         api.getVenues(),
       ]);
       
+      // Safely access event arrays with fallback to empty arrays
+      const tonightList = Array.isArray(eventsFeed?.tonight) ? eventsFeed.tonight : [];
+      const upcomingList = Array.isArray(eventsFeed?.upcoming) ? eventsFeed.upcoming : [];
+      const featuredList = Array.isArray(eventsFeed?.featured) ? eventsFeed.featured : [];
+      
       // Set tonight's events
-      setTonightEvents(eventsFeed.tonight || []);
+      setTonightEvents(tonightList);
       
       // Set all upcoming events
-      setEvents(eventsFeed.upcoming || []);
+      setEvents(upcomingList);
       
       // Set featured event (first featured or first upcoming)
-      const featured = eventsFeed.featured?.[0] || eventsFeed.upcoming?.[0];
+      const featured = featuredList[0] || upcomingList[0] || null;
       setFeaturedEvent(featured);
       
       // Sort venues
-      const sortedVenues = venuesData.sort((a: any, b: any) => {
+      const sortedVenues = (venuesData || []).sort((a: any, b: any) => {
         const aIndex = VENUE_ORDER.indexOf(a.id);
         const bIndex = VENUE_ORDER.indexOf(b.id);
         return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
@@ -95,6 +100,10 @@ export default function HomeScreen() {
       setVenues(sortedVenues);
     } catch (e) {
       console.error('Failed to fetch data:', e);
+      // Set empty arrays on error to prevent crashes
+      setEvents([]);
+      setTonightEvents([]);
+      setFeaturedEvent(null);
     }
   };
 
