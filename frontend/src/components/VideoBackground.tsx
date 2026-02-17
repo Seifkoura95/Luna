@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { StyleSheet, View, Platform, ImageBackground } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { BlurView } from 'expo-blur';
 
