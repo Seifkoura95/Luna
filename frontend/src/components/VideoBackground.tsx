@@ -1,8 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
-import { VideoView } from 'expo-video';
-import { BlurView } from 'expo-blur';
-import { useSharedVideo, VIDEO_URL } from '../context/VideoContext';
+import { StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface VideoBackgroundProps {
   intensity?: number;
@@ -12,72 +10,28 @@ interface VideoBackgroundProps {
 }
 
 export const VideoBackground: React.FC<VideoBackgroundProps> = ({
-  intensity = 25,
-  tint = 'dark',
-  overlayOpacity = 0.5,
   children,
 }) => {
-  // Use the shared video player from context
-  const { player } = useSharedVideo();
-
-  // Web fallback - use HTML video element
-  if (Platform.OS === 'web') {
-    return (
-      <View style={styles.container}>
-        <video
-          src={VIDEO_URL}
-          autoPlay
-          loop
-          muted
-          playsInline
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`,
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-          }}
-        />
-        {children && <View style={styles.content}>{children}</View>}
-      </View>
-    );
-  }
-
-  // Native - use expo-video with shared player
   return (
     <View style={styles.container}>
-      {/* Video Layer - uses shared player for seamless transitions */}
-      {player && (
-        <VideoView
-          player={player}
-          style={styles.video}
-          contentFit="cover"
-          nativeControls={false}
-        />
-      )}
-
-      {/* Frosted Glass Overlay */}
-      <BlurView
-        style={styles.blurOverlay}
-        intensity={intensity}
-        tint={tint}
+      {/* Black background */}
+      <View style={styles.blackBg} />
+      
+      {/* Subtle Luna glow in top left */}
+      <LinearGradient
+        colors={['rgba(227, 24, 55, 0.15)', 'rgba(227, 24, 55, 0.05)', 'transparent']}
+        style={styles.glowTopLeft}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
-
-      {/* Dark overlay for text readability */}
-      <View style={[styles.darkOverlay, { opacity: overlayOpacity }]} />
+      
+      {/* Subtle secondary glow */}
+      <LinearGradient
+        colors={['rgba(212, 175, 55, 0.08)', 'transparent']}
+        style={styles.glowTopRight}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      />
 
       {/* Content */}
       {children && <View style={styles.content}>{children}</View>}
@@ -90,15 +44,27 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
   },
-  video: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  blurOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  darkOverlay: {
+  blackBg: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
+  },
+  glowTopLeft: {
+    position: 'absolute',
+    top: -100,
+    left: -100,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.6,
+  },
+  glowTopRight: {
+    position: 'absolute',
+    top: -50,
+    right: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.4,
   },
   content: {
     ...StyleSheet.absoluteFillObject,
