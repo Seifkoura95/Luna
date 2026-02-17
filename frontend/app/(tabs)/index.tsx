@@ -210,7 +210,11 @@ export default function HomeScreen() {
               activeOpacity={0.9}
             >
               <Image source={{ uri: featuredEvent.image || featuredEvent.image_url }} style={styles.heroImage} contentFit="cover" />
-              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={styles.heroOverlay}>
+              <LinearGradient 
+                colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} 
+                locations={[0, 0.4, 1]}
+                style={styles.heroOverlay}
+              >
                 <View style={styles.heroBadge}>
                   <Text style={styles.heroBadgeText}>FEATURED</Text>
                 </View>
