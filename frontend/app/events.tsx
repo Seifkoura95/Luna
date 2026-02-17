@@ -59,9 +59,27 @@ export default function EventsListPage() {
   const loadEvents = async () => {
     try {
       setLoading(true);
+      console.log('Fetching events feed...');
       const data = await api.getEventsFeed(50);
-      const allEvents = data?.upcoming || [];
-      console.log('Loaded events:', allEvents.length);
+      console.log('Events feed response:', JSON.stringify(data, null, 2));
+      
+      // Combine all events from different categories
+      const tonightEvents = Array.isArray(data?.tonight) ? data.tonight : [];
+      const tomorrowEvents = Array.isArray(data?.tomorrow) ? data.tomorrow : [];
+      const upcomingEvents = Array.isArray(data?.upcoming) ? data.upcoming : [];
+      
+      // Combine and dedupe by ID
+      const seenIds = new Set<string>();
+      const allEvents: Event[] = [];
+      
+      [...tonightEvents, ...tomorrowEvents, ...upcomingEvents].forEach(event => {
+        if (!seenIds.has(event.id)) {
+          seenIds.add(event.id);
+          allEvents.push(event);
+        }
+      });
+      
+      console.log('Total unique events loaded:', allEvents.length);
       setEvents(allEvents);
       filterEvents(allEvents, selectedVenue, searchQuery);
     } catch (error) {

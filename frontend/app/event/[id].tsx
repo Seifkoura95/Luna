@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Linking,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -42,18 +43,29 @@ export default function EventDetailPage() {
   const insets = useSafeAreaInsets();
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadEvent();
+    if (id) {
+      loadEvent();
+    }
   }, [id]);
 
   const loadEvent = async () => {
     try {
       setLoading(true);
-      const data = await api.getEventDetail(id);
-      setEvent(data);
-    } catch (error) {
-      console.error('Failed to load event:', error);
+      setError(null);
+      console.log('Loading event with ID:', id);
+      const data = await api.getEventDetail(id as string);
+      console.log('Event data received:', data);
+      if (data) {
+        setEvent(data);
+      } else {
+        setError('Event not found');
+      }
+    } catch (err: any) {
+      console.error('Failed to load event:', err);
+      setError(err?.message || 'Failed to load event');
     } finally {
       setLoading(false);
     }
