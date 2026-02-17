@@ -43,6 +43,7 @@ interface Event {
   category: string;
   is_free: boolean;
   luna_venue?: string;
+  url?: string;
 }
 
 export default function EventsListPage() {
@@ -57,22 +58,24 @@ export default function EventsListPage() {
 
   const loadEvents = async () => {
     try {
+      setLoading(true);
       const data = await api.getEventsFeed(50);
-      const allEvents = data.upcoming || [];
+      const allEvents = data?.upcoming || [];
+      console.log('Loaded events:', allEvents.length);
       setEvents(allEvents);
       filterEvents(allEvents, selectedVenue, searchQuery);
     } catch (error) {
       console.error('Failed to load events:', error);
+      setEvents([]);
+      setFilteredEvents([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadEvents();
-    }, [])
-  );
+  useEffect(() => {
+    loadEvents();
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
