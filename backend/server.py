@@ -2048,6 +2048,96 @@ async def stripe_webhook(request: Request):
     return {"status": "received"}
 
 
+# ====== USER ACCOUNT MANAGEMENT API ======
+
+@api_router.delete("/user/delete")
+async def delete_user_account(request: Request):
+    """Delete user account and all associated data (App Store requirement)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user_id = current_user["user_id"]
+    
+    # Delete all user-related data from all collections
+    deletion_results = {}
+    
+    # Core user data
+    result = await db.users.delete_one({"user_id": user_id})
+    deletion_results["user"] = result.deleted_count
+    
+    # Tickets
+    result = await db.tickets.delete_many({"user_id": user_id})
+    deletion_results["tickets"] = result.deleted_count
+    
+    # Bookings
+    result = await db.bookings.delete_many({"user_id": user_id})
+    deletion_results["bookings"] = result.deleted_count
+    
+    # Guestlist entries
+    result = await db.guestlist.delete_many({"user_id": user_id})
+    deletion_results["guestlist"] = result.deleted_count
+    
+    # Redemptions
+    result = await db.redemptions.delete_many({"user_id": user_id})
+    deletion_results["redemptions"] = result.deleted_count
+    
+    # Referrals (both as referrer and referred)
+    result = await db.referrals.delete_many({"$or": [
+        {"referrer_user_id": user_id},
+        {"referred_user_id": user_id}
+    ]})
+    deletion_results["referrals"] = result.deleted_count
+    
+    # Crews (remove from members or delete if owner)
+    await db.crews.update_many(
+        {"members.user_id": user_id},
+        {"$pull": {"members": {"user_id": user_id}}}
+    )
+    result = await db.crews.delete_many({"owner_id": user_id})
+    deletion_results["crews_owned"] = result.deleted_count
+    
+    # Notifications
+    result = await db.notifications.delete_many({"user_id": user_id})
+    deletion_results["notifications"] = result.deleted_count
+    
+    # Push tokens
+    result = await db.push_tokens.delete_many({"user_id": user_id})
+    deletion_results["push_tokens"] = result.deleted_count
+    
+    # Auction notifications and preferences
+    await db.auction_notifications.delete_many({"user_id": user_id})
+    await db.auction_notification_preferences.delete_many({"user_id": user_id})
+    
+    # Bids
+    result = await db.bids.delete_many({"user_id": user_id})
+    deletion_results["bids"] = result.deleted_count
+    
+    # Incident reports
+    result = await db.incidents.delete_many({"user_id": user_id})
+    deletion_results["incidents"] = result.deleted_count
+    
+    # Lost property reports
+    result = await db.lost_property.delete_many({"user_id": user_id})
+    deletion_results["lost_property"] = result.deleted_count
+    
+    # Crew invites
+    await db.crew_invites.delete_many({"$or": [
+        {"invited_by": user_id},
+        {"email": current_user.get("email")}
+    ]})
+    
+    # Table bookings
+    result = await db.table_bookings.delete_many({"user_id": user_id})
+    deletion_results["table_bookings"] = result.deleted_count
+    
+    logging.info(f"Account deleted for user {user_id}: {deletion_results}")
+    
+    return {
+        "success": True,
+        "message": "Your account and all associated data have been permanently deleted.",
+        "deletion_summary": deletion_results
+    }
+
+
 # ====== PUSH NOTIFICATIONS API ======
 
 class RegisterPushTokenRequest(BaseModel):
