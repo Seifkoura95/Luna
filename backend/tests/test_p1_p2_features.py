@@ -291,16 +291,26 @@ class TestPromoCodeAPI:
     
     def test_apply_promo_one_time_enforcement(self):
         """Test that promo code can only be used once per user"""
-        # First use should work (but we already used WELCOME50)
-        response = requests.post(
+        # First use - apply LUNA100 (we haven't used it yet in this test class)
+        first_response = requests.post(
             f"{BASE_URL}/api/promo/apply",
-            json={"code": "WELCOME50"},
+            json={"code": "LUNA100"},
+            headers=self.headers
+        )
+        
+        assert first_response.status_code == 200, f"First use should succeed: {first_response.text}"
+        print(f"✅ First use of LUNA100 succeeded")
+        
+        # Second use - same code should fail
+        second_response = requests.post(
+            f"{BASE_URL}/api/promo/apply",
+            json={"code": "LUNA100"},
             headers=self.headers
         )
         
         # Should fail - already used
-        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
-        data = response.json()
+        assert second_response.status_code == 400, f"Expected 400, got {second_response.status_code}"
+        data = second_response.json()
         assert "already used" in data.get("detail", "").lower()
         print("✅ One-time use enforcement works - second use correctly rejected")
     
