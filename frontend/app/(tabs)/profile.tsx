@@ -413,9 +413,9 @@ export default function ProfileScreen() {
   ];
 
   const settingsItems = [
+    { id: 'settings', icon: 'settings', title: 'Settings', route: '/settings' },
     { id: 'notifications', icon: 'notifications', title: 'Notifications', route: '/notifications' },
     { id: 'payment', icon: 'card', title: 'Payment Methods' },
-    { id: 'privacy', icon: 'lock-closed', title: 'Privacy & Security' },
     { id: 'help', icon: 'help-circle', title: 'Help & Support' },
     { id: 'about', icon: 'information-circle', title: 'About Luna Group' },
   ];
