@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { VideoView } from 'expo-video';
 import { BlurView } from 'expo-blur';
+import { useSharedVideo, VIDEO_URL } from '../context/VideoContext';
 
 interface VideoBackgroundProps {
   intensity?: number;
@@ -10,21 +11,14 @@ interface VideoBackgroundProps {
   children?: React.ReactNode;
 }
 
-// Luna Group event video background
-const VIDEO_URL = 'https://customer-assets.emergentagent.com/job_2fca5f5e-e2fc-4a51-bccb-98ad0736e603/artifacts/72rbe8de_Darude%20Recap.mp4';
-
 export const VideoBackground: React.FC<VideoBackgroundProps> = ({
   intensity = 25,
   tint = 'dark',
   overlayOpacity = 0.5,
   children,
 }) => {
-  // Create video player with loop and muted settings
-  const player = useVideoPlayer(VIDEO_URL, player => {
-    player.loop = true;
-    player.muted = true;
-    player.play();
-  });
+  // Use the shared video player from context
+  const { player } = useSharedVideo();
 
   // Web fallback - use HTML video element
   if (Platform.OS === 'web') {
@@ -62,16 +56,18 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
     );
   }
 
-  // Native - use expo-video
+  // Native - use expo-video with shared player
   return (
     <View style={styles.container}>
-      {/* Video Layer */}
-      <VideoView
-        player={player}
-        style={styles.video}
-        contentFit="cover"
-        nativeControls={false}
-      />
+      {/* Video Layer - uses shared player for seamless transitions */}
+      {player && (
+        <VideoView
+          player={player}
+          style={styles.video}
+          contentFit="cover"
+          nativeControls={false}
+        />
+      )}
 
       {/* Frosted Glass Overlay */}
       <BlurView
