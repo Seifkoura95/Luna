@@ -398,13 +398,40 @@ class TestVouchersAPI:
 
 
 class TestInstagramIntegrationAPI:
-    """Instagram Integration tests (demo mode)"""
+    """Instagram Integration tests (demo mode) - Requires authentication"""
+    
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Setup - login user for authenticated requests"""
+        # Login
+        login_resp = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": "luna@test.com",
+            "password": "test123"
+        })
+        if login_resp.status_code != 200:
+            # Try register
+            requests.post(f"{BASE_URL}/api/auth/register", json={
+                "email": "luna@test.com",
+                "password": "test123",
+                "name": "Luna Test"
+            })
+            login_resp = requests.post(f"{BASE_URL}/api/auth/login", json={
+                "email": "luna@test.com",
+                "password": "test123"
+            })
+        
+        assert login_resp.status_code == 200
+        self.token = login_resp.json().get("token")
+        self.headers = {"Authorization": f"Bearer {self.token}"}
     
     def test_instagram_feed(self):
         """Test getting Instagram feed"""
-        response = requests.get(f"{BASE_URL}/api/instagram/feed?limit=5")
+        response = requests.get(
+            f"{BASE_URL}/api/instagram/feed?limit=5",
+            headers=self.headers
+        )
         
-        assert response.status_code == 200
+        assert response.status_code == 200, f"Instagram feed failed: {response.text}"
         data = response.json()
         
         assert "posts" in data
@@ -426,7 +453,10 @@ class TestInstagramIntegrationAPI:
     
     def test_instagram_account_eclipse(self):
         """Test getting Instagram posts for Eclipse Brisbane"""
-        response = requests.get(f"{BASE_URL}/api/instagram/account/eclipsebrisbane?limit=5")
+        response = requests.get(
+            f"{BASE_URL}/api/instagram/account/eclipsebrisbane?limit=5",
+            headers=self.headers
+        )
         
         assert response.status_code == 200
         data = response.json()
@@ -438,7 +468,10 @@ class TestInstagramIntegrationAPI:
     
     def test_instagram_config(self):
         """Test getting Instagram configuration"""
-        response = requests.get(f"{BASE_URL}/api/instagram/config")
+        response = requests.get(
+            f"{BASE_URL}/api/instagram/config",
+            headers=self.headers
+        )
         
         assert response.status_code == 200
         data = response.json()
@@ -455,13 +488,15 @@ class TestInstagramIntegrationAPI:
         print(f"✅ Instagram config: demo_mode={data['demo_mode']}, {len(data['accounts'])} accounts")
     
     def test_instagram_invalid_account(self):
-        """Test getting posts for invalid account returns empty"""
-        response = requests.get(f"{BASE_URL}/api/instagram/account/invalid_account_xyz")
+        """Test getting posts for invalid account returns 400"""
+        response = requests.get(
+            f"{BASE_URL}/api/instagram/account/invalid_account_xyz",
+            headers=self.headers
+        )
         
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data.get("posts", [])) == 0
-        print("✅ Invalid account returns empty posts")
+        # Invalid account should return 400
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+        print("✅ Invalid account correctly rejected with 400")
 
 
 if __name__ == "__main__":
