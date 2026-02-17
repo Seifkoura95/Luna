@@ -132,7 +132,9 @@ export default function HomeScreen() {
   };
 
   const isOpen = () => {
-    const hour = new Date().getHours();
+    // Use Brisbane timezone (AEST/AEDT)
+    const brisbaneTime = new Date().toLocaleString('en-US', { timeZone: 'Australia/Brisbane' });
+    const hour = new Date(brisbaneTime).getHours();
     return hour >= 20 || hour < 4;
   };
 
