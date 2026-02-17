@@ -87,14 +87,56 @@ Premium hospitality VIP operating system for Luna Group venues (Eclipse, After D
 - Primary Background: #000000
 - Card Background: #1A1A1A
 - Text Primary: #FFFFFF
-- Accent Red: #CC0000
-- Success Green: #00FF00
+- Accent Red: #E31837 (Luna Red)
+- Success Green: #00D26A
 - Warning Gold: #FFD700
 - Premium Gold: #D4AF37
 
 ## Technical Stack
 - Frontend: Expo React Native
 - Backend: FastAPI + MongoDB
-- Auth: Emergent Google OAuth
+- Auth: JWT-based authentication
 - State: Zustand
+- Image Loading: expo-image
 
+## App Store Readiness ✅ COMPLETE (Feb 2025)
+
+### Settings Page (/settings)
+- Account section (Notifications link)
+- Legal section (Privacy Policy, Terms of Service)
+- Danger Zone (Delete Account with 2-step confirmation)
+
+### Privacy Policy (/privacy-policy) ✅
+- 10 comprehensive sections covering data collection, usage, sharing, security, user rights
+
+### Terms of Service (/terms-of-service) ✅
+- 13 comprehensive sections covering eligibility, account registration, bookings, loyalty program, etc.
+
+### Account Deletion ✅
+- DELETE /api/user/delete endpoint
+- 2-step confirmation modal showing data to be deleted
+- Properly deletes all user data from all collections
+- Redirects to login after successful deletion
+
+## Recent Completions (Feb 2025)
+- Home page redesigned with Featured Events, What's On timeline, Venues carousel
+- Photo Gallery with venue albums from /backend/static/photos
+- Social Feed (mock data)
+- Venues page with category filters (All/Nightclubs/Dining)
+- Rewards page overhauled with new missions and Buy Points UI
+- App-wide font standardization to Montserrat
+- Header redesign (removed rotating moon, larger logo)
+- Profile page with Quick Actions hub for Photos, Social, Auctions, Rewards, Referrals
+
+## Upcoming Tasks (P1)
+- Connect "Buy Points" UI to CherryHub API
+- Implement Promo Code validation feature
+- Instagram integration for Social Feed
+
+## Future Tasks
+- Remove CherryHub mock mode (when DNS available)
+- Stripe payment integration for VIP bookings/auctions
+
+## Known Mocked Services
+- **CherryHub Integration**: Running in mock mode (DNS not resolvable)
+- **Social Feed**: Using hardcoded mock data
