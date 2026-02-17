@@ -165,8 +165,26 @@ export default function HomeScreen() {
   const isOpen = () => {
     // Use Brisbane timezone (AEST/AEDT)
     const brisbaneTime = new Date().toLocaleString('en-US', { timeZone: 'Australia/Brisbane' });
-    const hour = new Date(brisbaneTime).getHours();
+    const now = new Date(brisbaneTime);
+    const hour = now.getHours();
+    // Open from 8PM (20:00) to 4AM
     return hour >= 20 || hour < 4;
+  };
+
+  const getClosedMessage = () => {
+    const brisbaneTime = new Date().toLocaleString('en-US', { timeZone: 'Australia/Brisbane' });
+    const now = new Date(brisbaneTime);
+    const hour = now.getHours();
+    
+    if (hour >= 4 && hour < 12) {
+      return 'Opens Tonight at 8PM';
+    } else if (hour >= 12 && hour < 17) {
+      return 'Opens Tonight at 8PM';
+    } else if (hour >= 17 && hour < 20) {
+      return 'Opening Soon';
+    } else {
+      return 'Opens Tonight at 8PM';
+    }
   };
 
   return (
