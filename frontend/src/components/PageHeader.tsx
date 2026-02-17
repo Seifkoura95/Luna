@@ -66,17 +66,17 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 16,
   },
   logo: {
     width: 240,
     height: 70,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   logoCompact: {
-    width: 200,
-    height: 55,
-    marginBottom: 10,
+    width: 240,
+    height: 70,
+    marginBottom: 8,
   },
   pageTitle: {
     fontSize: 13,
