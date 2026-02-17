@@ -379,11 +379,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 20,
-    paddingTop: 8,
   },
   logo: {
     width: 260,
     height: 75,
+    marginBottom: 10,
   },
   statusRow: {
     alignItems: 'center',
