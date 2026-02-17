@@ -5041,6 +5041,392 @@ async def cherryhub_get_points(request: Request):
         raise HTTPException(status_code=500, detail=f"Failed to get points: {str(e)}")
 
 
+# ====== POINTS PURCHASE API (CherryHub Integration) ======
+
+class BuyPointsRequest(BaseModel):
+    """Request to purchase points"""
+    package_id: str
+    points: int
+    price: float
+    bonus: int = 0
+    payment_method: str = "card"  # card, apple_pay, google_pay
+
+@api_router.post("/cherryhub/buy-points")
+async def cherryhub_buy_points(request: Request, body: BuyPointsRequest):
+    """
+    Purchase Luna Points - integrates with CherryHub to add points
+    
+    This endpoint:
+    1. Validates the purchase request
+    2. Records the transaction
+    3. Adds points via CherryHub API
+    4. Updates user's local points balance
+    """
+    auth_header = request.headers.get("Authorization")
+    user_data = get_current_user(auth_header)
+    user_id = user_data.get("user_id")
+    
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    member_key = user.get("cherryhub_member_key")
+    
+    # Validate package
+    valid_packages = {
+        "p1": {"points": 100, "price": 10, "bonus": 0},
+        "p2": {"points": 500, "price": 45, "bonus": 50},
+        "p3": {"points": 1000, "price": 80, "bonus": 150},
+        "p4": {"points": 2500, "price": 180, "bonus": 500},
+    }
+    
+    if body.package_id not in valid_packages:
+        raise HTTPException(status_code=400, detail="Invalid package")
+    
+    package = valid_packages[body.package_id]
+    total_points = package["points"] + package["bonus"]
+    
+    # Create transaction record
+    transaction_id = str(uuid.uuid4())
+    transaction = {
+        "transaction_id": transaction_id,
+        "user_id": user_id,
+        "type": "points_purchase",
+        "package_id": body.package_id,
+        "points": package["points"],
+        "bonus_points": package["bonus"],
+        "total_points": total_points,
+        "price": package["price"],
+        "currency": "AUD",
+        "payment_method": body.payment_method,
+        "status": "completed",  # In production, this would be "pending" until payment confirmed
+        "cherryhub_member_key": member_key,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.transactions.insert_one(transaction)
+    
+    # Add points via CherryHub
+    if member_key:
+        try:
+            await cherryhub_service.add_points(
+                member_key, 
+                total_points, 
+                f"Points Purchase - Package {body.package_id}"
+            )
+            logger.info(f"Added {total_points} points via CherryHub for user {user_id}")
+        except Exception as e:
+            logger.error(f"CherryHub points addition failed: {e}")
+            # Continue - points will be added locally as fallback
+    
+    # Update local points balance
+    new_balance = (user.get("points_balance", 0) or 0) + total_points
+    await db.users.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {"points_balance": new_balance},
+            "$inc": {"lifetime_points": total_points}
+        }
+    )
+    
+    # Record in points history
+    await db.points_history.insert_one({
+        "user_id": user_id,
+        "type": "purchase",
+        "points": total_points,
+        "description": f"Purchased {package['points']} points" + (f" (+{package['bonus']} bonus)" if package['bonus'] > 0 else ""),
+        "transaction_id": transaction_id,
+        "balance_after": new_balance,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "success": True,
+        "transaction_id": transaction_id,
+        "points_added": total_points,
+        "base_points": package["points"],
+        "bonus_points": package["bonus"],
+        "new_balance": new_balance,
+        "message": f"Successfully purchased {total_points} Luna Points!"
+    }
+
+
+# ====== PROMO CODE API ======
+
+# Pre-configured promo codes (Top 5 most popular types)
+PROMO_CODES = {
+    "WELCOME50": {
+        "type": "bonus_points",
+        "value": 50,
+        "description": "Welcome bonus - 50 free points",
+        "max_uses": 1,
+        "active": True
+    },
+    "LUNA100": {
+        "type": "bonus_points",
+        "value": 100,
+        "description": "Luna VIP - 100 bonus points",
+        "max_uses": 1,
+        "active": True
+    },
+    "FREEENTRY": {
+        "type": "free_entry",
+        "value": 1,
+        "venue": "any",
+        "description": "One free venue entry",
+        "max_uses": 1,
+        "active": True
+    },
+    "FREEDRINK": {
+        "type": "drink_voucher",
+        "value": 1,
+        "description": "One free drink voucher",
+        "max_uses": 1,
+        "active": True
+    },
+    "VIP2024": {
+        "type": "combo",
+        "rewards": [
+            {"type": "bonus_points", "value": 75},
+            {"type": "drink_voucher", "value": 2}
+        ],
+        "description": "VIP Special - 75 points + 2 free drinks",
+        "max_uses": 1,
+        "active": True
+    }
+}
+
+class ApplyPromoRequest(BaseModel):
+    """Request to apply a promo code"""
+    code: str
+
+@api_router.post("/promo/apply")
+async def apply_promo_code(request: Request, body: ApplyPromoRequest):
+    """
+    Apply a promo code to the user's account
+    
+    Rewards can include:
+    - Bonus points
+    - Free entry vouchers
+    - Drink vouchers
+    - Combo rewards
+    """
+    auth_header = request.headers.get("Authorization")
+    user_data = get_current_user(auth_header)
+    user_id = user_data.get("user_id")
+    
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    code = body.code.strip().upper()
+    
+    # Check if code exists
+    if code not in PROMO_CODES:
+        raise HTTPException(status_code=400, detail="Invalid promo code")
+    
+    promo = PROMO_CODES[code]
+    
+    if not promo.get("active"):
+        raise HTTPException(status_code=400, detail="This promo code has expired")
+    
+    # Check if user has already used this code (one-time use per user)
+    existing_use = await db.promo_redemptions.find_one({
+        "user_id": user_id,
+        "code": code
+    })
+    
+    if existing_use:
+        raise HTTPException(status_code=400, detail="You have already used this promo code")
+    
+    # Process the promo code rewards
+    rewards_applied = []
+    points_added = 0
+    vouchers_added = []
+    
+    if promo["type"] == "bonus_points":
+        points_added = promo["value"]
+        rewards_applied.append(f"+{promo['value']} Luna Points")
+    
+    elif promo["type"] == "free_entry":
+        voucher = {
+            "voucher_id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "type": "free_entry",
+            "venue": promo.get("venue", "any"),
+            "quantity": promo["value"],
+            "source": f"promo_code:{code}",
+            "status": "active",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
+        }
+        await db.vouchers.insert_one(voucher)
+        vouchers_added.append(voucher)
+        rewards_applied.append(f"{promo['value']} Free Entry Voucher(s)")
+    
+    elif promo["type"] == "drink_voucher":
+        voucher = {
+            "voucher_id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "type": "drink_voucher",
+            "quantity": promo["value"],
+            "source": f"promo_code:{code}",
+            "status": "active",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
+        }
+        await db.vouchers.insert_one(voucher)
+        vouchers_added.append(voucher)
+        rewards_applied.append(f"{promo['value']} Free Drink Voucher(s)")
+    
+    elif promo["type"] == "combo":
+        for reward in promo.get("rewards", []):
+            if reward["type"] == "bonus_points":
+                points_added += reward["value"]
+                rewards_applied.append(f"+{reward['value']} Luna Points")
+            elif reward["type"] == "drink_voucher":
+                voucher = {
+                    "voucher_id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "type": "drink_voucher",
+                    "quantity": reward["value"],
+                    "source": f"promo_code:{code}",
+                    "status": "active",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "expires_at": (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
+                }
+                await db.vouchers.insert_one(voucher)
+                vouchers_added.append(voucher)
+                rewards_applied.append(f"{reward['value']} Free Drink Voucher(s)")
+            elif reward["type"] == "free_entry":
+                voucher = {
+                    "voucher_id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "type": "free_entry",
+                    "venue": reward.get("venue", "any"),
+                    "quantity": reward["value"],
+                    "source": f"promo_code:{code}",
+                    "status": "active",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "expires_at": (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
+                }
+                await db.vouchers.insert_one(voucher)
+                vouchers_added.append(voucher)
+                rewards_applied.append(f"{reward['value']} Free Entry Voucher(s)")
+    
+    # Add points if any
+    if points_added > 0:
+        member_key = user.get("cherryhub_member_key")
+        if member_key:
+            try:
+                await cherryhub_service.add_points(member_key, points_added, f"Promo Code: {code}")
+            except Exception as e:
+                logger.error(f"CherryHub promo points failed: {e}")
+        
+        new_balance = (user.get("points_balance", 0) or 0) + points_added
+        await db.users.update_one(
+            {"user_id": user_id},
+            {
+                "$set": {"points_balance": new_balance},
+                "$inc": {"lifetime_points": points_added}
+            }
+        )
+        
+        await db.points_history.insert_one({
+            "user_id": user_id,
+            "type": "promo_code",
+            "points": points_added,
+            "description": f"Promo code: {code}",
+            "balance_after": new_balance,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+    
+    # Record the redemption
+    await db.promo_redemptions.insert_one({
+        "redemption_id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "code": code,
+        "promo_type": promo["type"],
+        "rewards_applied": rewards_applied,
+        "points_added": points_added,
+        "vouchers_count": len(vouchers_added),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    logger.info(f"Promo code {code} applied for user {user_id}: {rewards_applied}")
+    
+    return {
+        "success": True,
+        "code": code,
+        "description": promo["description"],
+        "rewards": rewards_applied,
+        "points_added": points_added,
+        "vouchers_added": len(vouchers_added),
+        "message": f"Promo code applied! {', '.join(rewards_applied)}"
+    }
+
+
+@api_router.get("/promo/validate/{code}")
+async def validate_promo_code(request: Request, code: str):
+    """
+    Validate a promo code without applying it
+    """
+    auth_header = request.headers.get("Authorization")
+    user_data = get_current_user(auth_header)
+    user_id = user_data.get("user_id")
+    
+    code = code.strip().upper()
+    
+    if code not in PROMO_CODES:
+        return {"valid": False, "message": "Invalid promo code"}
+    
+    promo = PROMO_CODES[code]
+    
+    if not promo.get("active"):
+        return {"valid": False, "message": "This promo code has expired"}
+    
+    # Check if already used
+    existing_use = await db.promo_redemptions.find_one({
+        "user_id": user_id,
+        "code": code
+    })
+    
+    if existing_use:
+        return {"valid": False, "message": "You have already used this promo code"}
+    
+    return {
+        "valid": True,
+        "code": code,
+        "type": promo["type"],
+        "description": promo["description"],
+        "message": "Promo code is valid!"
+    }
+
+
+@api_router.get("/vouchers")
+async def get_user_vouchers(request: Request):
+    """
+    Get all active vouchers for the current user
+    """
+    auth_header = request.headers.get("Authorization")
+    user_data = get_current_user(auth_header)
+    user_id = user_data.get("user_id")
+    
+    vouchers = await db.vouchers.find({
+        "user_id": user_id,
+        "status": "active"
+    }).to_list(100)
+    
+    # Convert ObjectId to string
+    for v in vouchers:
+        v.pop("_id", None)
+    
+    return {
+        "vouchers": vouchers,
+        "total": len(vouchers)
+    }
+
+
 # CORS
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
