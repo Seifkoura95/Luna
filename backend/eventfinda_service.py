@@ -32,35 +32,52 @@ GOLD_COAST_LOCATION_SLUG = "gold-coast"
 LUNA_VENUES = {
     "eclipse": {
         "name": "Eclipse",
+        "full_name": "Eclipse Brisbane",
         "location": "Fortitude Valley, Brisbane",
-        "keywords": ["eclipse", "fortitude valley"]
+        "search_terms": ["Eclipse Brisbane", "Eclipse Fortitude Valley"],
+        "keywords": ["eclipse"]
     },
     "afterdark": {
         "name": "After Dark",
-        "location": "Fortitude Valley, Brisbane", 
+        "full_name": "After Dark Brisbane",
+        "location": "Fortitude Valley, Brisbane",
+        "search_terms": ["After Dark Brisbane", "After Dark Fortitude Valley"],
         "keywords": ["after dark", "afterdark"]
     },
     "sucasa-brisbane": {
         "name": "Su Casa Brisbane",
+        "full_name": "Su Casa Brisbane",
         "location": "Fortitude Valley, Brisbane",
-        "keywords": ["su casa", "sucasa"]
+        "search_terms": ["Su Casa Brisbane", "Su Casa Fortitude Valley"],
+        "keywords": ["su casa brisbane"]
     },
     "sucasa-goldcoast": {
         "name": "Su Casa Gold Coast",
+        "full_name": "Su Casa Gold Coast",
         "location": "Broadbeach, Gold Coast",
-        "keywords": ["su casa", "sucasa", "gold coast"]
+        "search_terms": ["Su Casa Gold Coast", "Su Casa Broadbeach"],
+        "keywords": ["su casa gold coast", "su casa gc"]
     },
     "juju": {
         "name": "Juju",
+        "full_name": "Juju Mermaid Beach",
         "location": "Mermaid Beach, Gold Coast",
-        "keywords": ["juju", "mermaid"]
+        "search_terms": ["Juju Mermaid", "Juju Gold Coast"],
+        "keywords": ["juju"]
     },
     "nightmarket": {
         "name": "Night Market",
+        "full_name": "Night Market Brisbane",
         "location": "Brisbane",
+        "search_terms": ["Night Market Brisbane"],
         "keywords": ["night market", "nightmarket"]
     }
 }
+
+# All search terms for Luna Group venues
+LUNA_VENUE_SEARCH_TERMS = []
+for venue in LUNA_VENUES.values():
+    LUNA_VENUE_SEARCH_TERMS.extend(venue["search_terms"])
 
 # Event categories relevant to Luna Group (nightlife, music, entertainment)
 RELEVANT_CATEGORIES = [
