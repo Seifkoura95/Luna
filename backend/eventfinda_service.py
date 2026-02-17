@@ -29,48 +29,56 @@ BRISBANE_LOCATION_SLUG = "brisbane"
 GOLD_COAST_LOCATION_SLUG = "gold-coast"
 
 # Luna Group venue mappings (for filtering events at Luna venues)
+# Must match venue IDs from luna_venues_config.py
 LUNA_VENUES = {
     "eclipse": {
         "name": "Eclipse",
         "full_name": "Eclipse Brisbane",
         "location": "Fortitude Valley, Brisbane",
-        "search_terms": ["Eclipse Brisbane", "Eclipse Fortitude Valley"],
-        "keywords": ["eclipse"]
+        "search_terms": ["Eclipse Brisbane", "Eclipse Fortitude Valley", "Eclipse nightclub Brisbane"],
+        "keywords": ["eclipse brisbane", "eclipse fortitude"]
     },
-    "afterdark": {
+    "after_dark": {
         "name": "After Dark",
         "full_name": "After Dark Brisbane",
         "location": "Fortitude Valley, Brisbane",
-        "search_terms": ["After Dark Brisbane", "After Dark Fortitude Valley"],
-        "keywords": ["after dark", "afterdark"]
+        "search_terms": ["After Dark Brisbane", "After Dark Fortitude Valley", "Afterdark Brisbane"],
+        "keywords": ["after dark brisbane", "afterdark brisbane"]
     },
-    "sucasa-brisbane": {
+    "su_casa_brisbane": {
         "name": "Su Casa Brisbane",
         "full_name": "Su Casa Brisbane",
         "location": "Fortitude Valley, Brisbane",
-        "search_terms": ["Su Casa Brisbane", "Su Casa Fortitude Valley"],
-        "keywords": ["su casa brisbane"]
+        "search_terms": ["Su Casa Brisbane", "Su Casa Fortitude Valley", "Sucasa Brisbane"],
+        "keywords": ["su casa brisbane", "sucasa brisbane"]
     },
-    "sucasa-goldcoast": {
+    "su_casa_gold_coast": {
         "name": "Su Casa Gold Coast",
         "full_name": "Su Casa Gold Coast",
-        "location": "Broadbeach, Gold Coast",
-        "search_terms": ["Su Casa Gold Coast", "Su Casa Broadbeach"],
-        "keywords": ["su casa gold coast", "su casa gc"]
+        "location": "Surfers Paradise, Gold Coast",
+        "search_terms": ["Su Casa Gold Coast", "Su Casa Surfers Paradise", "Sucasa Gold Coast"],
+        "keywords": ["su casa gold coast", "sucasa gold coast", "su casa surfers"]
     },
     "juju": {
         "name": "Juju",
         "full_name": "Juju Mermaid Beach",
         "location": "Mermaid Beach, Gold Coast",
-        "search_terms": ["Juju Mermaid", "Juju Gold Coast"],
-        "keywords": ["juju"]
+        "search_terms": ["Juju Mermaid Beach", "Juju Gold Coast", "Juju restaurant"],
+        "keywords": ["juju mermaid", "juju gold coast"]
     },
-    "nightmarket": {
+    "night_market": {
         "name": "Night Market",
         "full_name": "Night Market Brisbane",
-        "location": "Brisbane",
-        "search_terms": ["Night Market Brisbane"],
-        "keywords": ["night market", "nightmarket"]
+        "location": "Fortitude Valley, Brisbane",
+        "search_terms": ["Night Market Brisbane", "Night Market Fortitude Valley"],
+        "keywords": ["night market brisbane", "nightmarket brisbane"]
+    },
+    "ember_and_ash": {
+        "name": "Ember & Ash",
+        "full_name": "Ember & Ash Brisbane",
+        "location": "Brisbane CBD",
+        "search_terms": ["Ember and Ash Brisbane", "Ember & Ash Brisbane"],
+        "keywords": ["ember and ash", "ember ash brisbane"]
     }
 }
 
