@@ -513,28 +513,34 @@ import { api } from '../src/utils/api';
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'trending' && styles.tabActive]}
-            onPress={() => setSelectedTab('trending')}
+            style={[styles.tab, selectedTab === 'instagram' && styles.tabActive]}
+            onPress={() => setSelectedTab('instagram')}
           >
             <Ionicons 
-              name="trending-up" 
+              name="logo-instagram" 
               size={18} 
-              color={selectedTab === 'trending' ? colors.accent : colors.textSecondary} 
+              color={selectedTab === 'instagram' ? '#E4405F' : colors.textSecondary} 
             />
-            <Text style={[styles.tabText, selectedTab === 'trending' && styles.tabTextActive]}>
-              Trending
+            <Text style={[styles.tabText, selectedTab === 'instagram' && styles.tabTextActive]}>
+              Instagram
             </Text>
           </TouchableOpacity>
         </View>
 
-        {selectedTab === 'trending' && renderTrendingHashtags()}
+        {selectedTab === 'instagram' ? (
+          renderInstagramFeed()
+        ) : (
+          <>
+            {renderTrendingHashtags()}
 
-        {/* Activity Feed */}
-        <View style={styles.feedContainer}>
-          {activities.slice(0, selectedTab === 'friends' ? 10 : 5).map((activity, index) => 
-            renderActivityItem(activity, index)
-          )}
-        </View>
+            {/* Activity Feed */}
+            <View style={styles.feedContainer}>
+              {activities.slice(0, 10).map((activity, index) => 
+                renderActivityItem(activity, index)
+              )}
+            </View>
+          </>
+        )}
 
         {activities.length === 0 && (
           <View style={styles.emptyState}>
