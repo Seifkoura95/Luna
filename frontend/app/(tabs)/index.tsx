@@ -46,6 +46,7 @@ export default function HomeScreen() {
   
   const [refreshing, setRefreshing] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
+  const [tonightEvents, setTonightEvents] = useState<any[]>([]);
   const [venues, setVenues] = useState<any[]>([]);
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
 
@@ -69,22 +70,29 @@ export default function HomeScreen() {
 
   const fetchData = async () => {
     try {
-      const [eventsData, venuesData] = await Promise.all([
-        api.getEvents(),
+      // Fetch events feed from Eventfinda (real-time data)
+      const [eventsFeed, venuesData] = await Promise.all([
+        api.getEventsFeed(30),
         api.getVenues(),
       ]);
       
-      setEvents(eventsData);
+      // Set tonight's events
+      setTonightEvents(eventsFeed.tonight || []);
       
+      // Set all upcoming events
+      setEvents(eventsFeed.upcoming || []);
+      
+      // Set featured event (first featured or first upcoming)
+      const featured = eventsFeed.featured?.[0] || eventsFeed.upcoming?.[0];
+      setFeaturedEvent(featured);
+      
+      // Sort venues
       const sortedVenues = venuesData.sort((a: any, b: any) => {
         const aIndex = VENUE_ORDER.indexOf(a.id);
         const bIndex = VENUE_ORDER.indexOf(b.id);
         return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
       });
       setVenues(sortedVenues);
-      
-      const eclipseEvent = eventsData.find((e: any) => e.venue_id === 'eclipse');
-      setFeaturedEvent(eclipseEvent || eventsData[0]);
     } catch (e) {
       console.error('Failed to fetch data:', e);
     }
