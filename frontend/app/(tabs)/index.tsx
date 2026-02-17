@@ -636,11 +636,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
     lineHeight: 16,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   trendingVenue: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.7)',
     marginTop: 2,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 
   // Friends
