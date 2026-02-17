@@ -19,7 +19,7 @@ import os
 import json
 from datetime import datetime, timedelta
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://event-discovery-app-1.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://luna-vip-app-1.preview.emergentagent.com').rstrip('/')
 
 
 class TestEventfindaEventsAPI:
