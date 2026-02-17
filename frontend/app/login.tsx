@@ -97,18 +97,12 @@ export default function LoginScreen() {
             <View style={styles.content}>
               {/* Header Section */}
               <View style={styles.header}>
-                {/* Lunar Moon Logo - Smaller for login */}
-                <View style={styles.logoContainer}>
-                  <RotatingMoon size={80} rotationDuration={25000} />
-                </View>
-
-                {/* Brand Logo Image */}
+                {/* Brand Logo Image - Large and Prominent */}
                 <Image 
                   source={{ uri: LUNA_GROUP_LOGO }} 
                   style={styles.brandLogo}
                   resizeMode="contain"
                 />
-                <View style={styles.brandUnderline} />
 
                 {/* Tagline */}
                 <Text style={styles.tagline}>BRISBANE • GOLD COAST</Text>
