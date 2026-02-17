@@ -186,13 +186,13 @@ export default function HomeScreen() {
               onPress={() => { handleHaptic(); router.push(`/event/${featuredEvent.id}`); }}
               activeOpacity={0.9}
             >
-              <Image source={{ uri: featuredEvent.image_url }} style={styles.heroImage} contentFit="cover" />
+              <Image source={{ uri: featuredEvent.image || featuredEvent.image_url }} style={styles.heroImage} contentFit="cover" />
               <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={styles.heroOverlay}>
                 <View style={styles.heroBadge}>
                   <Text style={styles.heroBadgeText}>FEATURED</Text>
                 </View>
                 <View style={styles.heroContent}>
-                  <Text style={styles.heroVenue}>{featuredEvent.venue_name}</Text>
+                  <Text style={styles.heroVenue}>{featuredEvent.venue_name || featuredEvent.location}</Text>
                   <Text style={styles.heroTitle}>{featuredEvent.title}</Text>
                   <Text style={styles.heroMeta}>{formatDate(featuredEvent)} · {getTime(featuredEvent)}</Text>
                 </View>
@@ -219,11 +219,11 @@ export default function HomeScreen() {
                 onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
                 activeOpacity={0.8}
               >
-                <Image source={{ uri: event.image_url }} style={styles.eventThumb} contentFit="cover" />
+                <Image source={{ uri: event.image || event.image_url }} style={styles.eventThumb} contentFit="cover" />
                 <View style={styles.eventInfo}>
                   <Text style={styles.eventDate}>{formatDate(event)}</Text>
                   <Text style={styles.eventName} numberOfLines={1}>{event.title}</Text>
-                  <Text style={styles.eventVenue}>{event.venue_name}</Text>
+                  <Text style={styles.eventVenue}>{event.venue_name || event.location}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               </TouchableOpacity>
