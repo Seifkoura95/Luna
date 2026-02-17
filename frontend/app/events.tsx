@@ -128,9 +128,19 @@ export default function EventsListPage() {
     filterEvents(events, selectedVenue, query);
   };
 
-  const handleEventPress = (eventId: string) => {
+  const handleEventPress = (event: Event) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push(`/event/${eventId}`);
+    // Open Eventfinda page directly for ticket booking
+    if (event.url) {
+      Linking.openURL(event.url);
+    }
+  };
+
+  const handleBookTickets = (event: Event) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (event.url) {
+      Linking.openURL(event.url);
+    }
   };
 
   const formatDate = (dateStr: string) => {
