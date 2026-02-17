@@ -190,21 +190,21 @@ class EventfindaService:
         
         # Default image based on venue or category if none found
         if not image_url:
-            # Use venue-specific fallback images
+            # Use venue-specific fallback images (verified working URLs)
             location_lower = (ef_event.get("location", {}).get("name", "") or "").lower()
             if "eclipse" in location_lower:
-                image_url = "https://images.unsplash.com/photo-1571266028243-d220c6a68b7f?w=800&q=80"
+                image_url = "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=800"
             elif "su casa" in location_lower or "sucasa" in location_lower:
-                image_url = "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80"
+                image_url = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800"
             elif "juju" in location_lower:
-                image_url = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80"
+                image_url = "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800"
             elif "night market" in location_lower:
-                image_url = "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80"
+                image_url = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800"
             elif "after dark" in location_lower:
-                image_url = "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800&q=80"
+                image_url = "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=800"
             else:
                 # Generic nightclub image
-                image_url = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80"
+                image_url = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800"
         
         # Parse dates
         datetime_start = ef_event.get("datetime_start", "")
