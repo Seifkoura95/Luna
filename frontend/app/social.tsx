@@ -493,7 +493,6 @@ export default function SocialFeedScreen() {
           title="SOCIAL"
           description="See what your friends are up to"
           showLogo={true}
-          compactLogo={true}
         />
 
         {/* Tab Selector */}
