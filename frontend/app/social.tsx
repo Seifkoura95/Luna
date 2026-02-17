@@ -134,8 +134,6 @@ export default function SocialFeedScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
-import { api } from '../src/utils/api';
-  
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState<any[]>([]);
