@@ -163,8 +163,8 @@ export default function HomeScreen() {
               </View>
             ) : (
               <View style={styles.closedStatus}>
-                <Ionicons name="moon-outline" size={12} color={colors.textMuted} />
-                <Text style={styles.closedText}>Opens at 8PM</Text>
+                <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.5)" />
+                <Text style={styles.closedText}>Opens Tonight at 8PM</Text>
               </View>
             )}
           </View>
