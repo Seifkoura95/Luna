@@ -329,17 +329,17 @@ const styles = StyleSheet.create({
   // Header
   header: {
     alignItems: 'center',
-    marginBottom: 24,
-    paddingTop: 12,
+    marginBottom: 20,
+    paddingTop: 8,
   },
   logo: {
     width: 240,
     height: 70,
-    marginBottom: 10,
   },
   statusRow: {
     alignItems: 'center',
-    minHeight: 40,
+    marginTop: 12,
+    minHeight: 36,
   },
   liveStatus: {
     flexDirection: 'row',
