@@ -338,13 +338,8 @@ class EventfindaService:
         """
         Get events ONLY at Luna Group venues
         
-        Searches Eventfinda for events at:
-        - Eclipse Brisbane
-        - After Dark Brisbane
-        - Su Casa Brisbane
-        - Su Casa Gold Coast
-        - Juju Mermaid Beach
-        - Night Market Brisbane
+        Filters Eventfinda events to only include those where the venue_name
+        matches a Luna Group venue (Eclipse, After Dark, Su Casa, Juju, Night Market)
         """
         cache_key = f"luna_group_events_{limit}"
         cached = self._get_cached(cache_key)
@@ -354,27 +349,92 @@ class EventfindaService:
         all_events = []
         seen_ids = set()
         
-        # Search for each Luna Group venue
+        # Luna venue keywords for filtering (lowercase for comparison)
+        luna_venue_keywords = [
+            "eclipse",
+            "after dark", "afterdark",
+            "su casa", "sucasa",
+            "juju",
+            "night market", "nightmarket",
+            "ember & ash", "ember and ash"
+        ]
+        
+        # Helper function to check if an event is at a Luna venue
+        def is_luna_venue_event(event: Dict) -> bool:
+            venue = (event.get("venue_name") or "").lower()
+            location = (event.get("location") or "").lower()
+            address = (event.get("address") or "").lower()
+            
+            for keyword in luna_venue_keywords:
+                if keyword in venue or keyword in location or keyword in address:
+                    return True
+            return False
+        
+        # Helper function to get Luna venue name from event
+        def get_luna_venue_name(event: Dict) -> str:
+            venue = (event.get("venue_name") or "").lower()
+            location = (event.get("location") or "").lower()
+            
+            if "eclipse" in venue or "eclipse" in location:
+                return "Eclipse"
+            elif "after dark" in venue or "afterdark" in venue or "after dark" in location:
+                return "After Dark"
+            elif "su casa" in venue or "sucasa" in venue or "su casa" in location:
+                if "gold coast" in location or "surfers" in location or "broadbeach" in location:
+                    return "Su Casa Gold Coast"
+                return "Su Casa Brisbane"
+            elif "juju" in venue or "juju" in location:
+                return "Juju"
+            elif "night market" in venue or "nightmarket" in venue or "night market" in location:
+                return "Night Market"
+            elif "ember" in venue or "ash" in venue:
+                return "Ember & Ash"
+            return "Luna Group"
+        
+        # Get events from both Brisbane and Gold Coast
+        for location in ["brisbane", "gold-coast"]:
+            try:
+                # Get upcoming events
+                events = await self.get_events(
+                    location=location,
+                    rows=100,  # Get more to filter
+                    order="date"
+                )
+                
+                for event in events:
+                    if event["eventfinda_id"] not in seen_ids and is_luna_venue_event(event):
+                        event["luna_venue"] = get_luna_venue_name(event)
+                        seen_ids.add(event["eventfinda_id"])
+                        all_events.append(event)
+                        
+            except Exception as e:
+                logger.error(f"Failed to fetch events for {location}: {e}")
+                continue
+        
+        # Also search specifically for each venue name
         for venue_id, venue_info in LUNA_VENUES.items():
-            for search_term in venue_info["search_terms"]:
-                try:
-                    events = await self.search_events(
-                        query=search_term,
-                        location="brisbane" if "Brisbane" in search_term or "Fortitude" in search_term else "gold-coast",
-                        limit=10
-                    )
-                    
-                    for event in events:
-                        if event["eventfinda_id"] not in seen_ids:
-                            # Tag with Luna venue
-                            event["venue_id"] = venue_id
-                            event["luna_venue"] = venue_info["name"]
+            venue_name = venue_info["name"]
+            try:
+                # Use venue_search endpoint if available, otherwise keyword search
+                location = "gold-coast" if "Gold Coast" in venue_info.get("location", "") else "brisbane"
+                events = await self.search_events(
+                    query=f'"{venue_name}"',  # Exact phrase search
+                    location=location,
+                    limit=20
+                )
+                
+                for event in events:
+                    if event["eventfinda_id"] not in seen_ids:
+                        # Double check the venue matches
+                        venue_check = (event.get("venue_name") or "").lower()
+                        if any(kw in venue_check for kw in venue_info.get("keywords", [])):
+                            event["luna_venue"] = venue_name
                             seen_ids.add(event["eventfinda_id"])
                             all_events.append(event)
                             
-                except Exception as e:
-                    logger.error(f"Failed to search for {search_term}: {e}")
-                    continue
+            except Exception as e:
+                logger.error(f"Failed to search for venue {venue_name}: {e}")
+                continue
         
         # Sort by date
         all_events.sort(key=lambda x: x.get("datetime_start", ""))
