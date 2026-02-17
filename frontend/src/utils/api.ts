@@ -635,4 +635,15 @@ export const api = {
       points: number;
       points_data?: any;
     }>('/api/cherryhub/points'),
+
+  // ====== ACCOUNT MANAGEMENT ======
+  // Delete user account (App Store requirement)
+  deleteAccount: () =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      deletion_summary: Record<string, number>;
+    }>('/api/user/delete', {
+      method: 'DELETE'
+    }),
 };
