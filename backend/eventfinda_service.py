@@ -326,6 +326,59 @@ class EventfindaService:
             logger.error(f"Failed to fetch events from Eventfinda: {e}")
             return []
     
+    async def get_luna_group_events(self, limit: int = 30) -> List[Dict[str, Any]]:
+        """
+        Get events ONLY at Luna Group venues
+        
+        Searches Eventfinda for events at:
+        - Eclipse Brisbane
+        - After Dark Brisbane
+        - Su Casa Brisbane
+        - Su Casa Gold Coast
+        - Juju Mermaid Beach
+        - Night Market Brisbane
+        """
+        cache_key = f"luna_group_events_{limit}"
+        cached = self._get_cached(cache_key)
+        if cached:
+            return cached
+        
+        all_events = []
+        seen_ids = set()
+        
+        # Search for each Luna Group venue
+        for venue_id, venue_info in LUNA_VENUES.items():
+            for search_term in venue_info["search_terms"]:
+                try:
+                    events = await self.search_events(
+                        query=search_term,
+                        location="brisbane" if "Brisbane" in search_term or "Fortitude" in search_term else "gold-coast",
+                        limit=10
+                    )
+                    
+                    for event in events:
+                        if event["eventfinda_id"] not in seen_ids:
+                            # Tag with Luna venue
+                            event["venue_id"] = venue_id
+                            event["luna_venue"] = venue_info["name"]
+                            seen_ids.add(event["eventfinda_id"])
+                            all_events.append(event)
+                            
+                except Exception as e:
+                    logger.error(f"Failed to search for {search_term}: {e}")
+                    continue
+        
+        # Sort by date
+        all_events.sort(key=lambda x: x.get("datetime_start", ""))
+        
+        # Limit results
+        result = all_events[:limit]
+        
+        self._set_cached(cache_key, result, ttl_minutes=10)
+        
+        logger.info(f"Found {len(result)} Luna Group events")
+        return result
+    
     async def get_featured_events(self, location: str = "brisbane", limit: int = 5) -> List[Dict[str, Any]]:
         """Get featured/popular events"""
         events = await self.get_events(
