@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -13,27 +13,22 @@ interface VideoBackgroundProps {
   overlayOpacity?: number;
 }
 
-// Memoized video component to prevent re-renders
-const VideoLayer = memo(() => {
+// Video layer component for native platforms
+const NativeVideoLayer = memo(() => {
   const [isReady, setIsReady] = useState(false);
   
-  // Create video player with loop enabled
-  const player = useVideoPlayer(VIDEO_URL, (p) => {
-    p.loop = true;
-    p.muted = true;
-    p.play();
+  // Create video player with correct API - pass source object
+  const player = useVideoPlayer({ uri: VIDEO_URL }, (player) => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
   });
 
-  const handleStatusChange = useCallback((status: any) => {
-    if (status === 'readyToPlay') {
-      setIsReady(true);
-    }
+  useEffect(() => {
+    // Set ready after a short delay to ensure video is loaded
+    const timer = setTimeout(() => setIsReady(true), 1000);
+    return () => clearTimeout(timer);
   }, []);
-
-  // Web doesn't support expo-video well, use black background
-  if (Platform.OS === 'web') {
-    return null;
-  }
 
   return (
     <>
@@ -45,13 +40,13 @@ const VideoLayer = memo(() => {
         allowsFullscreen={false}
         allowsPictureInPicture={false}
       />
-      {/* Dark overlay for readability */}
-      <View style={[styles.overlay, { opacity: isReady ? 0.55 : 1 }]} />
+      {/* Dark overlay for readability - fades in as video loads */}
+      <View style={[styles.overlay, { opacity: 0.55 }]} />
     </>
   );
 });
 
-VideoLayer.displayName = 'VideoLayer';
+NativeVideoLayer.displayName = 'NativeVideoLayer';
 
 export const VideoBackground: React.FC<VideoBackgroundProps> = memo(({ 
   children,
@@ -59,13 +54,16 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = memo(({
   tint = 'dark',
   overlayOpacity = 0.5
 }) => {
+  // Check if we're on native platform
+  const isNative = Platform.OS === 'ios' || Platform.OS === 'android';
+
   return (
     <View style={styles.container}>
       {/* Base black background (always visible, acts as fallback) */}
       <View style={styles.blackBg} />
       
-      {/* Video layer (native only) */}
-      <VideoLayer />
+      {/* Video layer - only on native platforms */}
+      {isNative && <NativeVideoLayer />}
       
       {/* Subtle Luna glow in top left */}
       <LinearGradient
