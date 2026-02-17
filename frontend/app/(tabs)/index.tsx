@@ -246,7 +246,13 @@ export default function HomeScreen() {
                 onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
                 activeOpacity={0.8}
               >
-                <Image source={{ uri: event.image || event.image_url }} style={styles.eventThumb} contentFit="cover" />
+                <Image 
+                  source={{ uri: event.image || event.image_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800' }} 
+                  style={styles.eventThumb} 
+                  contentFit="cover"
+                  placeholder={{ uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' }}
+                  transition={200}
+                />
                 <View style={styles.eventInfo}>
                   <Text style={styles.eventDate}>{formatDate(event)}</Text>
                   <Text style={styles.eventName} numberOfLines={1}>{event.title}</Text>
