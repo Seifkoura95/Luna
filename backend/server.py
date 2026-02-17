@@ -723,15 +723,34 @@ async def get_upcoming_events(location: str = "brisbane", limit: int = 30):
 @api_router.get("/events/feed")
 async def get_events_feed(limit: int = 30):
     """
-    Get combined events feed from Brisbane and Gold Coast
+    Get events feed ONLY for Luna Group venues
     
     Returns categorized events: tonight, tomorrow, featured, upcoming
+    Filters events to only show those at Luna Group venues (Eclipse, After Dark, Su Casa, Juju, Night Market)
     """
     try:
-        feed = await eventfinda_service.get_combined_feed(limit=limit)
-        return feed
+        # Get Luna Group events only
+        luna_events = await eventfinda_service.get_luna_group_events(limit=limit)
+        
+        # Categorize events by date
+        today = datetime.now().strftime("%Y-%m-%d")
+        tomorrow_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+        
+        tonight_events = [e for e in luna_events if e.get("date") == today]
+        tomorrow_events = [e for e in luna_events if e.get("date") == tomorrow_date]
+        featured = [e for e in luna_events if e.get("is_featured")][:5]
+        
+        return {
+            "tonight": tonight_events[:10],
+            "tomorrow": tomorrow_events[:10],
+            "featured": featured,
+            "upcoming": luna_events[:limit],
+            "total_count": len(luna_events),
+            "source": "eventfinda_luna_filtered",
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
     except Exception as e:
-        logger.error(f"Failed to fetch events feed: {e}")
+        logger.error(f"Failed to fetch Luna Group events feed: {e}")
         return {
             "tonight": [],
             "tomorrow": [],
