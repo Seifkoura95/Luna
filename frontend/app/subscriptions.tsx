@@ -209,7 +209,7 @@ export default function SubscriptionsScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <StarfieldBackground starCount={50} shootingStarCount={1} />
+        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <ActivityIndicator size="large" color={colors.accent} />
         <Text style={styles.loadingText}>Loading plans...</Text>
       </View>
@@ -218,7 +218,7 @@ export default function SubscriptionsScreen() {
 
   return (
     <View style={styles.container}>
-      <StarfieldBackground starCount={60} shootingStarCount={2} />
+      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       <ScrollView
         style={styles.scrollView}

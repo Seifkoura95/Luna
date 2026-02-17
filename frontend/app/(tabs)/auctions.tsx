@@ -265,7 +265,7 @@ export default function AuctionsScreen() {
 
   return (
     <View style={styles.container}>
-      <StarfieldBackground starCount={50} shootingStarCount={2} />
+      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       <ScrollView
         ref={scrollRef}
