@@ -89,9 +89,38 @@ export const api = {
   getUpcomingBoosts: (venueId?: string) => 
     apiFetch<any[]>(`/api/boosts/upcoming${venueId ? `?venue_id=${venueId}` : ''}`, { auth: false }),
   
-  // Events
-  getEvents: (venueId?: string) => 
-    apiFetch<any[]>(`/api/events${venueId ? `?venue_id=${venueId}` : ''}`, { auth: false }),
+  // Events (Powered by Eventfinda - Real-time data)
+  getEvents: (venueId?: string, location: string = 'brisbane', limit: number = 20) => 
+    apiFetch<{events: any[], total: number, source: string}>(`/api/events?location=${location}&limit=${limit}${venueId ? `&venue_id=${venueId}` : ''}`, { auth: false }),
+  
+  getEventsFeed: (limit: number = 30) =>
+    apiFetch<{
+      tonight: any[];
+      tomorrow: any[];
+      featured: any[];
+      upcoming: any[];
+      total_count: number;
+      source: string;
+      updated_at: string;
+    }>(`/api/events/feed?limit=${limit}`),
+  
+  getFeaturedEvents: (location: string = 'brisbane', limit: number = 5) =>
+    apiFetch<{events: any[], total: number}>(`/api/events/featured?location=${location}&limit=${limit}`),
+  
+  getTonightEvents: (location: string = 'brisbane', limit: number = 10) =>
+    apiFetch<{events: any[], total: number, date: string}>(`/api/events/tonight?location=${location}&limit=${limit}`),
+  
+  getWeekendEvents: (location: string = 'brisbane', limit: number = 20) =>
+    apiFetch<{events: any[], total: number}>(`/api/events/weekend?location=${location}&limit=${limit}`),
+  
+  getUpcomingEvents: (location: string = 'brisbane', limit: number = 30) =>
+    apiFetch<{events: any[], total: number}>(`/api/events/upcoming?location=${location}&limit=${limit}`),
+  
+  searchEvents: (query: string, location: string = 'brisbane', limit: number = 20) =>
+    apiFetch<{events: any[], total: number, query: string}>(`/api/events/search?q=${encodeURIComponent(query)}&location=${location}&limit=${limit}`),
+  
+  getEventDetail: (eventId: string) =>
+    apiFetch<any>(`/api/events/${eventId}`),
   
   // User Stats
   getUserStats: () => apiFetch<any>('/api/users/stats'),
