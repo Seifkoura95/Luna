@@ -20,7 +20,7 @@ import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router, useFocusEffect } from 'expo-router';
-import { StarfieldBackground } from '../../src/components/StarfieldBackground';
+import { VideoBackground } from '../../src/components/VideoBackground';
 import { RotatingMoon } from '../../src/components/RotatingMoon';
 import { FierySun } from '../../src/components/FierySun';
 import { GoldStarIcon } from '../../src/components/GoldStarIcon';

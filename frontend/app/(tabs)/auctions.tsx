@@ -19,7 +19,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { StarfieldBackground } from '../../src/components/StarfieldBackground';
+import { VideoBackground } from '../../src/components/VideoBackground';
 import { PageHeader } from '../../src/components/PageHeader';
 import { GlassCard } from '../../src/components/GlassCard';
 import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';

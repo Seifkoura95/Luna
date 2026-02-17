@@ -27,7 +27,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { api } from '../../src/utils/api';
 import { useAuthStore } from '../../src/store/authStore';
-import { StarfieldBackground } from '../../src/components/StarfieldBackground';
+import { VideoBackground } from '../../src/components/VideoBackground';
 
 const { width } = Dimensions.get('window');
 const VENUE_CARD_WIDTH = width * 0.72;

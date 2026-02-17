@@ -16,7 +16,7 @@ import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { StarfieldBackground } from '../../src/components/StarfieldBackground';
+import { VideoBackground } from '../../src/components/VideoBackground';
 import { PageHeader } from '../../src/components/PageHeader';
 
 // Venue categories
