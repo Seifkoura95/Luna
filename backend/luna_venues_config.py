@@ -107,12 +107,12 @@ LUNA_VENUES = {
         "long_description": "Su Casa Brisbane is your ultimate rooftop escape in the heart of Fortitude Valley. Enjoy stunning city views, signature cocktails, and shareable tapas as the sun sets. As night falls, the vibe transforms with resident DJs spinning the best house, disco, and party anthems. Available for private events and VIP experiences.",
         "features": ["booth_booking", "fast_lane", "auctions", "rooftop_terrace"],
         "points_rate": 1.0,
-        "image_url": "/api/photos/image/sucasa-brisbane/@CUTBYJACK-10%20(1).jpg",
-        "hero_image": "/api/photos/image/sucasa-brisbane/@CUTBYJACK-2.jpg",
+        "image_url": f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-10%20(1).jpg",
+        "hero_image": f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-2.jpg",
         "gallery": [
-            "/api/photos/image/sucasa-brisbane/@CUTBYJACK-10%20(1).jpg",
-            "/api/photos/image/sucasa-brisbane/@CUTBYJACK-2.jpg",
-            "/api/photos/image/sucasa-brisbane/@CUTBYJACK-29.jpg"
+            f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-10%20(1).jpg",
+            f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-2.jpg",
+            f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-29.jpg"
         ],
         "operating_hours": {
             "wednesday": "5:00 PM - 3:00 AM",
