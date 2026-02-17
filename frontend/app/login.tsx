@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
   },
   logoContainer: {
     marginBottom: spacing.sm,
@@ -327,9 +327,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   brandLogo: {
-    width: 220,
-    height: 65,
-    marginBottom: spacing.xs,
+    width: 260,
+    height: 75,
+    marginBottom: spacing.md,
   },
   brandUnderline: {
     width: 50,
@@ -339,10 +339,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   tagline: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    color: colors.textSecondary,
-    letterSpacing: 4,
+    color: 'rgba(255,255,255,0.5)',
+    letterSpacing: 5,
   },
   toggleContainer: {
     flexDirection: 'row',
