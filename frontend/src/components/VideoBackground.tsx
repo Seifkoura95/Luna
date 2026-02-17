@@ -13,6 +13,52 @@ interface VideoBackgroundProps {
 // Luna Group event video background
 const VIDEO_URL = 'https://customer-assets.emergentagent.com/job_2fca5f5e-e2fc-4a51-bccb-98ad0736e603/artifacts/72rbe8de_Darude%20Recap.mp4';
 
+// Web-specific video component using HTML5 video
+const WebVideoBackground: React.FC<{ overlayOpacity: number }> = ({ overlayOpacity }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(e => console.log('Autoplay blocked:', e));
+    }
+  }, []);
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        src={VIDEO_URL}
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: -1,
+        }}
+      />
+      {/* Frosted glass effect for web */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: `rgba(0, 0, 0, ${overlayOpacity + 0.3})`,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
+      />
+    </>
+  );
+};
+
 export const VideoBackground: React.FC<VideoBackgroundProps> = ({
   intensity = 30,
   tint = 'dark',
@@ -22,17 +68,19 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
   const videoRef = useRef<Video>(null);
 
   useEffect(() => {
-    // Ensure video plays on mount
-    const playVideo = async () => {
-      if (videoRef.current) {
-        try {
-          await videoRef.current.playAsync();
-        } catch (e) {
-          console.log('Video autoplay error:', e);
+    // Ensure video plays on mount (native only)
+    if (Platform.OS !== 'web') {
+      const playVideo = async () => {
+        if (videoRef.current) {
+          try {
+            await videoRef.current.playAsync();
+          } catch (e) {
+            console.log('Video autoplay error:', e);
+          }
         }
-      }
-    };
-    playVideo();
+      };
+      playVideo();
+    }
   }, []);
 
   const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
@@ -44,6 +92,21 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
     }
   };
 
+  // Web uses HTML5 video element
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.container}>
+        <WebVideoBackground overlayOpacity={overlayOpacity} />
+        {children && (
+          <View style={styles.content}>
+            {children}
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  // Native uses expo-av Video
   return (
     <View style={styles.container}>
       {/* Video Layer */}
@@ -56,23 +119,15 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
         isLooping
         isMuted
         onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-        // Performance optimizations
         useNativeControls={false}
-        posterSource={{ uri: VIDEO_URL }}
-        usePoster={true}
       />
 
-      {/* Frosted Glass Overlay */}
-      {Platform.OS !== 'web' ? (
-        <BlurView
-          style={styles.blurOverlay}
-          intensity={intensity}
-          tint={tint}
-        />
-      ) : (
-        // Web fallback - CSS blur with backdrop-filter
-        <View style={[styles.webBlurOverlay, { backgroundColor: `rgba(0,0,0,${overlayOpacity + 0.2})` }]} />
-      )}
+      {/* Frosted Glass Overlay (Native) */}
+      <BlurView
+        style={styles.blurOverlay}
+        intensity={intensity}
+        tint={tint}
+      />
 
       {/* Additional dark overlay for text readability */}
       <View style={[styles.darkOverlay, { opacity: overlayOpacity }]} />
