@@ -102,22 +102,22 @@ export const api = {
       total_count: number;
       source: string;
       updated_at: string;
-    }>(`/api/events/feed?limit=${limit}`),
+    }>(`/api/events/feed?limit=${limit}`, { auth: false }),
   
   getFeaturedEvents: (location: string = 'brisbane', limit: number = 5) =>
-    apiFetch<{events: any[], total: number}>(`/api/events/featured?location=${location}&limit=${limit}`),
+    apiFetch<{events: any[], total: number}>(`/api/events/featured?location=${location}&limit=${limit}`, { auth: false }),
   
   getTonightEvents: (location: string = 'brisbane', limit: number = 10) =>
-    apiFetch<{events: any[], total: number, date: string}>(`/api/events/tonight?location=${location}&limit=${limit}`),
+    apiFetch<{events: any[], total: number, date: string}>(`/api/events/tonight?location=${location}&limit=${limit}`, { auth: false }),
   
   getWeekendEvents: (location: string = 'brisbane', limit: number = 20) =>
-    apiFetch<{events: any[], total: number}>(`/api/events/weekend?location=${location}&limit=${limit}`),
+    apiFetch<{events: any[], total: number}>(`/api/events/weekend?location=${location}&limit=${limit}`, { auth: false }),
   
   getUpcomingEvents: (location: string = 'brisbane', limit: number = 30) =>
-    apiFetch<{events: any[], total: number}>(`/api/events/upcoming?location=${location}&limit=${limit}`),
+    apiFetch<{events: any[], total: number}>(`/api/events/upcoming?location=${location}&limit=${limit}`, { auth: false }),
   
   searchEvents: (query: string, location: string = 'brisbane', limit: number = 20) =>
-    apiFetch<{events: any[], total: number, query: string}>(`/api/events/search?q=${encodeURIComponent(query)}&location=${location}&limit=${limit}`),
+    apiFetch<{events: any[], total: number, query: string}>(`/api/events/search?q=${encodeURIComponent(query)}&location=${location}&limit=${limit}`, { auth: false }),
   
   getEventDetail: (eventId: string) =>
     apiFetch<any>(`/api/events/${eventId}`),
