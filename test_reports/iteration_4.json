@@ -1,0 +1,94 @@
+{
+  "summary": "Verified Luna Group venue filtering for /api/events/feed and frontend text readability. All 8 backend tests pass (100%). Backend correctly returns ONLY Luna Group venue events with source='eventfinda_luna_filtered' and luna_venue field. Frontend displays events with readable text using LinearGradient overlays and text shadows.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_luna_venue_filtering.py",
+    "/app/test_reports/pytest/pytest_luna_filtering_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Luna venue filtering is working correctly - /api/events/feed returns source='eventfinda_luna_filtered'",
+    "All returned events have 'luna_venue' field identifying the Luna Group venue (Eclipse, Su Casa Gold Coast, Juju, Night Market)",
+    "Text readability on event cards is good - LinearGradient overlays provide dark background for white text",
+    "Text shadows applied to hero card, venue cards, and event titles for contrast enhancement",
+    "Events displayed are filtered to Luna Group venues: Eclipse (13 events), Su Casa Gold Coast (13 events), Juju (3 events), Night Market (1 event)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_luna_venue_filtering.py"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 tests passed)",
+    "frontend": "100% (UI verified - text readable on all card types)"
+  },
+  "test_credentials": {
+    "email": "luna@test.com",
+    "password": "test123"
+  },
+  "seed_data_creation": "None - events fetched from Eventfinda API with Luna venue filtering",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Luna venue filtering verified and working. The /api/events/feed endpoint now returns ONLY events at Luna Group venues (Eclipse, After Dark, Su Casa Brisbane, Su Casa Gold Coast, Juju, Night Market, Ember & Ash). Response includes 'source': 'eventfinda_luna_filtered' to indicate filtering is active, and each event has a 'luna_venue' field. Frontend text readability is good with LinearGradient overlays on hero cards, venue cards, and trending cards.",
+  "features_tested": {
+    "luna_venue_filtering": {
+      "status": "PASS",
+      "endpoint": "GET /api/events/feed",
+      "verification": "source='eventfinda_luna_filtered' confirmed"
+    },
+    "luna_venue_field": {
+      "status": "PASS",
+      "description": "All events have 'luna_venue' field set to Luna Group venue name"
+    },
+    "venue_distribution": {
+      "status": "PASS",
+      "luna_venues_found": ["Eclipse (13 events)", "Su Casa Gold Coast (13 events)", "Juju (3 events)", "Night Market (1 event)"]
+    },
+    "response_structure": {
+      "status": "PASS",
+      "categories": ["tonight", "tomorrow", "featured", "upcoming", "total_count", "source", "updated_at"]
+    },
+    "frontend_hero_card": {
+      "status": "PASS",
+      "elements_verified": ["FEATURED badge (yellow)", "Venue name (red - Eclipse Brisbane)", "Event title (white)", "Date/time (gray)", "LinearGradient overlay"]
+    },
+    "frontend_whats_on_section": {
+      "status": "PASS",
+      "elements_verified": ["Red date badges", "White event titles", "Gray venue names"]
+    },
+    "frontend_venue_cards": {
+      "status": "PASS",
+      "elements_verified": ["Venue type label (gray)", "Venue name (white)", "Location (gray)", "Dark gradient overlay"]
+    },
+    "text_contrast": {
+      "status": "PASS",
+      "notes": "All text has sufficient contrast with backgrounds due to LinearGradient overlays and textShadow styles"
+    }
+  },
+  "verification_details": {
+    "api_response_sample": {
+      "source": "eventfinda_luna_filtered",
+      "total_count": 30,
+      "tonight_count": 1,
+      "luna_venues_in_events": ["Eclipse", "Su Casa Gold Coast", "Juju", "Night Market"]
+    },
+    "screenshots_captured": [
+      "luna_home_logged_in.png - Hero card with FEATURED badge",
+      "full_home_top.png - Full home page top section",
+      "full_home_middle.png - Our Venues section"
+    ]
+  },
+  "mocked_apis": {
+    "Eventfinda API": "NOT MOCKED - Using live API with Luna venue filtering",
+    "CherryHub": "MOCKED - Points/wallet integration",
+    "Instagram": "MOCKED - Demo mode with placeholder images",
+    "Promo Codes": "MOCKED - Demo promo codes",
+    "Buy Points": "MOCKED - Mock purchase flow"
+  }
+}
