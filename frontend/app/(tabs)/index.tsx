@@ -279,7 +279,11 @@ export default function HomeScreen() {
                 activeOpacity={0.9}
               >
                 <Image source={{ uri: venue.image_url }} style={styles.venueImage} contentFit="cover" />
-                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={styles.venueOverlay}>
+                <LinearGradient 
+                  colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.95)']} 
+                  locations={[0, 0.3, 1]}
+                  style={styles.venueOverlay}
+                >
                   <Text style={styles.venueType}>{venue.type?.toUpperCase()}</Text>
                   <Text style={styles.venueName}>{venue.name}</Text>
                   <Text style={styles.venueLocation}>{venue.location}</Text>
