@@ -790,4 +790,127 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textMuted,
   },
+  // Instagram Feed Styles
+  instagramFeedContainer: {
+    paddingHorizontal: spacing.md,
+  },
+  hashtagScroll: {
+    marginBottom: spacing.md,
+  },
+  demoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  demoBannerText: {
+    fontSize: 12,
+    color: colors.gold,
+  },
+  instagramCard: {
+    marginBottom: spacing.md,
+  },
+  instagramPostHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  instagramAccountInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  instagramAvatarGradient: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    padding: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  instagramAvatarInner: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  instagramUsername: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  instagramTime: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
+  officialBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(227, 24, 55, 0.1)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+  },
+  officialText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+  instagramMainImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: radius.md,
+    marginBottom: spacing.sm,
+  },
+  instagramCaption: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: spacing.sm,
+  },
+  instagramActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  instagramStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  viewOnInstagram: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewOnInstagramText: {
+    fontSize: 13,
+    color: colors.accent,
+    fontWeight: '500',
+  },
+  seeAllText: {
+    fontSize: 13,
+    color: colors.accent,
+    fontWeight: '600',
+  },
 });
