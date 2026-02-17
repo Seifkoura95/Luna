@@ -283,6 +283,119 @@ import { api } from '../src/utils/api';
     </Animated.View>
   );
 
+  const renderInstagramPost = (post: any, index: number) => (
+    <Animated.View 
+      key={post.id}
+      entering={FadeInDown.delay(index * 50).duration(300)}
+    >
+      <GlassCard style={styles.instagramCard}>
+        <View style={styles.instagramPostHeader}>
+          <View style={styles.instagramAccountInfo}>
+            <LinearGradient
+              colors={['#833AB4', '#E1306C', '#F77737']}
+              style={styles.instagramAvatarGradient}
+            >
+              <View style={styles.instagramAvatarInner}>
+                <Ionicons name="logo-instagram" size={18} color="#fff" />
+              </View>
+            </LinearGradient>
+            <View>
+              <Text style={styles.instagramUsername}>@{post.username}</Text>
+              <Text style={styles.instagramTime}>
+                {formatTimeAgo(new Date(post.timestamp).getTime())}
+                {post.demo && ' • Demo'}
+              </Text>
+            </View>
+          </View>
+          {post.source_type === 'official' && (
+            <View style={styles.officialBadge}>
+              <Ionicons name="checkmark-circle" size={14} color={colors.accent} />
+              <Text style={styles.officialText}>Official</Text>
+            </View>
+          )}
+        </View>
+        
+        <Image 
+          source={{ uri: post.media_url }}
+          style={styles.instagramMainImage}
+          contentFit="cover"
+        />
+        
+        {post.caption && (
+          <Text style={styles.instagramCaption} numberOfLines={3}>
+            {post.caption}
+          </Text>
+        )}
+        
+        <View style={styles.instagramActions}>
+          <View style={styles.instagramStats}>
+            {post.like_count > 0 && (
+              <View style={styles.statItem}>
+                <Ionicons name="heart" size={16} color={colors.accent} />
+                <Text style={styles.statText}>{post.like_count}</Text>
+              </View>
+            )}
+            {post.comments_count > 0 && (
+              <View style={styles.statItem}>
+                <Ionicons name="chatbubble" size={14} color={colors.textSecondary} />
+                <Text style={styles.statText}>{post.comments_count}</Text>
+              </View>
+            )}
+          </View>
+          <TouchableOpacity 
+            style={styles.viewOnInstagram}
+            onPress={() => {
+              if (post.permalink) {
+                // Would open Instagram link in browser
+                Alert.alert('Opening Instagram', 'This would open the post on Instagram');
+              }
+            }}
+          >
+            <Text style={styles.viewOnInstagramText}>View on Instagram</Text>
+            <Ionicons name="open-outline" size={14} color={colors.accent} />
+          </TouchableOpacity>
+        </View>
+      </GlassCard>
+    </Animated.View>
+  );
+
+  const renderInstagramFeed = () => (
+    <View style={styles.instagramFeedContainer}>
+      {/* Hashtag Filter Chips */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hashtagScroll}>
+        {MOCK_VENUES.map((venue) => (
+          <TouchableOpacity 
+            key={venue.id}
+            style={[styles.hashtagChip, { borderColor: venue.color }]}
+          >
+            <Text style={[styles.hashtagText, { color: venue.color }]}>
+              {venue.hashtag}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+      
+      {/* Demo Mode Banner */}
+      {instagramPosts.length > 0 && instagramPosts[0]?.demo && (
+        <View style={styles.demoBanner}>
+          <Ionicons name="information-circle" size={16} color={colors.gold} />
+          <Text style={styles.demoBannerText}>
+            Demo Mode - Connect Instagram API for live content
+          </Text>
+        </View>
+      )}
+      
+      {instagramLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#E4405F" />
+          <Text style={styles.loadingText}>Loading Instagram feed...</Text>
+        </View>
+      ) : (
+        instagramPosts.map((post, index) => renderInstagramPost(post, index))
+      )}
+    </View>
+  );
+
   const renderTrendingHashtags = () => (
     <View style={styles.trendingSection}>
       <Text style={[styles.sectionTitle, ]}>
@@ -313,14 +426,16 @@ import { api } from '../src/utils/api';
         <View style={styles.instagramHeader}>
           <Ionicons name="logo-instagram" size={20} color="#E4405F" />
           <Text style={styles.instagramTitle}>From Instagram</Text>
-          <Text style={styles.instagramSubtitle}>Coming Soon</Text>
+          <TouchableOpacity onPress={() => setSelectedTab('instagram')}>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
         </View>
         
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {MOCK_INSTAGRAM_POSTS.map((post) => (
+          {(instagramPosts.length > 0 ? instagramPosts.slice(0, 5) : MOCK_INSTAGRAM_POSTS).map((post: any) => (
             <TouchableOpacity key={post.id} style={styles.instagramPost}>
               <Image 
-                source={{ uri: post.image }}
+                source={{ uri: post.media_url || post.image }}
                 style={styles.instagramImage}
                 contentFit="cover"
               />
@@ -328,10 +443,12 @@ import { api } from '../src/utils/api';
                 colors={['transparent', 'rgba(0,0,0,0.8)']}
                 style={styles.instagramOverlay}
               >
-                <Text style={styles.instagramHashtag}>{post.hashtag}</Text>
+                <Text style={styles.instagramHashtag}>
+                  {post.source_hashtag ? `#${post.source_hashtag}` : (post.hashtag || '@' + post.username)}
+                </Text>
                 <View style={styles.instagramLikes}>
                   <Ionicons name="heart" size={12} color="#fff" />
-                  <Text style={styles.instagramLikesText}>{post.likes}</Text>
+                  <Text style={styles.instagramLikesText}>{post.like_count || post.likes || 0}</Text>
                 </View>
               </LinearGradient>
             </TouchableOpacity>
