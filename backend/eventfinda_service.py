@@ -433,6 +433,14 @@ class EventfindaService:
         try:
             result = await self._make_request(f"/events/{event_id}.json")
             
+            # Single event lookup returns event directly (not in "events" array)
+            # Check if result has 'id' field (direct event response)
+            if result.get("id"):
+                transformed = self._transform_event(result)
+                self._set_cached(cache_key, transformed, ttl_minutes=15)
+                return transformed
+            
+            # Fallback: check if wrapped in events array (for compatibility)
             if result.get("events"):
                 event = result["events"][0]
                 transformed = self._transform_event(event)
