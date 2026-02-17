@@ -307,13 +307,17 @@ export default function HomeScreen() {
                 onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
                 activeOpacity={0.85}
               >
-                <Image source={{ uri: event.image_url }} style={styles.trendingImage} contentFit="cover" />
-                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={styles.trendingOverlay}>
+                <Image source={{ uri: event.image || event.image_url }} style={styles.trendingImage} contentFit="cover" />
+                <LinearGradient 
+                  colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} 
+                  locations={[0, 0.4, 1]}
+                  style={styles.trendingOverlay}
+                >
                   <View style={styles.trendingRank}>
                     <Text style={styles.trendingRankText}>{index + 1}</Text>
                   </View>
                   <Text style={styles.trendingTitle} numberOfLines={2}>{event.title}</Text>
-                  <Text style={styles.trendingVenue}>{event.venue_name}</Text>
+                  <Text style={styles.trendingVenue}>{event.venue_name || event.location}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             ))}
