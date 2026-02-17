@@ -6,6 +6,7 @@ import { useAuthStore } from '../src/store/authStore';
 import { colors } from '../src/theme/colors';
 import { useFonts } from '../src/hooks/useFonts';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
+import { SharedVideoProvider } from '../src/context/VideoContext';
 
 export default function RootLayout() {
   const loadStoredAuth = useAuthStore((state) => state.loadStoredAuth);
@@ -35,7 +36,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <SharedVideoProvider>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -48,6 +49,6 @@ export default function RootLayout() {
         <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
       </Stack>
-    </>
+    </SharedVideoProvider>
   );
 }
