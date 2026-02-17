@@ -112,7 +112,6 @@ export default function TabLayout() {
         }}
       />
       {/* Hidden screens */}
-      <Tabs.Screen name="events" options={{ href: null }} />
       <Tabs.Screen name="photos" options={{ href: null }} />
     </Tabs>
     </View>
