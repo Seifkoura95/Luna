@@ -213,7 +213,7 @@ export default function HomeScreen() {
             ) : (
               <View style={styles.closedStatus}>
                 <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.5)" />
-                <Text style={styles.closedText}>Opens Tonight at 8PM</Text>
+                <Text style={styles.closedText}>{getClosedMessage()}</Text>
               </View>
             )}
           </View>
