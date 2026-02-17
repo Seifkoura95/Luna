@@ -1,7 +1,14 @@
-# Eclipse VIP App - Product Requirements Document
+# Luna Group VIP App - Product Requirements Document
 
 ## Overview
-Premium nightclub VIP operating system for Eclipse Brisbane - a native iOS/Android app built with Expo React Native.
+Premium hospitality VIP operating system for Luna Group venues (Eclipse, After Dark, Su Casa Brisbane/Gold Coast) - a native iOS/Android app built with Expo React Native.
+
+## Core Product Vision
+- Luna Points system powered by CherryHub
+- Digital membership card via CherryHub integration
+- VIP experience across all Luna Group venues
+- Navigation to features via Profile > Quick Actions
+- Consistent Montserrat font family throughout app
 
 ## Phase 1 MVP Features ✅ COMPLETE
 
