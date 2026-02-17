@@ -143,22 +143,32 @@ Premium hospitality VIP operating system for Luna Group venues (Eclipse, After D
 
 ### Features:
 - Real-time events from Eventfinda API
-- **Luna Group Venue Filtering** - Events filtered to ONLY show Luna Group venues
+- **Luna Group Venue Filtering** - Events filtered to ONLY show events AT Luna Group venues
+- Proper venue matching: checks venue_name, location, and address fields
 - Brisbane and Gold Coast location support
-- 5-minute cache for rate limit compliance (1 req/sec)
+- 10-minute cache for rate limit compliance
 - Event categories: concerts, festivals, nightlife, DJ nights
 
 ### Luna Group Venues (Filtered):
-- Eclipse Brisbane
-- After Dark Brisbane
-- Su Casa Brisbane
-- Su Casa Gold Coast
-- Juju Mermaid Beach
-- Night Market Brisbane
+- Eclipse Brisbane (Fortitude Valley)
+- After Dark Brisbane (Fortitude Valley)
+- Su Casa Brisbane (Fortitude Valley)
+- Su Casa Gold Coast (Surfers Paradise)
+- Juju Mermaid Beach (Gold Coast)
+- Night Market Brisbane (Fortitude Valley)
 - Ember & Ash Brisbane (Coming Soon)
 
+### Filtering Logic:
+Events are matched by checking if the venue_name, location, or address contains:
+- "eclipse"
+- "after dark" / "afterdark"
+- "su casa" / "sucasa"
+- "juju"
+- "night market" / "nightmarket"
+- "ember & ash" / "ember and ash"
+
 ### API Endpoints:
-- GET /api/events - All events
+- GET /api/events - All events (unfiltered)
 - GET /api/events/feed - **Luna Group filtered** feed (tonight, tomorrow, featured, upcoming)
 - GET /api/events/tonight - Tonight's events
 - GET /api/events/featured - Featured/popular events
@@ -172,7 +182,7 @@ Premium hospitality VIP operating system for Luna Group venues (Eclipse, After D
 - title, description, date (YYYY-MM-DD), time (HH:MM)
 - venue_name, location, address
 - **luna_venue**: Luna Group venue name (Eclipse, Su Casa, etc.)
-- image (from Eventfinda CDN with Unsplash fallback)
+- image (from Eventfinda CDN)
 - category, is_free, is_featured, url
 - source: "eventfinda_luna_filtered"
 
