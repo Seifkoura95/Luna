@@ -1,16 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator } from 'react-native';
+import { View } from 'react-native';
 import { useAuthStore } from '../src/store/authStore';
 import { colors } from '../src/theme/colors';
 import { useFonts } from '../src/hooks/useFonts';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
-import { SharedVideoProvider } from '../src/context/VideoContext';
+import { VideoSplashScreen } from '../src/components/VideoSplashScreen';
 
 export default function RootLayout() {
   const loadStoredAuth = useAuthStore((state) => state.loadStoredAuth);
   const fontsLoaded = useFonts();
+  const [showSplash, setShowSplash] = useState(true);
   
   // Initialize push notifications
   const { expoPushToken, notification } = usePushNotifications();
@@ -26,17 +27,40 @@ export default function RootLayout() {
     }
   }, [expoPushToken]);
 
-  // Show loading screen while fonts are loading
-  if (!fontsLoaded) {
+  // Handle splash screen completion
+  const handleSplashReady = () => {
+    // Wait for fonts too
+    if (fontsLoaded) {
+      setShowSplash(false);
+    }
+  };
+
+  // Also hide splash when fonts are loaded after video
+  useEffect(() => {
+    if (fontsLoaded && !showSplash) {
+      return;
+    }
+    if (fontsLoaded) {
+      // Give minimum splash time
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [fontsLoaded]);
+
+  // Show video splash screen while loading
+  if (showSplash || !fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.accent} />
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <StatusBar style="light" />
+        <VideoSplashScreen onReady={handleSplashReady} />
       </View>
     );
   }
 
   return (
-    <SharedVideoProvider>
+    <>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -49,6 +73,6 @@ export default function RootLayout() {
         <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
       </Stack>
-    </SharedVideoProvider>
+    </>
   );
 }
