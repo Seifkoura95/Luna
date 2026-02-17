@@ -121,22 +121,80 @@ Premium hospitality VIP operating system for Luna Group venues (Eclipse, After D
 ## Recent Completions (Feb 2025)
 - Home page redesigned with Featured Events, What's On timeline, Venues carousel
 - Photo Gallery with venue albums from /backend/static/photos
-- Social Feed (mock data)
+- Social Feed with Instagram integration
 - Venues page with category filters (All/Nightclubs/Dining)
 - Rewards page overhauled with new missions and Buy Points UI
 - App-wide font standardization to Montserrat
 - Header redesign (removed rotating moon, larger logo)
 - Profile page with Quick Actions hub for Photos, Social, Auctions, Rewards, Referrals
 
-## Upcoming Tasks (P1)
-- Connect "Buy Points" UI to CherryHub API
-- Implement Promo Code validation feature
-- Instagram integration for Social Feed
+## Buy Points System ✅ COMPLETE (Feb 2025)
+
+### Point Packages:
+- p1: 100 points for $10
+- p2: 500 points + 50 bonus for $45 (Popular)
+- p3: 1,000 points + 150 bonus for $80
+- p4: 2,500 points + 500 bonus for $180
+
+### APIs:
+- POST /api/cherryhub/buy-points - Purchase points (integrates with CherryHub)
+- Points are tracked locally and synced to CherryHub when live
+
+## Promo Code System ✅ COMPLETE (Feb 2025)
+
+### Features:
+- One-time use per user enforcement
+- Multiple reward types: bonus points, free entry, drink vouchers, combo rewards
+- Voucher expiration (90 days)
+
+### Pre-configured Promo Codes:
+- WELCOME50: 50 bonus points (Welcome bonus)
+- LUNA100: 100 bonus points (Luna VIP)
+- FREEENTRY: 1 free venue entry voucher
+- FREEDRINK: 1 free drink voucher  
+- VIP2024: Combo - 75 points + 2 free drinks
+
+### APIs:
+- GET /api/promo/validate/{code} - Validate promo code
+- POST /api/promo/apply - Apply promo code
+- GET /api/vouchers - Get user's active vouchers
+
+## Instagram Integration ✅ COMPLETE (Feb 2025)
+
+### Features:
+- Combined feed from official accounts and hashtags
+- Demo mode with sample images (ready for production API)
+- Instagram tab in Social Feed
+- Post previews with captions, likes, and links
+
+### Configured Accounts:
+- @eclipsebrisbane
+- @sucasabrisbane
+- @nightmarketbrisbane
+- @jujumermaidbeach
+- @eclipse.afterdark
+- @sucasa.gc
+- @lunagrouphospitality
+
+### Tracked Hashtags:
+#eclipsebrisbane, #nightmarket, #nightmarketbrisbane, #Afterdarkbrisbane, #sucasabrisbane, #sucasagoldcoast, #sucasagc, #juju
+
+### APIs:
+- GET /api/instagram/feed - Combined feed
+- GET /api/instagram/account/{account} - Account posts
+- GET /api/instagram/hashtag/{hashtag} - Hashtag posts
+- GET /api/instagram/config - Integration configuration
+
+### To Enable Live Instagram:
+1. Set INSTAGRAM_ACCESS_TOKEN environment variable
+2. Set INSTAGRAM_APP_ID environment variable
+3. Set INSTAGRAM_APP_SECRET environment variable
 
 ## Future Tasks
 - Remove CherryHub mock mode (when DNS available)
 - Stripe payment integration for VIP bookings/auctions
+- Connect Instagram with production API credentials
 
 ## Known Mocked Services
 - **CherryHub Integration**: Running in mock mode (DNS not resolvable)
-- **Social Feed**: Using hardcoded mock data
+- **Instagram Integration**: Running in demo mode (no API credentials yet)
