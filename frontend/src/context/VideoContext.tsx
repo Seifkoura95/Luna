@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useRef } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { AppState, AppStateStatus, Platform } from 'react-native';
 import { useVideoPlayer, VideoPlayer } from 'expo-video';
 
 // Compressed Luna Group video background
@@ -15,22 +15,28 @@ export const useSharedVideo = () => useContext(VideoContext);
 
 export const SharedVideoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const appState = useRef(AppState.currentState);
+  const [isReady, setIsReady] = useState(false);
   
   // Create a single video player instance that persists across the app
   const player = useVideoPlayer(VIDEO_URL, player => {
     player.loop = true;
     player.muted = true;
-    player.playbackRate = 1.0;
     player.play();
   });
 
   // Handle app state changes to keep video playing
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (player) {
         if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
           // App came to foreground - resume video
-          player.play();
+          try {
+            player.play();
+          } catch (e) {
+            console.log('Error resuming video:', e);
+          }
         }
         appState.current = nextAppState;
       }
@@ -43,39 +49,51 @@ export const SharedVideoProvider: React.FC<{ children: React.ReactNode }> = ({ c
     };
   }, [player]);
 
-  // Keep checking if video is playing and restart if needed
+  // Monitor player status and restart if stopped
   useEffect(() => {
-    if (!player) return;
+    if (!player || Platform.OS === 'web') return;
 
-    const checkInterval = setInterval(() => {
-      if (player && !player.playing) {
-        player.play();
-      }
-    }, 2000); // Check every 2 seconds
-
-    return () => clearInterval(checkInterval);
-  }, [player]);
-
-  // Handle video errors and restart
-  useEffect(() => {
-    if (!player) return;
-
-    const handleStatusChange = () => {
-      // If video stopped for any reason, try to restart
-      if (player && !player.playing) {
-        setTimeout(() => {
+    const subscription = player.addListener('statusChange', ({ status }) => {
+      console.log('Video status:', status);
+      
+      if (status === 'readyToPlay') {
+        setIsReady(true);
+        if (!player.playing) {
           player.play();
-        }, 100);
+        }
+      } else if (status === 'idle' || status === 'error') {
+        // Video stopped or errored - try to restart
+        setTimeout(() => {
+          try {
+            player.play();
+          } catch (e) {
+            console.log('Error restarting video:', e);
+          }
+        }, 500);
       }
-    };
-
-    // Listen to status changes
-    player.addListener('statusChange', handleStatusChange);
+    });
 
     return () => {
-      player.removeListener('statusChange', handleStatusChange);
+      subscription?.remove();
     };
   }, [player]);
+
+  // Polling fallback to ensure video keeps playing
+  useEffect(() => {
+    if (!player || Platform.OS === 'web') return;
+
+    const checkInterval = setInterval(() => {
+      try {
+        if (player && !player.playing && isReady) {
+          player.play();
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    }, 3000); // Check every 3 seconds
+
+    return () => clearInterval(checkInterval);
+  }, [player, isReady]);
 
   return (
     <VideoContext.Provider value={{ player }}>
