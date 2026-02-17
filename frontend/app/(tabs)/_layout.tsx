@@ -40,8 +40,8 @@ const HeaderRight = () => {
 export default function TabLayout() {
   return (
     <View style={styles.rootContainer}>
-      {/* Global Video Background */}
-      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+      {/* Simple black background with Luna glow */}
+      <VideoBackground />
       
       <Tabs
         screenOptions={{
