@@ -26,6 +26,7 @@ import { PageHeader } from '../src/components/PageHeader';
 import { StarfieldBackground } from '../src/components/StarfieldBackground';
 import { GlassCard } from '../src/components/GlassCard';
 import { useAuthStore } from '../src/store/authStore';
+import { api } from '../src/utils/api';
 
 
 const { width } = Dimensions.get('window');
