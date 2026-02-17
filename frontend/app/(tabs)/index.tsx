@@ -335,10 +335,11 @@ const styles = StyleSheet.create({
   logo: {
     width: 240,
     height: 70,
-    marginBottom: 14,
+    marginBottom: 10,
   },
   statusRow: {
     alignItems: 'center',
+    minHeight: 40,
   },
   liveStatus: {
     flexDirection: 'row',
