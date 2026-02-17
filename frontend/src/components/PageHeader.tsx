@@ -33,7 +33,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       {showLogo && (
         <Image 
           source={{ uri: LUNA_GROUP_LOGO }} 
-          style={compactLogo ? styles.logoCompact : styles.logo}
+          style={styles.logo}
           contentFit="contain"
         />
       )}
@@ -66,14 +66,9 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 12,
+    marginBottom: 20,
   },
   logo: {
-    width: 260,
-    height: 75,
-    marginBottom: 10,
-  },
-  logoCompact: {
     width: 260,
     height: 75,
     marginBottom: 10,
@@ -84,6 +79,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
     letterSpacing: 2.5,
     textTransform: 'uppercase',
+    marginTop: 8,
   },
   subtitle: {
     fontSize: 12,
