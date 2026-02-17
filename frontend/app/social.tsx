@@ -492,7 +492,8 @@ export default function SocialFeedScreen() {
         <PageHeader 
           title="SOCIAL"
           description="See what your friends are up to"
-          showLogo={false}
+          showLogo={true}
+          compactLogo={true}
         />
 
         {/* Tab Selector */}
