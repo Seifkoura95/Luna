@@ -107,10 +107,11 @@ class EventfindaService:
     
     async def _rate_limit(self):
         """Ensure we don't exceed rate limits"""
-        now = datetime.now()
-        elapsed = (now - self._last_request_time).total_seconds()
-        if elapsed < self._rate_limit_seconds:
-            await asyncio.sleep(self._rate_limit_seconds - elapsed)
+        if self._last_request_time is not None:
+            now = datetime.now()
+            elapsed = (now - self._last_request_time).total_seconds()
+            if elapsed < self._rate_limit_seconds:
+                await asyncio.sleep(self._rate_limit_seconds - elapsed)
         self._last_request_time = datetime.now()
     
     async def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
