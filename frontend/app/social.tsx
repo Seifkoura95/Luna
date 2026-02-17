@@ -460,7 +460,7 @@ export default function SocialFeedScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <StarfieldBackground starCount={30} />
+        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <ActivityIndicator size="large" color={colors.accent} />
         <Text style={styles.loadingText}>Loading social feed...</Text>
       </View>
@@ -469,7 +469,7 @@ export default function SocialFeedScreen() {
 
   return (
     <View style={styles.container}>
-      <StarfieldBackground starCount={60} />
+      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       {/* Back Button */}
       <View style={[styles.backButtonContainer, { paddingTop: insets.top + spacing.sm }]}>

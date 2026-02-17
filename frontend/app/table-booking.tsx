@@ -247,7 +247,7 @@ export default function TableBookingScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StarfieldBackground starCount={40} />
+      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
 
       {/* Header */}
       <View style={styles.header}>

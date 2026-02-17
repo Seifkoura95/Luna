@@ -131,7 +131,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <StarfieldBackground starCount={40} />
+      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
 
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <TouchableOpacity

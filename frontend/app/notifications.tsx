@@ -173,7 +173,7 @@ export default function NotificationsScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <StarfieldBackground starCount={40} />
+        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <ActivityIndicator color={colors.accent} style={{ marginTop: 100 }} />
       </View>
     );
@@ -181,7 +181,7 @@ export default function NotificationsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StarfieldBackground starCount={40} />
+      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
 
       {/* Header */}
       <View style={styles.header}>

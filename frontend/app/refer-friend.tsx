@@ -94,7 +94,7 @@ export default function ReferFriendScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <StarfieldBackground starCount={40} />
+        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
         </View>
@@ -104,7 +104,7 @@ export default function ReferFriendScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StarfieldBackground starCount={40} />
+      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
 
       {/* Header */}
       <View style={styles.header}>
