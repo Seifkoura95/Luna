@@ -20,7 +20,7 @@ import { api } from '../src/utils/api';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { StarfieldBackground } from '../src/components/StarfieldBackground';
+import { VideoBackground } from '../src/components/VideoBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
