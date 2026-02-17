@@ -327,13 +327,13 @@ const styles = StyleSheet.create({
   // Header
   header: {
     alignItems: 'center',
-    marginBottom: 20,
-    paddingTop: 8,
+    marginBottom: 24,
+    paddingTop: 12,
   },
   logo: {
-    width: 220,
-    height: 60,
-    marginBottom: 16,
+    width: 240,
+    height: 70,
+    marginBottom: 14,
   },
   statusRow: {
     alignItems: 'center',
@@ -341,11 +341,13 @@ const styles = StyleSheet.create({
   liveStatus: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,212,170,0.12)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: 'rgba(0,212,170,0.15)',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 24,
     gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0,212,170,0.3)',
   },
   liveDot: {
     width: 8,
@@ -362,16 +364,19 @@ const styles = StyleSheet.create({
   closedStatus: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   closedText: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
     color: colors.textMuted,
+    letterSpacing: 0.5,
   },
 
   // Hero
