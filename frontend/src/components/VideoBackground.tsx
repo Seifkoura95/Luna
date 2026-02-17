@@ -66,6 +66,7 @@ const WebVideoBackground: React.FC<{ overlayOpacity: number }> = ({ overlayOpaci
           width: '100%',
           height: '100%',
           objectFit: 'cover',
+          zIndex: 0,
         }}
       />
       
@@ -89,12 +90,13 @@ const WebVideoBackground: React.FC<{ overlayOpacity: number }> = ({ overlayOpaci
             objectFit: 'cover',
             opacity: isLoaded ? 1 : 0,
             transition: 'opacity 0.5s ease-in-out',
+            zIndex: 1,
           }}
         />
       )}
       
       {/* Frosted glass effect for web */}
-      <View 
+      <div 
         style={{
           position: 'absolute',
           top: 0,
@@ -102,9 +104,9 @@ const WebVideoBackground: React.FC<{ overlayOpacity: number }> = ({ overlayOpaci
           right: 0,
           bottom: 0,
           backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`,
-          // @ts-ignore - Web-specific properties
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
+          zIndex: 2,
         }}
       />
     </View>
