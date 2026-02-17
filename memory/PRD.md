@@ -261,7 +261,13 @@ Events are matched by checking if the venue_name, location, or address contains:
 - Remove CherryHub mock mode (when DNS available)
 - Stripe payment integration for VIP bookings/auctions
 - Connect Instagram with production API credentials
+- Update Juju and Night Market venue thumbnail images
+- Add "Luna glow" effect enhancement to background
+- Implement custom loading screen with Luna logo
 
 ## Known Mocked Services
 - **CherryHub Integration**: Running in mock mode (DNS not resolvable)
 - **Instagram Integration**: Running in demo mode (no API credentials yet)
+
+## Test Reports
+- /app/test_reports/iteration_5.json - Latest full test (Feb 17, 2025) - 100% pass rate
