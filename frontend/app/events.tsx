@@ -245,42 +245,56 @@ export default function EventsListPage() {
           {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} found
         </Text>
 
+        {/* Loading State */}
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.accent} />
+            <Text style={styles.loadingText}>Loading events...</Text>
+          </View>
+        )}
+
         {/* Events List */}
-        <View style={styles.eventsList}>
-          {filteredEvents.map((event) => (
-            <TouchableOpacity
-              key={event.id}
-              style={styles.eventCard}
-              onPress={() => handleEventPress(event.id)}
-              activeOpacity={0.8}
-            >
-              <Image
-                source={{ uri: event.image || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800' }}
-                style={styles.eventImage}
-                contentFit="cover"
-              />
-              <View style={styles.eventInfo}>
-                <View style={styles.eventDateBadge}>
-                  <Text style={styles.eventDateText}>{formatDate(event.date)}</Text>
-                  {event.time && <Text style={styles.eventTimeText}>{formatTime(event.time)}</Text>}
-                </View>
-                <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
-                <View style={styles.eventMeta}>
-                  <Ionicons name="location-outline" size={14} color={colors.accent} />
-                  <Text style={styles.eventVenue} numberOfLines={1}>
-                    {event.luna_venue || event.venue_name}
-                  </Text>
-                </View>
-                {event.is_free && (
-                  <View style={styles.freeBadge}>
-                    <Text style={styles.freeBadgeText}>FREE</Text>
+        {!loading && (
+          <View style={styles.eventsList}>
+            {filteredEvents.map((event) => (
+              <TouchableOpacity
+                key={event.id}
+                style={styles.eventCard}
+                onPress={() => handleEventPress(event)}
+                activeOpacity={0.8}
+              >
+                <Image
+                  source={{ uri: event.image || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800' }}
+                  style={styles.eventImage}
+                  contentFit="cover"
+                />
+                <View style={styles.eventInfo}>
+                  <View style={styles.eventDateBadge}>
+                    <Text style={styles.eventDateText}>{formatDate(event.date)}</Text>
+                    {event.time && <Text style={styles.eventTimeText}>{formatTime(event.time)}</Text>}
                   </View>
-                )}
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-            </TouchableOpacity>
-          ))}
-        </View>
+                  <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
+                  <View style={styles.eventMeta}>
+                    <Ionicons name="location-outline" size={14} color={colors.accent} />
+                    <Text style={styles.eventVenue} numberOfLines={1}>
+                      {event.luna_venue || event.venue_name}
+                    </Text>
+                  </View>
+                  {/* Book Tickets Button */}
+                  <TouchableOpacity 
+                    style={styles.bookButton}
+                    onPress={() => handleBookTickets(event)}
+                  >
+                    <Text style={styles.bookButtonText}>
+                      {event.is_free ? 'RSVP' : 'BOOK TICKETS'}
+                    </Text>
+                    <Ionicons name="open-outline" size={14} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {filteredEvents.length === 0 && !loading && (
           <View style={styles.emptyState}>
