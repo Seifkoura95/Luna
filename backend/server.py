@@ -599,16 +599,197 @@ async def get_missions(request: Request, venue_id: Optional[str] = None):
         mission["progress"] = 0
     return clean_mongo_docs(missions)
 
-# ====== EVENTS API ======
+# ====== EVENTS API (Powered by Eventfinda) ======
+
+from eventfinda_service import (
+    eventfinda_service,
+    get_brisbane_events,
+    get_gold_coast_events,
+    get_tonight,
+    get_featured,
+    search as search_events
+)
 
 @api_router.get("/events")
-async def get_events(venue_id: Optional[str] = None):
-    now = datetime.now(timezone.utc)
-    query = {"event_date": {"$gte": now}}
-    if venue_id:
-        query["venue_id"] = venue_id
-    events = await db.events.find(query).sort("event_date", 1).to_list(50)
-    return clean_mongo_docs(events)
+async def get_events(
+    venue_id: Optional[str] = None,
+    location: Optional[str] = "brisbane",
+    limit: int = 20,
+    category: Optional[str] = None
+):
+    """
+    Get events from Eventfinda (real-time data)
+    
+    Args:
+        venue_id: Optional filter by Luna venue ID
+        location: brisbane or gold-coast
+        limit: Number of events to return (max 50)
+        category: Optional category filter
+    """
+    try:
+        events = await eventfinda_service.get_events(
+            location=location,
+            rows=min(limit, 50),
+            category=category
+        )
+        
+        # Filter by venue if specified
+        if venue_id:
+            events = [e for e in events if e.get("venue_id") == venue_id]
+        
+        return {
+            "events": events,
+            "total": len(events),
+            "source": "eventfinda",
+            "location": location
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch events: {e}")
+        # Fallback to database events
+        now = datetime.now(timezone.utc)
+        query = {"event_date": {"$gte": now}}
+        if venue_id:
+            query["venue_id"] = venue_id
+        db_events = await db.events.find(query).sort("event_date", 1).to_list(limit)
+        return {
+            "events": clean_mongo_docs(db_events),
+            "total": len(db_events),
+            "source": "database",
+            "location": location
+        }
+
+
+@api_router.get("/events/featured")
+async def get_featured_events(location: str = "brisbane", limit: int = 5):
+    """Get featured/popular events"""
+    try:
+        events = await eventfinda_service.get_featured_events(location=location, limit=limit)
+        return {
+            "events": events,
+            "total": len(events),
+            "source": "eventfinda"
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch featured events: {e}")
+        return {"events": [], "total": 0, "source": "eventfinda", "error": str(e)}
+
+
+@api_router.get("/events/tonight")
+async def get_tonight_events(location: str = "brisbane", limit: int = 10):
+    """Get events happening tonight"""
+    try:
+        events = await eventfinda_service.get_tonight_events(location=location, limit=limit)
+        return {
+            "events": events,
+            "total": len(events),
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "source": "eventfinda"
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch tonight's events: {e}")
+        return {"events": [], "total": 0, "source": "eventfinda", "error": str(e)}
+
+
+@api_router.get("/events/weekend")
+async def get_weekend_events(location: str = "brisbane", limit: int = 20):
+    """Get events happening this weekend"""
+    try:
+        events = await eventfinda_service.get_weekend_events(location=location, limit=limit)
+        return {
+            "events": events,
+            "total": len(events),
+            "source": "eventfinda"
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch weekend events: {e}")
+        return {"events": [], "total": 0, "source": "eventfinda", "error": str(e)}
+
+
+@api_router.get("/events/upcoming")
+async def get_upcoming_events(location: str = "brisbane", limit: int = 30):
+    """Get upcoming events (next 30 days)"""
+    try:
+        events = await eventfinda_service.get_upcoming_events(location=location, limit=limit)
+        return {
+            "events": events,
+            "total": len(events),
+            "source": "eventfinda"
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch upcoming events: {e}")
+        return {"events": [], "total": 0, "source": "eventfinda", "error": str(e)}
+
+
+@api_router.get("/events/feed")
+async def get_events_feed(limit: int = 30):
+    """
+    Get combined events feed from Brisbane and Gold Coast
+    
+    Returns categorized events: tonight, tomorrow, featured, upcoming
+    """
+    try:
+        feed = await eventfinda_service.get_combined_feed(limit=limit)
+        return feed
+    except Exception as e:
+        logger.error(f"Failed to fetch events feed: {e}")
+        return {
+            "tonight": [],
+            "tomorrow": [],
+            "featured": [],
+            "upcoming": [],
+            "total_count": 0,
+            "source": "eventfinda",
+            "error": str(e)
+        }
+
+
+@api_router.get("/events/search")
+async def search_events_api(
+    q: str,
+    location: str = "brisbane",
+    limit: int = 20
+):
+    """Search events by keyword"""
+    try:
+        events = await eventfinda_service.search_events(
+            query=q,
+            location=location,
+            limit=limit
+        )
+        return {
+            "events": events,
+            "total": len(events),
+            "query": q,
+            "source": "eventfinda"
+        }
+    except Exception as e:
+        logger.error(f"Failed to search events: {e}")
+        return {"events": [], "total": 0, "query": q, "source": "eventfinda", "error": str(e)}
+
+
+@api_router.get("/events/{event_id}")
+async def get_event_detail(event_id: str):
+    """
+    Get event details by ID
+    
+    Supports both Eventfinda IDs (ef_123456) and local database IDs
+    """
+    # Check if it's an Eventfinda event
+    if event_id.startswith("ef_"):
+        ef_id = int(event_id.replace("ef_", ""))
+        try:
+            event = await eventfinda_service.get_event_by_id(ef_id)
+            if event:
+                return event
+        except Exception as e:
+            logger.error(f"Failed to fetch Eventfinda event {ef_id}: {e}")
+    
+    # Fallback to database
+    event = await db.events.find_one({"id": event_id})
+    if event:
+        return clean_mongo_doc(event)
+    
+    raise HTTPException(status_code=404, detail="Event not found")
 
 # ====== BOOSTS API ======
 
