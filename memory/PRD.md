@@ -134,10 +134,15 @@ Premium hospitality VIP operating system for Luna Group venues (Eclipse, After D
 - **Eventfinda Integration** - Real-time events from Brisbane & Gold Coast
 - **Luna Group Venue Filtering** - Events feed now only shows Luna Group venues (Feb 17, 2025)
 - **Improved Text Readability** - Enhanced gradients and text shadows on event cards (Feb 17, 2025)
-- **Video Background** - Added app-wide video background with frosted glass overlay (Feb 17, 2025)
-  - Uses Darude Recap.mp4 from Luna Group
-  - Frosted glass blur effect with 40% dark overlay
-  - Fallback image for web preview (full video works on native iOS/Android)
+- **Black Background** - Simple black background with subtle gradient glow (Feb 17, 2025)
+  - Replaced video background for better performance
+  - Luna red and gold gradient effects in top corners
+  - Works on both native (Expo Go) and web preview
+- **Event Pages Fixed** (Feb 17, 2025)
+  - /events page now correctly loads and displays Luna Group events
+  - /event/[id] detail page fully functional with event data
+  - Fixed "unmatched route" error when clicking events
+  - Book Tickets button links to Eventfinda for ticket purchase
 
 ## Eventfinda Integration ✅ COMPLETE (Feb 2025)
 
