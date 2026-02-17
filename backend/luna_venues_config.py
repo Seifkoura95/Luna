@@ -103,12 +103,12 @@ LUNA_VENUES = {
         "long_description": "Su Casa Brisbane is your ultimate rooftop escape in the heart of Fortitude Valley. Enjoy stunning city views, signature cocktails, and shareable tapas as the sun sets. As night falls, the vibe transforms with resident DJs spinning the best house, disco, and party anthems. Available for private events and VIP experiences.",
         "features": ["booth_booking", "fast_lane", "auctions", "rooftop_terrace"],
         "points_rate": 1.0,
-        "image_url": "https://images.unsplash.com/photo-1621275471769-e6aa344546d5?w=800",
-        "hero_image": "https://images.unsplash.com/photo-1493246318656-5bfd4cfb29b8?w=1200",
+        "image_url": "/api/photos/image/sucasa-brisbane/@CUTBYJACK-10%20(1).jpg",
+        "hero_image": "/api/photos/image/sucasa-brisbane/@CUTBYJACK-2.jpg",
         "gallery": [
-            "https://images.unsplash.com/photo-1613066697301-d7dccfc86bb5?w=800",
-            "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800",
-            "https://images.unsplash.com/photo-1525268323446-0505b6fe7778?w=800"
+            "/api/photos/image/sucasa-brisbane/@CUTBYJACK-10%20(1).jpg",
+            "/api/photos/image/sucasa-brisbane/@CUTBYJACK-2.jpg",
+            "/api/photos/image/sucasa-brisbane/@CUTBYJACK-29.jpg"
         ],
         "operating_hours": {
             "wednesday": "5:00 PM - 3:00 AM",
@@ -142,12 +142,12 @@ LUNA_VENUES = {
         "long_description": "Su Casa Gold Coast brings the renowned Su Casa experience to Surfers Paradise. Open Thursday through Sunday, experience the best in Hip Hop, R&B, and party anthems. Premium bottle service, VIP booths, and the Gold Coast's most electric atmosphere await you in the heart of the action on Orchid Avenue.",
         "features": ["booth_booking", "fast_lane", "auctions", "bottle_service"],
         "points_rate": 1.0,
-        "image_url": "https://images.unsplash.com/photo-1613066697301-d7dccfc86bb5?w=800",
-        "hero_image": "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=1200",
+        "image_url": "/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-55.jpg",
+        "hero_image": "/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-68%20(1).jpg",
         "gallery": [
-            "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800",
-            "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
-            "https://images.unsplash.com/photo-1545128485-c400ce7b23d5?w=800"
+            "/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-55.jpg",
+            "/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-68%20(1).jpg",
+            "/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-128%20(1).jpg"
         ],
         "operating_hours": {
             "thursday": "9:00 PM - 3:00 AM",
