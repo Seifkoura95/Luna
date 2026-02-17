@@ -129,8 +129,39 @@ Premium hospitality VIP operating system for Luna Group venues (Eclipse, After D
 - Venues page with category filters (All/Nightclubs/Dining)
 - Rewards page overhauled with new missions and Buy Points UI
 - App-wide font standardization to Montserrat
-- Header redesign (removed rotating moon, larger logo)
+- Header redesign (removed rotating moon, larger logo 260x75)
 - Profile page with Quick Actions hub for Photos, Social, Auctions, Rewards, Referrals
+- **Eventfinda Integration** - Real-time events from Brisbane & Gold Coast
+
+## Eventfinda Integration ✅ COMPLETE (Feb 2025)
+
+### Features:
+- Real-time events from Eventfinda API
+- Brisbane and Gold Coast location support
+- 5-minute cache for rate limit compliance (1 req/sec)
+- Event categories: concerts, festivals, nightlife, DJ nights
+
+### API Endpoints:
+- GET /api/events - All events
+- GET /api/events/feed - Categorized feed (tonight, tomorrow, featured, upcoming)
+- GET /api/events/tonight - Tonight's events
+- GET /api/events/featured - Featured/popular events
+- GET /api/events/weekend - Weekend events
+- GET /api/events/upcoming - Next 30 days
+- GET /api/events/search?q= - Search events
+- GET /api/events/{id} - Event detail
+
+### Event Data Structure:
+- id: ef_XXXXXX (Eventfinda ID)
+- title, description, date (YYYY-MM-DD), time (HH:MM)
+- venue_name, location, address
+- image (from Eventfinda CDN with Unsplash fallback)
+- category, is_free, is_featured, url
+- source: "eventfinda"
+
+### Credentials (backend/.env):
+- EVENTFINDA_USERNAME=lunagrouployaltyapp
+- EVENTFINDA_PASSWORD=xytjdrgk6rjs
 
 ## Buy Points System ✅ COMPLETE (Feb 2025)
 
