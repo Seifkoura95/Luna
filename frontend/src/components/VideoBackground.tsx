@@ -16,10 +16,25 @@ const VIDEO_URL = 'https://customer-assets.emergentagent.com/job_2fca5f5e-e2fc-4
 // Web-specific video component using HTML5 video
 const WebVideoBackground: React.FC<{ overlayOpacity: number }> = ({ overlayOpacity }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isLoaded, setIsLoaded] = React.useState(false);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.play().catch(e => console.log('Autoplay blocked:', e));
+    const video = videoRef.current;
+    if (video) {
+      // Try to play when loaded
+      const handleCanPlay = () => {
+        setIsLoaded(true);
+        video.play().catch(e => console.log('Autoplay blocked:', e));
+      };
+      
+      video.addEventListener('canplay', handleCanPlay);
+      
+      // Also try immediate play
+      video.play().catch(e => console.log('Initial autoplay blocked:', e));
+      
+      return () => {
+        video.removeEventListener('canplay', handleCanPlay);
+      };
     }
   }, []);
 
@@ -32,6 +47,7 @@ const WebVideoBackground: React.FC<{ overlayOpacity: number }> = ({ overlayOpaci
         loop
         muted
         playsInline
+        preload="auto"
         style={{
           position: 'absolute',
           top: 0,
@@ -39,6 +55,8 @@ const WebVideoBackground: React.FC<{ overlayOpacity: number }> = ({ overlayOpaci
           width: '100%',
           height: '100%',
           objectFit: 'cover',
+          opacity: isLoaded ? 1 : 0,
+          transition: 'opacity 0.5s ease-in-out',
         }}
       />
       {/* Frosted glass effect for web */}
@@ -49,10 +67,10 @@ const WebVideoBackground: React.FC<{ overlayOpacity: number }> = ({ overlayOpaci
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: `rgba(0, 0, 0, ${overlayOpacity + 0.3})`,
+          backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`,
           // @ts-ignore - Web-specific properties
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
         }}
       />
     </View>
