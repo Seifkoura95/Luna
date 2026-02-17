@@ -55,11 +55,18 @@ const WebVideoBackground: React.FC<{ overlayOpacity: number }> = ({ overlayOpaci
 
   return (
     <View style={StyleSheet.absoluteFill}>
-      {/* Fallback image - always present as base layer */}
-      <ImageBackground
-        source={{ uri: FALLBACK_IMAGE }}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
+      {/* Fallback image using HTML img tag - always present as base layer */}
+      <img
+        src={FALLBACK_IMAGE}
+        alt=""
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+        }}
       />
       
       {/* Video layer - only shown when loaded and no errors */}
