@@ -35,9 +35,13 @@ Premium hospitality VIP operating system for Luna Group venues (Eclipse, After D
 - Time-based point multipliers
 - Special event boosts
 
-### Events Calendar ✅
-- Upcoming events display
-- RSVP functionality
+### Events Calendar ✅ (Powered by Eventfinda)
+- Real-time events from Eventfinda API
+- Brisbane and Gold Coast coverage
+- Event categories: concerts, festivals, nightlife, DJ nights
+- Tonight, Tomorrow, Weekend, Upcoming views
+- Event search functionality
+- Featured events display
 
 ### Membership Tiers (Mock) ✅
 - Bronze (Free)
