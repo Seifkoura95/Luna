@@ -115,11 +115,11 @@ export default function HomeScreen() {
   };
 
   const formatDate = (event: any) => {
-    const dateStr = event?.event_date || event?.date;
-    if (!dateStr) return 'Tonight';
+    const dateStr = event?.event_date || event?.date || event?.datetime_start;
+    if (!dateStr) return 'Upcoming';
     try {
       const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return 'Tonight';
+      if (isNaN(date.getTime())) return 'Upcoming';
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const eventDay = new Date(date);
