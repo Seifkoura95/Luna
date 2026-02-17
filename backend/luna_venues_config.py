@@ -1,4 +1,8 @@
 """Luna Group Venues Configuration - Real venue data"""
+import os
+
+# Get base URL for API (for photo URLs)
+API_BASE_URL = os.environ.get('API_BASE_URL', 'https://event-discovery-app-1.preview.emergentagent.com')
 
 # Venue logos (uploaded by client)
 VENUE_LOGOS = {
@@ -27,12 +31,12 @@ LUNA_VENUES = {
         "long_description": "Eclipse is Brisbane's premier destination for world-class nightlife. Featuring state-of-the-art sound systems, immersive lighting installations, and hosting international and domestic headliners across hip hop, RnB, house, and electronic genres. Experience the transformation of Brisbane's entertainment scene in the heart of Fortitude Valley.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos", "vip_tables"],
         "points_rate": 1.0,
-        "image_url": "/api/photos/image/eclipse/@CUTBYJACK%20(40%20of%2075).jpg",
-        "hero_image": "/api/photos/image/eclipse/@CUTBYJACK%20(42%20of%2075).jpg",
+        "image_url": f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK%20(40%20of%2075).jpg",
+        "hero_image": f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK%20(42%20of%2075).jpg",
         "gallery": [
-            "/api/photos/image/eclipse/@CUTBYJACK%20(40%20of%2075).jpg",
-            "/api/photos/image/eclipse/@CUTBYJACK%20(42%20of%2075).jpg",
-            "/api/photos/image/eclipse/@CUTBYJACK-1%20(3).jpg"
+            f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK%20(40%20of%2075).jpg",
+            f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK%20(42%20of%2075).jpg",
+            f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK-1%20(3).jpg"
         ],
         "operating_hours": {
             "friday": "9:00 PM - 3:00 AM",
@@ -65,12 +69,12 @@ LUNA_VENUES = {
         "long_description": "After Dark transforms the Eclipse space into Brisbane's ultimate destination for urban music. Every Saturday night, experience the best in hip hop, RnB, Afrobeats, and global sounds across multiple rooms. Premium bottle service, VIP booths, and an incredible atmosphere await. The best crowd, best sound, and best vibes in Brisbane.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos", "bottle_service"],
         "points_rate": 1.0,
-        "image_url": "/api/photos/image/afterdark/ER%20(102%20of%20111).jpg",
-        "hero_image": "/api/photos/image/afterdark/ER%20(42%20of%20111).jpg",
+        "image_url": f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(102%20of%20111).jpg",
+        "hero_image": f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(42%20of%20111).jpg",
         "gallery": [
-            "/api/photos/image/afterdark/ER%20(102%20of%20111).jpg",
-            "/api/photos/image/afterdark/ER%20(42%20of%20111).jpg",
-            "/api/photos/image/afterdark/ER%20(45%20of%20111).jpg"
+            f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(102%20of%20111).jpg",
+            f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(42%20of%20111).jpg",
+            f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(45%20of%20111).jpg"
         ],
         "operating_hours": {
             "friday": "9:00 PM - 3:00 AM",
