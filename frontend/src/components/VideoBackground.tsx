@@ -2,16 +2,11 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-interface VideoBackgroundProps {
-  intensity?: number;
-  tint?: 'light' | 'dark' | 'default';
-  overlayOpacity?: number;
+interface AppBackgroundProps {
   children?: React.ReactNode;
 }
 
-export const VideoBackground: React.FC<VideoBackgroundProps> = ({
-  children,
-}) => {
+export const AppBackground: React.FC<AppBackgroundProps> = ({ children }) => {
   return (
     <View style={styles.container}>
       {/* Black background */}
@@ -19,15 +14,15 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
       
       {/* Subtle Luna glow in top left */}
       <LinearGradient
-        colors={['rgba(227, 24, 55, 0.15)', 'rgba(227, 24, 55, 0.05)', 'transparent']}
+        colors={['rgba(227, 24, 55, 0.12)', 'rgba(227, 24, 55, 0.04)', 'transparent']}
         style={styles.glowTopLeft}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
       
-      {/* Subtle secondary glow */}
+      {/* Subtle gold glow */}
       <LinearGradient
-        colors={['rgba(212, 175, 55, 0.08)', 'transparent']}
+        colors={['rgba(212, 175, 55, 0.06)', 'transparent']}
         style={styles.glowTopRight}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -38,6 +33,11 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
     </View>
   );
 };
+
+// Keep VideoBackground as an alias for backwards compatibility
+export const VideoBackground = AppBackground;
+
+export default AppBackground;
 
 const styles = StyleSheet.create({
   container: {
@@ -52,23 +52,21 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -100,
     left: -100,
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    opacity: 0.6,
+    width: 350,
+    height: 350,
+    borderRadius: 175,
+    opacity: 0.5,
   },
   glowTopRight: {
     position: 'absolute',
     top: -50,
     right: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    opacity: 0.4,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    opacity: 0.3,
   },
   content: {
     ...StyleSheet.absoluteFillObject,
   },
 });
-
-export default VideoBackground;
