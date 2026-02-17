@@ -134,6 +134,10 @@ Premium hospitality VIP operating system for Luna Group venues (Eclipse, After D
 - **Eventfinda Integration** - Real-time events from Brisbane & Gold Coast
 - **Luna Group Venue Filtering** - Events feed now only shows Luna Group venues (Feb 17, 2025)
 - **Improved Text Readability** - Enhanced gradients and text shadows on event cards (Feb 17, 2025)
+- **Video Background** - Added app-wide video background with frosted glass overlay (Feb 17, 2025)
+  - Uses Darude Recap.mp4 from Luna Group
+  - Frosted glass blur effect with 40% dark overlay
+  - Fallback image for web preview (full video works on native iOS/Android)
 
 ## Eventfinda Integration ✅ COMPLETE (Feb 2025)
 
