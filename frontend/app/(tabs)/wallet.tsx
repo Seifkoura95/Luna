@@ -198,6 +198,32 @@ export default function WalletScreen() {
     setRefreshing(false);
   };
 
+  const handleCherryHubLogout = () => {
+    Alert.alert(
+      'Disconnect Cherry Hub',
+      'Are you sure you want to disconnect your Cherry Hub membership? You can reconnect anytime.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Disconnect',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setCherryHubStatus({ registered: false, member_key: null });
+              setCherryHubPoints(0);
+              if (Platform.OS !== 'web') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }
+              Alert.alert('Disconnected', 'Your Cherry Hub membership has been disconnected from this app.');
+            } catch (e) {
+              Alert.alert('Error', 'Failed to disconnect Cherry Hub membership');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const formatEventDate = (dateString: string) => {
     try {
       const date = parseISO(dateString);
