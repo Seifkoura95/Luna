@@ -159,6 +159,31 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const handleCherryHubLogout = () => {
+    Alert.alert(
+      'Disconnect Cherry Hub',
+      'Are you sure you want to disconnect your Cherry Hub membership? You can reconnect anytime.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Disconnect',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Reset local Cherry Hub status
+              setCherryHubStatus({ registered: false, member_key: null });
+              setCherryHubPoints(0);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Alert.alert('Disconnected', 'Your Cherry Hub membership has been disconnected from this app.');
+            } catch (e) {
+              Alert.alert('Error', 'Failed to disconnect Cherry Hub membership');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleGetQR = async () => {
     // Check if user is connected to CherryHub
     if (!cherryHubStatus.registered) {
