@@ -1,12 +1,14 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { StyleSheet, View, Dimensions, Platform, Text } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { StyleSheet, View, Dimensions, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AVPlaybackStatus, Video, ResizeMode } from 'expo-av';
 
-// Remote video URL
-const VIDEO_URL = 'https://customer-assets.emergentagent.com/job_61cbe233-3cbf-4ea2-80f1-8c789a51854e/artifacts/rg18z6d5_Darude%20Recap%20compressed%20again.mp4';
+// Try a known working test video first, then fall back to Luna video
+const TEST_VIDEO = 'https://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4';
+const LUNA_VIDEO = 'https://customer-assets.emergentagent.com/job_61cbe233-3cbf-4ea2-80f1-8c789a51854e/artifacts/rg18z6d5_Darude%20Recap%20compressed%20again.mp4';
 
-const { width, height } = Dimensions.get('window');
+// Use Luna video
+const VIDEO_URL = LUNA_VIDEO;
 
 interface VideoBackgroundProps {
   children?: React.ReactNode;
@@ -17,63 +19,41 @@ interface VideoBackgroundProps {
 
 export const VideoBackground: React.FC<VideoBackgroundProps> = ({ 
   children,
-  overlayOpacity = 0.35
+  overlayOpacity = 0.4
 }) => {
   const videoRef = useRef<Video>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
   const isNative = Platform.OS === 'ios' || Platform.OS === 'android';
 
-  const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
+  const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
     if (status.isLoaded) {
-      setIsPlaying(status.isPlaying);
-      // If loaded but not playing, try to play
-      if (!status.isPlaying && !status.isBuffering) {
-        videoRef.current?.playAsync().catch(console.error);
+      if (!isReady) setIsReady(true);
+      if (!status.isPlaying) {
+        videoRef.current?.playAsync();
       }
-    } else if (status.error) {
-      console.log('Playback error:', status.error);
-      setError(status.error);
-    }
-  };
-
-  const handleError = (err: string) => {
-    console.log('Video error:', err);
-    setError(err);
-  };
-
-  const handleLoad = async () => {
-    console.log('Video loaded, attempting to play...');
-    try {
-      await videoRef.current?.playAsync();
-    } catch (e) {
-      console.log('Play failed:', e);
     }
   };
 
   return (
     <View style={styles.container}>
-      {/* Video layer - positioned BEHIND everything */}
-      {isNative ? (
+      {isNative && (
         <Video
           ref={videoRef}
           source={{ uri: VIDEO_URL }}
-          style={styles.backgroundVideo}
+          rate={1.0}
+          volume={0}
+          isMuted={true}
           resizeMode={ResizeMode.COVER}
-          isLooping
-          isMuted
-          shouldPlay
-          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-          onError={handleError}
-          onLoad={handleLoad}
+          shouldPlay={true}
+          isLooping={true}
+          style={StyleSheet.absoluteFill}
+          onPlaybackStatusUpdate={onPlaybackStatusUpdate}
           useNativeControls={false}
         />
-      ) : (
-        <View style={styles.blackBg} />
       )}
       
-      {/* Dark overlay - only show when video is playing */}
-      <View style={[styles.overlay, { opacity: isPlaying ? overlayOpacity : 0.8 }]} />
+      {/* Black overlay - less opaque when video is ready */}
+      <View style={[styles.overlay, { opacity: isReady ? overlayOpacity : 0.9 }]} />
       
       {/* Luna glow effects */}
       <LinearGradient
@@ -90,8 +70,7 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
         end={{ x: 0, y: 1 }}
       />
 
-      {/* Content on top */}
-      {children && <View style={styles.content}>{children}</View>}
+      {children && <View style={StyleSheet.absoluteFill}>{children}</View>}
     </View>
   );
 };
@@ -101,23 +80,8 @@ export default VideoBackground;
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#000',
-  },
-  blackBg: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
-  },
-  backgroundVideo: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -140,8 +104,5 @@ const styles = StyleSheet.create({
     height: 250,
     borderRadius: 125,
     opacity: 0.3,
-  },
-  content: {
-    ...StyleSheet.absoluteFillObject,
   },
 });
