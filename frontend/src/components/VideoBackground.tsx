@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { StyleSheet, View, Dimensions, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { AVPlaybackStatus, Video, ResizeMode } from 'expo-av';
 
 // Remote video URL
 const VIDEO_URL = 'https://customer-assets.emergentagent.com/job_61cbe233-3cbf-4ea2-80f1-8c789a51854e/artifacts/rg18z6d5_Darude%20Recap%20compressed%20again.mp4';
@@ -15,41 +15,63 @@ interface VideoBackgroundProps {
   overlayOpacity?: number;
 }
 
-// Native video component using expo-video
-const NativeVideoBackground = () => {
-  const player = useVideoPlayer(VIDEO_URL, player => {
-    player.loop = true;
-    player.muted = true;
-    player.play();
-  });
-
-  return (
-    <VideoView
-      player={player}
-      style={styles.video}
-      contentFit="cover"
-      nativeControls={false}
-    />
-  );
-};
-
 export const VideoBackground: React.FC<VideoBackgroundProps> = ({ 
   children,
   overlayOpacity = 0.4
 }) => {
+  const videoRef = useRef<Video>(null);
+  const [status, setStatus] = useState<AVPlaybackStatus | null>(null);
   const isNative = Platform.OS === 'ios' || Platform.OS === 'android';
+
+  // Auto-play on mount for native
+  useEffect(() => {
+    if (isNative && videoRef.current) {
+      const playVideo = async () => {
+        try {
+          await videoRef.current?.playAsync();
+        } catch (e) {
+          console.log('Auto-play error:', e);
+        }
+      };
+      // Small delay to ensure video is loaded
+      setTimeout(playVideo, 100);
+    }
+  }, [isNative]);
+
+  const onPlaybackStatusUpdate = useCallback((newStatus: AVPlaybackStatus) => {
+    setStatus(newStatus);
+    if (newStatus.isLoaded && !newStatus.isPlaying) {
+      // Try to play if stopped
+      videoRef.current?.playAsync();
+    }
+  }, []);
 
   return (
     <View style={styles.container}>
       {/* Base black background */}
       <View style={styles.blackBg} />
       
-      {/* Video - only render on native */}
-      {isNative && <NativeVideoBackground />}
+      {/* Video - only render on native platforms */}
+      {isNative && (
+        <Video
+          ref={videoRef}
+          source={{ uri: VIDEO_URL }}
+          style={styles.video}
+          resizeMode={ResizeMode.COVER}
+          shouldPlay={true}
+          isLooping={true}
+          isMuted={true}
+          volume={0}
+          rate={1.0}
+          onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+          useNativeControls={false}
+          videoStyle={styles.videoInner}
+        />
+      )}
       
       {/* Semi-transparent overlay for text readability */}
       <LinearGradient
-        colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0.45)', 'rgba(0,0,0,0.35)']}
+        colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.3)']}
         style={styles.gradientOverlay}
       />
       
@@ -96,6 +118,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
+    right: 0,
+    bottom: 0,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+  },
+  videoInner: {
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
   },
