@@ -1077,6 +1077,28 @@ async def serve_photo(folder: str, filename: str):
     )
 
 
+
+# ====== VIDEO BACKGROUND ======
+@api_router.get("/video/background")
+async def serve_background_video():
+    """Serve the background video file"""
+    from fastapi.responses import FileResponse
+    
+    video_path = ROOT_DIR / "static" / "video" / "background.mp4"
+    if not video_path.exists():
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    return FileResponse(
+        video_path,
+        media_type="video/mp4",
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "Accept-Ranges": "bytes"
+        }
+    )
+
+
+
 # ====== REFERRAL SYSTEM ======
 
 REFERRAL_POINTS_REWARD = 10  # Points awarded when referred friend signs up
