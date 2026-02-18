@@ -1,5 +1,5 @@
-import React, { useRef, useCallback } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import React, { useRef, useCallback, useState } from 'react';
+import { StyleSheet, View, Dimensions, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 
@@ -17,36 +17,57 @@ interface VideoBackgroundProps {
 
 export const VideoBackground: React.FC<VideoBackgroundProps> = ({ 
   children,
-  overlayOpacity = 0.45  // Reduced overlay so video is more visible
+  overlayOpacity = 0.4
 }) => {
   const videoRef = useRef<Video>(null);
+  const [videoStatus, setVideoStatus] = useState<string>('loading');
 
   const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
-    if (status.isLoaded && !status.isPlaying) {
-      videoRef.current?.playAsync();
+    if (status.isLoaded) {
+      setVideoStatus(status.isPlaying ? 'playing' : 'paused');
+      if (!status.isPlaying) {
+        videoRef.current?.playAsync();
+      }
+    } else {
+      if (status.error) {
+        setVideoStatus(`error: ${status.error}`);
+        console.log('Video error:', status.error);
+      }
     }
   }, []);
 
+  const onError = (error: string) => {
+    console.log('Video onError:', error);
+    setVideoStatus(`onError: ${error}`);
+  };
+
+  const onLoad = () => {
+    console.log('Video loaded');
+    setVideoStatus('loaded');
+  };
+
   return (
     <View style={styles.container}>
-      {/* Base black background */}
-      <View style={styles.blackBg} />
-      
-      {/* Video background */}
+      {/* Video background - NO overlay initially to debug */}
       <Video
         ref={videoRef}
         source={localVideo}
         style={styles.video}
         resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping
-        isMuted
+        shouldPlay={true}
+        isLooping={true}
+        isMuted={true}
         onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+        onError={onError}
+        onLoad={onLoad}
         useNativeControls={false}
       />
       
-      {/* Dark overlay for text readability */}
-      <View style={[styles.overlay, { opacity: overlayOpacity }]} />
+      {/* Semi-transparent overlay for text readability */}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.3)']}
+        style={styles.gradientOverlay}
+      />
       
       {/* Subtle Luna glow in top left */}
       <LinearGradient
@@ -83,28 +104,21 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#000',
   },
-  blackBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#000',
-  },
   video: {
     position: 'absolute',
     top: 0,
     left: 0,
+    right: 0,
+    bottom: 0,
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
   },
-  overlay: {
+  gradientOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#000',
   },
   glowTopLeft: {
     position: 'absolute',
