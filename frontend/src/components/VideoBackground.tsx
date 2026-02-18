@@ -1,14 +1,16 @@
 import React, { useRef, useState } from 'react';
-import { StyleSheet, View, Dimensions, Platform } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AVPlaybackStatus, Video, ResizeMode } from 'expo-av';
+import Constants from 'expo-constants';
 
-// Try a known working test video first, then fall back to Luna video
-const TEST_VIDEO = 'https://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4';
-const LUNA_VIDEO = 'https://customer-assets.emergentagent.com/job_61cbe233-3cbf-4ea2-80f1-8c789a51854e/artifacts/rg18z6d5_Darude%20Recap%20compressed%20again.mp4';
+// Get backend URL from environment
+const BACKEND_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || 
+                    process.env.EXPO_PUBLIC_BACKEND_URL || 
+                    'https://luna-vip-app-1.preview.emergentagent.com';
 
-// Use Luna video
-const VIDEO_URL = LUNA_VIDEO;
+// Video URL from our backend
+const VIDEO_URL = `${BACKEND_URL}/api/video/background`;
 
 interface VideoBackgroundProps {
   children?: React.ReactNode;
@@ -27,11 +29,24 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
 
   const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
     if (status.isLoaded) {
-      if (!isReady) setIsReady(true);
+      if (!isReady) {
+        setIsReady(true);
+        console.log('Video loaded and ready');
+      }
       if (!status.isPlaying) {
         videoRef.current?.playAsync();
       }
+    } else if (status.error) {
+      console.log('Video playback error:', status.error);
     }
+  };
+
+  const onLoad = () => {
+    console.log('Video onLoad called');
+  };
+
+  const onError = (error: string) => {
+    console.log('Video onError:', error);
   };
 
   return (
@@ -48,6 +63,8 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
           isLooping={true}
           style={StyleSheet.absoluteFill}
           onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+          onLoad={onLoad}
+          onError={onError}
           useNativeControls={false}
         />
       )}
