@@ -535,20 +535,6 @@ export default function ProfileScreen() {
           </LinearGradient>
         </View>
 
-        {/* Digital Cherry Hub Membership Card - CherryHub Integration */}
-        <View style={styles.membershipSection}>
-          <View style={styles.membershipHeader}>
-            <Text style={styles.sectionTitle}>CHERRY HUB MEMBERSHIP</Text>
-            {cherryHubStatus.registered && (
-              <TouchableOpacity onPress={handleCherryHubLogout} style={styles.cherryHubLogoutBtn}>
-                <Ionicons name="log-out-outline" size={16} color={colors.textMuted} />
-                <Text style={styles.cherryHubLogoutText}>Disconnect</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          <MembershipCard compact={false} />
-        </View>
-
         {/* Tier Perks */}
         <View style={styles.tierPerksSection}>
           <Text style={styles.sectionTitle}>YOUR PERKS</Text>
