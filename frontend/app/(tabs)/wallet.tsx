@@ -432,6 +432,20 @@ export default function WalletScreen() {
           </LinearGradient>
         </View>
 
+        {/* Cherry Hub Membership Card */}
+        <View style={styles.membershipSection}>
+          <View style={styles.membershipHeader}>
+            <Text style={styles.sectionTitle}>CHERRY HUB MEMBERSHIP</Text>
+            {cherryHubStatus.registered && (
+              <TouchableOpacity onPress={handleCherryHubLogout} style={styles.cherryHubLogoutBtn}>
+                <Ionicons name="log-out-outline" size={16} color={colors.textMuted} />
+                <Text style={styles.cherryHubLogoutText}>Disconnect</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <MembershipCard compact={true} />
+        </View>
+
         {/* Active Missions */}
         <View style={styles.missionsSection}>
           <View style={styles.missionHeader}>
