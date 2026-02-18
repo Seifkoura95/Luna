@@ -406,12 +406,6 @@ export default function WalletScreen() {
           </LinearGradient>
         </View>
 
-        {/* Digital Membership Card */}
-        <View style={styles.membershipSection}>
-          <Text style={styles.sectionTitle}>CHERRY HUB MEMBERSHIP</Text>
-          <MembershipCard compact={true} />
-        </View>
-
         {/* Active Missions */}
         <View style={styles.missionsSection}>
           <View style={styles.missionHeader}>
