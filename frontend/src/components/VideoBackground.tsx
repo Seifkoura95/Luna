@@ -1,12 +1,12 @@
-import React, { useRef, useCallback, useState } from 'react';
-import { StyleSheet, View, Dimensions, Text } from 'react-native';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
+import { StyleSheet, View, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 
-// Use local video file for faster loading
-const localVideo = require('../../assets/video/background.mp4');
+// Remote video URL - direct link
+const VIDEO_URL = 'https://customer-assets.emergentagent.com/job_61cbe233-3cbf-4ea2-80f1-8c789a51854e/artifacts/rg18z6d5_Darude%20Recap%20compressed%20again.mp4';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('screen');
 
 interface VideoBackgroundProps {
   children?: React.ReactNode;
@@ -20,52 +20,62 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
   overlayOpacity = 0.4
 }) => {
   const videoRef = useRef<Video>(null);
-  const [videoStatus, setVideoStatus] = useState<string>('loading');
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Force play on mount
+    const playVideo = async () => {
+      try {
+        if (videoRef.current) {
+          await videoRef.current.playAsync();
+        }
+      } catch (e) {
+        console.log('Play error:', e);
+      }
+    };
+    
+    const timer = setTimeout(playVideo, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
     if (status.isLoaded) {
-      setVideoStatus(status.isPlaying ? 'playing' : 'paused');
-      if (!status.isPlaying) {
+      if (!isLoaded) setIsLoaded(true);
+      // Auto-play if paused
+      if (!status.isPlaying && !status.isBuffering) {
         videoRef.current?.playAsync();
       }
-    } else {
-      if (status.error) {
-        setVideoStatus(`error: ${status.error}`);
-        console.log('Video error:', status.error);
-      }
     }
-  }, []);
+  }, [isLoaded]);
 
-  const onError = (error: string) => {
-    console.log('Video onError:', error);
-    setVideoStatus(`onError: ${error}`);
-  };
-
-  const onLoad = () => {
-    console.log('Video loaded');
-    setVideoStatus('loaded');
+  const onReadyForDisplay = () => {
+    console.log('Video ready for display');
+    setIsLoaded(true);
   };
 
   return (
     <View style={styles.container}>
-      {/* Video background - NO overlay initially to debug */}
+      {/* Base black background */}
+      <View style={styles.blackBg} />
+      
+      {/* Video background */}
       <Video
         ref={videoRef}
-        source={localVideo}
+        source={{ uri: VIDEO_URL }}
         style={styles.video}
         resizeMode={ResizeMode.COVER}
-        shouldPlay={true}
-        isLooping={true}
-        isMuted={true}
+        shouldPlay
+        isLooping
+        isMuted
         onPlaybackStatusUpdate={onPlaybackStatusUpdate}
-        onError={onError}
-        onLoad={onLoad}
+        onReadyForDisplay={onReadyForDisplay}
         useNativeControls={false}
+        posterStyle={styles.video}
       />
       
       {/* Semi-transparent overlay for text readability */}
       <LinearGradient
-        colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.3)']}
+        colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0.45)', 'rgba(0,0,0,0.35)']}
         style={styles.gradientOverlay}
       />
       
@@ -104,21 +114,19 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#000',
   },
+  blackBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000',
+  },
   video: {
     position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
   },
   gradientOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
   },
   glowTopLeft: {
     position: 'absolute',
@@ -139,10 +147,6 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   content: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
   },
 });
