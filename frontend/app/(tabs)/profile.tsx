@@ -1443,6 +1443,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,
   },
+  membershipHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  cherryHubLogoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  cherryHubLogoutText: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
   // Tier Perks Section
   tierPerksSection: {
     paddingHorizontal: spacing.lg,
