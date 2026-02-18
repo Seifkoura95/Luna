@@ -1,97 +1,91 @@
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { AVPlaybackStatus, Video, ResizeMode } from 'expo-av';
-import Constants from 'expo-constants';
-
-// Get backend URL from environment
-const BACKEND_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || 
-                    process.env.EXPO_PUBLIC_BACKEND_URL || 
-                    'https://luna-vip-app-1.preview.emergentagent.com';
-
-// Video URL from our backend
-const VIDEO_URL = `${BACKEND_URL}/api/video/background`;
+import { VideoView } from 'expo-video';
+import { BlurView } from 'expo-blur';
+import { useSharedVideo, VIDEO_URL } from '../context/VideoContext';
 
 interface VideoBackgroundProps {
-  children?: React.ReactNode;
   intensity?: number;
-  tint?: 'dark' | 'light';
+  tint?: 'light' | 'dark' | 'default';
   overlayOpacity?: number;
+  children?: React.ReactNode;
 }
 
-export const VideoBackground: React.FC<VideoBackgroundProps> = ({ 
+export const VideoBackground: React.FC<VideoBackgroundProps> = ({
+  intensity = 25,
+  tint = 'dark',
+  overlayOpacity = 0.5,
   children,
-  overlayOpacity = 0.4
 }) => {
-  const videoRef = useRef<Video>(null);
-  const [isReady, setIsReady] = useState(false);
-  const isNative = Platform.OS === 'ios' || Platform.OS === 'android';
+  // Use the shared video player from context
+  const { player } = useSharedVideo();
 
-  const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (status.isLoaded) {
-      if (!isReady) {
-        setIsReady(true);
-        console.log('Video loaded and ready');
-      }
-      if (!status.isPlaying) {
-        videoRef.current?.playAsync();
-      }
-    } else if (status.error) {
-      console.log('Video playback error:', status.error);
-    }
-  };
+  // Web fallback - use HTML video element
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.container}>
+        <video
+          src={VIDEO_URL}
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`,
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+          }}
+        />
+        {children && <View style={styles.content}>{children}</View>}
+      </View>
+    );
+  }
 
-  const onLoad = () => {
-    console.log('Video onLoad called');
-  };
-
-  const onError = (error: string) => {
-    console.log('Video onError:', error);
-  };
-
+  // Native - use expo-video with shared player
   return (
     <View style={styles.container}>
-      {isNative && (
-        <Video
-          ref={videoRef}
-          source={{ uri: VIDEO_URL }}
-          rate={1.0}
-          volume={0}
-          isMuted={true}
-          resizeMode={ResizeMode.COVER}
-          shouldPlay={true}
-          isLooping={true}
-          style={StyleSheet.absoluteFill}
-          onPlaybackStatusUpdate={onPlaybackStatusUpdate}
-          onLoad={onLoad}
-          onError={onError}
-          useNativeControls={false}
+      {/* Video Layer - uses shared player for seamless transitions */}
+      {player && (
+        <VideoView
+          player={player}
+          style={styles.video}
+          contentFit="cover"
+          nativeControls={false}
         />
       )}
-      
-      {/* Black overlay - less opaque when video is ready */}
-      <View style={[styles.overlay, { opacity: isReady ? overlayOpacity : 0.9 }]} />
-      
-      {/* Luna glow effects */}
-      <LinearGradient
-        colors={['rgba(227, 24, 55, 0.12)', 'rgba(227, 24, 55, 0.04)', 'transparent']}
-        style={styles.glowTopLeft}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-      
-      <LinearGradient
-        colors={['rgba(212, 175, 55, 0.06)', 'transparent']}
-        style={styles.glowTopRight}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 1 }}
+
+      {/* Frosted Glass Overlay */}
+      <BlurView
+        style={styles.blurOverlay}
+        intensity={intensity}
+        tint={tint}
       />
 
-      {children && <View style={StyleSheet.absoluteFill}>{children}</View>}
+      {/* Dark overlay for text readability */}
+      <View style={[styles.darkOverlay, { opacity: overlayOpacity }]} />
+
+      {/* Content */}
+      {children && <View style={styles.content}>{children}</View>}
     </View>
   );
 };
 
+// Keep AppBackground as an alias
 export const AppBackground = VideoBackground;
 export default VideoBackground;
 
@@ -100,26 +94,17 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
   },
-  overlay: {
+  video: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  blurOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  darkOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
   },
-  glowTopLeft: {
-    position: 'absolute',
-    top: -100,
-    left: -100,
-    width: 350,
-    height: 350,
-    borderRadius: 175,
-    opacity: 0.5,
-  },
-  glowTopRight: {
-    position: 'absolute',
-    top: -50,
-    right: -100,
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    opacity: 0.3,
+  content: {
+    ...StyleSheet.absoluteFillObject,
   },
 });
