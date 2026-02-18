@@ -1,12 +1,12 @@
-import React, { useRef, useCallback, useState, useEffect } from 'react';
-import { StyleSheet, View, Dimensions, Platform } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { StyleSheet, View, Dimensions, Platform, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AVPlaybackStatus, Video, ResizeMode } from 'expo-av';
 
 // Remote video URL
 const VIDEO_URL = 'https://customer-assets.emergentagent.com/job_61cbe233-3cbf-4ea2-80f1-8c789a51854e/artifacts/rg18z6d5_Darude%20Recap%20compressed%20again.mp4';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('screen');
+const { width, height } = Dimensions.get('window');
 
 interface VideoBackgroundProps {
   children?: React.ReactNode;
@@ -17,65 +17,65 @@ interface VideoBackgroundProps {
 
 export const VideoBackground: React.FC<VideoBackgroundProps> = ({ 
   children,
-  overlayOpacity = 0.4
+  overlayOpacity = 0.35
 }) => {
   const videoRef = useRef<Video>(null);
-  const [status, setStatus] = useState<AVPlaybackStatus | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const isNative = Platform.OS === 'ios' || Platform.OS === 'android';
 
-  // Auto-play on mount for native
-  useEffect(() => {
-    if (isNative && videoRef.current) {
-      const playVideo = async () => {
-        try {
-          await videoRef.current?.playAsync();
-        } catch (e) {
-          console.log('Auto-play error:', e);
-        }
-      };
-      // Small delay to ensure video is loaded
-      setTimeout(playVideo, 100);
+  const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
+    if (status.isLoaded) {
+      setIsPlaying(status.isPlaying);
+      // If loaded but not playing, try to play
+      if (!status.isPlaying && !status.isBuffering) {
+        videoRef.current?.playAsync().catch(console.error);
+      }
+    } else if (status.error) {
+      console.log('Playback error:', status.error);
+      setError(status.error);
     }
-  }, [isNative]);
+  };
 
-  const onPlaybackStatusUpdate = useCallback((newStatus: AVPlaybackStatus) => {
-    setStatus(newStatus);
-    if (newStatus.isLoaded && !newStatus.isPlaying) {
-      // Try to play if stopped
-      videoRef.current?.playAsync();
+  const handleError = (err: string) => {
+    console.log('Video error:', err);
+    setError(err);
+  };
+
+  const handleLoad = async () => {
+    console.log('Video loaded, attempting to play...');
+    try {
+      await videoRef.current?.playAsync();
+    } catch (e) {
+      console.log('Play failed:', e);
     }
-  }, []);
+  };
 
   return (
     <View style={styles.container}>
-      {/* Base black background */}
-      <View style={styles.blackBg} />
-      
-      {/* Video - only render on native platforms */}
-      {isNative && (
+      {/* Video layer - positioned BEHIND everything */}
+      {isNative ? (
         <Video
           ref={videoRef}
           source={{ uri: VIDEO_URL }}
-          style={styles.video}
+          style={styles.backgroundVideo}
           resizeMode={ResizeMode.COVER}
-          shouldPlay={true}
-          isLooping={true}
-          isMuted={true}
-          volume={0}
-          rate={1.0}
-          onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+          isLooping
+          isMuted
+          shouldPlay
+          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+          onError={handleError}
+          onLoad={handleLoad}
           useNativeControls={false}
-          videoStyle={styles.videoInner}
         />
+      ) : (
+        <View style={styles.blackBg} />
       )}
       
-      {/* Semi-transparent overlay for text readability */}
-      <LinearGradient
-        colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.3)']}
-        style={styles.gradientOverlay}
-      />
+      {/* Dark overlay - only show when video is playing */}
+      <View style={[styles.overlay, { opacity: isPlaying ? overlayOpacity : 0.8 }]} />
       
-      {/* Subtle Luna glow in top left */}
+      {/* Luna glow effects */}
       <LinearGradient
         colors={['rgba(227, 24, 55, 0.12)', 'rgba(227, 24, 55, 0.04)', 'transparent']}
         style={styles.glowTopLeft}
@@ -83,7 +83,6 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
         end={{ x: 1, y: 1 }}
       />
       
-      {/* Subtle gold glow on right */}
       <LinearGradient
         colors={['rgba(212, 175, 55, 0.06)', 'transparent']}
         style={styles.glowTopRight}
@@ -91,13 +90,12 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
         end={{ x: 0, y: 1 }}
       />
 
-      {/* Content */}
+      {/* Content on top */}
       {children && <View style={styles.content}>{children}</View>}
     </View>
   );
 };
 
-// Aliases for backwards compatibility
 export const AppBackground = VideoBackground;
 export default VideoBackground;
 
@@ -114,21 +112,16 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
   },
-  video: {
+  backgroundVideo: {
     position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,
     bottom: 0,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    right: 0,
   },
-  videoInner: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
-  },
-  gradientOverlay: {
+  overlay: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000',
   },
   glowTopLeft: {
     position: 'absolute',
