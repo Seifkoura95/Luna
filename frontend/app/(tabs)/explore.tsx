@@ -22,14 +22,14 @@ import { PageHeader } from '../../src/components/PageHeader';
 // Venue categories
 const VENUE_CATEGORIES = {
   ALL: 'all',
-  NIGHTCLUB: 'nightclub',
+  NIGHTLIFE: 'nightclub',
   RESTAURANT: 'restaurant',
 };
 
 // Category labels
 const CATEGORY_LABELS: Record<string, string> = {
   all: 'All Venues',
-  nightclub: 'Nightclubs',
+  nightclub: 'Nightlife',
   restaurant: 'Restaurants & Bars',
 };
 
@@ -99,7 +99,7 @@ export default function VenuesScreen() {
   const goldCoastVenues = filteredVenues.filter(v => v.region === 'gold_coast');
 
   // Get venue counts by category
-  const nightclubCount = venues.filter(v => v.type === 'nightclub').length;
+  const nightlifeCount = venues.filter(v => v.type === 'nightclub').length;
   const restaurantCount = venues.filter(v => v.type === 'restaurant').length;
 
   return (
@@ -138,20 +138,20 @@ export default function VenuesScreen() {
         <TouchableOpacity 
           style={[
             styles.categoryTab, 
-            selectedCategory === VENUE_CATEGORIES.NIGHTCLUB && styles.categoryTabActive
+            selectedCategory === VENUE_CATEGORIES.NIGHTLIFE && styles.categoryTabActive
           ]}
-          onPress={() => handleCategoryChange(VENUE_CATEGORIES.NIGHTCLUB)}
+          onPress={() => handleCategoryChange(VENUE_CATEGORIES.NIGHTLIFE)}
         >
           <Ionicons 
             name="musical-notes" 
             size={16} 
-            color={selectedCategory === VENUE_CATEGORIES.NIGHTCLUB ? colors.accent : colors.textMuted} 
+            color={selectedCategory === VENUE_CATEGORIES.NIGHTLIFE ? colors.accent : colors.textMuted} 
           />
           <Text style={[
             styles.categoryTabText,
-            selectedCategory === VENUE_CATEGORIES.NIGHTCLUB && styles.categoryTabTextActive
+            selectedCategory === VENUE_CATEGORIES.NIGHTLIFE && styles.categoryTabTextActive
           ]}>
-            Nightclubs ({nightclubCount})
+            Nightlife ({nightlifeCount})
           </Text>
         </TouchableOpacity>
 
