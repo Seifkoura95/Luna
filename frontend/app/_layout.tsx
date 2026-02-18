@@ -41,7 +41,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <SharedVideoProvider>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -54,6 +54,6 @@ export default function RootLayout() {
         <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
       </Stack>
-    </>
+    </SharedVideoProvider>
   );
 }
