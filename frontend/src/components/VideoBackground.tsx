@@ -12,15 +12,14 @@ interface VideoBackgroundProps {
 }
 
 export const VideoBackground: React.FC<VideoBackgroundProps> = ({
-  intensity = 25,
+  intensity = 30,
   tint = 'dark',
-  overlayOpacity = 0.5,
+  overlayOpacity = 0.4,
   children,
 }) => {
-  // Use the shared video player from context
   const { player } = useSharedVideo();
 
-  // Web fallback - use HTML video element
+  // Web fallback
   if (Platform.OS === 'web') {
     return (
       <View style={styles.container}>
@@ -47,8 +46,8 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
             right: 0,
             bottom: 0,
             backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`,
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
+            backdropFilter: `blur(${intensity}px)`,
+            WebkitBackdropFilter: `blur(${intensity}px)`,
           }}
         />
         {children && <View style={styles.content}>{children}</View>}
@@ -56,10 +55,10 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
     );
   }
 
-  // Native - use expo-video with shared player
+  // Native - expo-video with blur overlay
   return (
     <View style={styles.container}>
-      {/* Video Layer - uses shared player for seamless transitions */}
+      {/* Video Layer */}
       {player && (
         <VideoView
           player={player}
@@ -69,14 +68,14 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
         />
       )}
 
-      {/* Frosted Glass Overlay */}
+      {/* Glass/Blur effect overlay */}
       <BlurView
-        style={styles.blurOverlay}
+        style={styles.blur}
         intensity={intensity}
         tint={tint}
       />
 
-      {/* Dark overlay for text readability */}
+      {/* Dark overlay for extra text readability */}
       <View style={[styles.darkOverlay, { opacity: overlayOpacity }]} />
 
       {/* Content */}
@@ -85,7 +84,6 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
   );
 };
 
-// Keep AppBackground as an alias
 export const AppBackground = VideoBackground;
 export default VideoBackground;
 
@@ -97,7 +95,7 @@ const styles = StyleSheet.create({
   video: {
     ...StyleSheet.absoluteFillObject,
   },
-  blurOverlay: {
+  blur: {
     ...StyleSheet.absoluteFillObject,
   },
   darkOverlay: {
