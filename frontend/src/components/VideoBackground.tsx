@@ -1,9 +1,9 @@
-import React, { useRef, useCallback, useState, useEffect } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Dimensions, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 
-// Remote video URL - direct link
+// Remote video URL
 const VIDEO_URL = 'https://customer-assets.emergentagent.com/job_61cbe233-3cbf-4ea2-80f1-8c789a51854e/artifacts/rg18z6d5_Darude%20Recap%20compressed%20again.mp4';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('screen');
@@ -15,63 +15,37 @@ interface VideoBackgroundProps {
   overlayOpacity?: number;
 }
 
+// Native video component using expo-video
+const NativeVideoBackground = () => {
+  const player = useVideoPlayer(VIDEO_URL, player => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
+
+  return (
+    <VideoView
+      player={player}
+      style={styles.video}
+      contentFit="cover"
+      nativeControls={false}
+    />
+  );
+};
+
 export const VideoBackground: React.FC<VideoBackgroundProps> = ({ 
   children,
   overlayOpacity = 0.4
 }) => {
-  const videoRef = useRef<Video>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    // Force play on mount
-    const playVideo = async () => {
-      try {
-        if (videoRef.current) {
-          await videoRef.current.playAsync();
-        }
-      } catch (e) {
-        console.log('Play error:', e);
-      }
-    };
-    
-    const timer = setTimeout(playVideo, 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
-    if (status.isLoaded) {
-      if (!isLoaded) setIsLoaded(true);
-      // Auto-play if paused
-      if (!status.isPlaying && !status.isBuffering) {
-        videoRef.current?.playAsync();
-      }
-    }
-  }, [isLoaded]);
-
-  const onReadyForDisplay = () => {
-    console.log('Video ready for display');
-    setIsLoaded(true);
-  };
+  const isNative = Platform.OS === 'ios' || Platform.OS === 'android';
 
   return (
     <View style={styles.container}>
       {/* Base black background */}
       <View style={styles.blackBg} />
       
-      {/* Video background */}
-      <Video
-        ref={videoRef}
-        source={{ uri: VIDEO_URL }}
-        style={styles.video}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping
-        isMuted
-        onPlaybackStatusUpdate={onPlaybackStatusUpdate}
-        onReadyForDisplay={onReadyForDisplay}
-        useNativeControls={false}
-        posterStyle={styles.video}
-      />
+      {/* Video - only render on native */}
+      {isNative && <NativeVideoBackground />}
       
       {/* Semi-transparent overlay for text readability */}
       <LinearGradient
