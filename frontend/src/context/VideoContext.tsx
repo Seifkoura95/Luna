@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { useVideoPlayer, VideoPlayer } from 'expo-video';
 
-// Compressed Luna Group video background - NEW compressed version
-export const VIDEO_URL = 'https://customer-assets.emergentagent.com/job_61cbe233-3cbf-4ea2-80f1-8c789a51854e/artifacts/rg18z6d5_Darude%20Recap%20compressed%20again.mp4';
+// Compressed Luna Group video background - OLD working version
+export const VIDEO_URL = 'https://customer-assets.emergentagent.com/job_2fca5f5e-e2fc-4a51-bccb-98ad0736e603/artifacts/xkebrois_Darude%20Recap%20compressed.mp4';
 
 interface VideoContextType {
   player: VideoPlayer | null;
