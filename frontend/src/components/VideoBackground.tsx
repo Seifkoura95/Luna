@@ -12,14 +12,15 @@ interface VideoBackgroundProps {
 }
 
 export const VideoBackground: React.FC<VideoBackgroundProps> = ({
-  intensity = 30,
+  intensity = 25,
   tint = 'dark',
-  overlayOpacity = 0.4,
+  overlayOpacity = 0.5,
   children,
 }) => {
+  // Use the shared video player from context
   const { player } = useSharedVideo();
 
-  // Web fallback
+  // Web fallback - use HTML video element
   if (Platform.OS === 'web') {
     return (
       <View style={styles.container}>
@@ -46,8 +47,8 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
             right: 0,
             bottom: 0,
             backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`,
-            backdropFilter: `blur(${intensity}px)`,
-            WebkitBackdropFilter: `blur(${intensity}px)`,
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
           }}
         />
         {children && <View style={styles.content}>{children}</View>}
@@ -55,10 +56,10 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
     );
   }
 
-  // Native - expo-video with blur overlay
+  // Native - use expo-video with shared player
   return (
     <View style={styles.container}>
-      {/* Video Layer */}
+      {/* Video Layer - uses shared player for seamless transitions */}
       {player && (
         <VideoView
           player={player}
@@ -68,14 +69,14 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
         />
       )}
 
-      {/* Glass/Blur effect overlay */}
+      {/* Frosted Glass Overlay */}
       <BlurView
-        style={styles.blur}
+        style={styles.blurOverlay}
         intensity={intensity}
         tint={tint}
       />
 
-      {/* Dark overlay for extra text readability */}
+      {/* Dark overlay for text readability */}
       <View style={[styles.darkOverlay, { opacity: overlayOpacity }]} />
 
       {/* Content */}
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
   video: {
     ...StyleSheet.absoluteFillObject,
   },
-  blur: {
+  blurOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
   darkOverlay: {
