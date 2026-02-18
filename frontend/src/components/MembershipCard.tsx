@@ -81,8 +81,8 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
         });
         onRegisterComplete?.();
         Alert.alert(
-          '🎉 Membership Activated!',
-          'Your Luna Group membership is now active. You can add your card to Apple Wallet or Google Wallet.',
+          '🎉 Cherry Hub Membership Activated!',
+          'Your Luna Group Cherry Hub membership is now active. You can add your card to Apple Wallet or Google Wallet.',
           [{ text: 'Got it!' }]
         );
       }
@@ -109,7 +109,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
       
       if (platform === 'ios' && result.pass_content_base64) {
         // For iOS, we need to save the .pkpass file and open it
-        const fileUri = FileSystem.documentDirectory + 'luna_membership.pkpass';
+        const fileUri = FileSystem.documentDirectory + 'luna_cherryhub_membership.pkpass';
         await FileSystem.writeAsStringAsync(fileUri, result.pass_content_base64, {
           encoding: FileSystem.EncodingType.Base64,
         });
@@ -121,7 +121,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
         } else {
           Alert.alert(
             'Apple Wallet',
-            'The membership card has been downloaded. Please open your Files app to add it to Apple Wallet.',
+            'The Cherry Hub membership card has been downloaded. Please open your Files app to add it to Apple Wallet.',
             [{ text: 'OK' }]
           );
         }
@@ -133,7 +133,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
         } else {
           Alert.alert(
             'Google Wallet',
-            'Please install Google Wallet to add your membership card.',
+            'Please install Google Wallet to add your Cherry Hub membership card.',
             [{ text: 'OK' }]
           );
         }
