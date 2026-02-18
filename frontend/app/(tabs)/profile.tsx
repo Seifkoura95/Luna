@@ -437,7 +437,7 @@ export default function ProfileScreen() {
         <PageHeader 
           title="PROFILE" 
           description={`Welcome back, ${formatName(user?.name)}`}
-          showPoints={true}
+          showPoints={false}
         />
 
         {/* Luna Points Card - Same design as Wallet */}
