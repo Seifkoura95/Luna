@@ -408,7 +408,7 @@ export default function WalletScreen() {
 
         {/* Digital Membership Card */}
         <View style={styles.membershipSection}>
-          <Text style={styles.sectionTitle}>MEMBERSHIP CARD</Text>
+          <Text style={styles.sectionTitle}>CHERRY HUB MEMBERSHIP</Text>
           <MembershipCard compact={true} />
         </View>
 

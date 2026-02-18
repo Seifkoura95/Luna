@@ -164,7 +164,7 @@ export default function ProfileScreen() {
     if (!cherryHubStatus.registered) {
       Alert.alert(
         'Connect CherryHub',
-        'You need to activate your membership to get your digital pass.',
+        'You need to activate your Cherry Hub membership to get your digital pass.',
         [
           { text: 'Cancel', style: 'cancel' },
           { 
@@ -178,7 +178,7 @@ export default function ProfileScreen() {
                   setShowQRPass(true);
                 }
               } catch (e: any) {
-                Alert.alert('Error', e.message || 'Failed to activate membership');
+                Alert.alert('Error', e.message || 'Failed to activate Cherry Hub membership');
               }
             }
           }
@@ -191,7 +191,7 @@ export default function ProfileScreen() {
 
   const handleAddToWallet = async () => {
     if (!cherryHubStatus.registered) {
-      Alert.alert('Error', 'Please activate your membership first');
+      Alert.alert('Error', 'Please activate your Cherry Hub membership first');
       return;
     }
     
@@ -208,7 +208,7 @@ export default function ProfileScreen() {
       if (platform === 'ios' && result.pass_content_base64) {
         Alert.alert(
           'Apple Wallet',
-          'Your membership pass is ready to be added to Apple Wallet.',
+          'Your Cherry Hub membership pass is ready to be added to Apple Wallet.',
           [{ text: 'OK' }]
         );
       } else if (result.google_wallet_url) {
@@ -218,7 +218,7 @@ export default function ProfileScreen() {
         } else {
           Alert.alert(
             'Google Wallet',
-            'Please install Google Wallet to add your membership card.',
+            'Please install Google Wallet to add your Cherry Hub membership card.',
             [{ text: 'OK' }]
           );
         }
@@ -510,9 +510,9 @@ export default function ProfileScreen() {
           </LinearGradient>
         </View>
 
-        {/* Digital Membership Card - CherryHub Integration */}
+        {/* Digital Cherry Hub Membership Card - CherryHub Integration */}
         <View style={styles.membershipSection}>
-          <Text style={styles.sectionTitle}>MEMBERSHIP CARD</Text>
+          <Text style={styles.sectionTitle}>CHERRY HUB MEMBERSHIP</Text>
           <MembershipCard compact={false} />
         </View>
 
@@ -759,7 +759,7 @@ export default function ProfileScreen() {
                       <Ionicons name="card-outline" size={80} color={colors.textMuted} />
                       <Text style={styles.notConnectedTitle}>No Pass Connected</Text>
                       <Text style={styles.notConnectedSubtitle}>
-                        Activate your membership to get your digital pass
+                        Activate your Cherry Hub membership to get your digital pass
                       </Text>
                     </View>
                   </>
