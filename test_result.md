@@ -291,6 +291,9 @@ frontend:
     priority: "high"
     needs_retesting: false
     status_history:
+  - agent: "main"
+    message: "Iteration 6: Implemented major new features - (1) Event RSVP with Going/Interested buttons and friends attending display, (2) Social tab with real friend API integration, friend request system (send/accept/decline), add friend modal, (3) QR Code Redemption system with RedemptionQRModal and rewards-shop page for point redemption, (4) Lost & Found page with photo upload and report tracking, (5) Uber/Didi deep-link integration on venue pages, (6) Fixed ESLint errors, renamed VideoBackground to AppBackground. All backend APIs tested manually and working. Ready for comprehensive testing."
+
       - working: "NA"
         agent: "main"
         comment: "Implemented events listing with upcoming boosts"
