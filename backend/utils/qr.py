@@ -5,11 +5,8 @@ Handles QR code generation and verification for rewards redemption
 
 import hmac
 import hashlib
-import os
 from datetime import datetime, timezone
-
-# QR Secret key
-QR_SECRET = os.environ.get('QR_SECRET', 'luna-group-vip-2024')
+from config import QR_SECRET
 
 
 def generate_qr_code(redemption_id: str, user_id: str) -> str:
