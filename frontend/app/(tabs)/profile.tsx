@@ -428,6 +428,14 @@ export default function ProfileScreen() {
       onPress: () => router.push('/auctions'),
     },
     {
+      id: 'lost_found',
+      icon: 'cube',
+      title: 'Lost & Found',
+      subtitle: 'Report items',
+      color: '#4ECDC4',
+      onPress: () => router.push('/lost-found'),
+    },
+    {
       id: 'refer',
       icon: 'gift',
       title: 'Refer Friends',
