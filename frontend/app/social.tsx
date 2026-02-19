@@ -157,10 +157,10 @@ export default function SocialFeedScreen() {
     try {
       const [friendsData, requestsData] = await Promise.all([
         api.getFriends(),
-        api.getPendingFriendRequests()
+        api.getFriendRequests()
       ]);
       setFriends(friendsData.friends || []);
-      setPendingRequests(requestsData.requests || []);
+      setPendingRequests(requestsData.incoming || []);
     } catch (error) {
       console.error('Failed to load friends:', error);
     }
