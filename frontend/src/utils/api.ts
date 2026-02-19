@@ -871,4 +871,164 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, password, name, venue_id: venueId, role })
     }),
+
+  // ====== SAFETY & EMERGENCY API ======
+  getEmergencyContacts: () =>
+    apiFetch<{ contacts: any[] }>('/api/safety/emergency-contacts'),
+
+  addEmergencyContact: (name: string, phone: string, relationship: string, email?: string) =>
+    apiFetch<{ success: boolean; contact: any }>('/api/safety/emergency-contacts', {
+      method: 'POST',
+      body: JSON.stringify({ name, phone, relationship, email })
+    }),
+
+  removeEmergencyContact: (contactId: string) =>
+    apiFetch<{ success: boolean }>(`/api/safety/emergency-contacts/${contactId}`, {
+      method: 'DELETE'
+    }),
+
+  sendSilentAlert: (latitude: number, longitude: number, venueId?: string, activationMethod: string = 'button') =>
+    apiFetch<{
+      success: boolean;
+      alert_id: string;
+      message: string;
+      notified: { crew: string[]; emergency_contacts: string[]; venue: string | null };
+      location_link: string;
+    }>('/api/safety/silent-alert', {
+      method: 'POST',
+      body: JSON.stringify({ latitude, longitude, venue_id: venueId, activation_method: activationMethod })
+    }),
+
+  sendSafetyAlert: (alertType: string, latitude: number, longitude: number, venueId?: string, crewId?: string, message?: string) =>
+    apiFetch<any>('/api/safety/alert', {
+      method: 'POST',
+      body: JSON.stringify({ alert_type: alertType, latitude, longitude, venue_id: venueId, crew_id: crewId, message })
+    }),
+
+  getActiveSafetyAlerts: () =>
+    apiFetch<{ alerts: any[] }>('/api/safety/alerts/active'),
+
+  acknowledgeSafetyAlert: (alertId: string) =>
+    apiFetch<{ success: boolean }>(`/api/safety/alerts/${alertId}/acknowledge`, { method: 'POST' }),
+
+  resolveSafetyAlert: (alertId: string) =>
+    apiFetch<{ success: boolean }>(`/api/safety/alerts/${alertId}/resolve`, { method: 'POST' }),
+
+  // ====== FRIENDS & SOCIAL API ======
+  getFriends: () =>
+    apiFetch<{ friends: any[]; count: number }>('/api/friends'),
+
+  sendFriendRequest: (email?: string, username?: string) =>
+    apiFetch<{ success: boolean; message: string; request_id: string }>('/api/friends/request', {
+      method: 'POST',
+      body: JSON.stringify({ email, username })
+    }),
+
+  getFriendRequests: () =>
+    apiFetch<{ incoming: any[]; outgoing: any[] }>('/api/friends/requests'),
+
+  acceptFriendRequest: (requestId: string) =>
+    apiFetch<{ success: boolean }>(`/api/friends/requests/${requestId}/accept`, { method: 'POST' }),
+
+  declineFriendRequest: (requestId: string) =>
+    apiFetch<{ success: boolean }>(`/api/friends/requests/${requestId}/decline`, { method: 'POST' }),
+
+  removeFriend: (friendId: string) =>
+    apiFetch<{ success: boolean }>(`/api/friends/${friendId}`, { method: 'DELETE' }),
+
+  getFriendsActivity: () =>
+    apiFetch<{ activities: any[] }>('/api/friends/activity'),
+
+  // ====== EVENT RSVP API ======
+  rsvpToEvent: (eventId: string, status: string, isPrivate: boolean = false) =>
+    apiFetch<{ success: boolean; status: string }>(`/api/events/${eventId}/rsvp`, {
+      method: 'POST',
+      body: JSON.stringify({ event_id: eventId, status, is_private: isPrivate })
+    }),
+
+  getMyEventRsvp: (eventId: string) =>
+    apiFetch<{ rsvp: any | null }>(`/api/events/${eventId}/rsvp`),
+
+  getEventAttendees: (eventId: string) =>
+    apiFetch<{
+      going_count: number;
+      interested_count: number;
+      friends_going: any[];
+      friends_interested: any[];
+      others_going_count: number;
+    }>(`/api/events/${eventId}/attendees`),
+
+  // ====== LOST & FOUND API ======
+  reportLostItem: (venueId: string, itemDescription: string, itemCategory: string, lostDate: string, lostTimeApprox?: string, contactPhone?: string, photoUrl?: string) =>
+    apiFetch<{ success: boolean; item_id: string; potential_matches: number }>('/api/lost-found/report-lost', {
+      method: 'POST',
+      body: JSON.stringify({
+        venue_id: venueId,
+        item_description: itemDescription,
+        item_category: itemCategory,
+        lost_date: lostDate,
+        lost_time_approx: lostTimeApprox,
+        contact_phone: contactPhone,
+        photo_url: photoUrl
+      })
+    }),
+
+  reportFoundItem: (venueId: string, itemDescription: string, itemCategory: string, foundDate: string, foundLocation?: string, photoUrl?: string) =>
+    apiFetch<{ success: boolean; item_id: string; matching_reports: number }>('/api/lost-found/report-found', {
+      method: 'POST',
+      body: JSON.stringify({
+        venue_id: venueId,
+        item_description: itemDescription,
+        item_category: itemCategory,
+        found_date: foundDate,
+        found_location: foundLocation,
+        photo_url: photoUrl
+      })
+    }),
+
+  getMyLostReports: () =>
+    apiFetch<{ reports: any[] }>('/api/lost-found/my-reports'),
+
+  getVenueLostFound: (venueId: string, itemType?: string) =>
+    apiFetch<{ items: any[] }>(`/api/lost-found/venue/${venueId}${itemType ? `?item_type=${itemType}` : ''}`),
+
+  claimFoundItem: (itemId: string) =>
+    apiFetch<{ success: boolean }>(`/api/lost-found/${itemId}/claim`, { method: 'POST' }),
+
+  sendLostFoundMessage: (itemId: string, message: string) =>
+    apiFetch<{ success: boolean; message_id: string }>('/api/lost-found/message', {
+      method: 'POST',
+      body: JSON.stringify({ item_id: itemId, message })
+    }),
+
+  getLostFoundMessages: (itemId: string) =>
+    apiFetch<{ messages: any[] }>(`/api/lost-found/${itemId}/messages`),
+
+  // ====== RIDE SHARING API ======
+  getRideOptions: (latitude: number, longitude: number, venueId?: string) =>
+    apiFetch<{
+      pickup_location: { latitude: number; longitude: number };
+      destination: string;
+      options: any[];
+    }>(`/api/rides/options?latitude=${latitude}&longitude=${longitude}${venueId ? `&venue_id=${venueId}` : ''}`),
+
+  // ====== PRIVACY SETTINGS API ======
+  getPrivacySettings: () =>
+    apiFetch<{
+      show_activity_to_friends: boolean;
+      show_event_attendance: boolean;
+      show_checkins: boolean;
+      allow_friend_requests: boolean;
+    }>('/api/settings/privacy'),
+
+  updatePrivacySettings: (settings: {
+    show_activity_to_friends?: boolean;
+    show_event_attendance?: boolean;
+    show_checkins?: boolean;
+    allow_friend_requests?: boolean;
+  }) =>
+    apiFetch<{ success: boolean }>('/api/settings/privacy', {
+      method: 'PUT',
+      body: JSON.stringify(settings)
+    }),
 };
