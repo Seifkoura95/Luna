@@ -143,6 +143,18 @@ api_router = APIRouter(prefix="/api")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+# ====== HEALTH CHECK ======
+
+@api_router.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "service": "Luna Group VIP API",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
 # Import venues
 from luna_venues_config import LUNA_VENUES
 
