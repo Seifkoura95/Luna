@@ -329,10 +329,14 @@ async def resend_verification_email(request: Request):
 
 @api_router.post("/auth/login")
 async def login(request: LoginRequest):
+    logging.info(f"Login attempt for: {request.email}")
     user = await db.users.find_one({"email": request.email})
     if not user:
+        logging.warning(f"User not found: {request.email}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    logging.info(f"User found: {user.get('email')}, role: {user.get('role')}")
     if not bcrypt.checkpw(request.password.encode(), user["hashed_password"].encode()):
+        logging.warning(f"Password check failed for: {request.email}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token_payload = {
         "user_id": user["user_id"],
@@ -342,6 +346,7 @@ async def login(request: LoginRequest):
     token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     # Remove MongoDB _id and hashed_password
     user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id"]}
+    logging.info(f"Login successful for: {request.email}")
     return {"user": user_copy, "token": token}
 
 @api_router.get("/auth/me")
