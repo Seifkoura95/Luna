@@ -54,11 +54,7 @@ export default function AboutPage() {
 
         {/* Logo */}
         <View style={styles.logoSection}>
-          <Image
-            source={require('../assets/images/luna-logo.png')}
-            style={styles.logo}
-            contentFit="contain"
-          />
+          <Text style={styles.logoText}>LUNA GROUP</Text>
           <Text style={styles.tagline}>Brisbane • Gold Coast</Text>
         </View>
 

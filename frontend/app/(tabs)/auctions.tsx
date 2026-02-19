@@ -982,9 +982,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  depositInfo: {
-    flex: 1,
-  },
   depositAmount: {
     fontSize: 14,
     fontWeight: '700',
@@ -1024,15 +1021,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     letterSpacing: 1,
     marginBottom: spacing.sm,
-  },
-  bidInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundElevated,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
   },
   bidInputPrefix: {
     fontSize: 24,
