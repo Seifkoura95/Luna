@@ -580,24 +580,533 @@ async def redeem_reward(request: Request, reward_id: str, venue_id: Optional[str
     new_user = await db.users.find_one({"user_id": user["user_id"]})
     return {
         "message": "Reward redeemed successfully!",
-        "redemption": redemption,
+        "redemption": clean_mongo_doc(redemption),
         "new_balance": new_user["points_balance"]
     }
 
-# ====== MISSIONS API ======
+# ====== QR CODE REDEMPTION SYSTEM ======
+
+def generate_qr_code(redemption_id: str, user_id: str) -> str:
+    """Generate a secure one-time use QR code"""
+    timestamp = int(datetime.now(timezone.utc).timestamp())
+    data = f"{redemption_id}:{user_id}:{timestamp}"
+    signature = hmac.new(QR_SECRET.encode(), data.encode(), hashlib.sha256).hexdigest()[:12]
+    return f"LUNA-{redemption_id[:8].upper()}-{signature.upper()}"
+
+def verify_qr_code(qr_code: str, redemption_id: str) -> bool:
+    """Verify QR code is valid"""
+    if not qr_code.startswith("LUNA-"):
+        return False
+    parts = qr_code.split("-")
+    if len(parts) != 3:
+        return False
+    return parts[1].lower() == redemption_id[:8].lower()
+
+@api_router.get("/redemptions/my")
+async def get_my_redemptions(request: Request, status: Optional[str] = None):
+    """Get user's redemptions with QR codes"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    query = {"user_id": current_user["user_id"]}
+    if status:
+        query["status"] = status
+    
+    redemptions = await db.redemptions.find(query).sort("created_at", -1).to_list(50)
+    return clean_mongo_docs(redemptions)
+
+@api_router.get("/redemptions/{redemption_id}")
+async def get_redemption(request: Request, redemption_id: str):
+    """Get a specific redemption with QR code"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    redemption = await db.redemptions.find_one({
+        "id": redemption_id,
+        "user_id": current_user["user_id"]
+    })
+    
+    if not redemption:
+        raise HTTPException(status_code=404, detail="Redemption not found")
+    
+    return clean_mongo_doc(redemption)
+
+class ScanQRRequest(BaseModel):
+    qr_code: str
+    venue_id: str
+
+@api_router.post("/venue/scan-qr")
+async def venue_scan_qr(request: Request, scan_req: ScanQRRequest):
+    """Venue scans and validates a QR code - marks as redeemed"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Verify user is venue staff
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized to scan QR codes")
+    
+    # Find redemption by QR code
+    redemption = await db.redemptions.find_one({"qr_code": scan_req.qr_code})
+    
+    if not redemption:
+        raise HTTPException(status_code=404, detail="Invalid QR code")
+    
+    if redemption["status"] == "redeemed":
+        raise HTTPException(status_code=400, detail="QR code already used")
+    
+    if redemption["status"] == "expired":
+        raise HTTPException(status_code=400, detail="QR code has expired")
+    
+    if redemption.get("expires_at") and redemption["expires_at"] < datetime.now(timezone.utc):
+        await db.redemptions.update_one(
+            {"id": redemption["id"]},
+            {"$set": {"status": "expired"}}
+        )
+        raise HTTPException(status_code=400, detail="QR code has expired")
+    
+    # Mark as redeemed
+    await db.redemptions.update_one(
+        {"id": redemption["id"]},
+        {"$set": {
+            "status": "redeemed",
+            "redeemed_at": datetime.now(timezone.utc),
+            "redeemed_by": current_user["user_id"],
+            "redeemed_venue": scan_req.venue_id
+        }}
+    )
+    
+    # Get customer info
+    customer = await db.users.find_one({"user_id": redemption["user_id"]})
+    
+    return {
+        "success": True,
+        "message": "Reward redeemed successfully!",
+        "reward_name": redemption["reward_name"],
+        "customer_name": customer.get("name", "Unknown") if customer else "Unknown",
+        "points_spent": redemption["points_spent"],
+        "redeemed_at": datetime.now(timezone.utc).isoformat()
+    }
+
+# ====== MISSIONS API (With Tracking) ======
 
 @api_router.get("/missions")
 async def get_missions(request: Request, venue_id: Optional[str] = None):
+    """Get missions with user progress"""
     auth_header = request.headers.get("authorization")
     current_user = get_current_user(auth_header)
+    
     query = {"is_active": True}
     missions = await db.missions.find(query).to_list(100)
+    
     if venue_id:
         missions = [m for m in missions if m.get("venue_requirements") is None or venue_id in m.get("venue_requirements", [])]
+    
+    # Get user's mission progress
+    user_progress = await db.mission_progress.find({
+        "user_id": current_user["user_id"]
+    }).to_list(100)
+    progress_map = {p["mission_id"]: p for p in user_progress}
+    
+    # Merge progress with missions
     for mission in missions:
-        mission["completed"] = False
-        mission["progress"] = 0
+        progress = progress_map.get(mission["id"], {})
+        mission["completed"] = progress.get("completed", False)
+        mission["progress"] = progress.get("progress", 0)
+        mission["claimed"] = progress.get("claimed", False)
+    
     return clean_mongo_docs(missions)
+
+class MissionProgressRequest(BaseModel):
+    mission_id: str
+    progress_increment: int = 1
+
+@api_router.post("/missions/progress")
+async def update_mission_progress(request: Request, progress_req: MissionProgressRequest):
+    """Update progress on a mission"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Get mission
+    mission = await db.missions.find_one({"id": progress_req.mission_id})
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+    
+    # Get or create user progress
+    user_progress = await db.mission_progress.find_one({
+        "user_id": current_user["user_id"],
+        "mission_id": progress_req.mission_id
+    })
+    
+    if user_progress and user_progress.get("completed"):
+        return {"message": "Mission already completed", "progress": user_progress}
+    
+    new_progress = (user_progress.get("progress", 0) if user_progress else 0) + progress_req.progress_increment
+    completed = new_progress >= mission.get("target", 1)
+    
+    await db.mission_progress.update_one(
+        {"user_id": current_user["user_id"], "mission_id": progress_req.mission_id},
+        {"$set": {
+            "user_id": current_user["user_id"],
+            "mission_id": progress_req.mission_id,
+            "progress": new_progress,
+            "completed": completed,
+            "claimed": False,
+            "updated_at": datetime.now(timezone.utc)
+        }},
+        upsert=True
+    )
+    
+    return {
+        "message": "Progress updated",
+        "progress": new_progress,
+        "target": mission.get("target", 1),
+        "completed": completed
+    }
+
+@api_router.post("/missions/{mission_id}/claim")
+async def claim_mission_reward(request: Request, mission_id: str):
+    """Claim reward for completed mission - one time only"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Get mission
+    mission = await db.missions.find_one({"id": mission_id})
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+    
+    # Get user progress
+    user_progress = await db.mission_progress.find_one({
+        "user_id": current_user["user_id"],
+        "mission_id": mission_id
+    })
+    
+    if not user_progress or not user_progress.get("completed"):
+        raise HTTPException(status_code=400, detail="Mission not completed")
+    
+    if user_progress.get("claimed"):
+        raise HTTPException(status_code=400, detail="Reward already claimed for this mission")
+    
+    # Award points
+    points_reward = mission.get("points_reward", 0)
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$inc": {"points_balance": points_reward}}
+    )
+    
+    # Mark as claimed
+    await db.mission_progress.update_one(
+        {"user_id": current_user["user_id"], "mission_id": mission_id},
+        {"$set": {
+            "claimed": True,
+            "claimed_at": datetime.now(timezone.utc)
+        }}
+    )
+    
+    # Record points transaction
+    await db.points_transactions.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": current_user["user_id"],
+        "amount": points_reward,
+        "type": "mission_reward",
+        "description": f"Completed mission: {mission.get('name', 'Unknown')}",
+        "mission_id": mission_id,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    # Get updated balance
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    
+    return {
+        "success": True,
+        "message": f"Claimed {points_reward} points!",
+        "points_awarded": points_reward,
+        "new_balance": user["points_balance"]
+    }
+
+# ====== VENUE STAFF/DASHBOARD API ======
+
+class VenueStaffRegister(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    venue_id: str
+    role: str = "venue_staff"  # venue_staff, venue_manager
+
+@api_router.post("/venue/register-staff")
+async def register_venue_staff(request: Request, staff: VenueStaffRegister):
+    """Register venue staff - requires admin or venue_manager"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Verify requester is admin or venue manager
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["admin", "venue_manager"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Check if staff email exists
+    existing = await db.users.find_one({"email": staff.email.lower()})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Validate role
+    if staff.role not in ["venue_staff", "venue_manager"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+    
+    # Create staff account
+    hashed_password = bcrypt.hashpw(staff.password.encode('utf-8'), bcrypt.gensalt())
+    staff_user = {
+        "user_id": str(uuid.uuid4()),
+        "email": staff.email.lower(),
+        "password": hashed_password.decode('utf-8'),
+        "name": staff.name,
+        "role": staff.role,
+        "venue_id": staff.venue_id,
+        "is_venue_staff": True,
+        "points_balance": 0,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    await db.users.insert_one(staff_user)
+    
+    return {
+        "success": True,
+        "message": f"Staff account created for {staff.name}",
+        "user_id": staff_user["user_id"]
+    }
+
+@api_router.get("/venue/dashboard")
+async def get_venue_dashboard(request: Request):
+    """Get venue dashboard data - analytics, redemptions, etc."""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Verify venue staff
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    venue_id = user.get("venue_id")
+    is_admin = user.get("role") == "admin"
+    
+    # Get date range for stats
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    week_ago = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
+    
+    # Build query based on role
+    redemption_query = {}
+    if not is_admin and venue_id:
+        redemption_query["redeemed_venue"] = venue_id
+    
+    # Get redemption stats
+    total_redemptions = await db.redemptions.count_documents({
+        **redemption_query,
+        "status": "redeemed"
+    })
+    
+    today_redemptions = await db.redemptions.count_documents({
+        **redemption_query,
+        "status": "redeemed",
+        "redeemed_at": {"$gte": today}
+    })
+    
+    week_redemptions = await db.redemptions.count_documents({
+        **redemption_query,
+        "status": "redeemed",
+        "redeemed_at": {"$gte": week_ago}
+    })
+    
+    # Get recent redemptions
+    recent_redemptions = await db.redemptions.find({
+        **redemption_query,
+        "status": "redeemed"
+    }).sort("redeemed_at", -1).limit(20).to_list(20)
+    
+    # Enrich with customer names
+    for r in recent_redemptions:
+        customer = await db.users.find_one({"user_id": r["user_id"]})
+        r["customer_name"] = customer.get("name", "Unknown") if customer else "Unknown"
+    
+    # Get pending redemptions (QR codes generated but not scanned)
+    pending_count = await db.redemptions.count_documents({
+        "status": "pending"
+    })
+    
+    # Get venue visitors (unique users with activity)
+    visitor_query = {"redeemed_venue": venue_id} if venue_id and not is_admin else {}
+    unique_visitors = await db.redemptions.distinct("user_id", visitor_query)
+    
+    return {
+        "stats": {
+            "total_redemptions": total_redemptions,
+            "today_redemptions": today_redemptions,
+            "week_redemptions": week_redemptions,
+            "pending_redemptions": pending_count,
+            "unique_visitors": len(unique_visitors)
+        },
+        "recent_redemptions": clean_mongo_docs(recent_redemptions),
+        "venue_id": venue_id,
+        "is_admin": is_admin
+    }
+
+@api_router.get("/venue/redemptions")
+async def get_venue_redemptions(
+    request: Request,
+    status: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    """Get redemptions for venue dashboard"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    query = {}
+    if user.get("role") != "admin" and user.get("venue_id"):
+        query["redeemed_venue"] = user["venue_id"]
+    if status:
+        query["status"] = status
+    
+    total = await db.redemptions.count_documents(query)
+    redemptions = await db.redemptions.find(query).sort("created_at", -1).skip(offset).limit(limit).to_list(limit)
+    
+    # Enrich with customer names
+    for r in redemptions:
+        customer = await db.users.find_one({"user_id": r["user_id"]})
+        r["customer_name"] = customer.get("name", "Unknown") if customer else "Unknown"
+    
+    return {
+        "total": total,
+        "redemptions": clean_mongo_docs(redemptions)
+    }
+
+@api_router.get("/venue/analytics")
+async def get_venue_analytics(request: Request, period: str = "week"):
+    """Get detailed analytics for venue"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    venue_id = user.get("venue_id")
+    is_admin = user.get("role") == "admin"
+    
+    # Calculate date range
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    if period == "day":
+        start_date = today
+    elif period == "week":
+        start_date = today - timedelta(days=7)
+    elif period == "month":
+        start_date = today - timedelta(days=30)
+    else:
+        start_date = today - timedelta(days=7)
+    
+    # Build query
+    query = {"redeemed_at": {"$gte": start_date}, "status": "redeemed"}
+    if not is_admin and venue_id:
+        query["redeemed_venue"] = venue_id
+    
+    # Get redemptions grouped by day
+    redemptions = await db.redemptions.find(query).to_list(1000)
+    
+    # Group by day
+    daily_stats = {}
+    for r in redemptions:
+        day = r["redeemed_at"].strftime("%Y-%m-%d")
+        if day not in daily_stats:
+            daily_stats[day] = {"count": 0, "points": 0}
+        daily_stats[day]["count"] += 1
+        daily_stats[day]["points"] += r.get("points_spent", 0)
+    
+    # Get top rewards
+    reward_counts = {}
+    for r in redemptions:
+        name = r.get("reward_name", "Unknown")
+        reward_counts[name] = reward_counts.get(name, 0) + 1
+    
+    top_rewards = sorted(reward_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+    return {
+        "period": period,
+        "daily_stats": daily_stats,
+        "top_rewards": [{"name": name, "count": count} for name, count in top_rewards],
+        "total_redemptions": len(redemptions),
+        "total_points_redeemed": sum(r.get("points_spent", 0) for r in redemptions)
+    }
+
+# Update the redeem_reward to include QR code
+@api_router.post("/rewards/redeem-with-qr")
+async def redeem_reward_with_qr(request: Request, reward_id: str, venue_id: Optional[str] = None):
+    """Redeem reward and get a QR code for redemption"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    reward = await db.rewards.find_one({"id": reward_id})
+    if not reward:
+        raise HTTPException(status_code=404, detail="Reward not found")
+    
+    if reward.get("venue_restriction") and reward["venue_restriction"] != venue_id:
+        raise HTTPException(status_code=400, detail="Reward not available at this venue")
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if user["points_balance"] < reward["points_cost"]:
+        raise HTTPException(status_code=400, detail="Insufficient points")
+    
+    # Deduct points
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$inc": {"points_balance": -reward["points_cost"]}}
+    )
+    
+    # Create redemption with QR code
+    redemption_id = str(uuid.uuid4())
+    qr_code = generate_qr_code(redemption_id, user["user_id"])
+    
+    redemption = {
+        "id": redemption_id,
+        "user_id": user["user_id"],
+        "reward_id": reward_id,
+        "reward_name": reward["name"],
+        "reward_description": reward.get("description", ""),
+        "reward_category": reward.get("category", "general"),
+        "points_spent": reward["points_cost"],
+        "venue_id": venue_id,
+        "qr_code": qr_code,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=48)
+    }
+    
+    await db.redemptions.insert_one(redemption)
+    
+    # Record points transaction
+    await db.points_transactions.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["user_id"],
+        "amount": -reward["points_cost"],
+        "type": "reward_redemption",
+        "description": f"Redeemed: {reward['name']}",
+        "reward_id": reward_id,
+        "redemption_id": redemption_id,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    new_user = await db.users.find_one({"user_id": user["user_id"]})
+    
+    return {
+        "success": True,
+        "message": "Reward redeemed! Show QR code at venue.",
+        "redemption": clean_mongo_doc(redemption),
+        "qr_code": qr_code,
+        "new_balance": new_user["points_balance"]
+    }
 
 # ====== EVENTS API (Powered by Eventfinda) ======
 
