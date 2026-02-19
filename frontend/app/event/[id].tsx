@@ -262,6 +262,61 @@ export default function EventDetailPage() {
               <Text style={styles.descriptionText}>{event.description}</Text>
             </View>
           )}
+
+          {/* RSVP Section */}
+          <View style={styles.rsvpSection}>
+            <Text style={styles.sectionTitle}>Are You Going?</Text>
+            
+            <View style={styles.rsvpButtons}>
+              <TouchableOpacity
+                style={[styles.rsvpButton, rsvpStatus === 'going' && styles.rsvpButtonActive]}
+                onPress={() => handleRsvp('going')}
+                disabled={loadingRsvp}
+              >
+                <Ionicons 
+                  name="checkmark-circle" 
+                  size={24} 
+                  color={rsvpStatus === 'going' ? colors.success : colors.textMuted} 
+                />
+                <Text style={[styles.rsvpButtonText, rsvpStatus === 'going' && styles.rsvpButtonTextActive]}>
+                  Going
+                </Text>
+                {attendees.going_count > 0 && (
+                  <Text style={styles.rsvpCount}>{attendees.going_count}</Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.rsvpButton, rsvpStatus === 'interested' && styles.rsvpButtonActive]}
+                onPress={() => handleRsvp('interested')}
+                disabled={loadingRsvp}
+              >
+                <Ionicons 
+                  name="star" 
+                  size={24} 
+                  color={rsvpStatus === 'interested' ? colors.accent : colors.textMuted} 
+                />
+                <Text style={[styles.rsvpButtonText, rsvpStatus === 'interested' && styles.rsvpButtonTextActive]}>
+                  Interested
+                </Text>
+                {attendees.interested_count > 0 && (
+                  <Text style={styles.rsvpCount}>{attendees.interested_count}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Friends Going */}
+            {(attendees.friends_going.length > 0 || attendees.friends_interested.length > 0) && (
+              <View style={styles.friendsSection}>
+                <Ionicons name="people" size={16} color={colors.textMuted} />
+                <Text style={styles.friendsText}>
+                  {attendees.friends_going.length > 0 && `${attendees.friends_going.map(f => f.name).join(', ')} ${attendees.friends_going.length === 1 ? 'is' : 'are'} going`}
+                  {attendees.friends_going.length > 0 && attendees.friends_interested.length > 0 && ' • '}
+                  {attendees.friends_interested.length > 0 && `${attendees.friends_interested.length} friend${attendees.friends_interested.length === 1 ? '' : 's'} interested`}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
 
