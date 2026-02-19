@@ -2441,9 +2441,9 @@ async def get_rideshare_links(venue_id: str):
         "venue_address": venue["address"]
     }
 
-@api_router.get("/safety/emergency-contacts")
-async def get_emergency_contacts(venue_id: Optional[str] = None):
-    """Get emergency contacts"""
+@api_router.get("/safety/emergency-services")
+async def get_emergency_services(venue_id: Optional[str] = None):
+    """Get emergency services contact numbers"""
     contacts = {
         "emergency": "000",
         "police_non_emergency": "131 444",
