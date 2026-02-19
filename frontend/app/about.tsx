@@ -142,6 +142,12 @@ const styles = StyleSheet.create({
     width: 200,
     height: 80,
   },
+  logoText: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: colors.textPrimary,
+    letterSpacing: 4,
+  },
   tagline: {
     fontSize: 14,
     color: colors.textMuted,
