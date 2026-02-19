@@ -144,32 +144,6 @@ logger = logging.getLogger(__name__)
 # Import venues
 from luna_venues_config import LUNA_VENUES
 
-# Auth helper
-def get_current_user(authorization: Optional[str] = None) -> dict:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing authorization")
-    token = authorization.replace("Bearer ", "")
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-# Helper function to clean MongoDB documents
-def clean_mongo_doc(doc):
-    """Remove MongoDB _id field from document"""
-    if doc and isinstance(doc, dict):
-        doc_copy = dict(doc)
-        doc_copy.pop('_id', None)
-        return doc_copy
-    return doc
-
-def clean_mongo_docs(docs):
-    """Remove MongoDB _id field from list of documents"""
-    return [clean_mongo_doc(doc) for doc in docs]
-
 # ====== VENUES API ======
 
 @api_router.get("/venues")
