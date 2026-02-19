@@ -763,4 +763,112 @@ export const api = {
       hashtags: string[];
       api_connected: boolean;
     }>('/api/instagram/config'),
+
+  // ====== QR REDEMPTION SYSTEM ======
+  redeemRewardWithQR: (rewardId: string, venueId?: string) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      redemption: any;
+      qr_code: string;
+      new_balance: number;
+    }>(`/api/rewards/redeem-with-qr?reward_id=${rewardId}${venueId ? `&venue_id=${venueId}` : ''}`, {
+      method: 'POST'
+    }),
+
+  getMyRedemptions: (status?: string) =>
+    apiFetch<any[]>(`/api/redemptions/my${status ? `?status=${status}` : ''}`),
+
+  getRedemption: (redemptionId: string) =>
+    apiFetch<any>(`/api/redemptions/${redemptionId}`),
+
+  // ====== MISSIONS API ======
+  getMissions: (venueId?: string) =>
+    apiFetch<any[]>(`/api/missions${venueId ? `?venue_id=${venueId}` : ''}`),
+
+  updateMissionProgress: (missionId: string, progressIncrement: number = 1) =>
+    apiFetch<{
+      message: string;
+      progress: number;
+      target: number;
+      completed: boolean;
+    }>('/api/missions/progress', {
+      method: 'POST',
+      body: JSON.stringify({ mission_id: missionId, progress_increment: progressIncrement })
+    }),
+
+  claimMissionReward: (missionId: string) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      points_awarded: number;
+      new_balance: number;
+    }>(`/api/missions/${missionId}/claim`, {
+      method: 'POST'
+    }),
+
+  // ====== VENUE DASHBOARD API ======
+  venueLogin: (email: string, password: string) =>
+    apiFetch<{
+      token: string;
+      user: any;
+      is_venue_staff: boolean;
+      venue_id: string;
+    }>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+      auth: false
+    }),
+
+  venueScanQR: (qrCode: string, venueId: string) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      reward_name: string;
+      customer_name: string;
+      points_spent: number;
+      redeemed_at: string;
+    }>('/api/venue/scan-qr', {
+      method: 'POST',
+      body: JSON.stringify({ qr_code: qrCode, venue_id: venueId })
+    }),
+
+  getVenueDashboard: () =>
+    apiFetch<{
+      stats: {
+        total_redemptions: number;
+        today_redemptions: number;
+        week_redemptions: number;
+        pending_redemptions: number;
+        unique_visitors: number;
+      };
+      recent_redemptions: any[];
+      venue_id: string;
+      is_admin: boolean;
+    }>('/api/venue/dashboard'),
+
+  getVenueRedemptions: (status?: string, limit: number = 50, offset: number = 0) =>
+    apiFetch<{
+      total: number;
+      redemptions: any[];
+    }>(`/api/venue/redemptions?limit=${limit}&offset=${offset}${status ? `&status=${status}` : ''}`),
+
+  getVenueAnalytics: (period: string = 'week') =>
+    apiFetch<{
+      period: string;
+      daily_stats: Record<string, { count: number; points: number }>;
+      top_rewards: { name: string; count: number }[];
+      total_redemptions: number;
+      total_points_redeemed: number;
+    }>(`/api/venue/analytics?period=${period}`),
+
+  registerVenueStaff: (email: string, password: string, name: string, venueId: string, role: string = 'venue_staff') =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      user_id: string;
+    }>('/api/venue/register-staff', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name, venue_id: venueId, role })
+    }),
 };
