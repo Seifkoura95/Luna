@@ -1072,6 +1072,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: spacing.sm,
   },
+  depositInfo: {
+    flex: 1,
+  },
   bidInputPrefix: {
     fontSize: 24,
     fontWeight: '700',
