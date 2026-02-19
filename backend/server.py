@@ -4528,6 +4528,839 @@ async def toggle_location_sharing(request: Request, crew_id: str, enabled: bool 
         "message": f"Location sharing {'enabled' if enabled else 'disabled'} for this crew"
     }
 
+# ====== EMERGENCY CONTACTS API ======
+
+class EmergencyContact(BaseModel):
+    name: str
+    phone: str
+    relationship: str  # friend, family, partner, other
+    email: Optional[str] = None
+
+@api_router.get("/safety/emergency-contacts")
+async def get_emergency_contacts(request: Request):
+    """Get user's emergency contacts"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    contacts = user.get("emergency_contacts", []) if user else []
+    
+    return {"contacts": contacts}
+
+@api_router.post("/safety/emergency-contacts")
+async def add_emergency_contact(request: Request, contact: EmergencyContact):
+    """Add an emergency contact"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    contact_data = {
+        "id": str(uuid.uuid4())[:8],
+        "name": contact.name,
+        "phone": contact.phone,
+        "email": contact.email,
+        "relationship": contact.relationship,
+        "added_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$push": {"emergency_contacts": contact_data}}
+    )
+    
+    return {"success": True, "contact": contact_data}
+
+@api_router.delete("/safety/emergency-contacts/{contact_id}")
+async def remove_emergency_contact(request: Request, contact_id: str):
+    """Remove an emergency contact"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$pull": {"emergency_contacts": {"id": contact_id}}}
+    )
+    
+    return {"success": True, "message": "Contact removed"}
+
+class SilentAlertRequest(BaseModel):
+    latitude: float
+    longitude: float
+    venue_id: Optional[str] = None
+    activation_method: str = "button"  # button, shake, hidden
+
+@api_router.post("/safety/silent-alert")
+async def send_silent_alert(request: Request, alert: SilentAlertRequest):
+    """Send a silent/discreet safety alert to emergency contacts, crew, and venue"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    user_name = user.get("name", "Someone") if user else "Someone"
+    
+    # Create the alert record
+    alert_record = {
+        "id": str(uuid.uuid4())[:8],
+        "user_id": current_user["user_id"],
+        "user_name": user_name,
+        "alert_type": "silent_emergency",
+        "latitude": alert.latitude,
+        "longitude": alert.longitude,
+        "venue_id": alert.venue_id,
+        "activation_method": alert.activation_method,
+        "status": "active",
+        "created_at": datetime.now(timezone.utc),
+        "acknowledged_by": [],
+        "resolved_at": None
+    }
+    await db.safety_alerts.insert_one(alert_record)
+    
+    notified = {"crew": [], "emergency_contacts": [], "venue": None}
+    google_maps_link = f"https://maps.google.com/?q={alert.latitude},{alert.longitude}"
+    
+    # 1. Notify all crew members in user's crews
+    crews = await db.crews.find({"members.user_id": current_user["user_id"]}).to_list(10)
+    for crew in crews:
+        for member in crew.get("members", []):
+            member_id = member.get("user_id")
+            if member_id and member_id != current_user["user_id"]:
+                notification = {
+                    "id": str(uuid.uuid4())[:8],
+                    "user_id": member_id,
+                    "type": "silent_safety_alert",
+                    "alert_id": alert_record["id"],
+                    "title": f"🚨 URGENT: {user_name} needs help!",
+                    "body": f"Silent alert activated. Tap to see location.",
+                    "data": {
+                        "alert_id": alert_record["id"],
+                        "latitude": alert.latitude,
+                        "longitude": alert.longitude,
+                        "maps_link": google_maps_link,
+                        "alert_type": "silent_emergency"
+                    },
+                    "read": False,
+                    "priority": "critical",
+                    "created_at": datetime.now(timezone.utc)
+                }
+                await db.safety_notifications.insert_one(notification)
+                notified["crew"].append(member.get("name", member_id))
+    
+    # 2. Notify emergency contacts (SMS/email would be sent in production)
+    emergency_contacts = user.get("emergency_contacts", []) if user else []
+    for contact in emergency_contacts:
+        # In production, send SMS via Twilio
+        # For now, create a record of the notification
+        contact_notification = {
+            "id": str(uuid.uuid4())[:8],
+            "alert_id": alert_record["id"],
+            "contact_name": contact.get("name"),
+            "contact_phone": contact.get("phone"),
+            "contact_email": contact.get("email"),
+            "message": f"URGENT: {user_name} has activated an emergency alert. Location: {google_maps_link}",
+            "status": "pending",  # In production: "sent"
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.emergency_notifications.insert_one(contact_notification)
+        notified["emergency_contacts"].append(contact.get("name"))
+    
+    # 3. Notify venue staff if at a venue
+    if alert.venue_id:
+        venue = await db.venues.find_one({"id": alert.venue_id})
+        if venue:
+            venue_alert = {
+                "id": str(uuid.uuid4())[:8],
+                "venue_id": alert.venue_id,
+                "venue_name": venue.get("name", "Venue"),
+                "alert_id": alert_record["id"],
+                "user_name": user_name,
+                "alert_type": "silent_emergency",
+                "latitude": alert.latitude,
+                "longitude": alert.longitude,
+                "priority": "critical",
+                "status": "pending",
+                "created_at": datetime.now(timezone.utc)
+            }
+            await db.venue_alerts.insert_one(venue_alert)
+            notified["venue"] = venue.get("name")
+            
+            # Also notify venue staff users
+            venue_staff = await db.users.find({"venue_id": alert.venue_id, "is_venue_staff": True}).to_list(20)
+            for staff in venue_staff:
+                staff_notification = {
+                    "id": str(uuid.uuid4())[:8],
+                    "user_id": staff["user_id"],
+                    "type": "venue_emergency_alert",
+                    "alert_id": alert_record["id"],
+                    "title": "🚨 EMERGENCY at your venue!",
+                    "body": f"{user_name} needs immediate assistance.",
+                    "data": {
+                        "alert_id": alert_record["id"],
+                        "latitude": alert.latitude,
+                        "longitude": alert.longitude,
+                        "maps_link": google_maps_link
+                    },
+                    "read": False,
+                    "priority": "critical",
+                    "created_at": datetime.now(timezone.utc)
+                }
+                await db.safety_notifications.insert_one(staff_notification)
+    
+    return {
+        "success": True,
+        "alert_id": alert_record["id"],
+        "message": "Silent alert sent to all contacts",
+        "notified": notified,
+        "location_link": google_maps_link
+    }
+
+# ====== FRIENDS & SOCIAL API ======
+
+class FriendRequest(BaseModel):
+    email: Optional[str] = None
+    username: Optional[str] = None
+
+@api_router.get("/friends")
+async def get_friends(request: Request):
+    """Get user's friends list"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    friend_ids = user.get("friends", []) if user else []
+    
+    # Get friend details
+    friends = []
+    for friend_id in friend_ids:
+        friend = await db.users.find_one({"user_id": friend_id})
+        if friend:
+            friends.append({
+                "user_id": friend["user_id"],
+                "name": friend.get("name", "Unknown"),
+                "username": friend.get("username"),
+                "avatar": friend.get("avatar"),
+                "tier": friend.get("tier", "bronze")
+            })
+    
+    return {"friends": friends, "count": len(friends)}
+
+@api_router.post("/friends/request")
+async def send_friend_request(request: Request, friend_req: FriendRequest):
+    """Send a friend request by email or username"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Find target user
+    target_user = None
+    if friend_req.email:
+        target_user = await db.users.find_one({"email": friend_req.email.lower()})
+    elif friend_req.username:
+        target_user = await db.users.find_one({"username": friend_req.username.lower()})
+    
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if target_user["user_id"] == current_user["user_id"]:
+        raise HTTPException(status_code=400, detail="Cannot add yourself as a friend")
+    
+    # Check if already friends
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if target_user["user_id"] in user.get("friends", []):
+        raise HTTPException(status_code=400, detail="Already friends")
+    
+    # Check if request already exists
+    existing = await db.friend_requests.find_one({
+        "from_user_id": current_user["user_id"],
+        "to_user_id": target_user["user_id"],
+        "status": "pending"
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Friend request already sent")
+    
+    # Create friend request
+    friend_request = {
+        "id": str(uuid.uuid4())[:8],
+        "from_user_id": current_user["user_id"],
+        "from_name": user.get("name", "Unknown"),
+        "to_user_id": target_user["user_id"],
+        "to_name": target_user.get("name", "Unknown"),
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.friend_requests.insert_one(friend_request)
+    
+    # Create notification for target user
+    notification = {
+        "id": str(uuid.uuid4())[:8],
+        "user_id": target_user["user_id"],
+        "type": "friend_request",
+        "title": "New Friend Request",
+        "body": f"{user.get('name', 'Someone')} wants to be friends",
+        "data": {"request_id": friend_request["id"]},
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.notifications.insert_one(notification)
+    
+    return {"success": True, "message": "Friend request sent", "request_id": friend_request["id"]}
+
+@api_router.get("/friends/requests")
+async def get_friend_requests(request: Request):
+    """Get pending friend requests"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Incoming requests
+    incoming = await db.friend_requests.find({
+        "to_user_id": current_user["user_id"],
+        "status": "pending"
+    }).to_list(50)
+    
+    # Outgoing requests
+    outgoing = await db.friend_requests.find({
+        "from_user_id": current_user["user_id"],
+        "status": "pending"
+    }).to_list(50)
+    
+    return {
+        "incoming": clean_mongo_docs(incoming),
+        "outgoing": clean_mongo_docs(outgoing)
+    }
+
+@api_router.post("/friends/requests/{request_id}/accept")
+async def accept_friend_request(request: Request, request_id: str):
+    """Accept a friend request"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    friend_request = await db.friend_requests.find_one({
+        "id": request_id,
+        "to_user_id": current_user["user_id"],
+        "status": "pending"
+    })
+    
+    if not friend_request:
+        raise HTTPException(status_code=404, detail="Friend request not found")
+    
+    # Add each user to the other's friends list
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$addToSet": {"friends": friend_request["from_user_id"]}}
+    )
+    await db.users.update_one(
+        {"user_id": friend_request["from_user_id"]},
+        {"$addToSet": {"friends": current_user["user_id"]}}
+    )
+    
+    # Update request status
+    await db.friend_requests.update_one(
+        {"id": request_id},
+        {"$set": {"status": "accepted", "accepted_at": datetime.now(timezone.utc)}}
+    )
+    
+    # Notify the requester
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    notification = {
+        "id": str(uuid.uuid4())[:8],
+        "user_id": friend_request["from_user_id"],
+        "type": "friend_accepted",
+        "title": "Friend Request Accepted",
+        "body": f"{user.get('name', 'Someone')} accepted your friend request!",
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.notifications.insert_one(notification)
+    
+    return {"success": True, "message": "Friend request accepted"}
+
+@api_router.post("/friends/requests/{request_id}/decline")
+async def decline_friend_request(request: Request, request_id: str):
+    """Decline a friend request"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.friend_requests.update_one(
+        {"id": request_id, "to_user_id": current_user["user_id"]},
+        {"$set": {"status": "declined", "declined_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"success": True, "message": "Friend request declined"}
+
+@api_router.delete("/friends/{friend_id}")
+async def remove_friend(request: Request, friend_id: str):
+    """Remove a friend"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Remove from both users' friends lists
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$pull": {"friends": friend_id}}
+    )
+    await db.users.update_one(
+        {"user_id": friend_id},
+        {"$pull": {"friends": current_user["user_id"]}}
+    )
+    
+    return {"success": True, "message": "Friend removed"}
+
+@api_router.get("/friends/activity")
+async def get_friends_activity(request: Request):
+    """Get activity feed from friends"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    friend_ids = user.get("friends", []) if user else []
+    
+    if not friend_ids:
+        return {"activities": []}
+    
+    # Get various activities from friends
+    activities = []
+    
+    # Event attendance
+    event_rsvps = await db.event_rsvps.find({
+        "user_id": {"$in": friend_ids},
+        "status": {"$in": ["going", "interested"]},
+        "is_private": {"$ne": True}
+    }).sort("created_at", -1).limit(20).to_list(20)
+    
+    for rsvp in event_rsvps:
+        friend = await db.users.find_one({"user_id": rsvp["user_id"]})
+        activities.append({
+            "type": "event_rsvp",
+            "user_id": rsvp["user_id"],
+            "user_name": friend.get("name", "Friend") if friend else "Friend",
+            "user_avatar": friend.get("avatar") if friend else None,
+            "event_id": rsvp["event_id"],
+            "event_name": rsvp.get("event_name", "an event"),
+            "status": rsvp["status"],
+            "created_at": rsvp["created_at"].isoformat() if isinstance(rsvp["created_at"], datetime) else rsvp["created_at"]
+        })
+    
+    # Check-ins
+    checkins = await db.checkins.find({
+        "user_id": {"$in": friend_ids},
+        "is_private": {"$ne": True}
+    }).sort("created_at", -1).limit(20).to_list(20)
+    
+    for checkin in checkins:
+        friend = await db.users.find_one({"user_id": checkin["user_id"]})
+        activities.append({
+            "type": "checkin",
+            "user_id": checkin["user_id"],
+            "user_name": friend.get("name", "Friend") if friend else "Friend",
+            "user_avatar": friend.get("avatar") if friend else None,
+            "venue_id": checkin.get("venue_id"),
+            "venue_name": checkin.get("venue_name", "a venue"),
+            "created_at": checkin["created_at"].isoformat() if isinstance(checkin["created_at"], datetime) else checkin["created_at"]
+        })
+    
+    # Sort all activities by date
+    activities.sort(key=lambda x: x["created_at"], reverse=True)
+    
+    return {"activities": activities[:30]}
+
+# ====== EVENT RSVP API ======
+
+class EventRSVP(BaseModel):
+    event_id: str
+    status: str  # going, interested, not_going
+    is_private: bool = False
+
+@api_router.post("/events/{event_id}/rsvp")
+async def rsvp_to_event(request: Request, event_id: str, rsvp: EventRSVP):
+    """RSVP to an event (going/interested)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Get event details
+    event = await db.events.find_one({"id": event_id})
+    event_name = event.get("title", "Event") if event else "Event"
+    
+    # Update or create RSVP
+    await db.event_rsvps.update_one(
+        {"user_id": current_user["user_id"], "event_id": event_id},
+        {"$set": {
+            "user_id": current_user["user_id"],
+            "event_id": event_id,
+            "event_name": event_name,
+            "status": rsvp.status,
+            "is_private": rsvp.is_private,
+            "updated_at": datetime.now(timezone.utc),
+            "created_at": datetime.now(timezone.utc)
+        }},
+        upsert=True
+    )
+    
+    return {"success": True, "message": f"Marked as {rsvp.status}", "status": rsvp.status}
+
+@api_router.get("/events/{event_id}/rsvp")
+async def get_my_event_rsvp(request: Request, event_id: str):
+    """Get user's RSVP status for an event"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    rsvp = await db.event_rsvps.find_one({
+        "user_id": current_user["user_id"],
+        "event_id": event_id
+    })
+    
+    return {"rsvp": clean_mongo_doc(rsvp) if rsvp else None}
+
+@api_router.get("/events/{event_id}/attendees")
+async def get_event_attendees(request: Request, event_id: str):
+    """Get list of people going/interested in an event"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    friend_ids = user.get("friends", []) if user else []
+    
+    # Get all RSVPs for this event
+    going = await db.event_rsvps.find({
+        "event_id": event_id,
+        "status": "going",
+        "is_private": {"$ne": True}
+    }).to_list(100)
+    
+    interested = await db.event_rsvps.find({
+        "event_id": event_id,
+        "status": "interested",
+        "is_private": {"$ne": True}
+    }).to_list(100)
+    
+    # Separate friends from others
+    friends_going = []
+    others_going = []
+    for rsvp in going:
+        attendee = await db.users.find_one({"user_id": rsvp["user_id"]})
+        if attendee:
+            attendee_data = {
+                "user_id": attendee["user_id"],
+                "name": attendee.get("name", "Unknown"),
+                "avatar": attendee.get("avatar"),
+                "is_friend": rsvp["user_id"] in friend_ids
+            }
+            if rsvp["user_id"] in friend_ids:
+                friends_going.append(attendee_data)
+            else:
+                others_going.append(attendee_data)
+    
+    friends_interested = []
+    for rsvp in interested:
+        if rsvp["user_id"] in friend_ids:
+            attendee = await db.users.find_one({"user_id": rsvp["user_id"]})
+            if attendee:
+                friends_interested.append({
+                    "user_id": attendee["user_id"],
+                    "name": attendee.get("name", "Unknown"),
+                    "avatar": attendee.get("avatar")
+                })
+    
+    return {
+        "going_count": len(going),
+        "interested_count": len(interested),
+        "friends_going": friends_going,
+        "friends_interested": friends_interested,
+        "others_going_count": len(others_going)
+    }
+
+# ====== LOST & FOUND API ======
+
+class LostItemReport(BaseModel):
+    venue_id: str
+    item_description: str
+    item_category: str  # phone, wallet, keys, bag, clothing, jewelry, other
+    lost_date: str
+    lost_time_approx: Optional[str] = None
+    contact_phone: Optional[str] = None
+    photo_url: Optional[str] = None
+
+class FoundItemReport(BaseModel):
+    venue_id: str
+    item_description: str
+    item_category: str
+    found_date: str
+    found_location: Optional[str] = None  # e.g., "near bar", "bathroom", "dance floor"
+    photo_url: Optional[str] = None
+
+@api_router.post("/lost-found/report-lost")
+async def report_lost_item(request: Request, item: LostItemReport):
+    """Report a lost item"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    
+    lost_item = {
+        "id": str(uuid.uuid4())[:8],
+        "type": "lost",
+        "user_id": current_user["user_id"],
+        "user_name": user.get("name", "Unknown") if user else "Unknown",
+        "user_email": user.get("email") if user else None,
+        "venue_id": item.venue_id,
+        "item_description": item.item_description,
+        "item_category": item.item_category,
+        "lost_date": item.lost_date,
+        "lost_time_approx": item.lost_time_approx,
+        "contact_phone": item.contact_phone,
+        "photo_url": item.photo_url,
+        "status": "reported",  # reported, matched, claimed, closed
+        "matched_with": None,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.lost_found.insert_one(lost_item)
+    
+    # Check for potential matches
+    potential_matches = await db.lost_found.find({
+        "type": "found",
+        "venue_id": item.venue_id,
+        "item_category": item.item_category,
+        "status": "reported"
+    }).to_list(10)
+    
+    return {
+        "success": True,
+        "item_id": lost_item["id"],
+        "message": "Lost item reported. We'll notify you if it's found.",
+        "potential_matches": len(potential_matches)
+    }
+
+@api_router.post("/lost-found/report-found")
+async def report_found_item(request: Request, item: FoundItemReport):
+    """Report a found item (venue staff only)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    
+    found_item = {
+        "id": str(uuid.uuid4())[:8],
+        "type": "found",
+        "reported_by_user_id": current_user["user_id"],
+        "reported_by_name": user.get("name", "Unknown") if user else "Unknown",
+        "venue_id": item.venue_id,
+        "item_description": item.item_description,
+        "item_category": item.item_category,
+        "found_date": item.found_date,
+        "found_location": item.found_location,
+        "photo_url": item.photo_url,
+        "status": "reported",
+        "claimed_by": None,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.lost_found.insert_one(found_item)
+    
+    # Check for matching lost items and notify owners
+    matching_lost = await db.lost_found.find({
+        "type": "lost",
+        "venue_id": item.venue_id,
+        "item_category": item.item_category,
+        "status": "reported"
+    }).to_list(20)
+    
+    for lost in matching_lost:
+        notification = {
+            "id": str(uuid.uuid4())[:8],
+            "user_id": lost["user_id"],
+            "type": "potential_item_match",
+            "title": "Potential Match Found!",
+            "body": f"An item matching your lost {item.item_category} was found at {item.venue_id}",
+            "data": {"lost_item_id": lost["id"], "found_item_id": found_item["id"]},
+            "read": False,
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.notifications.insert_one(notification)
+    
+    return {
+        "success": True,
+        "item_id": found_item["id"],
+        "message": "Found item logged",
+        "matching_reports": len(matching_lost)
+    }
+
+@api_router.get("/lost-found/my-reports")
+async def get_my_lost_reports(request: Request):
+    """Get user's lost item reports"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    reports = await db.lost_found.find({
+        "user_id": current_user["user_id"],
+        "type": "lost"
+    }).sort("created_at", -1).to_list(20)
+    
+    return {"reports": clean_mongo_docs(reports)}
+
+@api_router.get("/lost-found/venue/{venue_id}")
+async def get_venue_lost_found(request: Request, venue_id: str, item_type: Optional[str] = None):
+    """Get lost/found items at a venue (for venue staff)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    query = {"venue_id": venue_id}
+    if item_type:
+        query["type"] = item_type
+    
+    items = await db.lost_found.find(query).sort("created_at", -1).to_list(50)
+    
+    return {"items": clean_mongo_docs(items)}
+
+@api_router.post("/lost-found/{item_id}/claim")
+async def claim_found_item(request: Request, item_id: str):
+    """Claim a found item"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.lost_found.update_one(
+        {"id": item_id, "type": "found"},
+        {"$set": {
+            "status": "claimed",
+            "claimed_by": current_user["user_id"],
+            "claimed_at": datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {"success": True, "message": "Item claimed. Please visit the venue to collect it."}
+
+class LostFoundMessage(BaseModel):
+    item_id: str
+    message: str
+
+@api_router.post("/lost-found/message")
+async def send_lost_found_message(request: Request, msg: LostFoundMessage):
+    """Send a message about a lost/found item"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    
+    message = {
+        "id": str(uuid.uuid4())[:8],
+        "item_id": msg.item_id,
+        "from_user_id": current_user["user_id"],
+        "from_name": user.get("name", "Unknown") if user else "Unknown",
+        "message": msg.message,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.lost_found_messages.insert_one(message)
+    
+    # Notify item owner/reporter
+    item = await db.lost_found.find_one({"id": msg.item_id})
+    if item:
+        notify_user_id = item.get("user_id") or item.get("reported_by_user_id")
+        if notify_user_id and notify_user_id != current_user["user_id"]:
+            notification = {
+                "id": str(uuid.uuid4())[:8],
+                "user_id": notify_user_id,
+                "type": "lost_found_message",
+                "title": "New message about your item",
+                "body": msg.message[:50] + "..." if len(msg.message) > 50 else msg.message,
+                "data": {"item_id": msg.item_id},
+                "read": False,
+                "created_at": datetime.now(timezone.utc)
+            }
+            await db.notifications.insert_one(notification)
+    
+    return {"success": True, "message_id": message["id"]}
+
+@api_router.get("/lost-found/{item_id}/messages")
+async def get_lost_found_messages(request: Request, item_id: str):
+    """Get messages for a lost/found item"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    messages = await db.lost_found_messages.find({"item_id": item_id}).sort("created_at", 1).to_list(100)
+    
+    return {"messages": clean_mongo_docs(messages)}
+
+# ====== RIDE SHARING INTEGRATION ======
+
+@api_router.get("/rides/options")
+async def get_ride_options(request: Request, latitude: float, longitude: float, venue_id: Optional[str] = None):
+    """Get ride sharing options with deep links"""
+    
+    # Get venue address if provided
+    destination_name = "Luna Group Venue"
+    if venue_id:
+        venue = await db.venues.find_one({"id": venue_id})
+        if venue:
+            destination_name = venue.get("name", "Luna Group Venue")
+    
+    # Build deep links for ride apps
+    ride_options = [
+        {
+            "provider": "uber",
+            "name": "Uber",
+            "icon": "car",
+            "color": "#000000",
+            "deep_link": f"uber://?action=setPickup&pickup[latitude]={latitude}&pickup[longitude]={longitude}&pickup[nickname]=Current%20Location",
+            "web_fallback": f"https://m.uber.com/ul/?action=setPickup&pickup[latitude]={latitude}&pickup[longitude]={longitude}",
+            "affiliate_note": "Partner integration pending"
+        },
+        {
+            "provider": "didi",
+            "name": "DiDi",
+            "icon": "car-sport",
+            "color": "#FF7700",
+            "deep_link": f"didiglobal://",
+            "web_fallback": "https://web.didiglobal.com/",
+            "affiliate_note": "Partner integration pending"
+        },
+        {
+            "provider": "ola",
+            "name": "Ola",
+            "icon": "car",
+            "color": "#1BA94C",
+            "deep_link": f"olacabs://app/launch?lat={latitude}&lng={longitude}",
+            "web_fallback": "https://book.olacabs.com/",
+            "affiliate_note": "Partner integration pending"
+        }
+    ]
+    
+    return {
+        "pickup_location": {"latitude": latitude, "longitude": longitude},
+        "destination": destination_name,
+        "options": ride_options
+    }
+
+# ====== PRIVACY SETTINGS API ======
+
+class PrivacySettings(BaseModel):
+    show_activity_to_friends: bool = True
+    show_event_attendance: bool = True
+    show_checkins: bool = True
+    allow_friend_requests: bool = True
+
+@api_router.get("/settings/privacy")
+async def get_privacy_settings(request: Request):
+    """Get user's privacy settings"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    settings = user.get("privacy_settings", {}) if user else {}
+    
+    return {
+        "show_activity_to_friends": settings.get("show_activity_to_friends", True),
+        "show_event_attendance": settings.get("show_event_attendance", True),
+        "show_checkins": settings.get("show_checkins", True),
+        "allow_friend_requests": settings.get("allow_friend_requests", True)
+    }
+
+@api_router.put("/settings/privacy")
+async def update_privacy_settings(request: Request, settings: PrivacySettings):
+    """Update user's privacy settings"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {"privacy_settings": settings.dict()}}
+    )
+    
+    return {"success": True, "message": "Privacy settings updated"}
+
 
 # ====== VIP TABLE BOOKING API ======
 
