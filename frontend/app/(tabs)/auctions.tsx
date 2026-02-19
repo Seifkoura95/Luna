@@ -1103,11 +1103,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: spacing.xs,
   },
-  placeBidButton: {
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    marginTop: spacing.sm,
-  },
   placeBidButtonDisabled: {
     opacity: 0.6,
   },
