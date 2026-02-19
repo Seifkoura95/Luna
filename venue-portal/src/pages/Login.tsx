@@ -29,7 +29,6 @@ export default function Login({ onLogin }: LoginProps) {
 
       const { user, token } = response.data;
       
-      // Verify user is venue staff
       if (!['venue_staff', 'venue_manager', 'admin'].includes(user.role)) {
         setError('Access denied. Venue staff only.');
         setLoading(false);
@@ -58,30 +57,30 @@ export default function Login({ onLogin }: LoginProps) {
           <div style={styles.inputGroup}>
             <label style={styles.label}>Email</label>
             <input
-              type="email"
+              type={'email'}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               style={styles.input}
-              placeholder="venue@example.com"
+              placeholder={'venue@example.com'}
             />
           </div>
 
           <div style={styles.inputGroup}>
             <label style={styles.label}>Password</label>
             <input
-              type="password"
+              type={'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               style={styles.input}
-              placeholder="Enter password"
+              placeholder={'Enter password'}
             />
           </div>
 
           {error && <div style={styles.error}>{error}</div>}
 
-          <button type="submit" disabled={loading} style={styles.button}>
+          <button type={'submit'} disabled={loading} style={styles.button}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
