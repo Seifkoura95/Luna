@@ -221,7 +221,11 @@ export default function SocialFeedScreen() {
 
   const handleRespondToRequest = async (requestId: string, accept: boolean) => {
     try {
-      await api.respondToFriendRequest(requestId, accept);
+      if (accept) {
+        await api.acceptFriendRequest(requestId);
+      } else {
+        await api.declineFriendRequest(requestId);
+      }
       loadFriends();
       loadActivities(); // Refresh feed to show new friend activities
     } catch (error: any) {
