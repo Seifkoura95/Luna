@@ -23,19 +23,19 @@ CHERRYHUB_CLIENT_SECRET = os.environ.get('CHERRYHUB_CLIENT_SECRET', 'MdGxQK0gtEM
 CHERRYHUB_BUSINESS_ID = os.environ.get('CHERRYHUB_BUSINESS_ID', '81654767334')
 CHERRYHUB_INTEGRATION_ID = os.environ.get('CHERRYHUB_INTEGRATION_ID', '81654767334.0')
 
-# Mock mode - set to True for local testing when CherryHub API is not reachable
-CHERRYHUB_MOCK_MODE = os.environ.get('CHERRYHUB_MOCK_MODE', 'true').lower() == 'true'
+# Mock mode - set to False for production with live credentials
+CHERRYHUB_MOCK_MODE = os.environ.get('CHERRYHUB_MOCK_MODE', 'false').lower() == 'true'
 
 # CherryHub API Base URLs
-# Staging/Test environment
+# Production environment (LIVE)
+CHERRYHUB_API_BASE_URL = "https://api.cherryhub.com.au"
 CHERRYHUB_AUTH_URL = "https://accounts.cherryhub.com.au/oauth2/token"
-CHERRYHUB_API_BASE_URL = "https://api-staging.cherryhub.com.au"
-
-# Production environment (uncomment when ready)
-# CHERRYHUB_API_BASE_URL = "https://api.cherryhub.com.au"
 
 # Service Account Refresh Token (stored securely)
-CHERRYHUB_REFRESH_TOKEN = os.environ.get('CHERRYHUB_REFRESH_TOKEN', '')
+CHERRYHUB_REFRESH_TOKEN = os.environ.get(
+    'CHERRYHUB_REFRESH_TOKEN',
+    'AMf-vBzC-6FkmP2O4i88ZpGUukaaiFZaRUQrnSDr1vBabN9FhYKL3tRDjtR4MED4V36RqUvgoKr8bB3R_e_Hkh3ypoP75TX3Lgj8iAcKZ53ur62B1O2_JDCP1TAZC93GtbPKhpawCHoypDcNheHSCK46kktWDDk27PjJtoMEpKwN2vjfnksqD-1cDkOZLz7H-Ay4DcjsWWhqBpdHiNiC6nmnxoKBfuF0UxarxhG2SGahDkPNMrNnZyh5ScvP5kJ5qNHNoSkjJJynVZvyJbjm61-0cOgnmyKw0NLKWFZiY5xGvTIsUYQyBTAvVZMkjMSj_d1GeQ7POCJQ4WYdfLUcI5PZ2dSxWoMLuxGmSGMwcI0mLllQBV7t3xW_egdtCgg9yKZI9k8xJ2FmzGmcJTekbqeHe20EIvpWIJgXsIkd-CdO3usEkFEZXn4'
+)
 
 
 class CherryHubTokenManager:
