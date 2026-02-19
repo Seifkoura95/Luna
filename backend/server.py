@@ -471,10 +471,6 @@ async def get_redemption(request: Request, redemption_id: str):
     
     return clean_mongo_doc(redemption)
 
-class ScanQRRequest(BaseModel):
-    qr_code: str
-    venue_id: str
-
 @api_router.post("/venue/scan-qr")
 async def venue_scan_qr(request: Request, scan_req: ScanQRRequest):
     """Venue scans and validates a QR code - marks as redeemed"""
