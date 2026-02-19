@@ -562,6 +562,9 @@ export default function SocialFeedScreen() {
             />
             <Text style={[styles.tabText, selectedTab === 'friends' && styles.tabTextActive]}>
               Friends
+              {pendingRequests.length > 0 && (
+                <Text style={styles.requestBadge}> {pendingRequests.length}</Text>
+              )}
             </Text>
           </TouchableOpacity>
           
@@ -578,7 +581,65 @@ export default function SocialFeedScreen() {
               Instagram
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.addFriendBtn}
+            onPress={() => {
+              if (Platform.OS !== 'web') {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              setShowAddFriend(true);
+            }}
+          >
+            <Ionicons name="person-add" size={20} color={colors.accent} />
+          </TouchableOpacity>
         </View>
+
+        {/* Pending Friend Requests (shown when friends tab is active) */}
+        {selectedTab === 'friends' && pendingRequests.length > 0 && (
+          <View style={styles.requestsSection}>
+            <Text style={styles.sectionHeader}>FRIEND REQUESTS</Text>
+            {pendingRequests.map((request) => (
+              <View key={request.id} style={styles.requestCard}>
+                <View style={styles.requestInfo}>
+                  <View style={styles.requestAvatar}>
+                    <Text style={styles.requestAvatarText}>
+                      {request.from_user_name?.charAt(0).toUpperCase() || '?'}
+                    </Text>
+                  </View>
+                  <View style={styles.requestDetails}>
+                    <Text style={styles.requestName}>{request.from_user_name || 'Unknown'}</Text>
+                    <Text style={styles.requestEmail}>{request.from_user_email || ''}</Text>
+                  </View>
+                </View>
+                <View style={styles.requestActions}>
+                  <TouchableOpacity
+                    style={[styles.requestActionBtn, styles.acceptBtn]}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') {
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                      }
+                      handleRespondToRequest(request.id, true);
+                    }}
+                  >
+                    <Ionicons name="checkmark" size={18} color="#fff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.requestActionBtn, styles.declineBtn]}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }
+                      handleRespondToRequest(request.id, false);
+                    }}
+                  >
+                    <Ionicons name="close" size={18} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         {selectedTab === 'instagram' ? (
           renderInstagramFeed()
