@@ -51,6 +51,15 @@ export default function LoginScreen() {
       if (isLogin) {
         const result = await api.login(email, password);
         useAuthStore.getState().login(result.user, result.token);
+        
+        // Check if user is venue staff and redirect accordingly
+        if (result.user?.is_venue_staff || result.user?.role === 'venue_staff' || result.user?.role === 'venue_manager') {
+          if (Platform.OS !== 'web') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }
+          router.replace('/venue-dashboard');
+          return;
+        }
       } else {
         const result = await api.register(email, password, name, referralCode || undefined);
         useAuthStore.getState().login(result.user, result.token);
