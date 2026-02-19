@@ -502,9 +502,9 @@ export default function AuctionsScreen() {
                       </TouchableOpacity>
 
                       {/* Deposit Info - Compact */}
-                      <View style={styles.depositInfo}>
+                      <View style={styles.depositInfoCompact}>
                         <Ionicons name="shield-checkmark" size={14} color={colors.textMuted} />
-                        <Text style={styles.depositText}>
+                        <Text style={styles.depositTextCompact}>
                           ${selectedAuction.deposit_required} deposit • Min +${selectedAuction.min_increment}
                         </Text>
                       </View>
