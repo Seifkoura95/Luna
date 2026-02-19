@@ -207,7 +207,10 @@ export default function SocialFeedScreen() {
 
     setSendingRequest(true);
     try {
-      await api.sendFriendRequest(friendIdentifier.trim());
+      const identifier = friendIdentifier.trim();
+      // Determine if the input is an email or username
+      const isEmail = identifier.includes('@');
+      await api.sendFriendRequest(isEmail ? identifier : undefined, isEmail ? undefined : identifier);
       Alert.alert('Success', 'Friend request sent!');
       setFriendIdentifier('');
       setShowAddFriend(false);
