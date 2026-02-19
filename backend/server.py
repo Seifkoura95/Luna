@@ -868,6 +868,236 @@ async def get_venue_analytics(request: Request, period: str = "week"):
         "total_points_redeemed": sum(r.get("points_spent", 0) for r in redemptions)
     }
 
+@api_router.get("/venue/analytics/revenue")
+async def get_venue_revenue_analytics(request: Request, period: str = "month"):
+    """Get revenue analytics for venue - spending, bookings, subscriptions"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    venue_id = user.get("venue_id")
+    is_admin = user.get("role") == "admin"
+    
+    # Calculate date range
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    if period == "week":
+        start_date = today - timedelta(days=7)
+    elif period == "month":
+        start_date = today - timedelta(days=30)
+    elif period == "year":
+        start_date = today - timedelta(days=365)
+    else:
+        start_date = today - timedelta(days=30)
+    
+    # Build query based on role
+    spending_query = {"created_at": {"$gte": start_date}}
+    if not is_admin and venue_id:
+        spending_query["venue_id"] = venue_id
+    
+    # Get spending records
+    spending_records = await db.spending.find(spending_query).to_list(10000)
+    
+    # Calculate totals by category
+    total_revenue = sum(s.get("amount", 0) for s in spending_records)
+    category_revenue = {}
+    for s in spending_records:
+        category = s.get("category", "general")
+        category_revenue[category] = category_revenue.get(category, 0) + s.get("amount", 0)
+    
+    # Get revenue by day for chart
+    daily_revenue = {}
+    for s in spending_records:
+        day = s["created_at"].strftime("%Y-%m-%d")
+        if day not in daily_revenue:
+            daily_revenue[day] = 0
+        daily_revenue[day] += s.get("amount", 0)
+    
+    # Get booking revenue (bookings and guestlist)
+    booking_query = {"created_at": {"$gte": start_date}}
+    if not is_admin and venue_id:
+        booking_query["venue_id"] = venue_id
+    
+    bookings = await db.bookings.find(booking_query).to_list(1000)
+    booking_revenue = sum(b.get("deposit_amount", 0) for b in bookings)
+    
+    return {
+        "period": period,
+        "total_revenue": total_revenue,
+        "booking_revenue": booking_revenue,
+        "combined_revenue": total_revenue + booking_revenue,
+        "category_breakdown": category_revenue,
+        "daily_revenue": daily_revenue,
+        "average_spend_per_customer": total_revenue / len(spending_records) if spending_records else 0,
+        "total_transactions": len(spending_records)
+    }
+
+@api_router.get("/venue/analytics/checkins")
+async def get_venue_checkin_analytics(request: Request, period: str = "month"):
+    """Get check-in analytics for venue - peak hours, frequency, loyalty"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    venue_id = user.get("venue_id")
+    is_admin = user.get("role") == "admin"
+    
+    # Calculate date range
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    if period == "week":
+        start_date = today - timedelta(days=7)
+    elif period == "month":
+        start_date = today - timedelta(days=30)
+    elif period == "year":
+        start_date = today - timedelta(days=365)
+    else:
+        start_date = today - timedelta(days=30)
+    
+    # Build query
+    checkin_query = {"created_at": {"$gte": start_date}}
+    if not is_admin and venue_id:
+        checkin_query["venue_id"] = venue_id
+    
+    # Get check-ins
+    checkins = await db.checkins.find(checkin_query).to_list(10000)
+    
+    # Total check-ins
+    total_checkins = len(checkins)
+    
+    # Unique visitors
+    unique_users = len(set(c["user_id"] for c in checkins))
+    
+    # Average check-ins per user
+    avg_checkins_per_user = total_checkins / unique_users if unique_users > 0 else 0
+    
+    # Peak hours analysis
+    hour_distribution = {}
+    for c in checkins:
+        hour = c["created_at"].hour
+        hour_distribution[hour] = hour_distribution.get(hour, 0) + 1
+    
+    # Peak day of week analysis
+    day_distribution = {}
+    for c in checkins:
+        day = c["created_at"].strftime("%A")  # Monday, Tuesday, etc.
+        day_distribution[day] = day_distribution.get(day, 0) + 1
+    
+    # Daily check-ins for chart
+    daily_checkins = {}
+    for c in checkins:
+        day = c["created_at"].strftime("%Y-%m-%d")
+        if day not in daily_checkins:
+            daily_checkins[day] = 0
+        daily_checkins[day] += 1
+    
+    # Top frequent visitors
+    user_checkin_counts = {}
+    for c in checkins:
+        user_id = c["user_id"]
+        user_checkin_counts[user_id] = user_checkin_counts.get(user_id, 0) + 1
+    
+    top_visitors = sorted(user_checkin_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    
+    # Enrich with user names
+    top_visitors_enriched = []
+    for user_id, count in top_visitors:
+        u = await db.users.find_one({"user_id": user_id})
+        top_visitors_enriched.append({
+            "user_id": user_id,
+            "name": u.get("name", "Unknown") if u else "Unknown",
+            "checkins": count
+        })
+    
+    return {
+        "period": period,
+        "total_checkins": total_checkins,
+        "unique_visitors": unique_users,
+        "avg_checkins_per_user": round(avg_checkins_per_user, 2),
+        "peak_hours": sorted(hour_distribution.items(), key=lambda x: x[1], reverse=True)[:5],
+        "peak_days": sorted(day_distribution.items(), key=lambda x: x[1], reverse=True),
+        "daily_checkins": daily_checkins,
+        "top_visitors": top_visitors_enriched
+    }
+
+@api_router.get("/venue/analytics/demographics")
+async def get_venue_demographics(request: Request):
+    """Get user demographics for venue - age, gender, membership tiers"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    venue_id = user.get("venue_id")
+    is_admin = user.get("role") == "admin"
+    
+    # Get all users who have checked in to this venue
+    checkin_query = {}
+    if not is_admin and venue_id:
+        checkin_query["venue_id"] = venue_id
+    
+    checkins = await db.checkins.find(checkin_query).to_list(10000)
+    unique_user_ids = list(set(c["user_id"] for c in checkins))
+    
+    # Get user profiles
+    users = await db.users.find({"user_id": {"$in": unique_user_ids}}).to_list(10000)
+    
+    # Analyze membership tiers
+    tier_distribution = {}
+    for u in users:
+        tier = u.get("subscription_tier", "lunar")
+        tier_distribution[tier] = tier_distribution.get(tier, 0) + 1
+    
+    # Analyze age distribution (if available)
+    age_distribution = {
+        "18-24": 0,
+        "25-34": 0,
+        "35-44": 0,
+        "45+": 0
+    }
+    
+    from datetime import datetime
+    for u in users:
+        if u.get("date_of_birth"):
+            try:
+                dob = datetime.fromisoformat(u["date_of_birth"].replace("Z", "+00:00"))
+                age = (datetime.now(timezone.utc) - dob).days // 365
+                if age < 25:
+                    age_distribution["18-24"] += 1
+                elif age < 35:
+                    age_distribution["25-34"] += 1
+                elif age < 45:
+                    age_distribution["35-44"] += 1
+                else:
+                    age_distribution["45+"] += 1
+            except:
+                pass
+    
+    # Gender distribution (if available)
+    gender_distribution = {}
+    for u in users:
+        gender = u.get("gender", "unspecified")
+        gender_distribution[gender] = gender_distribution.get(gender, 0) + 1
+    
+    return {
+        "total_customers": len(users),
+        "membership_tiers": tier_distribution,
+        "age_distribution": age_distribution,
+        "gender_distribution": gender_distribution,
+        "loyalty_breakdown": {
+            "new_visitors": len([u for u in users if user_checkin_counts.get(u["user_id"], 0) == 1]) if 'user_checkin_counts' in locals() else 0,
+            "regular_visitors": len([u for u in users if 2 <= user_checkin_counts.get(u["user_id"], 0) <= 5]) if 'user_checkin_counts' in locals() else 0,
+            "vip_visitors": len([u for u in users if user_checkin_counts.get(u["user_id"], 0) > 5]) if 'user_checkin_counts' in locals() else 0
+        }
+    }
+
+
 # Update the redeem_reward to include QR code
 @api_router.post("/rewards/redeem-with-qr")
 async def redeem_reward_with_qr(request: Request, reward_id: str, venue_id: Optional[str] = None):
