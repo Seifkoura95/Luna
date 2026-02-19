@@ -44,10 +44,15 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rsvpStatus, setRsvpStatus] = useState<string | null>(null);
+  const [attendees, setAttendees] = useState<{ going_count: number; interested_count: number; friends_going: any[]; friends_interested: any[] }>({ going_count: 0, interested_count: 0, friends_going: [], friends_interested: [] });
+  const [loadingRsvp, setLoadingRsvp] = useState(false);
 
   useEffect(() => {
     if (id) {
       loadEvent();
+      loadRsvp();
+      loadAttendees();
     }
   }, [id]);
 
