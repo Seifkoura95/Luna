@@ -553,10 +553,6 @@ async def get_missions(request: Request, venue_id: Optional[str] = None):
     
     return clean_mongo_docs(missions)
 
-class MissionProgressRequest(BaseModel):
-    mission_id: str
-    progress_increment: int = 1
-
 @api_router.post("/missions/progress")
 async def update_mission_progress(request: Request, progress_req: MissionProgressRequest):
     """Update progress on a mission"""
@@ -1211,12 +1207,6 @@ async def get_auction_detail(auction_id: str):
     auction_data["total_bids"] = len(bids)
     
     return auction_data
-
-class PlaceBidRequest(BaseModel):
-    auction_id: str
-    amount: float
-    max_bid: Optional[float] = None  # For auto-bidding
-    notify_outbid: bool = True  # Opt-in for outbid notifications
 
 @api_router.post("/auctions/bid")
 async def place_bid(request: Request, bid_request: PlaceBidRequest):
@@ -4797,11 +4787,6 @@ async def get_friends_activity(request: Request):
     return {"activities": activities[:30]}
 
 # ====== EVENT RSVP API ======
-
-class EventRSVP(BaseModel):
-    event_id: str
-    status: str  # going, interested, not_going
-    is_private: bool = False
 
 @api_router.post("/events/{event_id}/rsvp")
 async def rsvp_to_event(request: Request, event_id: str, rsvp: EventRSVP):
