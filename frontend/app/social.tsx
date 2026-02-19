@@ -195,9 +195,39 @@ export default function SocialFeedScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([loadActivities(), loadInstagramFeed()]);
+    await Promise.all([loadActivities(), loadInstagramFeed(), loadFriends()]);
     setRefreshing(false);
   }, []);
+
+  const handleSendFriendRequest = async () => {
+    if (!friendIdentifier.trim()) {
+      Alert.alert('Error', 'Please enter an email or username');
+      return;
+    }
+
+    setSendingRequest(true);
+    try {
+      await api.sendFriendRequest(friendIdentifier.trim());
+      Alert.alert('Success', 'Friend request sent!');
+      setFriendIdentifier('');
+      setShowAddFriend(false);
+      loadFriends();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to send request');
+    } finally {
+      setSendingRequest(false);
+    }
+  };
+
+  const handleRespondToRequest = async (requestId: string, accept: boolean) => {
+    try {
+      await api.respondToFriendRequest(requestId, accept);
+      loadFriends();
+      loadActivities(); // Refresh feed to show new friend activities
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to respond to request');
+    }
+  };
 
   const handleLike = (activityId: string) => {
     if (Platform.OS !== 'web') {
