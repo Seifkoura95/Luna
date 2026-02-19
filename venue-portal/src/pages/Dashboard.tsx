@@ -105,9 +105,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               onChange={(e) => setPeriod(e.target.value)}
               style={styles.periodSelect}
             >
-              <option value=\"week\">Last 7 Days</option>
-              <option value=\"month\">Last 30 Days</option>
-              <option value=\"year\">Last Year</option>
+              <option value="week">Last 7 Days</option>
+              <option value="month">Last 30 Days</option>
+              <option value="year">Last Year</option>
             </select>
             <button onClick={handleLogout} style={styles.logoutButton}>
               Logout
