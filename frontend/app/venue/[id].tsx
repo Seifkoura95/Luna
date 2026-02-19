@@ -1095,12 +1095,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
   },
-  transportSection: {
-    marginBottom: spacing.lg,
-  },
-  transportButtons: {
-    gap: spacing.sm,
-  },
   transportBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1110,29 +1104,30 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: spacing.sm,
   },
-  transportBtnContent: {
+  transportRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
-  transportIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  transportIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  transportTextContainer: {
+  transportInfo: {
     flex: 1,
   },
-  transportTitle: {
+  transportLabel: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.textPrimary,
     marginBottom: 2,
   },
-  transportSubtext: {
+  transportSubtitle: {
     fontSize: 12,
     color: colors.textMuted,
   },
