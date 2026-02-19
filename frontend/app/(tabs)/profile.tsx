@@ -435,14 +435,31 @@ export default function ProfileScreen() {
       color: '#00D4AA',
       onPress: () => router.push('/refer-friend'),
     },
+    {
+      id: 'safety',
+      icon: 'shield-checkmark',
+      title: 'Safety',
+      subtitle: 'Emergency alert',
+      color: '#E31837',
+      onPress: () => router.push('/safety'),
+    },
+    {
+      id: 'lost-found',
+      icon: 'search',
+      title: 'Lost & Found',
+      subtitle: 'Report items',
+      color: '#FF9500',
+      onPress: () => router.push('/lost-found'),
+    },
   ];
 
   const settingsItems = [
     { id: 'settings', icon: 'settings', title: 'Settings', route: '/settings' },
-    { id: 'notifications', icon: 'notifications', title: 'Notifications', route: '/notifications' },
-    { id: 'payment', icon: 'card', title: 'Payment Methods' },
-    { id: 'help', icon: 'help-circle', title: 'Help & Support' },
-    { id: 'about', icon: 'information-circle', title: 'About Luna Group' },
+    { id: 'notifications', icon: 'notifications', title: 'Notifications', route: '/notification-settings' },
+    { id: 'payment', icon: 'card', title: 'Payment Methods', route: '/payment-methods' },
+    { id: 'safety-settings', icon: 'shield', title: 'Safety Settings', route: '/safety-settings' },
+    { id: 'help', icon: 'help-circle', title: 'Help & Support', route: '/help-support' },
+    { id: 'about', icon: 'information-circle', title: 'About Luna Group', route: '/about' },
   ];
 
   return (
