@@ -5,7 +5,9 @@ from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone, timedelta
+import secrets
 import bcrypt
+import jwt
 import stripe
 import asyncio
 from contextlib import asynccontextmanager
