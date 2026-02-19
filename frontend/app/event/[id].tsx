@@ -101,7 +101,7 @@ export default function EventDetailPage() {
     handleHaptic();
     
     try {
-      await api.markEventRsvp(id as string, status, false);
+      await api.rsvpToEvent(id as string, status, false);
       setRsvpStatus(status);
       loadAttendees();
     } catch (err: any) {
