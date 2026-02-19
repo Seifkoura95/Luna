@@ -42,7 +42,6 @@ export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
   );
 };
 
-export const AppBackground = AppBackground;
 export default AppBackground;
 
 const styles = StyleSheet.create({
