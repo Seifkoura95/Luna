@@ -1,19 +1,11 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Response
-from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
 import logging
-from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone, timedelta
-import hmac
-import hashlib
-import secrets
 import bcrypt
-import jwt
 import stripe
 import asyncio
 from contextlib import asynccontextmanager
@@ -22,24 +14,39 @@ from apscheduler.triggers.interval import IntervalTrigger
 import httpx
 from bs4 import BeautifulSoup
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+# Import database connection
+from database import db
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# Import configuration
+from config import (
+    JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS,
+    QR_SECRET,
+    STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET,
+    EMAIL_VERIFICATION_EXPIRY_HOURS,
+    REFERRAL_POINTS_REWARD,
+    ENTRY_CHARGING_VENUES,
+    SUBSCRIPTION_TIERS
+)
 
-# Configuration
-QR_SECRET = os.environ.get('QR_SECRET', 'luna-group-vip-2024')
-JWT_SECRET = os.environ.get('JWT_SECRET', 'luna-jwt-secret-2024')
-JWT_ALGORITHM = 'HS256'
-JWT_EXPIRY_DAYS = 7
+# Import utilities
+from utils.auth import get_current_user, create_access_token, generate_verification_token, send_verification_email
+from utils.qr import generate_qr_code, verify_qr_code
+from utils.mongo import clean_mongo_doc, clean_mongo_docs
 
-# Stripe Configuration (Test Mode)
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_demo_key')
-STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', 'pk_test_demo_key')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', 'whsec_demo_secret')
+# Import models
+from models.auth import RegisterRequest, LoginRequest, PushTokenRequest, RegisterPushTokenRequest
+from models.venue import ScanQRRequest, VenueStaffRegister, BookingRequest, GuestlistRequest, TableBookingRequest, TableDepositRequest
+from models.events import EventRSVP
+from models.rewards import MissionProgressRequest
+from models.auctions import PlaceBidRequest, AuctionSubscribeRequest
+from models.tickets import PurchaseTicketRequest, AddGuestRequest, CreateCrewRequest, InviteToCrewRequest, CrewBoothBidRequest
+from models.safety import IncidentReportRequest, LostPropertyRequest, LocationUpdate, SafetyAlertRequest, EmergencyContact, SilentAlertRequest
+from models.social import FriendRequest, LostItemReport, FoundItemReport, LostFoundMessage
+from models.payments import PaymentIntentRequest, SplitPaymentRequest, ApplyPromoRequest
+from models.notifications import NotificationPreferences, PrivacySettings
+from models.cherryhub import CherryHubRegisterRequest, WalletPassRequest, BuyPointsRequest
+from models.user import RecordSpendingRequest, SubscribeRequest
+from models.email import CrewInviteEmailRequest
 
 # Initialize Stripe with test key
 stripe.api_key = STRIPE_SECRET_KEY
