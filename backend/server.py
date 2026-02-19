@@ -329,10 +329,15 @@ async def resend_verification_email(request: Request):
 
 @api_router.post("/auth/login")
 async def login(request: LoginRequest):
-    logging.info(f"Login attempt for: {request.email}")
-    user = await db.users.find_one({"email": request.email})
+    logging.info(f"Login attempt for: {request.email} (type: {type(request.email).__name__})")
+    query = {"email": request.email}
+    logging.info(f"MongoDB query: {query}")
+    user = await db.users.find_one(query)
+    logging.info(f"Query result: {user is not None}")
     if not user:
-        logging.warning(f"User not found: {request.email}")
+        # Debug: try to find ALL emails
+        all_users = await db.users.find({}, {"email": 1, "_id": 0}).to_list(100)
+        logging.warning(f"User not found: {request.email}. Available emails: {[u['email'] for u in all_users[:5]]}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
     logging.info(f"User found: {user.get('email')}, role: {user.get('role')}")
     if not bcrypt.checkpw(request.password.encode(), user["hashed_password"].encode()):
