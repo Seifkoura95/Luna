@@ -807,52 +807,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accent + '50',
   },
-  notifyToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-  },
-  notifyToggleText: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  notifyToggleTextActive: {
-    color: colors.textPrimary,
-  },
-  toggleSwitch: {
-    width: 44,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.border,
-    padding: 2,
-    justifyContent: 'center',
-  },
-  toggleSwitchActive: {
-    backgroundColor: colors.accent,
-  },
-  toggleKnob: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.textMuted,
-  },
-  toggleKnobActive: {
-    backgroundColor: colors.textPrimary,
-    alignSelf: 'flex-end',
-  },
-  depositInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: spacing.sm,
-  },
-  depositText: {
-    fontSize: 11,
-    color: colors.textMuted,
-  },
   modalImageContainer: {
     height: 200,
     position: 'relative',
