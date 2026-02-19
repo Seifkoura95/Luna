@@ -76,6 +76,41 @@ export default function EventDetailPage() {
     }
   };
 
+  const loadRsvp = async () => {
+    try {
+      const data = await api.getMyEventRsvp(id as string);
+      setRsvpStatus(data.rsvp?.status || null);
+    } catch (err) {
+      console.log('No RSVP found');
+    }
+  };
+
+  const loadAttendees = async () => {
+    try {
+      const data = await api.getEventAttendees(id as string);
+      setAttendees(data);
+    } catch (err) {
+      console.log('Failed to load attendees');
+    }
+  };
+
+  const handleRsvp = async (status: 'going' | 'interested' | 'not_going') => {
+    if (loadingRsvp) return;
+    
+    setLoadingRsvp(true);
+    handleHaptic();
+    
+    try {
+      await api.markEventRsvp(id as string, status, false);
+      setRsvpStatus(status);
+      loadAttendees();
+    } catch (err: any) {
+      console.error('Failed to RSVP:', err);
+    } finally {
+      setLoadingRsvp(false);
+    }
+  };
+
   const handleHaptic = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
