@@ -320,6 +320,65 @@ export default function VenueDetailScreen() {
             </Text>
           </View>
 
+          {/* Transport Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Get There</Text>
+            <View style={styles.transportButtons}>
+              <TouchableOpacity 
+                style={styles.transportBtn}
+                onPress={() => {
+                  if (Platform.OS !== 'web') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                  const address = encodeURIComponent(`${venue.address.street}, ${venue.address.suburb}, ${venue.address.state} ${venue.address.postcode}`);
+                  Linking.openURL(`uber://?action=setPickup&dropoff[formatted_address]=${address}&dropoff[latitude]=${venue.coordinates.lat}&dropoff[longitude]=${venue.coordinates.lng}`)
+                    .catch(() => {
+                      Linking.openURL(`https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=${address}&dropoff[latitude]=${venue.coordinates.lat}&dropoff[longitude]=${venue.coordinates.lng}`);
+                    });
+                }}
+              >
+                <View style={styles.transportBtnContent}>
+                  <View style={[styles.transportIcon, { backgroundColor: '#000' }]}>
+                    <Ionicons name="car" size={18} color="#fff" />
+                  </View>
+                  <View style={styles.transportTextContainer}>
+                    <Text style={styles.transportTitle}>Uber</Text>
+                    <Text style={styles.transportSubtext}>Ride to venue</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.transportBtn}
+                onPress={() => {
+                  if (Platform.OS !== 'web') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                  Alert.alert('Didi', 'Opening Didi app...', [
+                    { text: 'OK', onPress: () => {
+                      Linking.openURL('didichuxing://')
+                        .catch(() => {
+                          Alert.alert('Didi Not Installed', 'Please install the Didi app from the App Store');
+                        });
+                    }}
+                  ]);
+                }}
+              >
+                <View style={styles.transportBtnContent}>
+                  <View style={[styles.transportIcon, { backgroundColor: '#FF6633' }]}>
+                    <Ionicons name="car" size={18} color="#fff" />
+                  </View>
+                  <View style={styles.transportTextContainer}>
+                    <Text style={styles.transportTitle}>Didi</Text>
+                    <Text style={styles.transportSubtext}>Ride to venue</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {/* Operating Hours */}
           {hasOperatingHours && (
             <View style={styles.section}>
