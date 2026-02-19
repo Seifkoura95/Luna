@@ -249,7 +249,7 @@ export default function HomeScreen() {
         {/* What's On */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.section}>
           <View style={styles.sectionHead}>
-            <Text style={styles.sectionTitle}>What's On</Text>
+            <Text style={styles.sectionTitle}>What&apos;s On</Text>
             <TouchableOpacity onPress={() => router.push('/events')} style={styles.seeAll}>
               <Text style={styles.seeAllText}>See All</Text>
               <Ionicons name="chevron-forward" size={14} color={colors.accent} />
@@ -369,7 +369,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.friendsInfo}>
               <Text style={styles.friendsText}>Friends are heading out tonight</Text>
-              <Text style={styles.friendsSubtext}>See what they're up to</Text>
+              <Text style={styles.friendsSubtext}>See what they&apos;re up to</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
           </TouchableOpacity>
