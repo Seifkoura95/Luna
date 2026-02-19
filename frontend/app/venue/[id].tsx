@@ -12,6 +12,7 @@ import {
   StatusBar,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
