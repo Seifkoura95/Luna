@@ -658,13 +658,6 @@ async def claim_mission_reward(request: Request, mission_id: str):
 
 # ====== VENUE STAFF/DASHBOARD API ======
 
-class VenueStaffRegister(BaseModel):
-    email: EmailStr
-    password: str
-    name: str
-    venue_id: str
-    role: str = "venue_staff"  # venue_staff, venue_manager
-
 @api_router.post("/venue/register-staff")
 async def register_venue_staff(request: Request, staff: VenueStaffRegister):
     """Register venue staff - requires admin or venue_manager"""
@@ -1660,21 +1653,6 @@ async def seed_database():
 
 
 # ====== SEVENROOMS BOOKING API (MOCK) ======
-
-class BookingRequest(BaseModel):
-    venue_id: str
-    date: str  # YYYY-MM-DD format
-    time: str  # HH:MM format
-    party_size: int
-    special_requests: Optional[str] = None
-    occasion: Optional[str] = None
-
-class GuestlistRequest(BaseModel):
-    venue_id: str
-    date: str  # YYYY-MM-DD format
-    party_size: int
-    arrival_time: Optional[str] = None
-    vip_booth: bool = False
 
 @api_router.get("/bookings/availability")
 async def get_availability(venue_id: str, date: str, party_size: int = 2):
