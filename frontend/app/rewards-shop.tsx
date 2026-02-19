@@ -51,7 +51,8 @@ export default function RewardsShopPage() {
         api.getMyRedemptions(),
         api.getMe()
       ]);
-      setRewards(rewardsData.rewards || []);
+      // Rewards API returns an array directly
+      setRewards(Array.isArray(rewardsData) ? rewardsData : rewardsData.rewards || []);
       setMyRedemptions(redemptionsData.redemptions || []);
       useAuthStore.getState().setUser(userData);
     } catch (error) {
