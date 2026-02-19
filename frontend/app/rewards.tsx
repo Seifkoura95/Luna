@@ -18,7 +18,7 @@ import { useAuthStore } from '../src/store/authStore';
 import { api } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { VideoBackground } from '../src/components/VideoBackground';
+import { AppBackground } from '../src/components/AppBackground';
 import { GoldStarIcon } from '../src/components/GoldStarIcon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -350,7 +350,7 @@ export default function RewardsScreen() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+      <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       <ScrollView
         style={styles.scrollView}

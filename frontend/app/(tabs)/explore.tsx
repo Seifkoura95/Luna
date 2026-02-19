@@ -16,7 +16,7 @@ import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { VideoBackground } from '../../src/components/VideoBackground';
+import { AppBackground } from '../../src/components/AppBackground';
 import { PageHeader } from '../../src/components/PageHeader';
 
 // Venue categories
@@ -104,7 +104,7 @@ export default function VenuesScreen() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+      <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       {/* Header with Logo */}
       <PageHeader 

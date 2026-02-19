@@ -17,7 +17,7 @@ import * as Location from 'expo-location';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api } from '../src/utils/api';
-import { VideoBackground } from '../src/components/VideoBackground';
+import { AppBackground } from '../src/components/AppBackground';
 import { useAuthStore } from '../src/store/authStore';
 
 export default function SafetyPage() {
@@ -108,7 +108,7 @@ export default function SafetyPage() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground />
+      <AppBackground />
       
       <ScrollView
         style={styles.scrollView}

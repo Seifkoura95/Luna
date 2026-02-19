@@ -17,7 +17,7 @@ import { api } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { VideoBackground } from '../src/components/VideoBackground';
+import { AppBackground } from '../src/components/AppBackground';
 import * as Haptics from 'expo-haptics';
 
 
@@ -94,7 +94,7 @@ export default function ReferFriendScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+        <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
         </View>
@@ -104,7 +104,7 @@ export default function ReferFriendScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+      <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
 
       {/* Header */}
       <View style={styles.header}>

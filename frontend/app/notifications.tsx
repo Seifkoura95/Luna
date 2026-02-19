@@ -16,7 +16,7 @@ import { api } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { VideoBackground } from '../src/components/VideoBackground';
+import { AppBackground } from '../src/components/AppBackground';
 import { useAuthStore } from '../src/store/authStore';
 
 
@@ -173,7 +173,7 @@ export default function NotificationsScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+        <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <ActivityIndicator color={colors.accent} style={{ marginTop: 100 }} />
       </View>
     );
@@ -181,7 +181,7 @@ export default function NotificationsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+      <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
 
       {/* Header */}
       <View style={styles.header}>

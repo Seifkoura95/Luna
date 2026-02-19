@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../../src/theme/colors';
 import { api } from '../../src/utils/api';
-import { VideoBackground } from '../../src/components/VideoBackground';
+import { AppBackground } from '../../src/components/AppBackground';
 
 interface EventDetail {
   id: string;
@@ -105,7 +105,7 @@ export default function EventDetailPage() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+        <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
           <Text style={styles.loadingText}>Loading event...</Text>
@@ -117,7 +117,7 @@ export default function EventDetailPage() {
   if (error || !event) {
     return (
       <View style={styles.container}>
-        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+        <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -136,7 +136,7 @@ export default function EventDetailPage() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+      <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       {/* Header with back button */}
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>

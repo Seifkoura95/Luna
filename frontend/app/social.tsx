@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { PageHeader } from '../src/components/PageHeader';
-import { VideoBackground } from '../src/components/VideoBackground';
+import { AppBackground } from '../src/components/AppBackground';
 import { GlassCard } from '../src/components/GlassCard';
 import { useAuthStore } from '../src/store/authStore';
 import { api } from '../src/utils/api';
@@ -460,7 +460,7 @@ export default function SocialFeedScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+        <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <ActivityIndicator size="large" color={colors.accent} />
         <Text style={styles.loadingText}>Loading social feed...</Text>
       </View>
@@ -469,7 +469,7 @@ export default function SocialFeedScreen() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+      <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       {/* Back Button */}
       <View style={[styles.backButtonContainer, { paddingTop: insets.top + spacing.sm }]}>

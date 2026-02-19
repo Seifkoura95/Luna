@@ -19,7 +19,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { VideoBackground } from '../../src/components/VideoBackground';
+import { AppBackground } from '../../src/components/AppBackground';
 import { PageHeader } from '../../src/components/PageHeader';
 import { GlassCard } from '../../src/components/GlassCard';
 import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';
@@ -265,7 +265,7 @@ export default function AuctionsScreen() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+      <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       <ScrollView
         ref={scrollRef}

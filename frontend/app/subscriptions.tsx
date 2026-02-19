@@ -16,7 +16,7 @@ import { api } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { VideoBackground } from '../src/components/VideoBackground';
+import { AppBackground } from '../src/components/AppBackground';
 import { RotatingMoon } from '../src/components/RotatingMoon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -209,7 +209,7 @@ export default function SubscriptionsScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+        <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <ActivityIndicator size="large" color={colors.accent} />
         <Text style={styles.loadingText}>Loading plans...</Text>
       </View>
@@ -218,7 +218,7 @@ export default function SubscriptionsScreen() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+      <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       <ScrollView
         style={styles.scrollView}

@@ -27,7 +27,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { api } from '../../src/utils/api';
 import { useAuthStore } from '../../src/store/authStore';
-import { VideoBackground } from '../../src/components/VideoBackground';
+import { AppBackground } from '../../src/components/AppBackground';
 
 const { width } = Dimensions.get('window');
 const VENUE_CARD_WIDTH = width * 0.72;
@@ -189,7 +189,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+      <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       <ScrollView
         ref={scrollRef}

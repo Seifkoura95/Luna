@@ -20,7 +20,7 @@ import { api } from '../src/utils/api';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { VideoBackground } from '../src/components/VideoBackground';
+import { AppBackground } from '../src/components/AppBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
@@ -87,7 +87,7 @@ export default function LoginScreen() {
       <StatusBar barStyle="light-content" />
       <View style={styles.container}>
         {/* Video Background with Frosted Glass */}
-        <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+        <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

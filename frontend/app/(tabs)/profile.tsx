@@ -20,7 +20,7 @@ import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router, useFocusEffect } from 'expo-router';
-import { VideoBackground } from '../../src/components/VideoBackground';
+import { AppBackground } from '../../src/components/AppBackground';
 import { RotatingMoon } from '../../src/components/RotatingMoon';
 import { FierySun } from '../../src/components/FierySun';
 import { GoldStarIcon } from '../../src/components/GoldStarIcon';
@@ -464,7 +464,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+      <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
       
       <ScrollView
         ref={scrollRef}

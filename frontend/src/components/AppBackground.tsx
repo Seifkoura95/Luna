@@ -6,7 +6,7 @@ interface BackgroundProps {
   children?: React.ReactNode;
 }
 
-export const VideoBackground: React.FC<BackgroundProps> = ({ children }) => {
+export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
   return (
     <View style={styles.container}>
       {/* Base black background */}
@@ -42,8 +42,8 @@ export const VideoBackground: React.FC<BackgroundProps> = ({ children }) => {
   );
 };
 
-export const AppBackground = VideoBackground;
-export default VideoBackground;
+export const AppBackground = AppBackground;
+export default AppBackground;
 
 const styles = StyleSheet.create({
   container: {

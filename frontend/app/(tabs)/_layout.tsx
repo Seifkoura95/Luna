@@ -4,7 +4,7 @@ import { Platform, StyleSheet, View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
-import { VideoBackground } from '../../src/components/VideoBackground';
+import { AppBackground } from '../../src/components/AppBackground';
 
 const TabBarIcon = ({ name, color, focused }: { name: keyof typeof Ionicons.glyphMap; color: string; focused: boolean }) => (
   <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
@@ -41,7 +41,7 @@ export default function TabLayout() {
   return (
     <View style={styles.rootContainer}>
       {/* Simple black background with Luna glow */}
-      <VideoBackground />
+      <AppBackground />
       
       <Tabs
         screenOptions={{

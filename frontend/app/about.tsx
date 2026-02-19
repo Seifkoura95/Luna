@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius } from '../src/theme/colors';
-import { VideoBackground } from '../src/components/VideoBackground';
+import { AppBackground } from '../src/components/AppBackground';
 
 export default function AboutPage() {
   const insets = useSafeAreaInsets();
@@ -35,7 +35,7 @@ export default function AboutPage() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground />
+      <AppBackground />
       
       <ScrollView
         style={styles.scrollView}

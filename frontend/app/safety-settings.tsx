@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api } from '../src/utils/api';
-import { VideoBackground } from '../src/components/VideoBackground';
+import { AppBackground } from '../src/components/AppBackground';
 
 export default function SafetySettingsPage() {
   const insets = useSafeAreaInsets();
@@ -98,7 +98,7 @@ export default function SafetySettingsPage() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground />
+      <AppBackground />
       
       <ScrollView
         style={styles.scrollView}

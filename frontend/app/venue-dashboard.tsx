@@ -19,7 +19,7 @@ import { BarCodeScanner } from 'expo-barcode-scanner';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api } from '../src/utils/api';
 import { useAuthStore } from '../src/store/authStore';
-import { VideoBackground } from '../src/components/VideoBackground';
+import { AppBackground } from '../src/components/AppBackground';
 
 interface DashboardStats {
   total_redemptions: number;
@@ -270,7 +270,7 @@ export default function VenueDashboard() {
 
   return (
     <View style={styles.container}>
-      <VideoBackground />
+      <AppBackground />
       
       <ScrollView
         style={styles.scrollView}
