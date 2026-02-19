@@ -141,18 +141,42 @@ export default function SocialFeedScreen() {
   const [instagramPosts, setInstagramPosts] = useState<any[]>([]);
   const [instagramLoading, setInstagramLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'friends' | 'instagram'>('friends');
+  const [friends, setFriends] = useState<any[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [showAddFriend, setShowAddFriend] = useState(false);
+  const [friendIdentifier, setFriendIdentifier] = useState('');
+  const [sendingRequest, setSendingRequest] = useState(false);
 
   useEffect(() => {
     loadActivities();
     loadInstagramFeed();
+    loadFriends();
   }, []);
+
+  const loadFriends = async () => {
+    try {
+      const [friendsData, requestsData] = await Promise.all([
+        api.getFriends(),
+        api.getPendingFriendRequests()
+      ]);
+      setFriends(friendsData.friends || []);
+      setPendingRequests(requestsData.requests || []);
+    } catch (error) {
+      console.error('Failed to load friends:', error);
+    }
+  };
 
   const loadActivities = async () => {
     setLoading(true);
-    // Simulate API call for friend activity
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setActivities(generateMockActivities());
-    setLoading(false);
+    try {
+      const feedData = await api.getFriendsActivity();
+      setActivities(feedData.activities || []);
+    } catch (error) {
+      console.error('Failed to load activity feed:', error);
+      setActivities(generateMockActivities());
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadInstagramFeed = async () => {
