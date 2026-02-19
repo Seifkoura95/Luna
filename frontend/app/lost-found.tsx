@@ -103,8 +103,8 @@ export default function LostAndFoundPage() {
       await api.reportLostItem(
         selectedVenue,
         description,
-        lostDate,
         selectedCategory,
+        lostDate,
         lostTime || undefined,
         contactPhone || undefined,
         photoUri || undefined
