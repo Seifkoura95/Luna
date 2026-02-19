@@ -423,10 +423,10 @@ export default function WalletScreen() {
               
               <TouchableOpacity 
                 style={[styles.rewardsButton, { backgroundColor: colors.gold + '20', borderColor: colors.gold }]}
-                onPress={() => router.push('/rewards')}
+                onPress={() => router.push('/rewards-shop')}
               >
                 <Ionicons name="gift" size={16} color={colors.gold} />
-                <Text style={[styles.rewardsButtonText, { color: colors.gold }]}>REWARDS</Text>
+                <Text style={[styles.rewardsButtonText, { color: colors.gold }]}>REDEEM REWARDS</Text>
               </TouchableOpacity>
             </View>
           </LinearGradient>
