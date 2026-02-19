@@ -171,45 +171,6 @@ async def get_venue(venue_id: str):
 
 # ====== AUTH API ======
 
-class RegisterRequest(BaseModel):
-    email: EmailStr
-    password: str
-    name: str
-    referral_code: Optional[str] = None  # Optional referral code
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-class PushTokenRequest(BaseModel):
-    push_token: str
-
-# Email verification token expiry (24 hours)
-EMAIL_VERIFICATION_EXPIRY_HOURS = 24
-
-def generate_verification_token():
-    """Generate a secure verification token"""
-    return secrets.token_urlsafe(32)
-
-async def send_verification_email(email: str, name: str, token: str):
-    """
-    Send verification email to user.
-    In production, this would use SendGrid, AWS SES, or similar service.
-    For now, we log the verification link.
-    """
-    verification_link = f"https://lunagroup.app/verify-email?token={token}"
-    logging.info(f"📧 Verification email for {email}:")
-    logging.info(f"   Link: {verification_link}")
-    
-    # In production, integrate with email service:
-    # await sendgrid.send_email(
-    #     to=email,
-    #     subject="Verify your Luna Group account",
-    #     html=f"Hi {name}, click here to verify: {verification_link}"
-    # )
-    
-    return verification_link
-
 @api_router.post("/auth/register")
 async def register(request: RegisterRequest):
     existing = await db.users.find_one({"email": request.email})
