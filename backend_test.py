@@ -13,7 +13,7 @@ import sys
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://luna-vip-app-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://luna-vip-app-2.preview.emergentagent.com/api"
 
 # Test credentials
 TEST_EMAIL = "demo@luna.com"

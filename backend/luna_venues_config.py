@@ -2,7 +2,7 @@
 import os
 
 # Get base URL for API (for photo URLs)
-API_BASE_URL = os.environ.get('API_BASE_URL', 'https://luna-vip-app-1.preview.emergentagent.com')
+API_BASE_URL = os.environ.get('API_BASE_URL', 'https://luna-vip-app-2.preview.emergentagent.com')
 
 # Venue logos (uploaded by client)
 VENUE_LOGOS = {
