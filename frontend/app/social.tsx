@@ -664,6 +664,60 @@ export default function SocialFeedScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Add Friend Modal */}
+      <Modal
+        visible={showAddFriend}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAddFriend(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Add Friend</Text>
+            <Text style={styles.modalDesc}>Enter their email or username</Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Email or username"
+              placeholderTextColor={colors.textMuted}
+              value={friendIdentifier}
+              onChangeText={setFriendIdentifier}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalCancelButton]}
+                onPress={() => {
+                  setShowAddFriend(false);
+                  setFriendIdentifier('');
+                }}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalSendButton]}
+                onPress={handleSendFriendRequest}
+                disabled={sendingRequest}
+              >
+                <LinearGradient
+                  colors={[colors.accent, '#FF6B6B']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.modalSendGradient}
+                >
+                  <Text style={styles.modalSendText}>
+                    {sendingRequest ? 'Sending...' : 'Send Request'}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
