@@ -1106,6 +1106,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.1)',
     marginBottom: spacing.sm,
   },
+  transportButtons: {
+    marginTop: spacing.sm,
+  },
   transportRow: {
     flexDirection: 'row',
     alignItems: 'center',
