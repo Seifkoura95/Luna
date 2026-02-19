@@ -1055,16 +1055,6 @@ const styles = StyleSheet.create({
   bidInputContainer: {
     marginBottom: spacing.md,
   },
-  bidInputLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 1,
-    marginBottom: spacing.sm,
-  },
-  depositInfo: {
-    flex: 1,
-  },
   bidInputPrefix: {
     fontSize: 24,
     fontWeight: '700',
