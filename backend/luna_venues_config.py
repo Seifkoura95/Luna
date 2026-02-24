@@ -184,8 +184,8 @@ LUNA_VENUES = {
         "long_description": "Juju Mermaid Beach offers an elevated dining experience with stunning panoramic coastal views. The open-air rooftop terrace features a retractable roof, signature cocktails, and modern Australian bar fare. Downstairs, enjoy refined modern Australian cuisine in an intimate setting. Perfect for sunset sessions, boozy Sunday brunch, or special occasions.",
         "features": ["table_booking", "rooftop_terrace", "private_dining"],
         "points_rate": 0.5,
-        "image_url": "https://images.unsplash.com/photo-1613066697157-e8345495b665?w=800",
-        "hero_image": "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=1200",
+        "image_url": "https://images.unsplash.com/photo-1661765830110-45a6a22991c7?w=800",
+        "hero_image": "https://images.unsplash.com/photo-1682414593590-767a4016be89?w=1200",
         "gallery": [
             "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800",
             "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
@@ -223,8 +223,8 @@ LUNA_VENUES = {
         "long_description": "Night Market brings the vibrant energy of Asia's street markets to Fortitude Valley. Experience shareable small plates like wagyu tartare and miso caramel popcorn chicken, alongside innovative cocktails in a neon-lit, lively atmosphere. Perfect for groups, date nights, and those seeking authentic Asian-fusion flavors with a modern twist.",
         "features": ["table_booking", "group_dining", "cocktail_bar"],
         "points_rate": 0.5,
-        "image_url": "https://images.unsplash.com/photo-1672172505672-babacdc28071?w=800",
-        "hero_image": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200",
+        "image_url": "https://images.unsplash.com/photo-1768511813816-b87857a9301a?w=800",
+        "hero_image": "https://images.unsplash.com/photo-1763051653996-db1eb2adba59?w=1200",
         "gallery": [
             "https://images.unsplash.com/photo-1504544750208-dc0358e63f7f?w=800",
             "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=800",
