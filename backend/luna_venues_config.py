@@ -31,11 +31,11 @@ LUNA_VENUES = {
         "long_description": "Eclipse is Brisbane's premier destination for world-class nightlife. Featuring state-of-the-art sound systems, immersive lighting installations, and hosting international and domestic headliners across hip hop, RnB, house, and electronic genres. Experience the transformation of Brisbane's entertainment scene in the heart of Fortitude Valley.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos", "vip_tables"],
         "points_rate": 1.0,
-        "image_url": f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK%20(40%20of%2075).jpg",
-        "hero_image": f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK%20(42%20of%2075).jpg",
+        "image_url": "https://images.pexels.com/photos/14925309/pexels-photo-14925309.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "hero_image": "https://images.pexels.com/photos/26794186/pexels-photo-26794186.jpeg?auto=compress&cs=tinysrgb&w=1200",
         "gallery": [
-            f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK%20(40%20of%2075).jpg",
-            f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK%20(42%20of%2075).jpg",
+            "https://images.pexels.com/photos/14925309/pexels-photo-14925309.jpeg?auto=compress&cs=tinysrgb&w=800",
+            "https://images.pexels.com/photos/26794186/pexels-photo-26794186.jpeg?auto=compress&cs=tinysrgb&w=800",
             f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK-1%20(3).jpg"
         ],
         "operating_hours": {
@@ -69,11 +69,11 @@ LUNA_VENUES = {
         "long_description": "After Dark transforms the Eclipse space into Brisbane's ultimate destination for urban music. Every Saturday night, experience the best in hip hop, RnB, Afrobeats, and global sounds across multiple rooms. Premium bottle service, VIP booths, and an incredible atmosphere await. The best crowd, best sound, and best vibes in Brisbane.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos", "bottle_service"],
         "points_rate": 1.0,
-        "image_url": f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(102%20of%20111).jpg",
-        "hero_image": f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(42%20of%20111).jpg",
+        "image_url": "https://images.pexels.com/photos/14925309/pexels-photo-14925309.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "hero_image": "https://images.pexels.com/photos/26794186/pexels-photo-26794186.jpeg?auto=compress&cs=tinysrgb&w=1200",
         "gallery": [
-            f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(102%20of%20111).jpg",
-            f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(42%20of%20111).jpg",
+            "https://images.pexels.com/photos/14925309/pexels-photo-14925309.jpeg?auto=compress&cs=tinysrgb&w=800",
+            "https://images.pexels.com/photos/26794186/pexels-photo-26794186.jpeg?auto=compress&cs=tinysrgb&w=800",
             f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(45%20of%20111).jpg"
         ],
         "operating_hours": {
@@ -107,11 +107,11 @@ LUNA_VENUES = {
         "long_description": "Su Casa Brisbane is your ultimate rooftop escape in the heart of Fortitude Valley. Enjoy stunning city views, signature cocktails, and shareable tapas as the sun sets. As night falls, the vibe transforms with resident DJs spinning the best house, disco, and party anthems. Available for private events and VIP experiences.",
         "features": ["booth_booking", "fast_lane", "auctions", "rooftop_terrace"],
         "points_rate": 1.0,
-        "image_url": f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-10%20(1).jpg",
-        "hero_image": f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-2.jpg",
+        "image_url": "https://images.unsplash.com/photo-1563138216-8ff2e182ccbd?w=800",
+        "hero_image": "https://images.pexels.com/photos/4457038/pexels-photo-4457038.jpeg?auto=compress&cs=tinysrgb&w=1200",
         "gallery": [
-            f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-10%20(1).jpg",
-            f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-2.jpg",
+            "https://images.unsplash.com/photo-1563138216-8ff2e182ccbd?w=800",
+            "https://images.pexels.com/photos/4457038/pexels-photo-4457038.jpeg?auto=compress&cs=tinysrgb&w=800",
             f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-29.jpg"
         ],
         "operating_hours": {
@@ -146,8 +146,8 @@ LUNA_VENUES = {
         "long_description": "Su Casa Gold Coast brings the renowned Su Casa experience to Surfers Paradise. Open Thursday through Sunday, experience the best in Hip Hop, R&B, and party anthems. Premium bottle service, VIP booths, and the Gold Coast's most electric atmosphere await you in the heart of the action on Orchid Avenue.",
         "features": ["booth_booking", "fast_lane", "auctions", "bottle_service"],
         "points_rate": 1.0,
-        "image_url": f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-55.jpg",
-        "hero_image": f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-68%20(1).jpg",
+        "image_url": "https://images.unsplash.com/photo-1563138216-8ff2e182ccbd?w=800",
+        "hero_image": "https://images.pexels.com/photos/31769337/pexels-photo-31769337.jpeg?auto=compress&cs=tinysrgb&w=1200",
         "gallery": [
             f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-55.jpg",
             f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-68%20(1).jpg",
