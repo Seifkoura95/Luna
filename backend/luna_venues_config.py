@@ -149,8 +149,8 @@ LUNA_VENUES = {
         "image_url": "https://images.unsplash.com/photo-1563138216-8ff2e182ccbd?w=800",
         "hero_image": "https://images.pexels.com/photos/31769337/pexels-photo-31769337.jpeg?auto=compress&cs=tinysrgb&w=1200",
         "gallery": [
-            f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-55.jpg",
-            f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-68%20(1).jpg",
+            "https://images.unsplash.com/photo-1563138216-8ff2e182ccbd?w=800",
+            "https://images.pexels.com/photos/31769337/pexels-photo-31769337.jpeg?auto=compress&cs=tinysrgb&w=800",
             f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-128%20(1).jpg"
         ],
         "operating_hours": {
