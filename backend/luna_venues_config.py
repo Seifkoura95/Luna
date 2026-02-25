@@ -34,7 +34,7 @@ LUNA_VENUES = {
         "image_url": "https://images.pexels.com/photos/14925309/pexels-photo-14925309.jpeg?auto=compress&cs=tinysrgb&w=800",
         "hero_image": "https://images.pexels.com/photos/26794186/pexels-photo-26794186.jpeg?auto=compress&cs=tinysrgb&w=1200",
         "gallery": [
-            "https://images.pexels.com/photos/14925309/pexels-photo-14925309.jpeg?auto=compress&cs=tinysrgb&w=800",
+            "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/pr03f9wj_Eclipse.webp",
             "https://images.pexels.com/photos/26794186/pexels-photo-26794186.jpeg?auto=compress&cs=tinysrgb&w=800",
             f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK-1%20(3).jpg"
         ],
@@ -72,7 +72,7 @@ LUNA_VENUES = {
         "image_url": "https://images.pexels.com/photos/14925309/pexels-photo-14925309.jpeg?auto=compress&cs=tinysrgb&w=800",
         "hero_image": "https://images.pexels.com/photos/26794186/pexels-photo-26794186.jpeg?auto=compress&cs=tinysrgb&w=1200",
         "gallery": [
-            "https://images.pexels.com/photos/14925309/pexels-photo-14925309.jpeg?auto=compress&cs=tinysrgb&w=800",
+            "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/2f51mmzf_After%20dark.webp",
             "https://images.pexels.com/photos/26794186/pexels-photo-26794186.jpeg?auto=compress&cs=tinysrgb&w=800",
             f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(45%20of%20111).jpg"
         ],
@@ -107,10 +107,10 @@ LUNA_VENUES = {
         "long_description": "Su Casa Brisbane is your ultimate rooftop escape in the heart of Fortitude Valley. Enjoy stunning city views, signature cocktails, and shareable tapas as the sun sets. As night falls, the vibe transforms with resident DJs spinning the best house, disco, and party anthems. Available for private events and VIP experiences.",
         "features": ["booth_booking", "fast_lane", "auctions", "rooftop_terrace"],
         "points_rate": 1.0,
-        "image_url": "https://images.unsplash.com/photo-1563138216-8ff2e182ccbd?w=800",
-        "hero_image": "https://images.pexels.com/photos/4457038/pexels-photo-4457038.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        "image_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/fb4gjnlf_Sucasa2.webp",
+        "hero_image": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/fb4gjnlf_Sucasa2.webp",
         "gallery": [
-            "https://images.unsplash.com/photo-1563138216-8ff2e182ccbd?w=800",
+            "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/fb4gjnlf_Sucasa2.webp",
             "https://images.pexels.com/photos/4457038/pexels-photo-4457038.jpeg?auto=compress&cs=tinysrgb&w=800",
             f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-29.jpg"
         ],
@@ -146,10 +146,10 @@ LUNA_VENUES = {
         "long_description": "Su Casa Gold Coast brings the renowned Su Casa experience to Surfers Paradise. Open Thursday through Sunday, experience the best in Hip Hop, R&B, and party anthems. Premium bottle service, VIP booths, and the Gold Coast's most electric atmosphere await you in the heart of the action on Orchid Avenue.",
         "features": ["booth_booking", "fast_lane", "auctions", "bottle_service"],
         "points_rate": 1.0,
-        "image_url": "https://images.unsplash.com/photo-1563138216-8ff2e182ccbd?w=800",
-        "hero_image": "https://images.pexels.com/photos/31769337/pexels-photo-31769337.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        "image_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/w4lbm1ea_Sucasa1.webp",
+        "hero_image": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/w4lbm1ea_Sucasa1.webp",
         "gallery": [
-            "https://images.unsplash.com/photo-1563138216-8ff2e182ccbd?w=800",
+            "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/w4lbm1ea_Sucasa1.webp",
             "https://images.pexels.com/photos/31769337/pexels-photo-31769337.jpeg?auto=compress&cs=tinysrgb&w=800",
             f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-128%20(1).jpg"
         ],
