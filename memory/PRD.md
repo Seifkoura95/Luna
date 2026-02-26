@@ -265,6 +265,15 @@ Events are matched by checking if the venue_name, location, or address contains:
 3. Set INSTAGRAM_APP_SECRET environment variable
 
 ## Recent Completions (Feb 2025)
+- **Venue Portal Dashboard Complete (Feb 26, 2025)**:
+  - Built premium, high-budget venue analytics dashboard at `/api/venue-portal`
+  - Features: QR Code Scanner, User Analytics, Revenue Analytics, Auction Analytics, Points Analytics
+  - VIP Alerts with arriving/expected status, Real-time Activity Feed, Top Spenders leaderboard
+  - Charts: Revenue Trend, Peak Hours Heatmap, Membership Demographics
+  - Export functionality for reports (PDF/CSV)
+  - Responsive design for mobile and desktop
+  - Login credentials: `venue@eclipse.com` / `venue123`
+
 - **Venue Images Fixed (Feb 26, 2025)**:
   - Updated Eclipse, After Dark, Su Casa Brisbane, and Su Casa Gold Coast venues to use user-provided images
   - Images now served from `/app/backend/static/photos/` via `/api/photos/image/{folder}/{filename}`
@@ -272,7 +281,6 @@ Events are matched by checking if the venue_name, location, or address contains:
 
 ## Future Tasks
 - Complete server.py refactoring (move API routes to /routes directory)
-- Complete Venue Web Portal UI and make externally accessible
 - Remove CherryHub mock mode (when DNS available)
 - Stripe payment integration for VIP bookings/auctions
 - Connect Instagram with production API credentials
@@ -282,6 +290,7 @@ Events are matched by checking if the venue_name, location, or address contains:
 ## Known Mocked Services
 - **CherryHub Integration**: Running in mock mode (DNS not resolvable)
 - **Instagram Integration**: Running in demo mode (no API credentials yet)
+- **Venue Portal Analytics**: Currently using mock data for demonstration
 
 ## Test Reports
 - /app/test_reports/iteration_7.json - Latest backend test (Feb 25, 2025)
