@@ -16,14 +16,14 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#050505', color: 'white' }}>
         <div>Loading...</div>
       </div>
     );
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/api/venue-portal">
       <Routes>
         <Route 
           path="/login" 
@@ -33,6 +33,7 @@ function App() {
           path="/" 
           element={isAuthenticated ? <Dashboard onLogout={() => setIsAuthenticated(false)} /> : <Navigate to="/login" />} 
         />
+        <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} />} />
       </Routes>
     </BrowserRouter>
   );
