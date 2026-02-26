@@ -1,0 +1,122 @@
+{
+  "brand_identity": {
+    "name": "Luna Venue Portal",
+    "tone": "Premium, High-Energy, Exclusive, Data-Driven",
+    "theme": "dark",
+    "emotional_archetype": "The Performance Pro (Elite Nightlife)",
+    "target_audience": "Venue Managers (Desktop), Floor Staff (Mobile)"
+  },
+  "typography": {
+    "headings": {
+      "family": "Chivo, sans-serif",
+      "weights": ["900", "700"],
+      "usage": "Use Black (900) for major stats, Bold (700) for section titles. Condensed feel.",
+      "letter_spacing": "tracking-tight"
+    },
+    "body": {
+      "family": "DM Sans, sans-serif",
+      "weights": ["400", "500", "700"],
+      "usage": "High legibility for data tables and lists."
+    },
+    "mono": {
+      "family": "JetBrains Mono, monospace",
+      "usage": "For IDs, Transaction Codes, and raw data values."
+    },
+    "import_url": "https://fonts.googleapis.com/css2?family=Chivo:wght@700;900&family=DM+Sans:opsz,wght@9..40,400;500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+  },
+  "colors": {
+    "palette": {
+      "background": "#050505",
+      "surface": "#0F0F0F",
+      "surface_highlight": "#1A1A1A",
+      "border": "#272727",
+      "primary": "#E31837",
+      "primary_foreground": "#FFFFFF",
+      "secondary": "#FFD700",
+      "secondary_foreground": "#000000",
+      "muted": "#525252",
+      "muted_foreground": "#A3A3A3",
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444"
+    },
+    "gradients": {
+      "gold_glow": "linear-gradient(135deg, #FFD700 0%, #B8860B 100%)",
+      "red_glow": "linear-gradient(135deg, #E31837 0%, #8B0000 100%)",
+      "surface_gradient": "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%)"
+    }
+  },
+  "layout_strategy": {
+    "grid_system": "Bento Grid (Mode B: High Density)",
+    "spacing": "Tailwind scale (p-4, p-6, p-8)",
+    "container_max_width": "max-w-7xl",
+    "mobile_strategy": "Sidebar becomes bottom nav or hamburger menu. Tables become cards.",
+    "border_radius": "rounded-sm (Sharp, premium feel - max 4px)"
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-white hover:bg-primary/90 shadow-[0_0_15px_rgba(227,24,55,0.3)] uppercase tracking-widest text-xs font-bold py-3",
+      "secondary": "border border-secondary/50 text-secondary hover:bg-secondary/10 uppercase tracking-widest text-xs font-bold py-3",
+      "ghost": "hover:bg-white/5 text-muted-foreground hover:text-white"
+    },
+    "cards": {
+      "base": "bg-surface border border-border/50 relative overflow-hidden group hover:border-border/80 transition-colors",
+      "effect": "Add a subtle gradient overlay (surface_gradient) to give depth without gloss."
+    },
+    "inputs": {
+      "style": "bg-black/50 border-border focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white placeholder:text-neutral-600 rounded-sm h-12"
+    },
+    "charts": {
+      "library": "recharts",
+      "style": "Dark mode optimized. No grid lines (or very subtle #222). Tooltips must be dark glassmorphism (bg-black/80 backdrop-blur-md border border-white/10).",
+      "colors": ["#E31837", "#FFD700", "#FFFFFF", "#525252"]
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-black/60 border-b border-white/5 (For Sticky Headers)",
+    "noise_texture": "Add a fixed position noise overlay at 2% opacity to the entire body to prevent color banding in dark mode.",
+    "glow_effects": "Use box-shadow for glows, not filters. e.g., shadow-[0_0_20px_rgba(227,24,55,0.15)]"
+  },
+  "image_urls": {
+    "backgrounds": [
+      "https://images.pexels.com/photos/801863/pexels-photo-801863.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "https://images.pexels.com/photos/3073898/pexels-photo-3073898.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+    ],
+    "avatars": [
+      "https://images.unsplash.com/photo-1717674796911-c029aa7e73d1?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1613030015614-d9d028d7e2e5?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1598986829244-7f78107535d4?crop=entropy&cs=srgb&fm=jpg&q=85"
+    ],
+    "auction_items": [
+      "https://images.unsplash.com/photo-1749497636434-82e53b6358b2?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1749497636473-ab347d99cf19?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.pexels.com/photos/13126355/pexels-photo-13126355.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+    ],
+    "scanner_visual": "https://images.unsplash.com/photo-1768527858342-037cff722276?crop=entropy&cs=srgb&fm=jpg&q=85"
+  },
+  "instructions_to_main_agent": [
+    "1. INSTALLATION: The user provided a bare React/Vite repo. You MUST install Tailwind CSS first.",
+    "   - Run: `npm install -D tailwindcss postcss autoprefixer`",
+    "   - Run: `npx tailwindcss init -p`",
+    "   - Update `tailwind.config.js` with the content provided in `tailwind_config` section below.",
+    "   - Add `@tailwind base; @tailwind components; @tailwind utilities;` to `./src/index.css`.",
+    "2. PACKAGES: Install these required packages:",
+    "   - `npm install clsx tailwind-merge lucide-react framer-motion sonner`",
+    "   - Ensure `recharts` is installed (already in package.json).",
+    "3. ICONS: Use `lucide-react` for all UI icons (LayoutDashboard, QrCode, Users, Gavel, Award, Bell, Settings, LogOut).",
+    "4. ROUTING: Use `react-router-dom` (already installed) for navigation.",
+    "5. MOCK DATA: Create a `src/data/mockData.ts` file to hold realistic dummy data for charts and tables so the dashboard looks populated.",
+    "6. STRUCTURE: Create `src/components/ui` for your reusable components (Button, Card, Input). Do NOT rely on shadcn CLI if it fails, just build the primitives using the design rules above.",
+    "7. DATA-TESTID: Add `data-testid` to every button, input, and link."
+  ],
+  "tailwind_config": "export default {\n  content: [\n    \"./index.html\",\n    \"./src/**/*.{js,ts,jsx,tsx}\",\n  ],\n  theme: {\n    extend: {\n      colors: {\n        border: \"hsl(var(--border))\",\n        input: \"hsl(var(--input))\",\n        ring: \"hsl(var(--ring))\",\n        background: \"hsl(var(--background))\",\n        foreground: \"hsl(var(--foreground))\",\n        primary: {\n          DEFAULT: \"#E31837\",\n          foreground: \"#FFFFFF\",\n        },\n        secondary: {\n          DEFAULT: \"#FFD700\",\n          foreground: \"#000000\",\n        },\n        destructive: {\n          DEFAULT: \"hsl(var(--destructive))\",\n          foreground: \"hsl(var(--destructive-foreground))\",\n        },\n        muted: {\n          DEFAULT: \"#272727\",\n          foreground: \"#A3A3A3\",\n        },\n        accent: {\n          DEFAULT: \"#1A1A1A\",\n          foreground: \"#FFFFFF\",\n        },\n        card: {\n          DEFAULT: \"#0F0F0F\",\n          foreground: \"#FFFFFF\",\n        },\n      },\n      borderRadius: {\n        lg: \"var(--radius)\",\n        md: \"calc(var(--radius) - 2px)\",\n        sm: \"calc(var(--radius) - 4px)\",\n      },\n      fontFamily: {\n        sans: [\"DM Sans\", \"sans-serif\"],\n        heading: [\"Chivo\", \"sans-serif\"],\n        mono: [\"JetBrains Mono\", \"monospace\"],\n      }\n    },\n  },\n  plugins: [],\n}",
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Do NOT use gradients for backgrounds (use solid #050505).",
+    "Use Red (#E31837) ONLY for primary actions (Scan, Save, Alert).",
+    "Use Gold (#FFD700) for Status Badges (VIP), Money, and Wins.",
+    "Ensure all text is at least text-neutral-400 on dark backgrounds.",
+    "The Dashboard Grid must be responsive: 1 col on mobile, 3 cols on tablet, 4 on desktop.",
+    "Charts must use custom Tooltips (Dark Glass) instead of default white ones.",
+    "Add a global CSS rule for ::selection { background: #E31837; color: white; }."
+  ]
+}
