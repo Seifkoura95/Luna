@@ -15,6 +15,10 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import httpx
 from bs4 import BeautifulSoup
+from pathlib import Path
+
+# Root directory for static files
+ROOT_DIR = Path(__file__).parent
 
 # Import database connection
 from database import db
