@@ -20,7 +20,7 @@ import uuid
 from datetime import datetime
 
 # Get BASE_URL from environment
-BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://luna-vip-app-3.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://cherryub-mock.preview.emergentagent.com').rstrip('/')
 
 
 class TestHealthAndBasicConnectivity:

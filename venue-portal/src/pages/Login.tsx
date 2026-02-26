@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { setToken, setUser } from '../utils/auth';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://luna-vip-app-3.preview.emergentagent.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://cherryub-mock.preview.emergentagent.com/api';
 
 interface LoginProps {
   onLogin: () => void;
