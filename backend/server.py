@@ -7154,10 +7154,10 @@ from fastapi.responses import FileResponse
 # Mount venue portal static assets
 VENUE_PORTAL_DIR = ROOT_DIR / "static" / "venue-portal"
 if VENUE_PORTAL_DIR.exists():
-    app.mount("/venue-portal/assets", StaticFiles(directory=VENUE_PORTAL_DIR / "assets"), name="venue-portal-assets")
+    api_router.mount("/venue-portal/assets", StaticFiles(directory=VENUE_PORTAL_DIR / "assets"), name="venue-portal-assets")
 
-@app.get("/venue-portal")
-@app.get("/venue-portal/{path:path}")
+@api_router.get("/venue-portal")
+@api_router.get("/venue-portal/{path:path}")
 async def serve_venue_portal(path: str = ""):
     """Serve the venue portal SPA"""
     index_file = ROOT_DIR / "static" / "venue-portal" / "index.html"
