@@ -264,11 +264,18 @@ Events are matched by checking if the venue_name, location, or address contains:
 2. Set INSTAGRAM_APP_ID environment variable
 3. Set INSTAGRAM_APP_SECRET environment variable
 
+## Recent Completions (Feb 2025)
+- **Venue Images Fixed (Feb 26, 2025)**:
+  - Updated Eclipse, After Dark, Su Casa Brisbane, and Su Casa Gold Coast venues to use user-provided images
+  - Images now served from `/app/backend/static/photos/` via `/api/photos/image/{folder}/{filename}`
+  - Fixed missing `ROOT_DIR` in server.py that was causing 500 errors on photo endpoints
+
 ## Future Tasks
+- Complete server.py refactoring (move API routes to /routes directory)
+- Complete Venue Web Portal UI and make externally accessible
 - Remove CherryHub mock mode (when DNS available)
 - Stripe payment integration for VIP bookings/auctions
 - Connect Instagram with production API credentials
-- Update Juju and Night Market venue thumbnail images
 - Add "Luna glow" effect enhancement to background
 - Implement custom loading screen with Luna logo
 
@@ -277,4 +284,5 @@ Events are matched by checking if the venue_name, location, or address contains:
 - **Instagram Integration**: Running in demo mode (no API credentials yet)
 
 ## Test Reports
-- /app/test_reports/iteration_5.json - Latest full test (Feb 17, 2025) - 100% pass rate
+- /app/test_reports/iteration_7.json - Latest backend test (Feb 25, 2025)
+
