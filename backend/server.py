@@ -7147,10 +7147,8 @@ async def get_instagram_config(request: Request):
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-# Mount venue portal static assets
+# Mount venue portal static assets on app directly (before router)
 VENUE_PORTAL_DIR = ROOT_DIR / "static" / "venue-portal"
-if VENUE_PORTAL_DIR.exists():
-    api_router.mount("/venue-portal/assets", StaticFiles(directory=VENUE_PORTAL_DIR / "assets"), name="venue-portal-assets")
 
 @api_router.get("/venue-portal")
 async def serve_venue_portal_root():
@@ -7162,7 +7160,31 @@ async def serve_venue_portal_root():
 
 @api_router.get("/venue-portal/{path:path}")
 async def serve_venue_portal(path: str):
-    """Serve the venue portal SPA for all paths"""
+    """Serve the venue portal SPA for all paths (excluding assets)"""
+    # Skip if path starts with assets/ - let the mount handle it
+    if path.startswith("assets/"):
+        # Return the actual file from assets
+        asset_path = VENUE_PORTAL_DIR / path
+        if asset_path.exists():
+            # Determine content type
+            if path.endswith('.js'):
+                return FileResponse(asset_path, media_type="application/javascript")
+            elif path.endswith('.css'):
+                return FileResponse(asset_path, media_type="text/css")
+            elif path.endswith('.json'):
+                return FileResponse(asset_path, media_type="application/json")
+            elif path.endswith('.svg'):
+                return FileResponse(asset_path, media_type="image/svg+xml")
+            elif path.endswith('.png'):
+                return FileResponse(asset_path, media_type="image/png")
+            elif path.endswith('.jpg') or path.endswith('.jpeg'):
+                return FileResponse(asset_path, media_type="image/jpeg")
+            elif path.endswith('.woff') or path.endswith('.woff2'):
+                return FileResponse(asset_path, media_type="font/woff2")
+            return FileResponse(asset_path)
+        raise HTTPException(status_code=404, detail="Asset not found")
+    
+    # For all other paths, serve the index.html (SPA routing)
     index_file = ROOT_DIR / "static" / "venue-portal" / "index.html"
     if index_file.exists():
         return FileResponse(index_file, media_type="text/html")
