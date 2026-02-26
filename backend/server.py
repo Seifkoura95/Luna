@@ -7147,6 +7147,24 @@ async def get_instagram_config(request: Request):
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
 
+# ====== VENUE PORTAL STATIC FILES ======
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+# Mount venue portal static assets
+VENUE_PORTAL_DIR = ROOT_DIR / "static" / "venue-portal"
+if VENUE_PORTAL_DIR.exists():
+    app.mount("/venue-portal/assets", StaticFiles(directory=VENUE_PORTAL_DIR / "assets"), name="venue-portal-assets")
+
+@app.get("/venue-portal")
+@app.get("/venue-portal/{path:path}")
+async def serve_venue_portal(path: str = ""):
+    """Serve the venue portal SPA"""
+    index_file = ROOT_DIR / "static" / "venue-portal" / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    raise HTTPException(status_code=404, detail="Venue portal not found")
+
 @app.get("/")
 async def root():
     return {"message": "Luna Group VIP API", "venues": len(LUNA_VENUES), "scheduler": "active"}
