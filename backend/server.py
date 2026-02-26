@@ -7143,10 +7143,6 @@ async def get_instagram_config(request: Request):
     return instagram_service.get_configuration()
 
 
-# CORS
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-app.include_router(api_router)
-
 # ====== VENUE PORTAL STATIC FILES ======
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -7157,13 +7153,24 @@ if VENUE_PORTAL_DIR.exists():
     api_router.mount("/venue-portal/assets", StaticFiles(directory=VENUE_PORTAL_DIR / "assets"), name="venue-portal-assets")
 
 @api_router.get("/venue-portal")
-@api_router.get("/venue-portal/{path:path}")
-async def serve_venue_portal(path: str = ""):
-    """Serve the venue portal SPA"""
+async def serve_venue_portal_root():
+    """Serve the venue portal SPA root"""
     index_file = ROOT_DIR / "static" / "venue-portal" / "index.html"
     if index_file.exists():
-        return FileResponse(index_file)
+        return FileResponse(index_file, media_type="text/html")
     raise HTTPException(status_code=404, detail="Venue portal not found")
+
+@api_router.get("/venue-portal/{path:path}")
+async def serve_venue_portal(path: str):
+    """Serve the venue portal SPA for all paths"""
+    index_file = ROOT_DIR / "static" / "venue-portal" / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file, media_type="text/html")
+    raise HTTPException(status_code=404, detail="Venue portal not found")
+
+# CORS
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.include_router(api_router)
 
 @app.get("/")
 async def root():
