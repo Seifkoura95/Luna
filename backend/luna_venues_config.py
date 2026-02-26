@@ -146,12 +146,12 @@ LUNA_VENUES = {
         "long_description": "Su Casa Gold Coast brings the renowned Su Casa experience to Surfers Paradise. Open Thursday through Sunday, experience the best in Hip Hop, R&B, and party anthems. Premium bottle service, VIP booths, and the Gold Coast's most electric atmosphere await you in the heart of the action on Orchid Avenue.",
         "features": ["booth_booking", "fast_lane", "auctions", "bottle_service"],
         "points_rate": 1.0,
-        "image_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/w4lbm1ea_Sucasa1.webp",
-        "hero_image": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/w4lbm1ea_Sucasa1.webp",
+        "image_url": f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-128%20(1).jpg",
+        "hero_image": f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-193.jpg",
         "gallery": [
-            "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/w4lbm1ea_Sucasa1.webp",
-            "https://images.pexels.com/photos/31769337/pexels-photo-31769337.jpeg?auto=compress&cs=tinysrgb&w=800",
-            f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-128%20(1).jpg"
+            f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-128%20(1).jpg",
+            f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-193.jpg",
+            f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-55.jpg"
         ],
         "operating_hours": {
             "thursday": "9:00 PM - 3:00 AM",
