@@ -148,6 +148,13 @@ api_router = APIRouter(prefix="/api")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# ====== INCLUDE MODULAR ROUTES ======
+# Import and include all modular route modules
+from routes import ALL_ROUTERS
+for router in ALL_ROUTERS:
+    api_router.include_router(router)
+logger.info(f"Loaded {len(ALL_ROUTERS)} modular route modules")
+
 
 # ====== HEALTH CHECK ======
 
