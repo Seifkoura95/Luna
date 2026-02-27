@@ -1125,6 +1125,401 @@ async def get_venue_demographics(request: Request):
     }
 
 
+@api_router.get("/venue/analytics/auctions")
+async def get_venue_auction_analytics(request: Request, period: str = "month"):
+    """Get auction analytics for venue - live auctions, bids, conversions"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    venue_id = user.get("venue_id")
+    is_admin = user.get("role") == "admin"
+    
+    # Calculate date range
+    today = datetime.now(timezone.utc)
+    if period == "week":
+        start_date = today - timedelta(days=7)
+    elif period == "month":
+        start_date = today - timedelta(days=30)
+    else:
+        start_date = today - timedelta(days=30)
+    
+    # Build query
+    auction_query = {}
+    if not is_admin and venue_id:
+        auction_query["venue_id"] = venue_id
+    
+    # Get all auctions
+    auctions = await db.auctions.find(auction_query).to_list(1000)
+    
+    # Live auctions
+    live_auctions = [a for a in auctions if a.get("status") == "active"]
+    ended_auctions = [a for a in auctions if a.get("status") in ["ended", "completed"]]
+    
+    # Get bids
+    total_bids = 0
+    total_bid_amount = 0
+    for auction in auctions:
+        bids = auction.get("bids", [])
+        total_bids += len(bids)
+        total_bid_amount += sum(b.get("amount", 0) for b in bids)
+    
+    # Format live auctions for frontend
+    live_auctions_formatted = []
+    for auction in live_auctions[:10]:
+        end_time = auction.get("end_time")
+        time_left = "Ended"
+        if end_time:
+            delta = end_time - today
+            if delta.total_seconds() > 0:
+                hours = int(delta.total_seconds() // 3600)
+                minutes = int((delta.total_seconds() % 3600) // 60)
+                time_left = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+        
+        live_auctions_formatted.append({
+            "id": auction.get("id"),
+            "item": auction.get("title", "Unknown Item"),
+            "currentBid": auction.get("current_bid", auction.get("starting_bid", 0)),
+            "bids": len(auction.get("bids", [])),
+            "timeLeft": time_left,
+            "status": "live" if delta.total_seconds() > 3600 else "ending"
+        })
+    
+    return {
+        "period": period,
+        "live_auctions_count": len(live_auctions),
+        "total_auctions": len(auctions),
+        "total_bids": total_bids,
+        "total_bid_amount": total_bid_amount,
+        "conversion_rate": round((len(ended_auctions) / len(auctions) * 100) if auctions else 0, 1),
+        "live_auctions": live_auctions_formatted
+    }
+
+
+@api_router.get("/venue/analytics/points")
+async def get_venue_points_analytics(request: Request, period: str = "month"):
+    """Get points analytics for venue - issued, redeemed, top earners"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    venue_id = user.get("venue_id")
+    is_admin = user.get("role") == "admin"
+    
+    # Calculate date range
+    today = datetime.now(timezone.utc)
+    if period == "week":
+        start_date = today - timedelta(days=7)
+    elif period == "month":
+        start_date = today - timedelta(days=30)
+    else:
+        start_date = today - timedelta(days=30)
+    
+    # Get points transactions
+    points_query = {"created_at": {"$gte": start_date}}
+    if not is_admin and venue_id:
+        points_query["venue_id"] = venue_id
+    
+    transactions = await db.points_transactions.find(points_query).to_list(10000)
+    
+    # Calculate totals
+    points_issued = sum(t.get("total_points", 0) for t in transactions if t.get("type") == "earn")
+    points_redeemed = sum(abs(t.get("total_points", 0)) for t in transactions if t.get("type") == "redeem")
+    points_expired = 0  # Would need expiry tracking
+    
+    redemption_rate = round((points_redeemed / points_issued * 100) if points_issued > 0 else 0, 1)
+    
+    # Top point earners
+    user_points = {}
+    for t in transactions:
+        if t.get("type") == "earn":
+            user_id = t.get("user_id")
+            user_points[user_id] = user_points.get(user_id, 0) + t.get("total_points", 0)
+    
+    top_earners = sorted(user_points.items(), key=lambda x: x[1], reverse=True)[:10]
+    
+    # Enrich with user info
+    top_earners_formatted = []
+    for user_id, points in top_earners:
+        u = await db.users.find_one({"user_id": user_id})
+        if u:
+            top_earners_formatted.append({
+                "user_id": user_id,
+                "name": u.get("name", "Unknown"),
+                "points": points,
+                "tier": u.get("subscription_tier", "lunar"),
+                "avatar": u.get("avatar_url", f"https://ui-avatars.com/api/?name={u.get('name', 'U')}&background=E31837&color=fff")
+            })
+    
+    return {
+        "period": period,
+        "points_issued": points_issued,
+        "points_redeemed": points_redeemed,
+        "points_expired": points_expired,
+        "redemption_rate": redemption_rate,
+        "top_earners": top_earners_formatted
+    }
+
+
+@api_router.get("/venue/analytics/activity")
+async def get_venue_activity_feed(request: Request, limit: int = 50):
+    """Get real-time activity feed for venue - check-ins, redemptions, purchases"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    venue_id = user.get("venue_id")
+    is_admin = user.get("role") == "admin"
+    
+    activities = []
+    now = datetime.now(timezone.utc)
+    
+    # Get recent check-ins
+    checkin_query = {}
+    if not is_admin and venue_id:
+        checkin_query["venue_id"] = venue_id
+    
+    recent_checkins = await db.checkins.find(checkin_query).sort("created_at", -1).limit(20).to_list(20)
+    for c in recent_checkins:
+        u = await db.users.find_one({"user_id": c["user_id"]})
+        if u:
+            delta = now - c["created_at"]
+            minutes = int(delta.total_seconds() // 60)
+            time_ago = f"{minutes} min ago" if minutes < 60 else f"{minutes // 60}h ago"
+            activities.append({
+                "type": "checkin",
+                "user": u.get("name", "Guest"),
+                "action": "checked in",
+                "time": time_ago,
+                "tier": u.get("subscription_tier", "bronze"),
+                "avatar": u.get("avatar_url", f"https://ui-avatars.com/api/?name={u.get('name', 'U')}&background=E31837&color=fff"),
+                "timestamp": c["created_at"]
+            })
+    
+    # Get recent redemptions
+    redemption_query = {"status": "redeemed"}
+    if not is_admin and venue_id:
+        redemption_query["redeemed_venue"] = venue_id
+    
+    recent_redemptions = await db.redemptions.find(redemption_query).sort("redeemed_at", -1).limit(20).to_list(20)
+    for r in recent_redemptions:
+        u = await db.users.find_one({"user_id": r["user_id"]})
+        if u:
+            delta = now - r.get("redeemed_at", r.get("created_at", now))
+            minutes = int(delta.total_seconds() // 60)
+            time_ago = f"{minutes} min ago" if minutes < 60 else f"{minutes // 60}h ago"
+            activities.append({
+                "type": "redemption",
+                "user": u.get("name", "Guest"),
+                "action": f"redeemed {r.get('reward_name', 'reward')}",
+                "time": time_ago,
+                "tier": u.get("subscription_tier", "bronze"),
+                "avatar": u.get("avatar_url", f"https://ui-avatars.com/api/?name={u.get('name', 'U')}&background=E31837&color=fff"),
+                "timestamp": r.get("redeemed_at", r.get("created_at", now))
+            })
+    
+    # Get recent auction bids
+    bid_query = {}
+    if not is_admin and venue_id:
+        bid_query["venue_id"] = venue_id
+    
+    recent_auctions = await db.auctions.find(bid_query).sort("updated_at", -1).limit(10).to_list(10)
+    for auction in recent_auctions:
+        bids = auction.get("bids", [])
+        for bid in bids[-3:]:  # Last 3 bids per auction
+            u = await db.users.find_one({"user_id": bid.get("user_id")})
+            if u:
+                bid_time = bid.get("timestamp", now)
+                if isinstance(bid_time, str):
+                    bid_time = datetime.fromisoformat(bid_time.replace("Z", "+00:00"))
+                delta = now - bid_time
+                minutes = int(delta.total_seconds() // 60)
+                time_ago = f"{minutes} min ago" if minutes < 60 else f"{minutes // 60}h ago"
+                activities.append({
+                    "type": "bid",
+                    "user": u.get("name", "Guest"),
+                    "action": f"bid ${bid.get('amount', 0)} on {auction.get('title', 'item')}",
+                    "time": time_ago,
+                    "tier": u.get("subscription_tier", "bronze"),
+                    "avatar": u.get("avatar_url", f"https://ui-avatars.com/api/?name={u.get('name', 'U')}&background=E31837&color=fff"),
+                    "timestamp": bid_time
+                })
+    
+    # Sort all activities by timestamp and return most recent
+    activities.sort(key=lambda x: x.get("timestamp", now), reverse=True)
+    
+    # Remove timestamp from response (was just for sorting)
+    for a in activities:
+        if "timestamp" in a:
+            del a["timestamp"]
+    
+    return {
+        "activities": activities[:limit]
+    }
+
+
+@api_router.get("/venue/analytics/top-spenders")
+async def get_venue_top_spenders(request: Request, period: str = "month", limit: int = 10):
+    """Get top spending customers for venue"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    venue_id = user.get("venue_id")
+    is_admin = user.get("role") == "admin"
+    
+    # Calculate date range
+    today = datetime.now(timezone.utc)
+    if period == "week":
+        start_date = today - timedelta(days=7)
+    elif period == "month":
+        start_date = today - timedelta(days=30)
+    else:
+        start_date = today - timedelta(days=30)
+    
+    # Get spending records
+    spending_query = {"created_at": {"$gte": start_date}}
+    if not is_admin and venue_id:
+        spending_query["venue_id"] = venue_id
+    
+    spending_records = await db.spending.find(spending_query).to_list(10000)
+    
+    # Aggregate by user
+    user_spending = {}
+    for s in spending_records:
+        user_id = s.get("user_id")
+        if user_id:
+            if user_id not in user_spending:
+                user_spending[user_id] = {"total": 0, "visits": set()}
+            user_spending[user_id]["total"] += s.get("amount", 0)
+            user_spending[user_id]["visits"].add(s.get("created_at", today).strftime("%Y-%m-%d"))
+    
+    # Sort by total spending
+    top_spenders = sorted(user_spending.items(), key=lambda x: x[1]["total"], reverse=True)[:limit]
+    
+    # Enrich with user info
+    result = []
+    for user_id, data in top_spenders:
+        u = await db.users.find_one({"user_id": user_id})
+        if u:
+            result.append({
+                "name": u.get("name", "Unknown"),
+                "spent": data["total"],
+                "visits": len(data["visits"]),
+                "tier": u.get("subscription_tier", "bronze"),
+                "avatar": u.get("avatar_url", f"https://ui-avatars.com/api/?name={u.get('name', 'U')}&background=E31837&color=fff")
+            })
+    
+    return {
+        "period": period,
+        "top_spenders": result
+    }
+
+
+@api_router.get("/venue/analytics/vip-alerts")
+async def get_venue_vip_alerts(request: Request):
+    """Get VIP customer alerts - high value customers arriving/expected"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    venue_id = user.get("venue_id")
+    is_admin = user.get("role") == "admin"
+    
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Get VIP users (platinum tier or high spenders)
+    vip_query = {
+        "$or": [
+            {"subscription_tier": {"$in": ["platinum", "gold"]}},
+            {"total_spent": {"$gte": 5000}}
+        ]
+    }
+    
+    vip_users = await db.users.find(vip_query).to_list(100)
+    
+    alerts = []
+    for vip in vip_users[:10]:
+        # Check for recent bookings today
+        booking_query = {
+            "user_id": vip["user_id"],
+            "booking_date": {"$gte": today_start.isoformat(), "$lte": (today_start + timedelta(days=1)).isoformat()}
+        }
+        if not is_admin and venue_id:
+            booking_query["venue_id"] = venue_id
+        
+        booking = await db.bookings.find_one(booking_query)
+        
+        # Check if they checked in today
+        checkin_query = {
+            "user_id": vip["user_id"],
+            "created_at": {"$gte": today_start}
+        }
+        if not is_admin and venue_id:
+            checkin_query["venue_id"] = venue_id
+        
+        recent_checkin = await db.checkins.find_one(checkin_query)
+        
+        # Get their total spend
+        total_spent = vip.get("total_spent", 0)
+        if total_spent == 0:
+            # Calculate from spending records
+            spending = await db.spending.find({"user_id": vip["user_id"]}).to_list(1000)
+            total_spent = sum(s.get("amount", 0) for s in spending)
+        
+        # Get last visit
+        last_checkin = await db.checkins.find_one(
+            {"user_id": vip["user_id"]},
+            sort=[("created_at", -1)]
+        )
+        last_visit = "Never"
+        if last_checkin:
+            delta = now - last_checkin["created_at"]
+            if delta.days == 0:
+                last_visit = "Today"
+            elif delta.days == 1:
+                last_visit = "Yesterday"
+            else:
+                last_visit = f"{delta.days} days ago"
+        
+        if booking or (recent_checkin and (now - recent_checkin["created_at"]).total_seconds() < 3600):
+            status = "arriving"
+        elif booking:
+            status = "expected"
+        else:
+            continue  # Skip if no reason to alert
+        
+        alerts.append({
+            "id": vip["user_id"],
+            "name": vip.get("name", "VIP Guest"),
+            "tier": vip.get("subscription_tier", "gold"),
+            "totalSpend": total_spent,
+            "lastVisit": last_visit,
+            "status": status,
+            "avatar": vip.get("avatar_url", f"https://ui-avatars.com/api/?name={vip.get('name', 'V')}&background=FFD700&color=000")
+        })
+    
+    return {
+        "alerts": alerts[:5]  # Top 5 VIP alerts
+    }
+
+
 # Update the redeem_reward to include QR code
 @api_router.post("/rewards/redeem-with-qr")
 async def redeem_reward_with_qr(request: Request, reward_id: str, venue_id: Optional[str] = None):
