@@ -79,6 +79,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [vipAlertsData, setVipAlertsData] = useState<any>(null);
   const [dataLoading, setDataLoading] = useState(true);
   
+  // Auction Management State
+  const [auctionModalOpen, setAuctionModalOpen] = useState(false);
+  const [selectedAuction, setSelectedAuction] = useState<any>(null);
+  const [auctionsList, setAuctionsList] = useState<any[]>([]);
+  
+  // User Profile State
+  const [userDrawerOpen, setUserDrawerOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [usersListData, setUsersListData] = useState<any>({ users: [], total: 0 });
+  const [usersSearch, setUsersSearch] = useState('');
+  
   // Fetch analytics data on mount and when period changes
   useEffect(() => {
     const fetchAllData = async () => {
