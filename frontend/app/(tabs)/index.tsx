@@ -246,8 +246,39 @@ export default function HomeScreen() {
           </Animated.View>
         )}
 
-        {/* What's On */}
+        {/* Trending */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.section}>
+          <View style={styles.sectionHead}>
+            <Text style={styles.sectionTitle}>Trending</Text>
+          </View>
+
+          <View style={styles.trendingGrid}>
+            {events.slice(0, 4).map((event, index) => (
+              <TouchableOpacity
+                key={event.id}
+                style={styles.trendingCard}
+                onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
+                activeOpacity={0.85}
+              >
+                <Image source={{ uri: event.image || event.image_url }} style={styles.trendingImage} contentFit="cover" />
+                <LinearGradient 
+                  colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} 
+                  locations={[0, 0.4, 1]}
+                  style={styles.trendingOverlay}
+                >
+                  <View style={styles.trendingRank}>
+                    <Text style={styles.trendingRankText}>{index + 1}</Text>
+                  </View>
+                  <Text style={styles.trendingTitle} numberOfLines={2}>{event.title}</Text>
+                  <Text style={styles.trendingVenue}>{event.venue_name || event.location}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Animated.View>
+
+        {/* What's On */}
+        <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.section}>
           <View style={styles.sectionHead}>
             <Text style={styles.sectionTitle}>What&apos;s On</Text>
             <TouchableOpacity onPress={() => router.push('/events')} style={styles.seeAll}>
@@ -283,7 +314,7 @@ export default function HomeScreen() {
         </Animated.View>
 
         {/* Venues */}
-        <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.section}>
+        <Animated.View entering={FadeInDown.delay(400).duration(400)} style={styles.section}>
           <View style={styles.sectionHead}>
             <Text style={styles.sectionTitle}>Our Venues</Text>
           </View>
@@ -315,37 +346,6 @@ export default function HomeScreen() {
               </TouchableOpacity>
             ))}
           </ScrollView>
-        </Animated.View>
-
-        {/* Trending */}
-        <Animated.View entering={FadeInDown.delay(400).duration(400)} style={styles.section}>
-          <View style={styles.sectionHead}>
-            <Text style={styles.sectionTitle}>Trending</Text>
-          </View>
-
-          <View style={styles.trendingGrid}>
-            {events.slice(0, 4).map((event, index) => (
-              <TouchableOpacity
-                key={event.id}
-                style={styles.trendingCard}
-                onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
-                activeOpacity={0.85}
-              >
-                <Image source={{ uri: event.image || event.image_url }} style={styles.trendingImage} contentFit="cover" />
-                <LinearGradient 
-                  colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} 
-                  locations={[0, 0.4, 1]}
-                  style={styles.trendingOverlay}
-                >
-                  <View style={styles.trendingRank}>
-                    <Text style={styles.trendingRankText}>{index + 1}</Text>
-                  </View>
-                  <Text style={styles.trendingTitle} numberOfLines={2}>{event.title}</Text>
-                  <Text style={styles.trendingVenue}>{event.venue_name || event.location}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
-          </View>
         </Animated.View>
 
         {/* Friends */}
