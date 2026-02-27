@@ -30,7 +30,7 @@ Access at: `http://localhost:5173`
 ## API Integration
 
 The portal connects to the same backend API as the mobile app:
-- Base URL: `https://cherryub-mock.preview.emergentagent.com/api`
+- Base URL: `https://fastapi-restructure-3.preview.emergentagent.com/api`
 - Authentication: JWT Bearer tokens
 - Endpoints:
   - `POST /api/auth/login` - Staff login

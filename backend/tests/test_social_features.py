@@ -7,7 +7,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://cherryub-mock.preview.emergentagent.com')
+BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://fastapi-restructure-3.preview.emergentagent.com')
 
 # Store auth token for authenticated requests
 AUTH_TOKEN = None

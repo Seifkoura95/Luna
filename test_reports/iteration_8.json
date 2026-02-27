@@ -52,7 +52,7 @@
   "features_tested": {
     "venue_portal_login": {
       "status": "PASS",
-      "url": "https://cherryub-mock.preview.emergentagent.com/api/venue-portal",
+      "url": "https://fastapi-restructure-3.preview.emergentagent.com/api/venue-portal",
       "details": "Login page renders with email/password fields, credentials venue@eclipse.com/venue123 work correctly"
     },
     "dashboard_overview": {
