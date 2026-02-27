@@ -22,7 +22,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://fastapi-restructure-3.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://luna-venue-admin.preview.emergentagent.com').rstrip('/')
 
 
 class TestHealth:
