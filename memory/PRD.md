@@ -390,6 +390,19 @@ A comprehensive technical specification has been generated covering:
 - **Real-Time Features**: Push notification system via Expo
 - **Configuration**: Environment variables and constants
 
+### Owner's Manual ✅ COMPLETE (Dec 2025)
+**Location:** `/app/memory/owners_manual.md`
+
+A comprehensive owner's manual has been created covering:
+- **Application Overview**: Full tech stack and architecture
+- **Mobile App Features**: All 16+ screens documented with functionality
+- **Venue Portal**: Staff dashboard features and usage
+- **Third-Party Integrations**: Eventfinda, CherryHub, Instagram
+- **Database Structure**: All collections and key schemas
+- **Administrator Guide**: User roles, auction management, redemptions
+- **Troubleshooting**: Common issues and solutions
+- **Future Roadmap**: Planned features and enhancements
+
 ### Documented API Groups:
 1. Authentication & Users (register, login, profile, email verification)
 2. Venues (listing, details, status)
