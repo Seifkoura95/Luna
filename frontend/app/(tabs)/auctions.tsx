@@ -318,7 +318,7 @@ export default function AuctionsScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Auction Detail Modal - Optimized Layout */}
+      {/* Premium Auction Detail Modal */}
       <Modal
         visible={!!selectedAuction}
         transparent
@@ -326,100 +326,120 @@ export default function AuctionsScreen() {
         onRequestClose={() => setSelectedAuction(null)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <LinearGradient
-              colors={[colors.backgroundCard, colors.background]}
-              style={styles.modalGradient}
-            >
-              {/* Modal Header */}
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Auction Detail</Text>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setSelectedAuction(null)}
-                >
-                  <Ionicons name="close" size={24} color={colors.textPrimary} />
-                </TouchableOpacity>
-              </View>
-
-              {selectedAuction && (
-                <ScrollView 
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.modalScrollContent}
-                >
-                  {/* Compact Image + Info Row */}
-                  <View style={styles.compactInfoRow}>
-                    <Image source={{ uri: selectedAuction.image_url }} style={styles.compactImage} />
-                    <View style={styles.compactDetails}>
-                      <Text style={styles.compactVenue}>{selectedAuction.venue_name}</Text>
-                      <Text style={styles.compactTitle} numberOfLines={2}>{selectedAuction.title}</Text>
-                      <View style={styles.compactTimer}>
-                        <Ionicons name="time" size={14} color={colors.accent} />
-                        <Text style={styles.compactTimerText}>
-                          {selectedAuction.status === 'active' 
-                            ? timeLeft[selectedAuction.id] || 'Loading...'
-                            : selectedAuction.status.toUpperCase()
-                          }
-                        </Text>
-                      </View>
+          <View style={styles.premiumModalContent}>
+            {selectedAuction && (
+              <>
+                {/* Hero Image with Gradient Overlay */}
+                <View style={styles.heroImageContainer}>
+                  <Image 
+                    source={{ uri: selectedAuction.image_url }} 
+                    style={styles.heroImage}
+                    resizeMode="cover"
+                  />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.8)', colors.background]}
+                    style={styles.heroGradient}
+                  />
+                  
+                  {/* Close Button */}
+                  <TouchableOpacity
+                    style={styles.premiumCloseBtn}
+                    onPress={() => setSelectedAuction(null)}
+                  >
+                    <View style={styles.premiumCloseBtnInner}>
+                      <Ionicons name="close" size={20} color={colors.textPrimary} />
                     </View>
+                  </TouchableOpacity>
+
+                  {/* Timer Badge on Image */}
+                  <View style={styles.timerBadgeOnImage}>
+                    <Ionicons name="time" size={14} color={colors.accent} />
+                    <Text style={styles.timerBadgeText}>
+                      {selectedAuction.status === 'active' 
+                        ? timeLeft[selectedAuction.id] || 'Loading...'
+                        : selectedAuction.status.toUpperCase()
+                      }
+                    </Text>
                   </View>
+
+                  {/* Title Overlay */}
+                  <View style={styles.heroTitleOverlay}>
+                    <Text style={styles.heroVenueName}>{selectedAuction.venue_name}</Text>
+                    <Text style={styles.heroTitle}>{selectedAuction.title}</Text>
+                  </View>
+                </View>
+
+                {/* Scrollable Content */}
+                <ScrollView 
+                  style={styles.premiumScrollView}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.premiumScrollContent}
+                  bounces={true}
+                >
+                  {/* Features Row */}
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.premiumFeaturesRow}
+                    contentContainerStyle={styles.premiumFeaturesContent}
+                  >
+                    {selectedAuction.features?.map((feature, index) => (
+                      <View key={index} style={styles.premiumFeatureChip}>
+                        <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                        <Text style={styles.premiumFeatureText}>{feature}</Text>
+                      </View>
+                    ))}
+                  </ScrollView>
 
                   {/* Description */}
                   {selectedAuction.description && (
-                    <Text style={styles.auctionDescription}>{selectedAuction.description}</Text>
+                    <Text style={styles.premiumDescription}>{selectedAuction.description}</Text>
                   )}
 
-                  {/* Features - Horizontal Scroll */}
-                  <View style={styles.featuresContainer}>
-                    <Text style={styles.featuresLabel}>INCLUDES</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuresScroll}>
-                      {selectedAuction.features?.map((feature, index) => (
-                        <View key={index} style={styles.featureChipModal}>
-                          <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-                          <Text style={styles.featureChipTextModal}>{feature}</Text>
-                        </View>
-                      ))}
-                    </ScrollView>
-                  </View>
-
-                  {/* Current Bid Card */}
-                  <View style={styles.currentBidCardNew}>
-                    <View style={styles.bidCardHeader}>
-                      <Text style={styles.bidCardLabel}>
-                        {selectedAuction.current_bid > 0 ? 'CURRENT BID' : 'STARTING BID'}
+                  {/* Bid Stats Row */}
+                  <View style={styles.bidStatsRow}>
+                    <View style={styles.bidStatItem}>
+                      <Text style={styles.bidStatLabel}>CURRENT BID</Text>
+                      <Text style={styles.bidStatValue}>
+                        ${selectedAuction.current_bid > 0 ? selectedAuction.current_bid : selectedAuction.starting_bid}
                       </Text>
-                      {selectedAuction.winner_name && (
-                        <View style={[styles.leadingBadge, isWinning(selectedAuction) && styles.leadingBadgeWinning]}>
-                          <Ionicons 
-                            name={isWinning(selectedAuction) ? 'trophy' : 'person'} 
-                            size={12} 
-                            color={isWinning(selectedAuction) ? colors.gold : colors.textSecondary} 
-                          />
-                          <Text style={[styles.leadingText, isWinning(selectedAuction) && styles.leadingTextWinning]}>
-                            {isWinning(selectedAuction) ? 'You\'re Winning!' : selectedAuction.winner_name}
-                          </Text>
-                        </View>
-                      )}
                     </View>
-                    <Text style={styles.bidCardValue}>
-                      ${selectedAuction.current_bid > 0 ? selectedAuction.current_bid : selectedAuction.starting_bid}
-                    </Text>
-                    <Text style={styles.bidCardMinIncrement}>
-                      Min increment: ${selectedAuction.min_increment}
-                    </Text>
+                    <View style={styles.bidStatDivider} />
+                    <View style={styles.bidStatItem}>
+                      <Text style={styles.bidStatLabel}>MIN INCREMENT</Text>
+                      <Text style={styles.bidStatValueSmall}>+${selectedAuction.min_increment}</Text>
+                    </View>
+                    <View style={styles.bidStatDivider} />
+                    <View style={styles.bidStatItem}>
+                      <Text style={styles.bidStatLabel}>DEPOSIT</Text>
+                      <Text style={styles.bidStatValueSmall}>${selectedAuction.deposit_required}</Text>
+                    </View>
                   </View>
 
-                  {/* Bid Controls - Only for active auctions */}
+                  {/* Leading Bidder */}
+                  {selectedAuction.winner_name && (
+                    <View style={[styles.leadingBidderCard, isWinning(selectedAuction) && styles.leadingBidderCardWinning]}>
+                      <Ionicons 
+                        name={isWinning(selectedAuction) ? 'trophy' : 'person-circle'} 
+                        size={24} 
+                        color={isWinning(selectedAuction) ? colors.gold : colors.textMuted} 
+                      />
+                      <Text style={[styles.leadingBidderText, isWinning(selectedAuction) && styles.leadingBidderTextWinning]}>
+                        {isWinning(selectedAuction) ? "You're in the lead!" : `Leading: ${selectedAuction.winner_name}`}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Bid Controls */}
                   {selectedAuction.status === 'active' && (
-                    <View style={styles.bidControlsSection}>
+                    <>
                       {/* Your Bid Input */}
-                      <View style={styles.bidInputSection}>
-                        <Text style={styles.bidInputLabel}>YOUR BID</Text>
-                        <View style={styles.bidInputWrapper}>
-                          <Text style={styles.bidCurrency}>$</Text>
+                      <View style={styles.premiumBidInputContainer}>
+                        <Text style={styles.premiumInputLabel}>YOUR BID</Text>
+                        <View style={styles.premiumBidInput}>
+                          <Text style={styles.premiumCurrency}>$</Text>
                           <TextInput
-                            style={styles.bidInputField}
+                            style={styles.premiumBidField}
                             value={bidAmount}
                             onChangeText={setBidAmount}
                             keyboardType="numeric"
@@ -429,78 +449,81 @@ export default function AuctionsScreen() {
                         </View>
                       </View>
 
-                      {/* Quick Bid Buttons */}
-                      <View style={styles.quickBidSection}>
-                        <Text style={styles.quickBidLabel}>QUICK ADD</Text>
-                        <View style={styles.quickBidButtons}>
-                          {[10, 25, 50, 100].map((increment) => (
-                            <TouchableOpacity
-                              key={increment}
-                              style={styles.quickBidBtn}
-                              onPress={() => handleQuickBid(increment)}
-                            >
-                              <Text style={styles.quickBidBtnText}>+${increment}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
+                      {/* Quick Add Buttons */}
+                      <View style={styles.premiumQuickBids}>
+                        {[10, 25, 50, 100].map((increment) => (
+                          <TouchableOpacity
+                            key={increment}
+                            style={styles.premiumQuickBidBtn}
+                            onPress={() => handleQuickBid(increment)}
+                          >
+                            <Text style={styles.premiumQuickBidText}>+${increment}</Text>
+                          </TouchableOpacity>
+                        ))}
                       </View>
 
-                      {/* Notify if Outbid Toggle - Prominent */}
+                      {/* Notify Toggle - Premium Card */}
                       <TouchableOpacity
-                        style={[styles.notifyCard, notifyOutbid && styles.notifyCardActive]}
+                        style={[styles.premiumNotifyCard, notifyOutbid && styles.premiumNotifyCardActive]}
                         onPress={() => {
                           setNotifyOutbid(!notifyOutbid);
                           if (Platform.OS !== 'web') Haptics.selectionAsync();
                         }}
+                        activeOpacity={0.8}
                       >
-                        <View style={styles.notifyIconContainer}>
-                          <Ionicons 
-                            name={notifyOutbid ? 'notifications' : 'notifications-off-outline'} 
-                            size={24} 
-                            color={notifyOutbid ? colors.accent : colors.textMuted} 
-                          />
-                        </View>
-                        <View style={styles.notifyTextContainer}>
-                          <Text style={[styles.notifyTitle, notifyOutbid && styles.notifyTitleActive]}>
-                            Notify me if outbid
-                          </Text>
-                          <Text style={styles.notifySubtitle}>
-                            Get push notifications when someone outbids you
-                          </Text>
-                        </View>
-                        <View style={[styles.notifyToggle, notifyOutbid && styles.notifyToggleActive]}>
-                          <View style={[styles.notifyToggleKnob, notifyOutbid && styles.notifyToggleKnobActive]} />
-                        </View>
+                        <LinearGradient
+                          colors={notifyOutbid ? [colors.accent + '20', colors.accent + '10'] : ['transparent', 'transparent']}
+                          style={styles.premiumNotifyGradient}
+                        >
+                          <View style={[styles.premiumNotifyIcon, notifyOutbid && styles.premiumNotifyIconActive]}>
+                            <Ionicons 
+                              name={notifyOutbid ? 'notifications' : 'notifications-outline'} 
+                              size={22} 
+                              color={notifyOutbid ? colors.accent : colors.textMuted} 
+                            />
+                          </View>
+                          <View style={styles.premiumNotifyContent}>
+                            <Text style={[styles.premiumNotifyTitle, notifyOutbid && styles.premiumNotifyTitleActive]}>
+                              Notify if Outbid
+                            </Text>
+                            <Text style={styles.premiumNotifyDesc}>
+                              Push notification when outbid
+                            </Text>
+                          </View>
+                          <View style={[styles.premiumToggle, notifyOutbid && styles.premiumToggleActive]}>
+                            <View style={[styles.premiumToggleKnob, notifyOutbid && styles.premiumToggleKnobActive]} />
+                          </View>
+                        </LinearGradient>
                       </TouchableOpacity>
 
-                      {/* Auto-bid Maximum (Optional) */}
+                      {/* Auto-Bid Option */}
                       <TouchableOpacity
-                        style={styles.maxBidToggleRow}
+                        style={styles.premiumAutoBidRow}
                         onPress={() => setShowMaxBid(!showMaxBid)}
                       >
                         <Ionicons 
                           name={showMaxBid ? 'checkbox' : 'square-outline'} 
-                          size={20} 
+                          size={22} 
                           color={showMaxBid ? colors.accent : colors.textMuted} 
                         />
-                        <Text style={[styles.maxBidToggleLabel, showMaxBid && { color: colors.textPrimary }]}>
-                          Set auto-bid maximum
+                        <Text style={[styles.premiumAutoBidText, showMaxBid && styles.premiumAutoBidTextActive]}>
+                          Enable auto-bid (set maximum)
                         </Text>
                       </TouchableOpacity>
 
                       {showMaxBid && (
-                        <View style={styles.maxBidInputSection}>
-                          <Text style={styles.maxBidHelper}>
-                            Auto-bid up to this amount to stay in the lead
+                        <View style={styles.premiumMaxBidInput}>
+                          <Text style={styles.premiumMaxBidHelper}>
+                            We'll automatically bid for you up to this amount
                           </Text>
-                          <View style={styles.maxBidInputWrapper}>
-                            <Text style={styles.bidCurrency}>$</Text>
+                          <View style={styles.premiumBidInput}>
+                            <Text style={styles.premiumCurrency}>$</Text>
                             <TextInput
-                              style={styles.bidInputField}
+                              style={styles.premiumBidField}
                               value={maxBidAmount}
                               onChangeText={setMaxBidAmount}
                               keyboardType="numeric"
-                              placeholder="Enter max"
+                              placeholder="Max amount"
                               placeholderTextColor={colors.textMuted}
                             />
                           </View>
@@ -509,51 +532,52 @@ export default function AuctionsScreen() {
 
                       {/* Place Bid Button */}
                       <TouchableOpacity
-                        style={[styles.placeBidButton, isPlacingBid && styles.placeBidButtonDisabled]}
+                        style={[styles.premiumBidButton, isPlacingBid && styles.premiumBidButtonDisabled]}
                         onPress={handlePlaceBid}
                         disabled={isPlacingBid}
+                        activeOpacity={0.9}
                       >
                         <LinearGradient
-                          colors={[colors.accent, colors.accentDark]}
-                          style={styles.placeBidGradient}
+                          colors={[colors.accent, '#B81230']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.premiumBidButtonGradient}
                         >
                           {isPlacingBid ? (
-                            <Text style={styles.placeBidText}>Placing Bid...</Text>
+                            <Text style={styles.premiumBidButtonText}>Placing Bid...</Text>
                           ) : (
                             <>
-                              <Ionicons name="flash" size={20} color={colors.textPrimary} />
-                              <Text style={styles.placeBidText}>
-                                {bidAmount ? `Place Bid - $${bidAmount}` : 'Enter Bid Amount'}
+                              <Ionicons name="flash" size={22} color="#FFF" />
+                              <Text style={styles.premiumBidButtonText}>
+                                {bidAmount ? `Place Bid · $${bidAmount}` : 'Enter Amount'}
                               </Text>
                             </>
                           )}
                         </LinearGradient>
                       </TouchableOpacity>
 
-                      {/* Deposit Info */}
-                      <View style={styles.depositInfoRow}>
+                      {/* Security Badge */}
+                      <View style={styles.securityBadge}>
                         <Ionicons name="shield-checkmark" size={14} color={colors.success} />
-                        <Text style={styles.depositInfoText}>
-                          ${selectedAuction.deposit_required} refundable deposit required
-                        </Text>
+                        <Text style={styles.securityText}>Secure · Deposit refundable if you don't win</Text>
                       </View>
-                    </View>
+                    </>
                   )}
 
                   {/* Won State */}
                   {selectedAuction.status === 'ended' && isWinning(selectedAuction) && (
-                    <View style={styles.wonSection}>
+                    <View style={styles.premiumWonContainer}>
                       <LinearGradient
-                        colors={[colors.gold + '30', 'transparent']}
-                        style={styles.wonGradient}
+                        colors={[colors.gold + '30', colors.gold + '10', 'transparent']}
+                        style={styles.premiumWonGradient}
                       >
-                        <Ionicons name="trophy" size={48} color={colors.gold} />
-                        <Text style={styles.wonTitle}>🎉 You Won!</Text>
-                        <Text style={styles.wonSubtitle}>
-                          Winning bid: ${selectedAuction.current_bid}
+                        <Ionicons name="trophy" size={56} color={colors.gold} />
+                        <Text style={styles.premiumWonTitle}>Congratulations!</Text>
+                        <Text style={styles.premiumWonSubtitle}>
+                          You won with a bid of ${selectedAuction.current_bid}
                         </Text>
-                        <TouchableOpacity style={styles.claimButton}>
-                          <Text style={styles.claimButtonText}>Claim Your Prize</Text>
+                        <TouchableOpacity style={styles.premiumClaimBtn}>
+                          <Text style={styles.premiumClaimBtnText}>Claim Prize</Text>
                         </TouchableOpacity>
                       </LinearGradient>
                     </View>
@@ -561,24 +585,33 @@ export default function AuctionsScreen() {
 
                   {/* Bid History */}
                   {bidHistory.length > 0 && (
-                    <View style={styles.bidHistorySection}>
-                      <Text style={styles.bidHistoryTitle}>BID HISTORY</Text>
+                    <View style={styles.premiumHistorySection}>
+                      <Text style={styles.premiumHistoryTitle}>Recent Bids</Text>
                       {bidHistory.slice(0, 5).map((bid, index) => (
-                        <View key={index} style={styles.bidHistoryItem}>
-                          <View style={styles.bidHistoryLeft}>
-                            <Text style={styles.bidHistoryUser}>{bid.user_name || 'Anonymous'}</Text>
-                            <Text style={styles.bidHistoryTime}>
-                              {new Date(bid.timestamp).toLocaleTimeString()}
-                            </Text>
+                        <View key={index} style={styles.premiumHistoryItem}>
+                          <View style={styles.premiumHistoryLeft}>
+                            <View style={styles.premiumHistoryAvatar}>
+                              <Text style={styles.premiumHistoryInitial}>
+                                {(bid.user_name || 'A')[0]}
+                              </Text>
+                            </View>
+                            <View>
+                              <Text style={styles.premiumHistoryName}>{bid.user_name || 'Anonymous'}</Text>
+                              <Text style={styles.premiumHistoryTime}>
+                                {new Date(bid.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </Text>
+                            </View>
                           </View>
-                          <Text style={styles.bidHistoryAmount}>${bid.amount}</Text>
+                          <Text style={styles.premiumHistoryAmount}>${bid.amount}</Text>
                         </View>
                       ))}
                     </View>
                   )}
+
+                  <View style={{ height: 40 }} />
                 </ScrollView>
-              )}
-            </LinearGradient>
+              </>
+            )}
           </View>
         </View>
       </Modal>
