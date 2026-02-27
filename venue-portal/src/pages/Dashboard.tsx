@@ -4,7 +4,7 @@ import {
   LayoutDashboard, QrCode, Users, Gavel, Award, Bell, Settings, LogOut, 
   TrendingUp, TrendingDown, DollarSign, UserCheck, Gift, Clock, Download,
   ChevronRight, Search, Filter, RefreshCw, AlertTriangle, Crown, Zap,
-  BarChart3, PieChart as PieChartIcon, Activity, Calendar, Menu, X
+  BarChart3, PieChart as PieChartIcon, Activity, Calendar, Menu, X, Plus, Edit, Eye
 } from 'lucide-react';
 import { 
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area,
@@ -14,6 +14,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import api from '../utils/api';
 import { removeToken, getUser } from '../utils/auth';
+import AuctionModal from '../components/AuctionModal';
+import UserProfileDrawer from '../components/UserProfileDrawer';
 import {
   mockRevenueData, mockHourlyData, mockPointsData, mockAuctionData,
   mockActivityFeed, mockTopSpenders, mockDemographics, mockVIPAlerts,
