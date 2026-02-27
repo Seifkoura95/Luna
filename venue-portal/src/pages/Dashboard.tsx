@@ -1140,6 +1140,29 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </AnimatePresence>
         </div>
       </main>
+      
+      {/* Auction Modal */}
+      <AuctionModal
+        isOpen={auctionModalOpen}
+        onClose={() => {
+          setAuctionModalOpen(false);
+          setSelectedAuction(null);
+        }}
+        auction={selectedAuction}
+        onSuccess={() => {
+          fetchAuctions();
+        }}
+      />
+      
+      {/* User Profile Drawer */}
+      <UserProfileDrawer
+        isOpen={userDrawerOpen}
+        onClose={() => {
+          setUserDrawerOpen(false);
+          setSelectedUserId(null);
+        }}
+        userId={selectedUserId}
+      />
     </div>
   );
 }
