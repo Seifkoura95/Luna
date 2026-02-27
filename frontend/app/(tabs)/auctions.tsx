@@ -168,9 +168,25 @@ export default function AuctionsScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       
-      Alert.alert('Bid Placed!', notifyOutbid 
-        ? 'You are now the highest bidder! We\'ll notify you if someone outbids you.' 
-        : 'You are now the highest bidder!');
+      // Build success message based on result
+      let title = 'Bid Placed!';
+      let message = '';
+      
+      if (result.you_are_winning) {
+        if (result.auto_bid_active && result.your_max_bid) {
+          message = `You're winning at $${result.final_amount}! Auto-bid active up to $${result.your_max_bid}.`;
+        } else {
+          message = `You're the highest bidder at $${result.final_amount}!`;
+        }
+        if (notifyOutbid) {
+          message += " We'll notify you if outbid.";
+        }
+      } else {
+        title = 'Outbid by Auto-Bidder';
+        message = `Another bidder's auto-bid exceeded yours. Current bid: $${result.final_amount}. Increase your bid to win!`;
+      }
+      
+      Alert.alert(title, message);
       
       // Refresh auction data
       await fetchAuctionDetail(selectedAuction.id);
