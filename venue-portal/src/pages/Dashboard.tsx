@@ -65,6 +65,154 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [scannerActive, setScannerActive] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  
+  // API Data State
+  const [revenueData, setRevenueData] = useState<any>(null);
+  const [checkinsData, setCheckinsData] = useState<any>(null);
+  const [demographicsData, setDemographicsData] = useState<any>(null);
+  const [auctionsData, setAuctionsData] = useState<any>(null);
+  const [pointsData, setPointsData] = useState<any>(null);
+  const [activityData, setActivityData] = useState<any>(null);
+  const [topSpendersData, setTopSpendersData] = useState<any>(null);
+  const [vipAlertsData, setVipAlertsData] = useState<any>(null);
+  const [dataLoading, setDataLoading] = useState(true);
+  
+  // Fetch analytics data on mount and when period changes
+  useEffect(() => {
+    const fetchAllData = async () => {
+      setDataLoading(true);
+      try {
+        const [revenue, checkins, demographics, auctions, points, activity, topSpenders, vipAlerts] = await Promise.all([
+          api.get(`/venue/analytics/revenue?period=${period}`).catch(() => ({ data: null })),
+          api.get(`/venue/analytics/checkins?period=${period}`).catch(() => ({ data: null })),
+          api.get('/venue/analytics/demographics').catch(() => ({ data: null })),
+          api.get(`/venue/analytics/auctions?period=${period}`).catch(() => ({ data: null })),
+          api.get(`/venue/analytics/points?period=${period}`).catch(() => ({ data: null })),
+          api.get('/venue/analytics/activity?limit=50').catch(() => ({ data: null })),
+          api.get(`/venue/analytics/top-spenders?period=${period}`).catch(() => ({ data: null })),
+          api.get('/venue/analytics/vip-alerts').catch(() => ({ data: null })),
+        ]);
+        
+        setRevenueData(revenue.data);
+        setCheckinsData(checkins.data);
+        setDemographicsData(demographics.data);
+        setAuctionsData(auctions.data);
+        setPointsData(points.data);
+        setActivityData(activity.data);
+        setTopSpendersData(topSpenders.data);
+        setVipAlertsData(vipAlerts.data);
+      } catch (error) {
+        console.error('Error fetching analytics data:', error);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+    
+    fetchAllData();
+  }, [period]);
+  
+  // Helper functions to get data with fallback to mock
+  const getRevenueStats = () => {
+    if (revenueData) {
+      return {
+        revenue: revenueData.combined_revenue || revenueData.total_revenue || 0,
+        avgSpend: revenueData.average_spend_per_customer || 0,
+        transactions: revenueData.total_transactions || 0
+      };
+    }
+    return {
+      revenue: mockWeeklyComparison.thisWeek.revenue,
+      avgSpend: mockWeeklyComparison.thisWeek.avgSpend,
+      transactions: 2847
+    };
+  };
+  
+  const getCheckinsStats = () => {
+    if (checkinsData) {
+      return {
+        total: checkinsData.total_checkins || 0,
+        unique: checkinsData.unique_visitors || 0,
+        hourlyData: checkinsData.peak_hours ? checkinsData.peak_hours.map((h: any) => ({
+          hour: `${h[0]}:00`,
+          checkins: h[1]
+        })) : mockHourlyData
+      };
+    }
+    return {
+      total: mockWeeklyComparison.thisWeek.checkins,
+      unique: 890,
+      hourlyData: mockHourlyData
+    };
+  };
+  
+  const getTopSpenders = () => {
+    if (topSpendersData?.top_spenders?.length) {
+      return topSpendersData.top_spenders;
+    }
+    return mockTopSpenders;
+  };
+  
+  const getActivityFeed = () => {
+    if (activityData?.activities?.length) {
+      return activityData.activities.map((a: any, idx: number) => ({
+        id: idx,
+        ...a
+      }));
+    }
+    return mockActivityFeed;
+  };
+  
+  const getVIPAlerts = () => {
+    if (vipAlertsData?.alerts?.length) {
+      return vipAlertsData.alerts;
+    }
+    return mockVIPAlerts;
+  };
+  
+  const getAuctions = () => {
+    if (auctionsData?.live_auctions?.length) {
+      return auctionsData.live_auctions;
+    }
+    return mockAuctionData;
+  };
+  
+  const getPointsStats = () => {
+    if (pointsData) {
+      return {
+        issued: pointsData.points_issued || 0,
+        redeemed: pointsData.points_redeemed || 0,
+        expired: pointsData.points_expired || 0,
+        redemptionRate: pointsData.redemption_rate || 0,
+        topEarners: pointsData.top_earners || []
+      };
+    }
+    return {
+      issued: mockPointsData[0].value,
+      redeemed: mockPointsData[1].value,
+      expired: mockPointsData[2].value,
+      redemptionRate: 71,
+      topEarners: mockTopSpenders.map(s => ({ ...s, points: s.spent * 10 }))
+    };
+  };
+  
+  const getDemographics = () => {
+    if (demographicsData) {
+      const tiers = demographicsData.membership_tiers || {};
+      return {
+        ageGroups: Object.entries(demographicsData.age_distribution || {}).map(([range, count]) => ({
+          range,
+          percentage: Math.round((count as number) / Math.max(demographicsData.total_customers || 1, 1) * 100)
+        })),
+        membershipTiers: [
+          { tier: 'Lunar', count: tiers.lunar || 0, color: '#CD7F32' },
+          { tier: 'Stellar', count: tiers.stellar || 0, color: '#C0C0C0' },
+          { tier: 'Celestial', count: tiers.celestial || 0, color: '#FFD700' },
+          { tier: 'Nova', count: tiers.nova || 0, color: '#E5E4E2' },
+        ]
+      };
+    }
+    return mockDemographics;
+  };
 
   const handleLogout = () => {
     removeToken();
