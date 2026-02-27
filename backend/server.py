@@ -1882,29 +1882,135 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
     
     user = await db.users.find_one({"user_id": current_user["user_id"]})
     previous_winner_id = auction.get("winner_id")
+    min_increment = auction.get("min_increment", 5)
     
-    # Update auction
+    # Process the initial bid
+    final_bid_amount = bid_request.amount
+    final_winner_id = user["user_id"]
+    final_winner_name = user["name"]
+    
+    # Check for auto-bid war - if previous bidder has auto-bid enabled
+    if previous_winner_id and previous_winner_id != user["user_id"]:
+        # Find previous bidder's auto-bid setting
+        prev_auto_bid = await db.bids.find_one(
+            {"auction_id": bid_request.auction_id, "user_id": previous_winner_id, "max_bid": {"$exists": True, "$ne": None}},
+            sort=[("timestamp", -1)]
+        )
+        
+        if prev_auto_bid and prev_auto_bid.get("max_bid"):
+            prev_max = prev_auto_bid["max_bid"]
+            
+            # Check if new bidder also has auto-bid
+            new_bidder_max = bid_request.max_bid if bid_request.max_bid else bid_request.amount
+            
+            # Auto-bid war: increment until one runs out
+            current_amount = bid_request.amount
+            current_leader = user["user_id"]
+            current_leader_name = user["name"]
+            
+            while True:
+                # Previous bidder tries to counter
+                counter_bid = current_amount + min_increment
+                
+                if counter_bid <= prev_max:
+                    # Previous bidder can counter
+                    prev_user = await db.users.find_one({"user_id": previous_winner_id})
+                    
+                    # Record the auto-bid
+                    await db.bids.insert_one({
+                        "id": str(uuid.uuid4()),
+                        "auction_id": bid_request.auction_id,
+                        "user_id": previous_winner_id,
+                        "user_name": prev_user["name"] if prev_user else "Auto-bidder",
+                        "amount": counter_bid,
+                        "max_bid": prev_max,
+                        "is_auto_bid": True,
+                        "timestamp": datetime.now(timezone.utc)
+                    })
+                    
+                    current_amount = counter_bid
+                    current_leader = previous_winner_id
+                    current_leader_name = prev_user["name"] if prev_user else "Auto-bidder"
+                    
+                    # Now check if new bidder can counter back
+                    if new_bidder_max:
+                        next_counter = current_amount + min_increment
+                        if next_counter <= new_bidder_max:
+                            # New bidder counters
+                            await db.bids.insert_one({
+                                "id": str(uuid.uuid4()),
+                                "auction_id": bid_request.auction_id,
+                                "user_id": user["user_id"],
+                                "user_name": user["name"],
+                                "amount": next_counter,
+                                "max_bid": new_bidder_max,
+                                "is_auto_bid": True,
+                                "timestamp": datetime.now(timezone.utc)
+                            })
+                            current_amount = next_counter
+                            current_leader = user["user_id"]
+                            current_leader_name = user["name"]
+                        else:
+                            # New bidder can't counter - previous bidder wins auto-bid war
+                            break
+                    else:
+                        # New bidder has no auto-bid - previous bidder wins
+                        break
+                else:
+                    # Previous bidder can't counter - notify them their max was exceeded
+                    await db.auction_notifications.insert_one({
+                        "id": str(uuid.uuid4()),
+                        "user_id": previous_winner_id,
+                        "auction_id": bid_request.auction_id,
+                        "auction_title": auction["title"],
+                        "type": "auto_bid_exhausted",
+                        "message": f"Your auto-bid limit of ${prev_max} was exceeded on {auction['title']}. Current bid: ${current_amount}",
+                        "read": False,
+                        "created_at": datetime.now(timezone.utc)
+                    })
+                    
+                    # Send push notification about auto-bid exhaustion
+                    prev_user = await db.users.find_one({"user_id": previous_winner_id})
+                    if prev_user and prev_user.get("push_tokens"):
+                        for token in prev_user.get("push_tokens", []):
+                            try:
+                                await send_push_notification_to_token(
+                                    token,
+                                    title="⚠️ Auto-Bid Limit Reached",
+                                    body=f"Your ${prev_max} limit on {auction['title']} was exceeded. Bid ${current_amount + min_increment}+ to stay ahead!",
+                                    data={"type": "auto_bid_exhausted", "auction_id": bid_request.auction_id}
+                                )
+                            except Exception as e:
+                                logging.error(f"Failed to send auto-bid exhausted notification: {e}")
+                    break
+            
+            final_bid_amount = current_amount
+            final_winner_id = current_leader
+            final_winner_name = current_leader_name
+    
+    # Update auction with final winner
     await db.auctions.update_one(
         {"id": bid_request.auction_id},
         {"$set": {
-            "current_bid": bid_request.amount, 
-            "winner_id": user["user_id"], 
-            "winner_name": user["name"],
+            "current_bid": final_bid_amount, 
+            "winner_id": final_winner_id, 
+            "winner_name": final_winner_name,
             "last_bid_time": datetime.now(timezone.utc)
         }}
     )
     
-    # Record bid with notification preference
-    await db.bids.insert_one({
-        "id": str(uuid.uuid4()),
-        "auction_id": bid_request.auction_id,
-        "user_id": user["user_id"],
-        "user_name": user["name"],
-        "amount": bid_request.amount,
-        "max_bid": bid_request.max_bid,
-        "notify_outbid": bid_request.notify_outbid,
-        "timestamp": datetime.now(timezone.utc)
-    })
+    # Record the original bid (if not already recorded in auto-bid war)
+    if final_winner_id == user["user_id"] and final_bid_amount == bid_request.amount:
+        await db.bids.insert_one({
+            "id": str(uuid.uuid4()),
+            "auction_id": bid_request.auction_id,
+            "user_id": user["user_id"],
+            "user_name": user["name"],
+            "amount": bid_request.amount,
+            "max_bid": bid_request.max_bid,
+            "notify_outbid": bid_request.notify_outbid,
+            "timestamp": datetime.now(timezone.utc)
+        })
     
     # Store user's notification preference for this auction
     if bid_request.notify_outbid:
@@ -1914,13 +2020,14 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
                 "user_id": user["user_id"],
                 "auction_id": bid_request.auction_id,
                 "notify_outbid": True,
+                "max_bid": bid_request.max_bid,
                 "updated_at": datetime.now(timezone.utc)
             }},
             upsert=True
         )
     
-    # Notify previous winner they've been outbid
-    if previous_winner_id and previous_winner_id != user["user_id"]:
+    # Notify previous winner they've been outbid (if they lost)
+    if previous_winner_id and previous_winner_id != final_winner_id:
         # Check if previous winner wants notifications
         prev_user_pref = await db.auction_notification_preferences.find_one({
             "user_id": previous_winner_id,
@@ -1938,8 +2045,8 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
                 "auction_id": bid_request.auction_id,
                 "auction_title": auction["title"],
                 "type": "outbid",
-                "message": f"You've been outbid on {auction['title']}! Current bid: ${bid_request.amount}",
-                "new_bid": bid_request.amount,
+                "message": f"You've been outbid on {auction['title']}! Current bid: ${final_bid_amount}",
+                "new_bid": final_bid_amount,
                 "read": False,
                 "created_at": datetime.now(timezone.utc)
             })
@@ -1953,11 +2060,11 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
                         await send_push_notification_to_token(
                             token,
                             title="🔔 You've Been Outbid!",
-                            body=f"Someone bid ${bid_request.amount} on {auction['title']}. Bid now to stay ahead!",
+                            body=f"Someone bid ${final_bid_amount} on {auction['title']}. Bid now to stay ahead!",
                             data={
                                 "type": "outbid",
                                 "auction_id": bid_request.auction_id,
-                                "new_bid": bid_request.amount
+                                "new_bid": final_bid_amount
                             }
                         )
                         logging.info(f"Sent outbid push notification to {previous_winner_id}")
@@ -1965,7 +2072,18 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
                         logging.error(f"Failed to send push notification: {e}")
     
     updated_auction = await db.auctions.find_one({"id": bid_request.auction_id})
-    return {"message": "Bid placed successfully!", "auction": clean_mongo_doc(updated_auction)}
+    
+    # Return with auto-bid info
+    response = {
+        "message": "Bid placed successfully!", 
+        "auction": clean_mongo_doc(updated_auction),
+        "auto_bid_active": bid_request.max_bid is not None,
+        "your_max_bid": bid_request.max_bid,
+        "final_amount": final_bid_amount,
+        "you_are_winning": final_winner_id == user["user_id"]
+    }
+    
+    return response
 
 @api_router.get("/auctions/{auction_id}/bids")
 async def get_auction_bids(auction_id: str):
