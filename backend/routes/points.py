@@ -24,7 +24,7 @@ async def award_points(user_id: str, amount_spent: float, source: str, source_id
     
     tier_id = subscription.get("tier_id", "lunar") if subscription else "lunar"
     tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS["lunar"])
-    multiplier = tier["benefits"]["points_multiplier"]
+    multiplier = tier.get("points_multiplier", 1.0)
     
     base_points = int(amount_spent * POINTS_PER_DOLLAR)
     bonus_points = int(base_points * (multiplier - 1))
