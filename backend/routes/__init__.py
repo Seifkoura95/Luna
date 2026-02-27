@@ -16,6 +16,9 @@ from routes.auctions import router as auctions_router
 from routes.boosts import router as boosts_router
 from routes.photos import router as photos_router
 from routes.venue_dashboard import router as venue_dashboard_router
+from routes.bookings import router as bookings_router
+from routes.subscriptions import router as subscriptions_router
+from routes.points import router as points_router
 
 # Export all routers for easy importing
 __all__ = [
@@ -30,6 +33,9 @@ __all__ = [
     "boosts_router",
     "photos_router",
     "venue_dashboard_router",
+    "bookings_router",
+    "subscriptions_router",
+    "points_router",
 ]
 
 # List of all routers for bulk registration
@@ -45,4 +51,7 @@ ALL_ROUTERS = [
     boosts_router,
     photos_router,
     venue_dashboard_router,
+    bookings_router,
+    subscriptions_router,
+    points_router,
 ]
