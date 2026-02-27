@@ -27,6 +27,7 @@ import { GoldStarIcon } from '../../src/components/GoldStarIcon';
 import { MembershipCard } from '../../src/components/MembershipCard';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
+import QRCode from 'react-native-qrcode-svg';
 
 const { width } = Dimensions.get('window');
 
