@@ -16,7 +16,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://luna-venue-admin.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://owner-manual-docs.preview.emergentagent.com').rstrip('/')
 
 # Luna Group venue names (must match eventfinda_service.py LUNA_VENUES keys)
 LUNA_VENUE_IDS = [

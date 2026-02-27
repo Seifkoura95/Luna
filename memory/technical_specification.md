@@ -1943,7 +1943,7 @@ The API uses Expo's push notification service for real-time alerts.
 
 ### Base API URL
 ```
-Production: https://your-app.preview.emergentagent.com/api
+Production: https://owner-manual-docs.preview.emergentagent.com/api
 ```
 
 ### Required Environment Variables
