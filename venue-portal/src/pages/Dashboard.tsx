@@ -469,7 +469,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           </div>
           <div className="space-y-2 max-h-[300px] overflow-y-auto">
-            {mockActivityFeed.map(item => <ActivityItem key={item.id} item={item} />)}
+            {activityFeed.map((item: any) => <ActivityItem key={item.id} item={item} />)}
           </div>
         </div>
 
@@ -480,7 +480,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <Crown className="w-4 h-4 text-secondary" />
           </div>
           <div className="space-y-3">
-            {mockTopSpenders.slice(0, 5).map((spender, idx) => (
+            {topSpenders.slice(0, 5).map((spender: any, idx: number) => (
               <div key={idx} className="flex items-center gap-3">
                 <span className="text-xs font-mono text-muted-foreground w-4">{idx + 1}</span>
                 <img src={spender.avatar} alt={spender.name} className="w-8 h-8 rounded-full object-cover" />
@@ -495,7 +495,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
       </div>
     </div>
-  );
+  );};
 
   const renderScanner = () => (
     <div className="max-w-2xl mx-auto">
