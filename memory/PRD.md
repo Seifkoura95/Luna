@@ -265,6 +265,17 @@ Events are matched by checking if the venue_name, location, or address contains:
 3. Set INSTAGRAM_APP_SECRET environment variable
 
 ## Recent Completions (Feb 2025)
+- **Venue Portal Connected to Real APIs (Feb 27, 2025)**:
+  - Connected venue portal dashboard to real backend analytics endpoints
+  - Added fallback to mock data when real data is unavailable
+  - Backend endpoints: /venue/analytics/revenue, /checkins, /demographics, /auctions, /points, /activity, /top-spenders, /vip-alerts
+  - Dashboard now fetches live data on mount and when period changes
+
+- **Logo Spacing Fix (Feb 27, 2025)**:
+  - Increased top padding for logo on all pages from 16px to 32px
+  - Updated PageHeader component and index.tsx home page
+  - Logo now has better breathing room in the header area
+
 - **Venue Portal Dashboard Complete (Feb 26, 2025)**:
   - Built premium, high-budget venue analytics dashboard at `/api/venue-portal`
   - Features: QR Code Scanner, User Analytics, Revenue Analytics, Auction Analytics, Points Analytics
