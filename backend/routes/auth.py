@@ -87,11 +87,28 @@ async def register(request: RegisterRequest):
     verification_token = generate_verification_token()
     verification_expiry = datetime.now(timezone.utc) + timedelta(hours=EMAIL_VERIFICATION_EXPIRY_HOURS)
     
+    # Calculate age if DOB provided
+    age = None
+    if request.date_of_birth:
+        try:
+            dob = datetime.strptime(request.date_of_birth, "%Y-%m-%d")
+            today = datetime.now()
+            age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        except:
+            pass
+    
     user = {
         "user_id": user_id,
         "email": request.email,
         "hashed_password": hashed.decode(),
         "name": request.name,
+        "phone": request.phone,
+        "date_of_birth": request.date_of_birth,
+        "age": age,
+        "gender": request.gender,
+        "address": request.address,
+        "city": request.city or "brisbane",
+        "preferred_venues": request.preferred_venues or [],
         "tier": "bronze",
         "points_balance": 500,
         "home_region": "brisbane",
@@ -101,6 +118,10 @@ async def register(request: RegisterRequest):
         "email_verification_token": verification_token,
         "email_verification_expiry": verification_expiry,
         "push_token": None,
+        "total_visits": 0,
+        "total_spend": 0,
+        "last_visit": None,
+        "visit_history": [],
         "created_at": datetime.now(timezone.utc)
     }
     await db.users.insert_one(user)
