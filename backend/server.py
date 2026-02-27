@@ -1172,11 +1172,16 @@ async def get_venue_auction_analytics(request: Request, period: str = "month"):
     for auction in live_auctions[:10]:
         end_time = auction.get("end_time")
         time_left = "Ended"
+        delta_seconds = 0
         if end_time:
+            # Ensure end_time is timezone-aware
+            if end_time.tzinfo is None:
+                end_time = end_time.replace(tzinfo=timezone.utc)
             delta = end_time - today
-            if delta.total_seconds() > 0:
-                hours = int(delta.total_seconds() // 3600)
-                minutes = int((delta.total_seconds() % 3600) // 60)
+            delta_seconds = delta.total_seconds()
+            if delta_seconds > 0:
+                hours = int(delta_seconds // 3600)
+                minutes = int((delta_seconds % 3600) // 60)
                 time_left = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
         
         live_auctions_formatted.append({
@@ -1185,7 +1190,7 @@ async def get_venue_auction_analytics(request: Request, period: str = "month"):
             "currentBid": auction.get("current_bid", auction.get("starting_bid", 0)),
             "bids": len(auction.get("bids", [])),
             "timeLeft": time_left,
-            "status": "live" if delta.total_seconds() > 3600 else "ending"
+            "status": "live" if delta_seconds > 3600 else "ending"
         })
     
     return {
