@@ -19,6 +19,9 @@ from routes.venue_dashboard import router as venue_dashboard_router
 from routes.bookings import router as bookings_router
 from routes.subscriptions import router as subscriptions_router
 from routes.points import router as points_router
+from routes.tickets import router as tickets_router
+from routes.friends import router as friends_router
+from routes.notifications import router as notifications_router
 
 # Export all routers for easy importing
 __all__ = [
@@ -36,6 +39,9 @@ __all__ = [
     "bookings_router",
     "subscriptions_router",
     "points_router",
+    "tickets_router",
+    "friends_router",
+    "notifications_router",
 ]
 
 # List of all routers for bulk registration
@@ -54,4 +60,7 @@ ALL_ROUTERS = [
     bookings_router,
     subscriptions_router,
     points_router,
+    tickets_router,
+    friends_router,
+    notifications_router,
 ]
