@@ -79,7 +79,7 @@ async def get_points_balance(request: Request):
         "points_balance": user.get("points_balance", 0),
         "tier_id": tier_id,
         "tier_name": tier["name"],
-        "multiplier": tier["benefits"]["points_multiplier"],
+        "multiplier": tier.get("points_multiplier", 1.0),
         "next_tier_points": tier.get("next_tier_points", None)
     }
 
