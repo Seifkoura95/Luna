@@ -7680,7 +7680,15 @@ async def serve_venue_portal_root():
     """Serve the venue portal SPA root"""
     index_file = ROOT_DIR / "static" / "venue-portal" / "index.html"
     if index_file.exists():
-        return FileResponse(index_file, media_type="text/html")
+        return FileResponse(
+            index_file, 
+            media_type="text/html",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     raise HTTPException(status_code=404, detail="Venue portal not found")
 
 @api_router.get("/venue-portal/{path:path}")
@@ -7693,9 +7701,9 @@ async def serve_venue_portal(path: str):
         if asset_path.exists():
             # Determine content type
             if path.endswith('.js'):
-                return FileResponse(asset_path, media_type="application/javascript")
+                return FileResponse(asset_path, media_type="application/javascript", headers={"Cache-Control": "public, max-age=31536000"})
             elif path.endswith('.css'):
-                return FileResponse(asset_path, media_type="text/css")
+                return FileResponse(asset_path, media_type="text/css", headers={"Cache-Control": "public, max-age=31536000"})
             elif path.endswith('.json'):
                 return FileResponse(asset_path, media_type="application/json")
             elif path.endswith('.svg'):
@@ -7712,7 +7720,15 @@ async def serve_venue_portal(path: str):
     # For all other paths, serve the index.html (SPA routing)
     index_file = ROOT_DIR / "static" / "venue-portal" / "index.html"
     if index_file.exists():
-        return FileResponse(index_file, media_type="text/html")
+        return FileResponse(
+            index_file, 
+            media_type="text/html",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     raise HTTPException(status_code=404, detail="Venue portal not found")
 
 # CORS
