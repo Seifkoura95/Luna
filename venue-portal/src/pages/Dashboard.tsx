@@ -350,10 +350,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     );
   };
 
-  const renderOverview = () => (
+  const renderOverview = () => {
+    const revenueStats = getRevenueStats();
+    const checkinsStats = getCheckinsStats();
+    const vipAlerts = getVIPAlerts();
+    const auctions = getAuctions();
+    const activityFeed = getActivityFeed();
+    const topSpenders = getTopSpenders();
+    
+    return (
     <div className="space-y-6">
       {/* VIP Alerts Banner */}
-      {mockVIPAlerts.length > 0 && (
+      {vipAlerts.length > 0 && (
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -364,7 +372,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <span className="text-sm font-semibold text-secondary uppercase tracking-wider">VIP Alerts</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {mockVIPAlerts.map(alert => <VIPAlert key={alert.id} alert={alert} />)}
+            {vipAlerts.map((alert: any) => <VIPAlert key={alert.id} alert={alert} />)}
           </div>
         </motion.div>
       )}
@@ -373,32 +381,32 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           title="Revenue" 
-          value={`$${mockWeeklyComparison.thisWeek.revenue.toLocaleString()}`}
-          subtext="This week"
+          value={`$${revenueStats.revenue.toLocaleString()}`}
+          subtext={`This ${period}`}
           icon={DollarSign}
           trend="up"
-          trendValue={mockWeeklyComparison.change.revenue}
+          trendValue={11.5}
         />
         <StatCard 
           title="Check-ins" 
-          value={mockWeeklyComparison.thisWeek.checkins.toLocaleString()}
-          subtext="This week"
+          value={checkinsStats.total.toLocaleString()}
+          subtext={`This ${period}`}
           icon={UserCheck}
           trend="up"
-          trendValue={mockWeeklyComparison.change.checkins}
+          trendValue={7.3}
         />
         <StatCard 
           title="Avg Spend" 
-          value={`$${mockWeeklyComparison.thisWeek.avgSpend.toFixed(2)}`}
+          value={`$${revenueStats.avgSpend.toFixed(2)}`}
           subtext="Per customer"
           icon={TrendingUp}
           trend="up"
-          trendValue={mockWeeklyComparison.change.avgSpend}
+          trendValue={3.9}
         />
         <StatCard 
           title="Active Auctions" 
-          value={mockAuctionData.filter(a => a.status === 'live').length}
-          subtext={`${mockAuctionData.reduce((acc, a) => acc + a.bids, 0)} total bids`}
+          value={auctions.filter((a: any) => a.status === 'live' || a.status === 'ending').length}
+          subtext={`${auctionsData?.total_bids || auctions.reduce((acc: number, a: any) => acc + (a.bids || 0), 0)} total bids`}
           icon={Gavel}
         />
       </div>
@@ -436,7 +444,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <Clock className="w-4 h-4 text-muted-foreground" />
           </div>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={mockHourlyData}>
+            <BarChart data={checkinsStats.hourlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
               <XAxis dataKey="hour" stroke="#525252" fontSize={11} tickLine={false} axisLine={false} />
               <YAxis stroke="#525252" fontSize={11} tickLine={false} axisLine={false} />
