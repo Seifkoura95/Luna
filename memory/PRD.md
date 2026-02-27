@@ -324,8 +324,49 @@ Events are matched by checking if the venue_name, location, or address contains:
   - Images now served from `/app/backend/static/photos/` via `/api/photos/image/{folder}/{filename}`
   - Fixed missing `ROOT_DIR` in server.py that was causing 500 errors on photo endpoints
 
+## server.py Refactoring ✅ IN PROGRESS (Feb 27, 2025)
+
+### Completed:
+- Created modular route architecture in `/app/backend/routes/`
+- Extracted 17 route modules (3,400+ lines) from monolithic server.py
+- All routes tested and working with 100% pass rate (23/23 tests)
+- Testing agent fixed 2 bugs (points_multiplier key access)
+
+### Route Modules Created:
+1. `health.py` - Health check endpoint
+2. `auth.py` - Authentication (login, register, me)
+3. `venues.py` - Venue listing and details
+4. `events.py` - Eventfinda integration
+5. `auctions.py` - Auction system with auto-bid
+6. `rewards.py` - Rewards and redemptions
+7. `missions.py` - Missions with progress tracking
+8. `referrals.py` - Referral code system
+9. `boosts.py` - Point multiplier boosts
+10. `photos.py` - Photo galleries
+11. `venue_dashboard.py` - Venue staff analytics
+12. `bookings.py` - Table reservations
+13. `subscriptions.py` - Membership tiers
+14. `points.py` - Points balance and history
+15. `tickets.py` - Ticket wallet
+16. `friends.py` - Friends and social
+17. `notifications.py` - Notification management
+18. `shared.py` - Shared utilities (push notifications)
+
+### Remaining to Extract:
+- Crews API
+- Safety/Emergency API
+- Payments (Stripe)
+- CherryHub integration
+- Admin/Seed endpoints
+- VIP Table Booking
+- Lost & Found
+- Promo Codes
+- Instagram integration
+- Venue Portal static files
+
 ## Future Tasks
-- Complete server.py refactoring (move API routes to /routes directory)
+- Continue server.py refactoring (remaining routes)
+- Remove duplicate code from server.py once all routes migrated
 - Remove CherryHub mock mode (when DNS available)
 - Stripe payment integration for VIP bookings/auctions
 - Connect Instagram with production API credentials
