@@ -588,7 +588,16 @@ export default function WalletScreen() {
                   {/* QR Code */}
                   <View style={styles.modalQRSection}>
                     <View style={styles.modalQRCode}>
-                      <Ionicons name="qr-code" size={120} color={colors.textPrimary} />
+                      {Platform.OS === 'web' ? (
+                        <Ionicons name="qr-code" size={120} color={colors.textPrimary} />
+                      ) : (
+                        <QRCode
+                          value={selectedTicket.qr_code || 'LUNA-TICKET'}
+                          size={140}
+                          backgroundColor="white"
+                          color="black"
+                        />
+                      )}
                     </View>
                     <Text style={styles.modalQRId}>{selectedTicket.qr_code}</Text>
                     <Text style={styles.modalQRHelp}>Show this QR code at the entrance</Text>
