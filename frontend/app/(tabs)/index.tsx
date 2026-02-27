@@ -194,7 +194,7 @@ export default function HomeScreen() {
       <ScrollView
         ref={scrollRef}
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 32 }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
