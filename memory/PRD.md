@@ -379,5 +379,7 @@ Events are matched by checking if the venue_name, location, or address contains:
 - **Venue Portal Analytics**: Currently using mock data for demonstration
 
 ## Test Reports
-- /app/test_reports/iteration_7.json - Latest backend test (Feb 25, 2025)
+- /app/test_reports/iteration_10.json - Modular routes refactoring test (Feb 27, 2025) - 100% pass rate
+- /app/test_reports/iteration_12.json - Full app deep-dive (Feb 27, 2025)
+- /app/test_reports/iteration_7.json - Backend test (Feb 25, 2025)
 
