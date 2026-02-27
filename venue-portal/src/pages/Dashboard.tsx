@@ -805,58 +805,133 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     <div className="space-y-6">
       {/* Auction Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Live Auctions" value={mockAuctionData.filter(a => a.status === 'live').length} subtext="Currently active" icon={Gavel} />
-        <StatCard title="Total Bids" value={mockAuctionData.reduce((acc, a) => acc + a.bids, 0)} subtext="This week" icon={Zap} />
-        <StatCard title="Revenue" value={`$${mockAuctionData.reduce((acc, a) => acc + a.currentBid, 0).toLocaleString()}`} subtext="Current bids" icon={DollarSign} />
-        <StatCard title="Conversion" value="68%" subtext="Winning bids" icon={TrendingUp} trend="up" trendValue={5} />
+        <StatCard title="Live Auctions" value={auctionsList.filter(a => a.status === 'active').length} subtext="Currently active" icon={Gavel} />
+        <StatCard title="Total Bids" value={auctionsList.reduce((acc, a) => acc + (a.total_bids || 0), 0)} subtext="All auctions" icon={Zap} />
+        <StatCard title="Revenue" value={`$${auctionsList.reduce((acc, a) => acc + (a.current_bid || 0), 0).toLocaleString()}`} subtext="Current bids" icon={DollarSign} />
+        <StatCard title="Draft Auctions" value={auctionsList.filter(a => a.status === 'draft').length} subtext="Ready to publish" icon={Clock} />
       </div>
 
-      {/* Live Auctions */}
-      <div className="bg-card border border-border/50 rounded-sm p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Live Auctions</h3>
-          <span className="flex items-center gap-1 text-xs text-success">
-            <span className="w-2 h-2 bg-success rounded-full animate-pulse" />
-            Live
-          </span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {mockAuctionData.map((auction) => (
-            <motion.div 
-              key={auction.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`p-4 bg-surface-highlight border rounded-sm ${
-                auction.status === 'ending' ? 'border-primary/50 shadow-glow-red' : 'border-border/50'
-              }`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <p className="font-mono text-xs text-muted-foreground">{auction.id}</p>
-                  <p className="font-semibold text-white">{auction.item}</p>
-                </div>
-                <span className={`px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-sm ${
-                  auction.status === 'ending' ? 'bg-primary/20 text-primary animate-pulse' : 'bg-success/20 text-success'
+      {/* Create New Auction Button */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-white">Auction Management</h3>
+        <button
+          onClick={() => {
+            setSelectedAuction(null);
+            setAuctionModalOpen(true);
+          }}
+          className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-xl font-medium"
+          data-testid="create-auction-btn"
+        >
+          <Plus className="w-4 h-4" />
+          Create Auction
+        </button>
+      </div>
+
+      {/* Auctions Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {auctionsList.map((auction) => (
+          <motion.div 
+            key={auction.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`glass-card rounded-xl overflow-hidden ${
+              auction.status === 'active' ? 'border-green-500/30' : 
+              auction.status === 'draft' ? 'border-yellow-500/30' : 'border-white/10'
+            }`}
+          >
+            {/* Auction Image */}
+            <div className="relative h-40 bg-gradient-to-br from-surface to-black">
+              {auction.image_url && (
+                <img src={auction.image_url} alt={auction.title} className="w-full h-full object-cover opacity-80" />
+              )}
+              <div className="absolute top-3 right-3">
+                <span className={`px-2 py-1 text-[10px] uppercase tracking-wider font-bold rounded ${
+                  auction.status === 'active' ? 'badge-live' : 
+                  auction.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400' :
+                  auction.status === 'ended' ? 'bg-gray-500/20 text-gray-400' :
+                  'bg-gray-500/20 text-gray-400'
                 }`}>
-                  {auction.status === 'ending' ? 'ENDING SOON' : 'LIVE'}
+                  {auction.status === 'active' ? 'LIVE' : auction.status?.toUpperCase()}
                 </span>
               </div>
-              <div className="flex items-end justify-between">
+              {auction.status === 'active' && auction.end_time && (
+                <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 bg-black/60 rounded text-xs text-white">
+                  <Clock className="w-3 h-3" />
+                  {(() => {
+                    const end = new Date(auction.end_time);
+                    const now = new Date();
+                    const diff = end.getTime() - now.getTime();
+                    if (diff <= 0) return 'Ended';
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    return hours > 0 ? `${hours}h ${mins}m left` : `${mins}m left`;
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {/* Auction Details */}
+            <div className="p-4">
+              <p className="font-mono text-xs text-gray-500 mb-1">#{auction.id}</p>
+              <h4 className="font-semibold text-white mb-2">{auction.title}</h4>
+              <p className="text-xs text-gray-400 mb-3 capitalize">{auction.venue_name}</p>
+              
+              <div className="flex items-end justify-between mb-4">
                 <div>
-                  <p className="text-xs text-muted-foreground">Current Bid</p>
-                  <p className="text-2xl font-heading font-black text-secondary">${auction.currentBid}</p>
+                  <p className="text-xs text-gray-500">Current Bid</p>
+                  <p className="text-2xl font-bold text-[#FFD700]">${(auction.current_bid || auction.starting_bid || 0).toLocaleString()}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">{auction.bids} bids</p>
-                  <p className="text-sm text-white flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {auction.timeLeft}
-                  </p>
+                  <p className="text-xs text-gray-500">{auction.total_bids || 0} bids</p>
+                  <p className="text-xs text-gray-400">Min: ${auction.min_increment}</p>
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setSelectedAuction(auction);
+                    setAuctionModalOpen(true);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Edit className="w-3 h-3" />
+                  Edit
+                </button>
+                {auction.status === 'draft' && (
+                  <button
+                    onClick={async () => {
+                      await api.post(`/venue-admin/auctions/${auction.id}/publish`);
+                      fetchAuctions();
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <Eye className="w-3 h-3" />
+                    Publish
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+        
+        {/* Empty State */}
+        {auctionsList.length === 0 && (
+          <div className="col-span-full py-12 text-center">
+            <Gavel className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400 mb-4">No auctions yet</p>
+            <button
+              onClick={() => {
+                setSelectedAuction(null);
+                setAuctionModalOpen(true);
+              }}
+              className="px-4 py-2 btn-primary text-white rounded-xl font-medium"
+            >
+              Create Your First Auction
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
