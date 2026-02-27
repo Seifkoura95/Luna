@@ -124,6 +124,38 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     fetchAllData();
   }, [period]);
   
+  // Fetch auctions for management
+  const fetchAuctions = async () => {
+    try {
+      const res = await api.get('/venue-admin/auctions');
+      setAuctionsList(res.data || []);
+    } catch (error) {
+      console.error('Error fetching auctions:', error);
+    }
+  };
+  
+  // Fetch users for management
+  const fetchUsers = async () => {
+    try {
+      const params = new URLSearchParams();
+      params.append('limit', '50');
+      if (usersSearch) params.append('search', usersSearch);
+      const res = await api.get(`/venue-admin/users?${params.toString()}`);
+      setUsersListData(res.data || { users: [], total: 0 });
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+  
+  // Fetch auctions and users when switching to those tabs
+  useEffect(() => {
+    if (activeTab === 'auctions') {
+      fetchAuctions();
+    } else if (activeTab === 'users') {
+      fetchUsers();
+    }
+  }, [activeTab, usersSearch]);
+  
   // Helper functions to get data with fallback to mock
   const getRevenueStats = () => {
     if (revenueData) {
