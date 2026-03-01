@@ -1,26 +1,20 @@
 """
 Geofence Routes - Location-based push notifications
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
 import uuid
 import math
+import logging
 
-router = APIRouter(prefix="/api/geofences", tags=["geofences"])
+from database import db
+from utils.auth import get_current_user
+from utils.mongo import clean_mongo_doc, clean_mongo_docs
 
-# Import shared dependencies (will be injected from server.py)
-db = None
-get_current_user = None
-send_push_notification = None
-
-def init_router(database, auth_dependency, push_func):
-    """Initialize router with dependencies"""
-    global db, get_current_user, send_push_notification
-    db = database
-    get_current_user = auth_dependency
-    send_push_notification = push_func
+router = APIRouter(prefix="/geofences", tags=["geofences"])
+logger = logging.getLogger(__name__)
 
 
 # ============ Models ============
@@ -79,11 +73,11 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     return R * c
 
 
-def has_triggered_today(user_id: str, geofence_id: str) -> bool:
+async def has_triggered_today(user_id: str, geofence_id: str) -> bool:
     """Check if user has already triggered this geofence today"""
     today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     
-    trigger = db.geofence_triggers.find_one({
+    trigger = await db.geofence_triggers.find_one({
         "user_id": user_id,
         "geofence_id": geofence_id,
         "triggered_at": {"$gte": today_start}
@@ -92,39 +86,68 @@ def has_triggered_today(user_id: str, geofence_id: str) -> bool:
     return trigger is not None
 
 
+async def send_push_notification(push_token: str, title: str, body: str, data: dict = None):
+    """Send push notification via Expo"""
+    import httpx
+    
+    message = {
+        "to": push_token,
+        "sound": "default",
+        "title": title,
+        "body": body,
+        "data": data or {}
+    }
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://exp.host/--/api/v2/push/send",
+            json=message,
+            headers={"Content-Type": "application/json"}
+        )
+        return response.json()
+
+
 # ============ Public Endpoints ============
 
 @router.get("")
-async def get_active_geofences(user: dict = Depends(lambda: get_current_user)):
+async def get_active_geofences(authorization: str = Header(None)):
     """Get all active geofence zones for the mobile app"""
-    geofences = list(db.geofences.find(
+    user = get_current_user(authorization)
+    
+    geofences = await db.geofences.find(
         {"is_active": True},
         {"_id": 0}
-    ))
+    ).to_list(100)
+    
     return {"geofences": geofences}
 
 
 @router.post("/check-location")
 async def check_location(
     location: LocationUpdate,
-    user: dict = Depends(lambda: get_current_user)
+    authorization: str = Header(None)
 ):
     """
     Check if user is within any geofence zones.
     Returns zones they've entered and sends push notifications.
     """
+    user = get_current_user(authorization)
     user_id = user.get("user_id")
     
+    # Get full user record for push token and preferences
+    user_record = await db.users.find_one({"user_id": user_id})
+    if not user_record:
+        raise HTTPException(status_code=404, detail="User not found")
+    
     # Check if user has location notifications enabled
-    user_prefs = db.users.find_one({"user_id": user_id}, {"notification_preferences": 1})
-    prefs = user_prefs.get("notification_preferences", {}) if user_prefs else {}
+    prefs = user_record.get("notification_preferences", {})
     
     # Default to enabled if not set
     if prefs.get("location_alerts", True) is False:
         return {"triggered": [], "message": "Location notifications disabled"}
     
     # Get all active geofences
-    geofences = list(db.geofences.find({"is_active": True}))
+    geofences = await db.geofences.find({"is_active": True}).to_list(100)
     
     triggered_zones = []
     notifications_sent = []
@@ -143,9 +166,9 @@ async def check_location(
         # Check if within radius
         if distance <= geofence.get("radius", 200):
             # Check if already triggered today
-            if not has_triggered_today(user_id, geofence_id):
+            if not await has_triggered_today(user_id, geofence_id):
                 # Record the trigger
-                db.geofence_triggers.insert_one({
+                await db.geofence_triggers.insert_one({
                     "id": str(uuid.uuid4()),
                     "user_id": user_id,
                     "geofence_id": geofence_id,
@@ -163,8 +186,8 @@ async def check_location(
                 })
                 
                 # Send push notification
-                push_token = user.get("push_token")
-                if push_token and send_push_notification:
+                push_token = user_record.get("push_token")
+                if push_token:
                     try:
                         await send_push_notification(
                             push_token,
@@ -178,8 +201,9 @@ async def check_location(
                             }
                         )
                         notifications_sent.append(geofence_id)
+                        logger.info(f"Push notification sent for geofence {geofence_id} to user {user_id}")
                     except Exception as e:
-                        print(f"Failed to send push for geofence {geofence_id}: {e}")
+                        logger.error(f"Failed to send push for geofence {geofence_id}: {e}")
     
     return {
         "triggered": triggered_zones,
@@ -191,13 +215,15 @@ async def check_location(
 @router.get("/my-triggers")
 async def get_my_triggers(
     limit: int = 20,
-    user: dict = Depends(lambda: get_current_user)
+    authorization: str = Header(None)
 ):
     """Get user's recent geofence trigger history"""
-    triggers = list(db.geofence_triggers.find(
+    user = get_current_user(authorization)
+    
+    triggers = await db.geofence_triggers.find(
         {"user_id": user.get("user_id")},
         {"_id": 0}
-    ).sort("triggered_at", -1).limit(limit))
+    ).sort("triggered_at", -1).limit(limit).to_list(limit)
     
     return {"triggers": triggers}
 
@@ -205,22 +231,30 @@ async def get_my_triggers(
 # ============ Admin Endpoints ============
 
 @router.get("/admin/all")
-async def get_all_geofences(user: dict = Depends(lambda: get_current_user)):
+async def get_all_geofences(authorization: str = Header(None)):
     """Get all geofences (admin only)"""
-    if user.get("role") not in ["admin", "venue_manager"]:
+    user = get_current_user(authorization)
+    
+    # Get user role from database
+    user_record = await db.users.find_one({"user_id": user.get("user_id")})
+    if not user_record or user_record.get("role") not in ["admin", "venue_manager"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    geofences = list(db.geofences.find({}, {"_id": 0}))
+    geofences = await db.geofences.find({}, {"_id": 0}).to_list(100)
     return {"geofences": geofences, "total": len(geofences)}
 
 
 @router.post("/admin/create")
 async def create_geofence(
     geofence: GeofenceCreate,
-    user: dict = Depends(lambda: get_current_user)
+    authorization: str = Header(None)
 ):
     """Create a new geofence zone (admin only)"""
-    if user.get("role") not in ["admin", "venue_manager"]:
+    user = get_current_user(authorization)
+    
+    # Get user role from database
+    user_record = await db.users.find_one({"user_id": user.get("user_id")})
+    if not user_record or user_record.get("role") not in ["admin", "venue_manager"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     geofence_id = str(uuid.uuid4())[:8].upper()
@@ -240,7 +274,7 @@ async def create_geofence(
         "updated_at": datetime.now(timezone.utc)
     }
     
-    db.geofences.insert_one(geofence_doc)
+    await db.geofences.insert_one(geofence_doc)
     
     # Remove _id for response
     geofence_doc.pop("_id", None)
@@ -248,7 +282,7 @@ async def create_geofence(
     return {
         "success": True,
         "message": f"Geofence '{geofence.name}' created successfully",
-        "geofence": geofence_doc
+        "geofence": clean_mongo_doc(geofence_doc)
     }
 
 
@@ -256,50 +290,58 @@ async def create_geofence(
 async def update_geofence(
     geofence_id: str,
     updates: GeofenceUpdate,
-    user: dict = Depends(lambda: get_current_user)
+    authorization: str = Header(None)
 ):
     """Update a geofence zone (admin only)"""
-    if user.get("role") not in ["admin", "venue_manager"]:
+    user = get_current_user(authorization)
+    
+    # Get user role from database
+    user_record = await db.users.find_one({"user_id": user.get("user_id")})
+    if not user_record or user_record.get("role") not in ["admin", "venue_manager"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    existing = db.geofences.find_one({"id": geofence_id})
+    existing = await db.geofences.find_one({"id": geofence_id})
     if not existing:
         raise HTTPException(status_code=404, detail="Geofence not found")
     
     update_data = {k: v for k, v in updates.dict().items() if v is not None}
     update_data["updated_at"] = datetime.now(timezone.utc)
     
-    db.geofences.update_one(
+    await db.geofences.update_one(
         {"id": geofence_id},
         {"$set": update_data}
     )
     
-    updated = db.geofences.find_one({"id": geofence_id}, {"_id": 0})
+    updated = await db.geofences.find_one({"id": geofence_id}, {"_id": 0})
     
     return {
         "success": True,
         "message": "Geofence updated successfully",
-        "geofence": updated
+        "geofence": clean_mongo_doc(updated)
     }
 
 
 @router.delete("/admin/{geofence_id}")
 async def delete_geofence(
     geofence_id: str,
-    user: dict = Depends(lambda: get_current_user)
+    authorization: str = Header(None)
 ):
     """Delete a geofence zone (admin only)"""
-    if user.get("role") not in ["admin", "venue_manager"]:
+    user = get_current_user(authorization)
+    
+    # Get user role from database
+    user_record = await db.users.find_one({"user_id": user.get("user_id")})
+    if not user_record or user_record.get("role") not in ["admin", "venue_manager"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    existing = db.geofences.find_one({"id": geofence_id})
+    existing = await db.geofences.find_one({"id": geofence_id})
     if not existing:
         raise HTTPException(status_code=404, detail="Geofence not found")
     
-    db.geofences.delete_one({"id": geofence_id})
+    await db.geofences.delete_one({"id": geofence_id})
     
     # Also delete associated triggers
-    db.geofence_triggers.delete_many({"geofence_id": geofence_id})
+    await db.geofence_triggers.delete_many({"geofence_id": geofence_id})
     
     return {
         "success": True,
@@ -310,10 +352,14 @@ async def delete_geofence(
 @router.get("/admin/analytics")
 async def get_geofence_analytics(
     period: str = "week",
-    user: dict = Depends(lambda: get_current_user)
+    authorization: str = Header(None)
 ):
     """Get geofence trigger analytics (admin only)"""
-    if user.get("role") not in ["admin", "venue_manager"]:
+    user = get_current_user(authorization)
+    
+    # Get user role from database
+    user_record = await db.users.find_one({"user_id": user.get("user_id")})
+    if not user_record or user_record.get("role") not in ["admin", "venue_manager"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     # Calculate date range
@@ -346,13 +392,14 @@ async def get_geofence_analytics(
         {"$sort": {"trigger_count": -1}}
     ]
     
-    stats = list(db.geofence_triggers.aggregate(pipeline))
+    stats = await db.geofence_triggers.aggregate(pipeline).to_list(100)
     
     # Total triggers
-    total_triggers = db.geofence_triggers.count_documents({"triggered_at": {"$gte": start_date}})
+    total_triggers = await db.geofence_triggers.count_documents({"triggered_at": {"$gte": start_date}})
     
     # Total unique users
-    unique_users = len(db.geofence_triggers.distinct("user_id", {"triggered_at": {"$gte": start_date}}))
+    unique_users_list = await db.geofence_triggers.distinct("user_id", {"triggered_at": {"$gte": start_date}})
+    unique_users = len(unique_users_list)
     
     return {
         "period": period,
@@ -364,14 +411,12 @@ async def get_geofence_analytics(
 
 # ============ Seed Default Geofences ============
 
-def seed_default_geofences():
+async def seed_default_geofences():
     """Create default geofences for Luna Group venues"""
-    if db is None:
-        return
-    
     # Check if already seeded
-    if db.geofences.count_documents({}) > 0:
-        return
+    count = await db.geofences.count_documents({})
+    if count > 0:
+        return {"message": "Geofences already seeded", "count": count}
     
     default_geofences = [
         {
@@ -441,5 +486,6 @@ def seed_default_geofences():
         }
     ]
     
-    db.geofences.insert_many(default_geofences)
-    print(f"Seeded {len(default_geofences)} default geofences")
+    await db.geofences.insert_many(default_geofences)
+    logger.info(f"Seeded {len(default_geofences)} default geofences")
+    return {"message": f"Seeded {len(default_geofences)} default geofences", "count": len(default_geofences)}
