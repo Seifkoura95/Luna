@@ -45,6 +45,7 @@ __all__ = [
     "friends_router",
     "notifications_router",
     "venue_admin_router",
+    "geofences_router",
 ]
 
 # List of all routers for bulk registration
@@ -67,4 +68,5 @@ ALL_ROUTERS = [
     friends_router,
     notifications_router,
     venue_admin_router,
+    geofences_router,
 ]
