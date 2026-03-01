@@ -489,3 +489,9 @@ async def seed_default_geofences():
     await db.geofences.insert_many(default_geofences)
     logger.info(f"Seeded {len(default_geofences)} default geofences")
     return {"message": f"Seeded {len(default_geofences)} default geofences", "count": len(default_geofences)}
+
+
+@router.post("/seed")
+async def seed_geofences():
+    """Seed default geofences for Luna Group venues"""
+    return await seed_default_geofences()
