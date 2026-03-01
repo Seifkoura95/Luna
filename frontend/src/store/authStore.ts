@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveAuthTokenForGeofencing, clearGeofencingAuth, startBackgroundLocationTracking } from '../utils/geofencing';
 
 interface User {
   user_id: string;
@@ -63,6 +64,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await storage.setItem('auth_token', token);
     await storage.setItem('user', JSON.stringify(user));
     set({ user, token, isAuthenticated: true, isLoading: false });
+    
+    // Initialize geofencing with auth token (only on native)
+    if (Platform.OS !== 'web') {
+      try {
+        await saveAuthTokenForGeofencing(token);
+        // Check if user has location alerts enabled (default true)
+        const locationEnabled = await AsyncStorage.getItem('@luna_location_alerts');
+        if (locationEnabled !== 'false') {
+          await startBackgroundLocationTracking();
+        }
+      } catch (e) {
+        console.error('Failed to initialize geofencing:', e);
+      }
+    }
   },
   
   logout: async () => {
@@ -78,6 +93,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
     } catch (e) {
       console.error('Logout API error:', e);
+    }
+    
+    // Clear geofencing auth (stops background tracking)
+    if (Platform.OS !== 'web') {
+      try {
+        await clearGeofencingAuth();
+      } catch (e) {
+        console.error('Failed to clear geofencing auth:', e);
+      }
     }
     
     await storage.removeItem('auth_token');
@@ -103,6 +127,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (response.ok) {
           const user = await response.json();
           set({ user, token, isAuthenticated: true, isLoading: false });
+          
+          // Re-initialize geofencing on app restart (only on native)
+          if (Platform.OS !== 'web') {
+            try {
+              await saveAuthTokenForGeofencing(token);
+              const locationEnabled = await AsyncStorage.getItem('@luna_location_alerts');
+              if (locationEnabled !== 'false') {
+                await startBackgroundLocationTracking();
+              }
+            } catch (e) {
+              console.error('Failed to reinitialize geofencing:', e);
+            }
+          }
           return;
         }
       }
