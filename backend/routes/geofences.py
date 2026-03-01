@@ -112,7 +112,7 @@ async def send_push_notification(push_token: str, title: str, body: str, data: d
 @router.get("")
 async def get_active_geofences(authorization: str = Header(None)):
     """Get all active geofence zones for the mobile app"""
-    user = get_current_user(authorization)
+    get_current_user(authorization)  # Validate auth
     
     geofences = await db.geofences.find(
         {"is_active": True},
