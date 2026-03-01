@@ -83,6 +83,13 @@ export default function SettingsScreen() {
       subtitle: 'Manage push notifications',
       route: '/notifications',
     },
+    {
+      id: 'location',
+      icon: 'location',
+      title: 'Location Settings',
+      subtitle: 'Venue proximity alerts',
+      route: '/location-settings',
+    },
   ];
 
   const dangerItems = [
