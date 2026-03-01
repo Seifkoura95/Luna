@@ -266,6 +266,41 @@ Events are matched by checking if the venue_name, location, or address contains:
 
 ## Recent Completions (Feb 2025)
 
+### Geofencing System ✅ COMPLETE (Mar 2026)
+**Location-based proximity alerts for Luna Group venues**
+
+#### Features:
+- Admin-defined custom geofence zones with custom notification messages
+- Background location tracking (works when app is closed)
+- 200-meter radius detection for all Luna Group venues
+- Once-per-day notification limit per venue (prevents spam)
+- User opt-in/opt-out via Settings > Location Settings
+- Location Settings page with permission status display
+- Privacy-focused: data only used for venue proximity
+
+#### Pre-configured Geofences:
+- Eclipse Brisbane (-27.4567, 153.0368)
+- After Dark Brisbane (-27.4572, 153.0372)
+- Su Casa Brisbane (-27.4580, 153.0365)
+- Su Casa Gold Coast (-28.0024, 153.4296)
+- Juju Mermaid Beach (-28.0456, 153.4432)
+
+#### APIs:
+- GET /api/geofences - Get active geofence zones
+- POST /api/geofences/check-location - Check if user is within any zones
+- GET /api/geofences/my-triggers - User's trigger history
+- POST /api/geofences/admin/create - Create new geofence (admin)
+- PUT /api/geofences/admin/{id} - Update geofence (admin)
+- DELETE /api/geofences/admin/{id} - Delete geofence (admin)
+- GET /api/geofences/admin/analytics - Trigger analytics (admin)
+- POST /api/geofences/seed - Seed default venue geofences
+
+#### Mobile Integration:
+- Uses expo-location and expo-task-manager for background tracking
+- Auth token persisted for background task API calls
+- Automatic start on login if enabled
+- Automatic stop on logout
+
 ### App Deep Dive & Testing (Feb 27, 2025)
 - **Backend API**: 87.5% passing (170+ endpoints work correctly)
 - **Frontend Pages**: 100% functional (all pages load correctly)
