@@ -1,12 +1,18 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { useAuthStore } from '../src/store/authStore';
 import { colors } from '../src/theme/colors';
 import { useFonts } from '../src/hooks/useFonts';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
+import { defineGeofenceTask } from '../src/utils/geofencing';
+
+// Define background task at module level (required for expo-task-manager)
+if (Platform.OS !== 'web') {
+  defineGeofenceTask();
+}
 
 const LUNA_LOGO = 'https://customer-assets.emergentagent.com/job_c826baa4-6640-40ce-9e0d-38132d9944fc/artifacts/2k76js5m_luna-group-logo-2.webp';
 
