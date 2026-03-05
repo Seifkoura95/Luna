@@ -19,7 +19,7 @@ interface BackgroundProps {
   intensity?: 'low' | 'medium' | 'high';
 }
 
-// Pulsing Orb Component
+// Pulsing Orb Component with stronger visibility
 const PulsingOrb = ({ 
   color, 
   size, 
@@ -39,7 +39,6 @@ const PulsingOrb = ({
   const drift = useSharedValue(0);
 
   useEffect(() => {
-    // Pulsing animation
     pulse.value = withDelay(
       delay,
       withRepeat(
@@ -52,7 +51,6 @@ const PulsingOrb = ({
       )
     );
 
-    // Subtle drift animation
     drift.value = withDelay(
       delay,
       withRepeat(
@@ -67,10 +65,10 @@ const PulsingOrb = ({
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const scale = interpolate(pulse.value, [0, 1], [0.8, 1.2]);
-    const opacity = interpolate(pulse.value, [0, 1], [0.3, 0.6]);
-    const translateX = interpolate(drift.value, [0, 1], [-15, 15]);
-    const translateY = interpolate(drift.value, [0, 1], [-10, 10]);
+    const scale = interpolate(pulse.value, [0, 1], [0.85, 1.15]);
+    const opacity = interpolate(pulse.value, [0, 1], [0.5, 0.9]);
+    const translateX = interpolate(drift.value, [0, 1], [-20, 20]);
+    const translateY = interpolate(drift.value, [0, 1], [-15, 15]);
 
     return {
       transform: [
@@ -85,7 +83,7 @@ const PulsingOrb = ({
   return (
     <Animated.View style={[styles.orb, { width: size, height: size, borderRadius: size / 2 }, animatedStyle]}>
       <LinearGradient
-        colors={[color, 'transparent']}
+        colors={[color, color.replace(/[\d.]+\)$/, '0)')]}
         style={StyleSheet.absoluteFillObject}
         start={{ x: 0.5, y: 0.5 }}
         end={{ x: 1, y: 1 }}
@@ -94,87 +92,85 @@ const PulsingOrb = ({
   );
 };
 
-// SVG-based noise pattern overlay
-const NoiseOverlay = () => {
-  return (
-    <View style={styles.noiseContainer} pointerEvents="none">
-      <View style={styles.noisePattern} />
-    </View>
-  );
-};
-
-export const AppBackground: React.FC<BackgroundProps> = ({ children, intensity = 'medium' }) => {
-  const orbOpacity = intensity === 'low' ? 0.5 : intensity === 'high' ? 1 : 0.75;
-
+export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
   return (
     <View style={styles.container}>
-      {/* Base dark background with subtle gradient */}
+      {/* Base dark background */}
+      <View style={styles.baseBg} />
+
+      {/* Static ambient glow layers for guaranteed visibility */}
       <LinearGradient
-        colors={['#0a0a0a', '#050508', '#0a0a0a']}
-        style={StyleSheet.absoluteFillObject}
+        colors={['rgba(227, 24, 55, 0.4)', 'rgba(227, 24, 55, 0.15)', 'transparent']}
+        style={styles.topLeftGlow}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
+      
+      <LinearGradient
+        colors={['rgba(212, 175, 55, 0.3)', 'rgba(212, 175, 55, 0.1)', 'transparent']}
+        style={styles.topRightGlow}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      />
 
-      {/* Pulsing gradient orbs */}
-      <View style={[styles.orbsContainer, { opacity: orbOpacity }]} pointerEvents="none">
-        {/* Main Luna Red orb - top left */}
+      <LinearGradient
+        colors={['rgba(139, 92, 246, 0.25)', 'rgba(139, 92, 246, 0.08)', 'transparent']}
+        style={styles.centerLeftGlow}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+      />
+
+      {/* Animated pulsing orbs on top of static glows */}
+      <View style={styles.orbsContainer} pointerEvents="none">
         <PulsingOrb
-          color="rgba(227, 24, 55, 0.25)"
-          size={400}
-          initialX={-150}
-          initialY={-100}
+          color="rgba(227, 24, 55, 0.6)"
+          size={450}
+          initialX={-80}
+          initialY={-30}
           delay={0}
+          duration={8000}
+        />
+        
+        <PulsingOrb
+          color="rgba(212, 175, 55, 0.5)"
+          size={380}
+          initialX={SCREEN_WIDTH - 80}
+          initialY={20}
+          delay={1500}
           duration={10000}
         />
         
-        {/* Gold accent orb - top right */}
         <PulsingOrb
-          color="rgba(212, 175, 55, 0.15)"
-          size={300}
-          initialX={SCREEN_WIDTH - 150}
-          initialY={-50}
-          delay={2000}
+          color="rgba(139, 92, 246, 0.4)"
+          size={400}
+          initialX={-30}
+          initialY={SCREEN_HEIGHT * 0.35}
+          delay={3000}
           duration={12000}
         />
         
-        {/* Deep purple orb - center left */}
         <PulsingOrb
-          color="rgba(139, 92, 246, 0.12)"
+          color="rgba(227, 24, 55, 0.45)"
           size={350}
-          initialX={-100}
-          initialY={SCREEN_HEIGHT * 0.4}
-          delay={4000}
-          duration={14000}
-        />
-        
-        {/* Subtle red orb - bottom right */}
-        <PulsingOrb
-          color="rgba(227, 24, 55, 0.15)"
-          size={280}
-          initialX={SCREEN_WIDTH - 100}
-          initialY={SCREEN_HEIGHT * 0.6}
-          delay={3000}
-          duration={11000}
+          initialX={SCREEN_WIDTH - 40}
+          initialY={SCREEN_HEIGHT * 0.55}
+          delay={2000}
+          duration={9000}
         />
 
-        {/* Cyan accent orb - bottom center */}
         <PulsingOrb
-          color="rgba(0, 212, 170, 0.08)"
-          size={250}
-          initialX={SCREEN_WIDTH * 0.3}
-          initialY={SCREEN_HEIGHT * 0.8}
-          delay={5000}
-          duration={13000}
+          color="rgba(0, 212, 170, 0.3)"
+          size={320}
+          initialX={SCREEN_WIDTH * 0.2}
+          initialY={SCREEN_HEIGHT * 0.75}
+          delay={4000}
+          duration={11000}
         />
       </View>
 
-      {/* Film grain noise texture overlay */}
-      <NoiseOverlay />
-
       {/* Vignette effect */}
       <LinearGradient
-        colors={['transparent', 'transparent', 'rgba(0,0,0,0.4)']}
+        colors={['transparent', 'transparent', 'rgba(0,0,0,0.5)']}
         style={styles.vignette}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
@@ -194,24 +190,39 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     overflow: 'hidden',
   },
+  baseBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#050508',
+  },
+  topLeftGlow: {
+    position: 'absolute',
+    top: -80,
+    left: -80,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+  },
+  topRightGlow: {
+    position: 'absolute',
+    top: -60,
+    right: -80,
+    width: 350,
+    height: 350,
+    borderRadius: 175,
+  },
+  centerLeftGlow: {
+    position: 'absolute',
+    top: SCREEN_HEIGHT * 0.3,
+    left: -100,
+    width: 350,
+    height: 350,
+    borderRadius: 175,
+  },
   orbsContainer: {
     ...StyleSheet.absoluteFillObject,
   },
   orb: {
     position: 'absolute',
-  },
-  noiseContainer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  noisePattern: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.035,
-    backgroundColor: 'transparent',
-    // Creates a subtle noise texture effect
-    ...(Platform.OS === 'web' ? {
-      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-      backgroundRepeat: 'repeat',
-    } : {}),
   },
   vignette: {
     ...StyleSheet.absoluteFillObject,
