@@ -1,12 +1,11 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, Dimensions, Platform } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { StyleSheet, View, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
   withTiming,
-  withSequence,
   withDelay,
   Easing,
   interpolate,
@@ -16,161 +15,183 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface BackgroundProps {
   children?: React.ReactNode;
-  intensity?: 'low' | 'medium' | 'high';
 }
 
-// Pulsing Orb Component with stronger visibility
-const PulsingOrb = ({ 
-  color, 
+// Single particle/star component
+const Particle = ({ 
   size, 
   initialX, 
   initialY, 
-  delay = 0,
-  duration = 8000,
+  duration,
+  delay,
+  opacity,
+  color,
 }: { 
-  color: string; 
-  size: number; 
-  initialX: number; 
+  size: number;
+  initialX: number;
   initialY: number;
-  delay?: number;
-  duration?: number;
+  duration: number;
+  delay: number;
+  opacity: number;
+  color: string;
 }) => {
-  const pulse = useSharedValue(0);
-  const drift = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const translateX = useSharedValue(0);
+  const scale = useSharedValue(1);
+  const particleOpacity = useSharedValue(0);
 
   useEffect(() => {
-    pulse.value = withDelay(
+    // Floating up animation
+    translateY.value = withDelay(
       delay,
       withRepeat(
-        withSequence(
-          withTiming(1, { duration: duration / 2, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0, { duration: duration / 2, easing: Easing.inOut(Easing.sin) })
-        ),
+        withTiming(-SCREEN_HEIGHT - 100, { 
+          duration: duration, 
+          easing: Easing.linear 
+        }),
         -1,
         false
       )
     );
 
-    drift.value = withDelay(
+    // Subtle horizontal drift
+    translateX.value = withDelay(
       delay,
       withRepeat(
-        withSequence(
-          withTiming(1, { duration: duration * 1.5, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0, { duration: duration * 1.5, easing: Easing.inOut(Easing.sin) })
-        ),
+        withTiming(Math.random() > 0.5 ? 50 : -50, { 
+          duration: duration / 2, 
+          easing: Easing.inOut(Easing.sin) 
+        }),
         -1,
-        false
+        true
       )
+    );
+
+    // Twinkling effect
+    scale.value = withDelay(
+      delay,
+      withRepeat(
+        withTiming(1.5, { 
+          duration: 2000 + Math.random() * 2000, 
+          easing: Easing.inOut(Easing.sin) 
+        }),
+        -1,
+        true
+      )
+    );
+
+    // Fade in
+    particleOpacity.value = withDelay(
+      delay,
+      withTiming(opacity, { duration: 1000 })
     );
   }, []);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    const scale = interpolate(pulse.value, [0, 1], [0.85, 1.15]);
-    const opacity = interpolate(pulse.value, [0, 1], [0.5, 0.9]);
-    const translateX = interpolate(drift.value, [0, 1], [-20, 20]);
-    const translateY = interpolate(drift.value, [0, 1], [-15, 15]);
-
-    return {
-      transform: [
-        { translateX: initialX + translateX },
-        { translateY: initialY + translateY },
-        { scale },
-      ],
-      opacity,
-    };
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: initialX + translateX.value },
+      { translateY: initialY + translateY.value },
+      { scale: scale.value },
+    ],
+    opacity: particleOpacity.value,
+  }));
 
   return (
-    <Animated.View style={[styles.orb, { width: size, height: size, borderRadius: size / 2 }, animatedStyle]}>
-      <LinearGradient
-        colors={[color, color.replace(/[\d.]+\)$/, '0)')]}
-        style={StyleSheet.absoluteFillObject}
-        start={{ x: 0.5, y: 0.5 }}
-        end={{ x: 1, y: 1 }}
-      />
-    </Animated.View>
+    <Animated.View 
+      style={[
+        styles.particle, 
+        { 
+          width: size, 
+          height: size, 
+          borderRadius: size / 2,
+          backgroundColor: color,
+          shadowColor: color,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.8,
+          shadowRadius: size * 2,
+        },
+        animatedStyle
+      ]} 
+    />
   );
 };
 
+// Generate random particles
+const generateParticles = (count: number) => {
+  const particles = [];
+  const colors = [
+    '#ffffff',      // White
+    '#E31837',      // Luna Red
+    '#D4AF37',      // Gold
+    '#8B5CF6',      // Purple
+    '#00D4AA',      // Cyan
+    '#ffffff',      // More white for balance
+    '#ffffff',
+  ];
+
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      id: i,
+      size: Math.random() * 3 + 1, // 1-4px
+      initialX: Math.random() * SCREEN_WIDTH,
+      initialY: SCREEN_HEIGHT + Math.random() * SCREEN_HEIGHT, // Start below screen
+      duration: 15000 + Math.random() * 20000, // 15-35 seconds to float up
+      delay: Math.random() * 10000, // Stagger start times
+      opacity: Math.random() * 0.6 + 0.2, // 0.2-0.8 opacity
+      color: colors[Math.floor(Math.random() * colors.length)],
+    });
+  }
+  return particles;
+};
+
 export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
+  // Memoize particles so they don't regenerate on every render
+  const particles = useMemo(() => generateParticles(50), []);
+
   return (
     <View style={styles.container}>
       {/* Base dark background */}
-      <View style={styles.baseBg} />
-
-      {/* Static ambient glow layers for guaranteed visibility */}
       <LinearGradient
-        colors={['rgba(227, 24, 55, 0.4)', 'rgba(227, 24, 55, 0.15)', 'transparent']}
+        colors={['#0a0a0c', '#050508', '#0a0a0c']}
+        style={StyleSheet.absoluteFillObject}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+
+      {/* Subtle ambient glows for depth */}
+      <LinearGradient
+        colors={['rgba(227, 24, 55, 0.15)', 'transparent']}
         style={styles.topLeftGlow}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
       
       <LinearGradient
-        colors={['rgba(212, 175, 55, 0.3)', 'rgba(212, 175, 55, 0.1)', 'transparent']}
+        colors={['rgba(212, 175, 55, 0.1)', 'transparent']}
         style={styles.topRightGlow}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
       />
 
-      <LinearGradient
-        colors={['rgba(139, 92, 246, 0.25)', 'rgba(139, 92, 246, 0.08)', 'transparent']}
-        style={styles.centerLeftGlow}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-      />
-
-      {/* Animated pulsing orbs on top of static glows */}
-      <View style={styles.orbsContainer} pointerEvents="none">
-        <PulsingOrb
-          color="rgba(227, 24, 55, 0.6)"
-          size={450}
-          initialX={-80}
-          initialY={-30}
-          delay={0}
-          duration={8000}
-        />
-        
-        <PulsingOrb
-          color="rgba(212, 175, 55, 0.5)"
-          size={380}
-          initialX={SCREEN_WIDTH - 80}
-          initialY={20}
-          delay={1500}
-          duration={10000}
-        />
-        
-        <PulsingOrb
-          color="rgba(139, 92, 246, 0.4)"
-          size={400}
-          initialX={-30}
-          initialY={SCREEN_HEIGHT * 0.35}
-          delay={3000}
-          duration={12000}
-        />
-        
-        <PulsingOrb
-          color="rgba(227, 24, 55, 0.45)"
-          size={350}
-          initialX={SCREEN_WIDTH - 40}
-          initialY={SCREEN_HEIGHT * 0.55}
-          delay={2000}
-          duration={9000}
-        />
-
-        <PulsingOrb
-          color="rgba(0, 212, 170, 0.3)"
-          size={320}
-          initialX={SCREEN_WIDTH * 0.2}
-          initialY={SCREEN_HEIGHT * 0.75}
-          delay={4000}
-          duration={11000}
-        />
+      {/* Floating particles/stars */}
+      <View style={styles.particlesContainer} pointerEvents="none">
+        {particles.map((particle) => (
+          <Particle
+            key={particle.id}
+            size={particle.size}
+            initialX={particle.initialX}
+            initialY={particle.initialY}
+            duration={particle.duration}
+            delay={particle.delay}
+            opacity={particle.opacity}
+            color={particle.color}
+          />
+        ))}
       </View>
 
       {/* Vignette effect */}
       <LinearGradient
-        colors={['transparent', 'transparent', 'rgba(0,0,0,0.5)']}
+        colors={['transparent', 'transparent', 'rgba(0,0,0,0.4)']}
         style={styles.vignette}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
@@ -190,38 +211,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     overflow: 'hidden',
   },
-  baseBg: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#050508',
-  },
   topLeftGlow: {
     position: 'absolute',
-    top: -80,
-    left: -80,
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-  },
-  topRightGlow: {
-    position: 'absolute',
-    top: -60,
-    right: -80,
-    width: 350,
-    height: 350,
-    borderRadius: 175,
-  },
-  centerLeftGlow: {
-    position: 'absolute',
-    top: SCREEN_HEIGHT * 0.3,
+    top: -100,
     left: -100,
     width: 350,
     height: 350,
     borderRadius: 175,
   },
-  orbsContainer: {
+  topRightGlow: {
+    position: 'absolute',
+    top: -80,
+    right: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+  },
+  particlesContainer: {
     ...StyleSheet.absoluteFillObject,
   },
-  orb: {
+  particle: {
     position: 'absolute',
   },
   vignette: {
