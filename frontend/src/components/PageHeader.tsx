@@ -29,7 +29,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const user = useAuthStore((state) => state.user);
 
   return (
-    <View style={[styles.header, { paddingTop: insets.top + 32 }]}>
+    <View style={[styles.header, { paddingTop: insets.top + 48 }]}>
       {showLogo && (
         <Image 
           source={{ uri: LUNA_GROUP_LOGO }} 
