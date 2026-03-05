@@ -146,7 +146,7 @@ const generateParticles = (count: number) => {
 
 export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
   // Memoize particles so they don't regenerate on every render
-  const particles = useMemo(() => generateParticles(50), []);
+  const particles = useMemo(() => generateParticles(65), []);
 
   return (
     <View style={styles.container}>
