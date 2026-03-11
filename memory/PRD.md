@@ -285,6 +285,65 @@ Events are matched by checking if the venue_name, location, or address contains:
 - Su Casa Gold Coast (-28.0024, 153.4296)
 - Juju Mermaid Beach (-28.0456, 153.4432)
 
+### Birthday Club ✅ COMPLETE (Mar 2026)
+**Automated birthday rewards and celebrations**
+
+#### Features:
+- Auto-detects user birthday from profile
+- Birthday Week rewards (3 days before/after)
+- 4 Birthday Rewards:
+  - Free Entry (any Luna venue)
+  - Free Birthday Drink
+  - 250 Bonus Points
+  - 2x Point Multiplier (7 days)
+- One-time claim per year per reward
+- Rewards expire after 7 days
+
+#### APIs:
+- GET /api/birthday/status - Check birthday status and available rewards
+- POST /api/birthday/claim/{reward_id} - Claim a birthday reward
+- GET /api/birthday/my-rewards - View reward history
+- POST /api/birthday/redeem/{id} - Redeem at venue
+
+### Leaderboard System ✅ COMPLETE (Mar 2026)
+**Rankings, competition, and point-earning strategies**
+
+#### Features:
+- New Rankings tab in bottom navigation (trophy icon)
+- Top 3 podium display with medals
+- Full ranking list with user positions
+- Filter by period: All Time, Monthly, Weekly
+- Filter by category: Points, Visits, Spend
+- "Your Position" card with:
+  - Current rank
+  - Points/score
+  - Gap to first place
+  - Progress bar to #1
+- "Climb Faster" strategies section:
+  - 10 point-earning strategies
+  - Quick wins highlighted
+  - Personalized recommendations
+  - Difficulty ratings (Easy/Medium/Hard)
+  - Pro tips for each strategy
+
+#### Point Strategies Include:
+- Weekend Warrior Combo (150 pts)
+- Auction Snipe Strategy (500 pts)
+- Referral Chain (750 pts)
+- Birthday Point Stack (500 pts)
+- Mission Sweep (690 pts)
+- Tier Upgrade Bonus (ongoing multiplier)
+- Early Bird Check-in (50 pts)
+- Social Media Boost (75 pts)
+- Crew Night Bonus (100 pts)
+- VIP Table Points (300 pts)
+
+#### APIs:
+- GET /api/leaderboard - Get rankings with filters
+- GET /api/leaderboard/my-stats - User's detailed stats
+- GET /api/leaderboard/strategies - Point-earning tips
+- GET /api/leaderboard/top-earners - This week's top earners
+
 #### APIs:
 - GET /api/geofences - Get active geofence zones
 - POST /api/geofences/check-location - Check if user is within any zones
