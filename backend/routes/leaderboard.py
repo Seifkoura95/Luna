@@ -374,3 +374,74 @@ async def get_top_earners_this_week(authorization: str = Header(None)):
         earner["user_id"] = earner.pop("_id")
     
     return {"top_earners": top_earners, "period": "This Week"}
+
+
+
+@router.post("/seed-sample-users")
+async def seed_sample_leaderboard_users():
+    """Seed sample users for leaderboard demonstration"""
+    import random
+    
+    sample_names = [
+        "Emma Thompson", "Liam Wilson", "Olivia Chen", "Noah Martinez",
+        "Ava Johnson", "Ethan Brown", "Sophia Davis", "Mason Garcia",
+        "Isabella Lee", "William Anderson", "Mia Taylor", "James Thomas",
+        "Charlotte White", "Benjamin Harris", "Amelia Martin", "Lucas Jackson",
+        "Harper Robinson", "Henry Clark", "Evelyn Lewis", "Alexander Walker",
+        "Abigail Hall", "Sebastian Young", "Emily King", "Jack Wright",
+        "Ella Scott", "Owen Green", "Scarlett Baker", "Daniel Adams",
+        "Grace Nelson", "Matthew Hill", "Chloe Campbell", "Aiden Mitchell",
+        "Lily Roberts", "Samuel Turner", "Aria Phillips", "Joseph Evans",
+        "Zoey Collins", "David Edwards", "Penelope Stewart", "Carter Sanchez"
+    ]
+    
+    subscription_tiers = [None, None, None, "lunar", "lunar", "eclipse", "eclipse", "aurora"]
+    tiers = ["bronze", "bronze", "bronze", "silver", "silver", "gold", "platinum"]
+    
+    created_count = 0
+    
+    for i, name in enumerate(sample_names):
+        user_id = f"sample_user_{i+1}"
+        
+        # Check if already exists
+        existing = await db.users.find_one({"user_id": user_id})
+        if existing:
+            continue
+        
+        # Generate random stats
+        points = random.randint(500, 15000)
+        visits = random.randint(3, 50)
+        spend = random.randint(100, 3000)
+        
+        # Higher ranks for some users
+        if i < 3:
+            points = random.randint(12000, 18000)
+            visits = random.randint(30, 60)
+            spend = random.randint(2000, 5000)
+        elif i < 8:
+            points = random.randint(8000, 12000)
+            visits = random.randint(20, 40)
+            spend = random.randint(1000, 2500)
+        
+        user_doc = {
+            "user_id": user_id,
+            "email": f"{name.lower().replace(' ', '.')}@example.com",
+            "name": name,
+            "role": "user",
+            "tier": random.choice(tiers),
+            "subscription_tier": random.choice(subscription_tiers),
+            "points_balance": points,
+            "total_visits": visits,
+            "total_spend": spend,
+            "created_at": datetime.now(timezone.utc),
+            "last_visit": datetime.now(timezone.utc) - timedelta(days=random.randint(0, 14))
+        }
+        
+        await db.users.insert_one(user_doc)
+        created_count += 1
+    
+    return {
+        "success": True,
+        "message": f"Created {created_count} sample users for leaderboard",
+        "total_sample_users": len(sample_names)
+    }

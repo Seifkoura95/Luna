@@ -12,6 +12,7 @@ import {
   Alert,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
@@ -144,6 +145,9 @@ export default function WalletScreen() {
   // CherryHub state
   const [cherryHubStatus, setCherryHubStatus] = useState<{registered: boolean, member_key: string | null}>({registered: false, member_key: null});
   const [cherryHubPoints, setCherryHubPoints] = useState<number>(0);
+  // Leaderboard state
+  const [leaderboardData, setLeaderboardData] = useState<any>(null);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
 
   // Auto scroll to top when tab gains focus
   useFocusEffect(
@@ -182,10 +186,20 @@ export default function WalletScreen() {
           console.log('Failed to fetch CherryHub points');
         }
       }
+      
+      // Fetch leaderboard data
+      try {
+        const leaderboard = await api.get('/leaderboard?period=all_time&category=points&limit=10');
+        setLeaderboardData(leaderboard.data);
+      } catch (e) {
+        console.log('Failed to fetch leaderboard');
+      }
+      setLeaderboardLoading(false);
     } catch (e) {
       console.error('Failed to fetch wallet data:', e);
       // Use mock data on error
       setTickets(MOCK_TICKETS);
+      setLeaderboardLoading(false);
     }
   }, []);
 
@@ -480,6 +494,72 @@ export default function WalletScreen() {
               </View>
             </View>
           ))}
+        </View>
+
+        {/* Leaderboard Section */}
+        <View style={styles.leaderboardSection}>
+          <View style={styles.leaderboardHeader}>
+            <View style={styles.leaderboardTitleRow}>
+              <Ionicons name="trophy" size={20} color={colors.gold} />
+              <Text style={styles.sectionTitle}>LEADERBOARD</Text>
+            </View>
+            <TouchableOpacity onPress={() => router.push('/leaderboard')}>
+              <Text style={styles.seeAllText}>Full Rankings</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {leaderboardLoading ? (
+            <ActivityIndicator size="small" color={colors.accent} style={{ marginVertical: 20 }} />
+          ) : leaderboardData?.leaders?.length > 0 ? (
+            <>
+              {/* Top 3 Mini Podium */}
+              <View style={styles.miniPodium}>
+                {leaderboardData.leaders.slice(0, 3).map((leader: any, index: number) => {
+                  const medals = ['🥇', '🥈', '🥉'];
+                  const colors_arr = ['#FFD700', '#C0C0C0', '#CD7F32'];
+                  return (
+                    <View key={leader.user_id} style={[styles.podiumMiniItem, index === 0 && styles.podiumMiniFirst]}>
+                      <Text style={styles.podiumMedal}>{medals[index]}</Text>
+                      <Text style={[styles.podiumMiniName, index === 0 && { color: colors_arr[0] }]} numberOfLines={1}>
+                        {leader.display_name}
+                      </Text>
+                      <Text style={[styles.podiumMiniScore, { color: colors_arr[index] }]}>
+                        {leader.points_balance?.toLocaleString()} pts
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+              
+              {/* Your Rank Card */}
+              <LinearGradient
+                colors={[colors.accent + '15', colors.accent + '05']}
+                style={styles.yourRankCard}
+              >
+                <View style={styles.yourRankLeft}>
+                  <Text style={styles.yourRankLabel}>YOUR RANK</Text>
+                  <Text style={styles.yourRankValue}>
+                    #{leaderboardData.leaders.find((l: any) => l.is_current_user)?.rank || 
+                      leaderboardData.current_user_rank || '-'}
+                  </Text>
+                </View>
+                <View style={styles.yourRankDivider} />
+                <View style={styles.yourRankRight}>
+                  <Text style={styles.yourRankLabel}>GAP TO #1</Text>
+                  <Text style={styles.yourRankGap}>
+                    {leaderboardData.gap_to_first > 0 
+                      ? `${leaderboardData.gap_to_first.toLocaleString()} pts`
+                      : '🏆 You\'re #1!'}
+                  </Text>
+                </View>
+              </LinearGradient>
+            </>
+          ) : (
+            <View style={styles.emptyLeaderboard}>
+              <Ionicons name="trophy-outline" size={32} color={colors.textMuted} />
+              <Text style={styles.emptyLeaderboardText}>Leaderboard loading...</Text>
+            </View>
+          )}
         </View>
 
         {/* Tab Selector */}
@@ -1317,5 +1397,108 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  // Leaderboard styles
+  leaderboardSection: {
+    marginBottom: spacing.xl,
+  },
+  leaderboardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  leaderboardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  seeAllText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+  miniPodium: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.sm,
+  },
+  podiumMiniItem: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+  },
+  podiumMiniFirst: {
+    backgroundColor: 'rgba(255,215,0,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.3)',
+  },
+  podiumMedal: {
+    fontSize: 20,
+    marginBottom: 4,
+  },
+  podiumMiniName: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  podiumMiniScore: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  yourRankCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.accent + '30',
+  },
+  yourRankLeft: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  yourRankRight: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  yourRankLabel: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: colors.textMuted,
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  yourRankValue: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: colors.accent,
+  },
+  yourRankDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.md,
+  },
+  yourRankGap: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.gold,
+  },
+  emptyLeaderboard: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyLeaderboardText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: spacing.sm,
   },
 });

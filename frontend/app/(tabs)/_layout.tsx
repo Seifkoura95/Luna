@@ -92,12 +92,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="leaderboard"
+        name="auctions"
         options={{
-          title: 'Rankings',
+          title: 'Auctions',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="trophy" color={color} focused={focused} />
+            <TabBarIcon name="flash" color={color} focused={focused} />
           ),
         }}
       />
@@ -113,7 +113,7 @@ export default function TabLayout() {
       />
       {/* Hidden screens */}
       <Tabs.Screen name="photos" options={{ href: null }} />
-      <Tabs.Screen name="auctions" options={{ href: null }} />
+      <Tabs.Screen name="leaderboard" options={{ href: null }} />
     </Tabs>
     </View>
   );
