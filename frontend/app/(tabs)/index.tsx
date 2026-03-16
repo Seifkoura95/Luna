@@ -253,7 +253,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.trendingGrid}>
-            {events.slice(0, 6).map((event, index) => (
+            {events.slice(1, 7).map((event, index) => (
               <View key={event.id} style={styles.trendingCard}>
                 <TouchableOpacity
                   style={styles.trendingCardInner}
