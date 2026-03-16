@@ -260,9 +260,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleLogout = () => {
+    // Clear all stored data first
     removeToken();
+    // Then notify parent to update auth state
     onLogout();
-    navigate('/login');
+    // Force navigation to login
+    window.location.href = '/api/venue-portal/login';
   };
 
   // QR Scanner setup
