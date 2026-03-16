@@ -253,31 +253,32 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.trendingGrid}>
-            {events.slice(0, 4).map((event, index) => (
-              <TouchableOpacity
-                key={event.id}
-                style={styles.trendingCard}
-                onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
-                activeOpacity={0.85}
-              >
-                <Image source={{ uri: event.image || event.image_url }} style={styles.trendingImage} contentFit="cover" />
-                <LinearGradient 
-                  colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} 
-                  locations={[0, 0.4, 1]}
-                  style={styles.trendingOverlay}
+            {events.slice(0, 6).map((event, index) => (
+              <View key={event.id} style={styles.trendingCard}>
+                <TouchableOpacity
+                  style={styles.trendingCardInner}
+                  onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
+                  activeOpacity={0.85}
                 >
-                  <View style={styles.trendingRank}>
-                    <Text style={styles.trendingRankText}>{index + 1}</Text>
-                  </View>
-                  <Text style={styles.trendingTitle} numberOfLines={2}>{event.title}</Text>
-                  <Text style={styles.trendingVenue}>{event.venue_name || event.location}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+                  <Image source={{ uri: event.image || event.image_url }} style={styles.trendingImage} contentFit="cover" />
+                  <LinearGradient 
+                    colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} 
+                    locations={[0, 0.4, 1]}
+                    style={styles.trendingOverlay}
+                  >
+                    <View style={styles.trendingRank}>
+                      <Text style={styles.trendingRankText}>{index + 1}</Text>
+                    </View>
+                    <Text style={styles.trendingTitle} numberOfLines={2}>{event.title}</Text>
+                    <Text style={styles.trendingVenue}>{event.venue_name || event.location}</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
             ))}
           </View>
         </Animated.View>
 
-        {/* What's On */}
+        {/* What's On - Event Cards */}
         <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.section}>
           <View style={styles.sectionHead}>
             <Text style={styles.sectionTitle}>What&apos;s On</Text>
@@ -287,30 +288,41 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.eventsList}>
-            {events.slice(0, 4).map((event, index) => (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.whatsOnScroll}
+            decelerationRate="fast"
+          >
+            {events.slice(0, 10).map((event) => (
               <TouchableOpacity
                 key={event.id}
-                style={styles.eventRow}
+                style={styles.whatsOnCard}
                 onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
-                activeOpacity={0.8}
+                activeOpacity={0.9}
               >
                 <Image 
                   source={{ uri: event.image || event.image_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800' }} 
-                  style={styles.eventThumb} 
+                  style={styles.whatsOnImage} 
                   contentFit="cover"
-                  placeholder={{ uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' }}
-                  transition={200}
                 />
-                <View style={styles.eventInfo}>
-                  <Text style={styles.eventDate}>{formatDate(event)}</Text>
-                  <Text style={styles.eventName} numberOfLines={1}>{event.title}</Text>
-                  <Text style={styles.eventVenue}>{event.venue_name || event.location}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                <LinearGradient 
+                  colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']} 
+                  locations={[0, 0.5, 1]}
+                  style={styles.whatsOnOverlay}
+                >
+                  <View style={styles.whatsOnDateBadge}>
+                    <Text style={styles.whatsOnDateText}>{formatDate(event)}</Text>
+                  </View>
+                  <Text style={styles.whatsOnTitle} numberOfLines={2}>{event.title}</Text>
+                  <View style={styles.whatsOnMeta}>
+                    <Ionicons name="location-outline" size={12} color="rgba(255,255,255,0.7)" />
+                    <Text style={styles.whatsOnVenue}>{event.venue_name || event.location}</Text>
+                  </View>
+                </LinearGradient>
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         </Animated.View>
 
         {/* Venues */}
@@ -624,11 +636,15 @@ const styles = StyleSheet.create({
   trendingGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    marginHorizontal: -5,
   },
   trendingCard: {
-    width: (width - 40 - 12) / 2,
-    height: 130,
+    flexBasis: '50%',
+    paddingHorizontal: 5,
+    paddingBottom: 10,
+  },
+  trendingCardInner: {
+    height: 140,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -722,5 +738,61 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.5)',
     marginTop: 2,
+  },
+
+  // What's On Cards
+  whatsOnScroll: {
+    paddingRight: 20,
+  },
+  whatsOnCard: {
+    width: width * 0.42,
+    height: 180,
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginRight: 12,
+  },
+  whatsOnImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  whatsOnOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: 12,
+  },
+  whatsOnDateBadge: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  whatsOnDateText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000',
+    letterSpacing: 0.5,
+  },
+  whatsOnTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+    lineHeight: 18,
+    marginBottom: 4,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  whatsOnMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  whatsOnVenue: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 });

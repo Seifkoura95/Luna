@@ -1484,7 +1484,10 @@ const styles = StyleSheet.create({
   // Leaderboard styles
   leaderboardSection: {
     marginBottom: spacing.lg,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
+    maxWidth: 400,
+    alignSelf: 'center',
+    width: '100%',
   },
   leaderboardHeader: {
     flexDirection: 'row',
@@ -1514,10 +1517,13 @@ const styles = StyleSheet.create({
     color: colors.accent,
   },
   scoreboardContainer: {
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: radius.lg,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: radius.md,
     overflow: 'hidden',
     borderWidth: 1,
+    maxWidth: 380,
+    alignSelf: 'center',
+    width: '100%',
     borderColor: 'rgba(255,255,255,0.1)',
   },
   scoreboardRow: {
