@@ -414,7 +414,7 @@ export default function WalletScreen() {
           showPoints={false} 
         />
 
-        {/* Points Card - Simplified */}
+        {/* Points Card - Full Version with Perks */}
         <View style={styles.rewardsCard}>
           <LinearGradient
             colors={['#1A1A1A', '#0D0D0D']}
@@ -423,7 +423,7 @@ export default function WalletScreen() {
             style={styles.rewardsGradient}
           >
             {/* Accent border glow */}
-            <View style={[styles.accentBorder, { borderColor: colors.gold }]} />
+            <View style={[styles.accentBorder, { borderColor: subscriptionData?.tier?.color || colors.gold }]} />
             
             <View style={styles.rewardsHeader}>
               <View style={styles.pointsDisplay}>
@@ -437,13 +437,52 @@ export default function WalletScreen() {
               </View>
               
               <TouchableOpacity 
-                style={[styles.rewardsButton, { backgroundColor: colors.gold + '20', borderColor: colors.gold }]}
-                onPress={() => router.push('/rewards-shop')}
+                style={[styles.tierBadge, { backgroundColor: subscriptionData?.tier?.color || colors.gold }]}
+                onPress={() => router.push('/subscriptions')}
               >
-                <Ionicons name="gift" size={16} color={colors.gold} />
-                <Text style={[styles.rewardsButtonText, { color: colors.gold }]}>REDEEM REWARDS</Text>
+                <Ionicons 
+                  name={subscriptionData?.tier?.id === 'supernova' ? 'star' : subscriptionData?.tier?.id === 'eclipse' ? 'flash' : 'moon'} 
+                  size={14} 
+                  color="#000" 
+                />
+                <Text style={styles.tierBadgeText}>
+                  {subscriptionData?.tier?.name?.toUpperCase() || 'LUNAR'}
+                </Text>
               </TouchableOpacity>
             </View>
+
+            {/* Perks Row */}
+            <View style={styles.rewardsInfo}>
+              <View style={styles.rewardsStat}>
+                <Text style={styles.rewardsStatValue}>{subscriptionData?.tier?.points_multiplier || 1}x</Text>
+                <Text style={styles.rewardsStatLabel}>Multiplier</Text>
+              </View>
+              <View style={styles.rewardsDivider} />
+              <View style={styles.rewardsStat}>
+                <Text style={styles.rewardsStatValue}>
+                  {subscriptionData?.subscription?.free_entries_remaining === -1 
+                    ? '∞' 
+                    : subscriptionData?.subscription?.free_entries_remaining || 0}
+                </Text>
+                <Text style={styles.rewardsStatLabel}>Free Entries</Text>
+              </View>
+              <View style={styles.rewardsDivider} />
+              <View style={styles.rewardsStat}>
+                <Text style={styles.rewardsStatValue}>$1</Text>
+                <Text style={styles.rewardsStatLabel}>= 1 Point</Text>
+              </View>
+            </View>
+
+            {/* Upgrade Button */}
+            <TouchableOpacity 
+              style={[styles.upgradeButton, { borderColor: subscriptionData?.tier?.color || colors.gold }]}
+              onPress={() => router.push('/subscriptions')}
+            >
+              <Ionicons name="arrow-up-circle" size={18} color={subscriptionData?.tier?.color || colors.gold} />
+              <Text style={[styles.upgradeButtonText, { color: subscriptionData?.tier?.color || colors.gold }]}>
+                {subscriptionData?.is_subscribed ? 'MANAGE SUBSCRIPTION' : 'UPGRADE MEMBERSHIP'}
+              </Text>
+            </TouchableOpacity>
           </LinearGradient>
         </View>
 
