@@ -444,6 +444,14 @@ export default function ProfileScreen() {
       onPress: () => router.push('/refer-friend'),
     },
     {
+      id: 'birthday',
+      icon: 'balloon',
+      title: 'Birthday Club',
+      subtitle: 'Special rewards',
+      color: '#FF6B9D',
+      onPress: () => router.push('/birthday-club'),
+    },
+    {
       id: 'safety',
       icon: 'shield-checkmark',
       title: 'Safety',

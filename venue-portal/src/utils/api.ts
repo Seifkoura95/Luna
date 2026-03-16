@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getToken } from './auth';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://owner-manual-docs.preview.emergentagent.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://birthday-rewards-1.preview.emergentagent.com/api';
 
 const api = axios.create({
   baseURL: API_URL,

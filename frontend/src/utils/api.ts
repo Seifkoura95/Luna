@@ -1031,4 +1031,30 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(settings)
     }),
+
+  // ====== BIRTHDAY CLUB API ======
+  getBirthdayStatus: () =>
+    apiFetch<{
+      has_birthday_set: boolean;
+      date_of_birth?: string;
+      is_birthday_today: boolean;
+      is_birthday_week: boolean;
+      days_until_birthday: number | null;
+      available_rewards: any[];
+      claimed_rewards: any[];
+      message: string;
+    }>('/api/birthday/status'),
+
+  claimBirthdayReward: (rewardId: string) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      reward: any;
+    }>(`/api/birthday/claim/${rewardId}`, { method: 'POST' }),
+
+  getMyBirthdayRewards: () =>
+    apiFetch<{ rewards: any[] }>('/api/birthday/my-rewards'),
+
+  redeemBirthdayReward: (rewardClaimId: string) =>
+    apiFetch<{ success: boolean; message: string }>(`/api/birthday/redeem/${rewardClaimId}`, { method: 'POST' }),
 };

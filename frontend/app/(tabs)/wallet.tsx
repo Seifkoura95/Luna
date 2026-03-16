@@ -414,64 +414,108 @@ export default function WalletScreen() {
           showPoints={false} 
         />
 
-        {/* Leaderboard Section - At Top */}
+        {/* Leaderboard Section - Fun Scoreboard Style */}
         <View style={styles.leaderboardSection}>
           <View style={styles.leaderboardHeader}>
             <View style={styles.leaderboardTitleRow}>
-              <Ionicons name="trophy" size={20} color={colors.gold} />
-              <Text style={styles.sectionTitle}>LEADERBOARD</Text>
+              <Ionicons name="trophy" size={18} color={colors.gold} />
+              <Text style={styles.leaderboardTitle}>LEADERBOARD</Text>
             </View>
-            <TouchableOpacity onPress={() => router.push('/leaderboard')}>
-              <Text style={styles.seeAllText}>Full Rankings</Text>
+            <TouchableOpacity onPress={() => router.push('/leaderboard')} style={styles.fullRankingsBtn}>
+              <Text style={styles.fullRankingsText}>See All</Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.accent} />
             </TouchableOpacity>
           </View>
           
           {leaderboardLoading ? (
             <ActivityIndicator size="small" color={colors.accent} style={{ marginVertical: 20 }} />
           ) : leaderboardData?.leaders?.length > 0 ? (
-            <>
-              {/* Top 3 Mini Podium */}
-              <View style={styles.miniPodium}>
-                {leaderboardData.leaders.slice(0, 3).map((leader: any, index: number) => {
-                  const medals = ['🥇', '🥈', '🥉'];
-                  const podiumColors = ['#FFD700', '#C0C0C0', '#CD7F32'];
-                  return (
-                    <View key={leader.user_id} style={[styles.podiumMiniItem, index === 0 && styles.podiumMiniFirst]}>
-                      <Text style={styles.podiumMedal}>{medals[index]}</Text>
-                      <Text style={[styles.podiumMiniName, index === 0 && { color: podiumColors[0] }]} numberOfLines={1}>
-                        {leader.display_name}
-                      </Text>
-                      <Text style={[styles.podiumMiniScore, { color: podiumColors[index] }]}>
-                        {leader.points_balance?.toLocaleString()} pts
-                      </Text>
+            <View style={styles.scoreboardContainer}>
+              {/* Scoreboard List */}
+              {leaderboardData.leaders.slice(0, 5).map((leader: any, index: number) => {
+                const isCurrentUser = leader.is_current_user;
+                const rankColors = ['#FFD700', '#C0C0C0', '#CD7F32', colors.textMuted, colors.textMuted];
+                const rankEmojis = ['👑', '🥈', '🥉', '', ''];
+                
+                return (
+                  <View 
+                    key={leader.user_id} 
+                    style={[
+                      styles.scoreboardRow,
+                      isCurrentUser && styles.scoreboardRowHighlight,
+                      index === 0 && styles.scoreboardRowFirst
+                    ]}
+                  >
+                    <View style={styles.scoreboardRank}>
+                      {index < 3 ? (
+                        <Text style={styles.rankEmoji}>{rankEmojis[index]}</Text>
+                      ) : (
+                        <Text style={[styles.rankNumber, { color: rankColors[index] }]}>#{index + 1}</Text>
+                      )}
                     </View>
-                  );
-                })}
-              </View>
+                    <View style={styles.scoreboardUser}>
+                      <Text style={[
+                        styles.scoreboardName, 
+                        isCurrentUser && styles.scoreboardNameHighlight,
+                        index === 0 && { color: '#FFD700' }
+                      ]}>
+                        {leader.display_name} {isCurrentUser && '(You)'}
+                      </Text>
+                      {leader.subscription_tier && (
+                        <View style={[styles.miniTierBadge, { backgroundColor: index === 0 ? '#FFD700' : colors.accent }]}>
+                          <Text style={styles.miniTierText}>{leader.subscription_tier}</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.scoreboardPoints}>
+                      <Text style={[
+                        styles.scoreboardScore,
+                        index === 0 && { color: '#FFD700' },
+                        isCurrentUser && { color: colors.accent }
+                      ]}>
+                        {leader.points_balance?.toLocaleString()}
+                      </Text>
+                      <Text style={styles.scoreboardPts}>pts</Text>
+                    </View>
+                  </View>
+                );
+              })}
               
-              {/* Your Rank Card */}
-              <LinearGradient
-                colors={[colors.accent + '15', colors.accent + '05']}
-                style={styles.yourRankCard}
-              >
-                <View style={styles.yourRankLeft}>
-                  <Text style={styles.yourRankLabel}>YOUR RANK</Text>
-                  <Text style={styles.yourRankValue}>
-                    #{leaderboardData.leaders.find((l: any) => l.is_current_user)?.rank || 
-                      leaderboardData.current_user_rank || '-'}
+              {/* Your Position Summary if not in top 5 */}
+              {!leaderboardData.leaders.slice(0, 5).some((l: any) => l.is_current_user) && leaderboardData.current_user_rank && (
+                <View style={styles.yourPositionRow}>
+                  <Text style={styles.yourPositionDots}>• • •</Text>
+                  <View style={[styles.scoreboardRow, styles.scoreboardRowHighlight]}>
+                    <View style={styles.scoreboardRank}>
+                      <Text style={[styles.rankNumber, { color: colors.accent }]}>#{leaderboardData.current_user_rank}</Text>
+                    </View>
+                    <View style={styles.scoreboardUser}>
+                      <Text style={[styles.scoreboardName, styles.scoreboardNameHighlight]}>You</Text>
+                    </View>
+                    <View style={styles.scoreboardPoints}>
+                      <Text style={[styles.scoreboardScore, { color: colors.accent }]}>
+                        {leaderboardData.current_user_score?.toLocaleString()}
+                      </Text>
+                      <Text style={styles.scoreboardPts}>pts</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+              
+              {/* Gap to #1 indicator */}
+              {leaderboardData.gap_to_first > 0 ? (
+                <View style={styles.gapIndicator}>
+                  <Ionicons name="trending-up" size={14} color={colors.gold} />
+                  <Text style={styles.gapText}>
+                    <Text style={styles.gapValue}>{leaderboardData.gap_to_first.toLocaleString()}</Text> pts to reach #1
                   </Text>
                 </View>
-                <View style={styles.yourRankDivider} />
-                <View style={styles.yourRankRight}>
-                  <Text style={styles.yourRankLabel}>GAP TO #1</Text>
-                  <Text style={styles.yourRankGap}>
-                    {leaderboardData.gap_to_first > 0 
-                      ? `${leaderboardData.gap_to_first.toLocaleString()} pts`
-                      : '🏆 You\'re #1!'}
-                  </Text>
+              ) : (
+                <View style={styles.gapIndicator}>
+                  <Text style={styles.championText}>🏆 You're the champion!</Text>
                 </View>
-              </LinearGradient>
-            </>
+              )}
+            </View>
           ) : (
             <View style={styles.emptyLeaderboard}>
               <Ionicons name="trophy-outline" size={32} color={colors.textMuted} />
@@ -1439,101 +1483,141 @@ const styles = StyleSheet.create({
   },
   // Leaderboard styles
   leaderboardSection: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.sm,
   },
   leaderboardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   leaderboardTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
   },
-  seeAllText: {
-    fontSize: 13,
+  leaderboardTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    letterSpacing: 1,
+  },
+  fullRankingsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  fullRankingsText: {
+    fontSize: 12,
     fontWeight: '600',
     color: colors.accent,
   },
-  miniPodium: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    gap: spacing.md,
-    marginBottom: spacing.md,
-    paddingHorizontal: spacing.sm,
-  },
-  podiumMiniItem: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: radius.md,
-    padding: spacing.sm,
-  },
-  podiumMiniFirst: {
-    backgroundColor: 'rgba(255,215,0,0.1)',
+  scoreboardContainer: {
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: radius.lg,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,215,0,0.3)',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  podiumMedal: {
-    fontSize: 20,
-    marginBottom: 4,
+  scoreboardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
   },
-  podiumMiniName: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 2,
+  scoreboardRowFirst: {
+    backgroundColor: 'rgba(255,215,0,0.1)',
   },
-  podiumMiniScore: {
-    fontSize: 10,
+  scoreboardRowHighlight: {
+    backgroundColor: colors.accent + '15',
+  },
+  scoreboardRank: {
+    width: 36,
+    alignItems: 'center',
+  },
+  rankEmoji: {
+    fontSize: 18,
+  },
+  rankNumber: {
+    fontSize: 14,
     fontWeight: '700',
   },
-  yourRankCard: {
+  scoreboardUser: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.accent + '30',
+    gap: spacing.xs,
   },
-  yourRankLeft: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  yourRankRight: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  yourRankLabel: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: colors.textMuted,
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  yourRankValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: colors.accent,
-  },
-  yourRankDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: colors.border,
-    marginHorizontal: spacing.md,
-  },
-  yourRankGap: {
+  scoreboardName: {
     fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  scoreboardNameHighlight: {
+    color: colors.accent,
+    fontWeight: '700',
+  },
+  miniTierBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.xs,
+  },
+  miniTierText: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#000',
+    textTransform: 'uppercase',
+  },
+  scoreboardPoints: {
+    alignItems: 'flex-end',
+  },
+  scoreboardScore: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  scoreboardPts: {
+    fontSize: 9,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+  },
+  yourPositionRow: {
+    alignItems: 'center',
+  },
+  yourPositionDots: {
+    fontSize: 12,
+    color: colors.textMuted,
+    paddingVertical: spacing.xs,
+  },
+  gapIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  gapText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  gapValue: {
+    fontWeight: '700',
+    color: colors.gold,
+  },
+  championText: {
+    fontSize: 13,
     fontWeight: '700',
     color: colors.gold,
   },
   emptyLeaderboard: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: radius.lg,
   },
   emptyLeaderboardText: {
     fontSize: 13,

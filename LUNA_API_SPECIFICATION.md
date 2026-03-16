@@ -1,7 +1,7 @@
 # Luna Group VIP API - Technical Specification
 
 **Version:** 1.0  
-**Base URL:** `https://owner-manual-docs.preview.emergentagent.com/api`  
+**Base URL:** `https://birthday-rewards-1.preview.emergentagent.com/api`  
 **Last Updated:** February 2025
 
 ---
@@ -1740,7 +1740,7 @@ Many images are stored externally:
 ### Base API URL
 ```
 Production: https://[your-domain]/api
-Preview: https://owner-manual-docs.preview.emergentagent.com/api
+Preview: https://birthday-rewards-1.preview.emergentagent.com/api
 ```
 
 ### Required Environment Variables

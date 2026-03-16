@@ -13,7 +13,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
     BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://owner-manual-docs.preview.emergentagent.com"
+    BASE_URL = "https://birthday-rewards-1.preview.emergentagent.com"
 
 
 class TestBuyPointsAPI:

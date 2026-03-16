@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 
 # Get BASE_URL from environment
-BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://owner-manual-docs.preview.emergentagent.com')
+BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://birthday-rewards-1.preview.emergentagent.com')
 
 # Test credentials
 TEST_USER_EMAIL = "luna@test.com"
