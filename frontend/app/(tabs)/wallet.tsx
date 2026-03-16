@@ -17,7 +17,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
-import { api } from '../../src/utils/api';
+import { api, apiFetch } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { AppBackground } from '../../src/components/AppBackground';
@@ -189,10 +189,10 @@ export default function WalletScreen() {
       
       // Fetch leaderboard data
       try {
-        const leaderboard = await api.get('/leaderboard?period=all_time&category=points&limit=10');
-        setLeaderboardData(leaderboard.data);
+        const leaderboardRes = await apiFetch<any>('/api/leaderboard?period=all_time&category=points&limit=10');
+        setLeaderboardData(leaderboardRes);
       } catch (e) {
-        console.log('Failed to fetch leaderboard');
+        console.log('Failed to fetch leaderboard:', e);
       }
       setLeaderboardLoading(false);
     } catch (e) {
@@ -414,6 +414,72 @@ export default function WalletScreen() {
           showPoints={false} 
         />
 
+        {/* Leaderboard Section - At Top */}
+        <View style={styles.leaderboardSection}>
+          <View style={styles.leaderboardHeader}>
+            <View style={styles.leaderboardTitleRow}>
+              <Ionicons name="trophy" size={20} color={colors.gold} />
+              <Text style={styles.sectionTitle}>LEADERBOARD</Text>
+            </View>
+            <TouchableOpacity onPress={() => router.push('/leaderboard')}>
+              <Text style={styles.seeAllText}>Full Rankings</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {leaderboardLoading ? (
+            <ActivityIndicator size="small" color={colors.accent} style={{ marginVertical: 20 }} />
+          ) : leaderboardData?.leaders?.length > 0 ? (
+            <>
+              {/* Top 3 Mini Podium */}
+              <View style={styles.miniPodium}>
+                {leaderboardData.leaders.slice(0, 3).map((leader: any, index: number) => {
+                  const medals = ['🥇', '🥈', '🥉'];
+                  const podiumColors = ['#FFD700', '#C0C0C0', '#CD7F32'];
+                  return (
+                    <View key={leader.user_id} style={[styles.podiumMiniItem, index === 0 && styles.podiumMiniFirst]}>
+                      <Text style={styles.podiumMedal}>{medals[index]}</Text>
+                      <Text style={[styles.podiumMiniName, index === 0 && { color: podiumColors[0] }]} numberOfLines={1}>
+                        {leader.display_name}
+                      </Text>
+                      <Text style={[styles.podiumMiniScore, { color: podiumColors[index] }]}>
+                        {leader.points_balance?.toLocaleString()} pts
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+              
+              {/* Your Rank Card */}
+              <LinearGradient
+                colors={[colors.accent + '15', colors.accent + '05']}
+                style={styles.yourRankCard}
+              >
+                <View style={styles.yourRankLeft}>
+                  <Text style={styles.yourRankLabel}>YOUR RANK</Text>
+                  <Text style={styles.yourRankValue}>
+                    #{leaderboardData.leaders.find((l: any) => l.is_current_user)?.rank || 
+                      leaderboardData.current_user_rank || '-'}
+                  </Text>
+                </View>
+                <View style={styles.yourRankDivider} />
+                <View style={styles.yourRankRight}>
+                  <Text style={styles.yourRankLabel}>GAP TO #1</Text>
+                  <Text style={styles.yourRankGap}>
+                    {leaderboardData.gap_to_first > 0 
+                      ? `${leaderboardData.gap_to_first.toLocaleString()} pts`
+                      : '🏆 You\'re #1!'}
+                  </Text>
+                </View>
+              </LinearGradient>
+            </>
+          ) : (
+            <View style={styles.emptyLeaderboard}>
+              <Ionicons name="trophy-outline" size={32} color={colors.textMuted} />
+              <Text style={styles.emptyLeaderboardText}>Loading leaderboard...</Text>
+            </View>
+          )}
+        </View>
+
         {/* Points Card - Full Version with Perks */}
         <View style={styles.rewardsCard}>
           <LinearGradient
@@ -533,72 +599,6 @@ export default function WalletScreen() {
               </View>
             </View>
           ))}
-        </View>
-
-        {/* Leaderboard Section */}
-        <View style={styles.leaderboardSection}>
-          <View style={styles.leaderboardHeader}>
-            <View style={styles.leaderboardTitleRow}>
-              <Ionicons name="trophy" size={20} color={colors.gold} />
-              <Text style={styles.sectionTitle}>LEADERBOARD</Text>
-            </View>
-            <TouchableOpacity onPress={() => router.push('/leaderboard')}>
-              <Text style={styles.seeAllText}>Full Rankings</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {leaderboardLoading ? (
-            <ActivityIndicator size="small" color={colors.accent} style={{ marginVertical: 20 }} />
-          ) : leaderboardData?.leaders?.length > 0 ? (
-            <>
-              {/* Top 3 Mini Podium */}
-              <View style={styles.miniPodium}>
-                {leaderboardData.leaders.slice(0, 3).map((leader: any, index: number) => {
-                  const medals = ['🥇', '🥈', '🥉'];
-                  const colors_arr = ['#FFD700', '#C0C0C0', '#CD7F32'];
-                  return (
-                    <View key={leader.user_id} style={[styles.podiumMiniItem, index === 0 && styles.podiumMiniFirst]}>
-                      <Text style={styles.podiumMedal}>{medals[index]}</Text>
-                      <Text style={[styles.podiumMiniName, index === 0 && { color: colors_arr[0] }]} numberOfLines={1}>
-                        {leader.display_name}
-                      </Text>
-                      <Text style={[styles.podiumMiniScore, { color: colors_arr[index] }]}>
-                        {leader.points_balance?.toLocaleString()} pts
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-              
-              {/* Your Rank Card */}
-              <LinearGradient
-                colors={[colors.accent + '15', colors.accent + '05']}
-                style={styles.yourRankCard}
-              >
-                <View style={styles.yourRankLeft}>
-                  <Text style={styles.yourRankLabel}>YOUR RANK</Text>
-                  <Text style={styles.yourRankValue}>
-                    #{leaderboardData.leaders.find((l: any) => l.is_current_user)?.rank || 
-                      leaderboardData.current_user_rank || '-'}
-                  </Text>
-                </View>
-                <View style={styles.yourRankDivider} />
-                <View style={styles.yourRankRight}>
-                  <Text style={styles.yourRankLabel}>GAP TO #1</Text>
-                  <Text style={styles.yourRankGap}>
-                    {leaderboardData.gap_to_first > 0 
-                      ? `${leaderboardData.gap_to_first.toLocaleString()} pts`
-                      : '🏆 You\'re #1!'}
-                  </Text>
-                </View>
-              </LinearGradient>
-            </>
-          ) : (
-            <View style={styles.emptyLeaderboard}>
-              <Ionicons name="trophy-outline" size={32} color={colors.textMuted} />
-              <Text style={styles.emptyLeaderboardText}>Leaderboard loading...</Text>
-            </View>
-          )}
         </View>
 
         {/* Tab Selector */}
