@@ -514,8 +514,47 @@ A comprehensive owner's manual has been created covering:
 14. Venue Admin Auction CRUD (create, update, delete)
 15. Venue Admin User Analytics (comprehensive user profiles)
 
+## Phase 10: Leaderboard & Birthday Club ✅ COMPLETE (March 2026)
+
+### Leaderboard Feature ✅
+- **UI**: Fun scoreboard list on Wallet page with crown/medal emojis for top 3
+- **Rankings**: Shows top 5 users with points, tier badges, and display names
+- **Current User Position**: Highlights user's rank if not in top 5
+- **Gap to #1**: Shows points needed to reach first place
+- **APIs**:
+  - GET /api/leaderboard - Rankings by period (all_time, monthly, weekly) and category (points, visits, spend)
+  - GET /api/leaderboard/my-stats - Detailed user stats
+  - GET /api/leaderboard/strategies - Point-earning tips
+  - POST /api/leaderboard/seed-sample-users - Seed demo data
+
+### Birthday Club Feature ✅
+- **Birthday Detection**: Rewards unlock 3 days before/after birthday
+- **Available Rewards**:
+  - Free Entry (any Luna venue)
+  - Free Birthday Drink
+  - 250 Bonus Points (instant)
+  - 2x Points Multiplier (7 days)
+- **UI**: Dedicated birthday-club.tsx screen with reward cards, claim buttons
+- **Navigation**: Access via Profile > Quick Actions > Birthday Club
+- **APIs**:
+  - GET /api/birthday/status - Birthday week status and available rewards
+  - POST /api/birthday/claim/{reward_id} - Claim birthday reward
+  - GET /api/birthday/my-rewards - Claimed rewards history
+  - POST /api/birthday/redeem/{claim_id} - Redeem at venue
+
 ## Test Reports
 - /app/test_reports/iteration_10.json - Modular routes refactoring test (Feb 27, 2025) - 100% pass rate
 - /app/test_reports/iteration_12.json - Full app deep-dive (Feb 27, 2025)
 - /app/test_reports/iteration_7.json - Backend test (Feb 25, 2025)
+
+## Pending Technical Debt
+- **server.py Cleanup**: Remove duplicated endpoint definitions (7745 lines → ~500 lines)
+  - Routes have been modularized into `/app/backend/routes/`
+  - Old inline definitions in server.py should be removed
+  - Risk: Medium - requires careful testing after cleanup
+
+## Known Infrastructure Issues
+- **CherryHub Integration**: Network DNS resolution blocked in container (use MOCK_MODE=true)
+- **Venue Portal Caching**: CDN caches aggressively, use hard refresh (Cmd+Shift+R)
+- **Expo Tunnel**: Occasional ngrok timeout, restart expo service if needed
 
