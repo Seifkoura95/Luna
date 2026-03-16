@@ -548,10 +548,11 @@ A comprehensive owner's manual has been created covering:
 - /app/test_reports/iteration_7.json - Backend test (Feb 25, 2025)
 
 ## Pending Technical Debt
-- **server.py Cleanup**: Remove duplicated endpoint definitions (7745 lines → ~500 lines)
-  - Routes have been modularized into `/app/backend/routes/`
-  - Old inline definitions in server.py should be removed
-  - Risk: Medium - requires careful testing after cleanup
+- **server.py Cleanup**: ✅ COMPLETE (March 16, 2026)
+  - Reduced from 7745 lines to 6576 lines (1169 lines removed)
+  - Removed duplicated endpoints: health, venues, auth, rewards, missions, events, boosts, auctions, photos, video, referrals
+  - Routes now served from modular `/app/backend/routes/` directory
+  - Backup saved at `/app/backend/server.py.backup`
 
 ## Known Infrastructure Issues
 - **CherryHub Integration**: Network DNS resolution blocked in container (use MOCK_MODE=true)

@@ -156,12 +156,29 @@ for router in ALL_ROUTERS:
 logger.info(f"Loaded {len(ALL_ROUTERS)} modular route modules")
 
 
-# NOTE: Health check endpoint moved to routes/health.py
+# ====== HEALTH CHECK ======
 
-# NOTE: Basic venues list moved to routes/venues.py
+@api_router.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "service": "Luna Group VIP API",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+# Import venues
 from luna_venues_config import LUNA_VENUES
 
-# Venue detail with status (unique to server.py)
+# ====== VENUES API ======
+
+@api_router.get("/venues")
+async def get_venues(region: Optional[str] = None):
+    venues = list(LUNA_VENUES.values())
+    if region:
+        venues = [v for v in venues if v["region"] == region]
+    return venues
+
 @api_router.get("/venues/{venue_id}")
 async def get_venue(venue_id: str):
     if venue_id not in LUNA_VENUES:
@@ -178,8 +195,199 @@ async def get_venue(venue_id: str):
             venue["status"] = "closed"
     return venue
 
+# ====== AUTH API ======
 
-# NOTE: Auth endpoints moved to routes/auth.py
+@api_router.post("/auth/register")
+async def register(request: RegisterRequest):
+    existing = await db.users.find_one({"email": request.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Validate referral code if provided
+    referrer = None
+    if request.referral_code:
+        referrer = await db.users.find_one({"referral_code": request.referral_code.upper()})
+        if not referrer:
+            raise HTTPException(status_code=400, detail="Invalid referral code")
+    
+    hashed = bcrypt.hashpw(request.password.encode(), bcrypt.gensalt())
+    user_id = str(uuid.uuid4())
+    
+    # Generate email verification token
+    verification_token = generate_verification_token()
+    verification_expiry = datetime.now(timezone.utc) + timedelta(hours=EMAIL_VERIFICATION_EXPIRY_HOURS)
+    
+    user = {
+        "user_id": user_id,
+        "email": request.email,
+        "hashed_password": hashed.decode(),
+        "name": request.name,
+        "tier": "bronze",
+        "points_balance": 500,
+        "home_region": "brisbane",
+        "favorite_venues": [],
+        "referred_by": referrer["user_id"] if referrer else None,
+        "email_verified": False,  # Requires verification
+        "email_verification_token": verification_token,
+        "email_verification_expiry": verification_expiry,
+        "push_token": None,  # Set when user enables push notifications
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.users.insert_one(user)
+    
+    # Create referral record if code was provided (pending until email verified)
+    if referrer:
+        referral = {
+            "id": str(uuid.uuid4())[:8],
+            "referrer_user_id": referrer["user_id"],
+            "referrer_name": referrer.get("name", "Luna Member"),
+            "referred_user_id": user_id,
+            "referred_name": request.name,
+            "referral_code": request.referral_code.upper(),
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.referrals.insert_one(referral)
+    
+    # Send verification email
+    verification_link = await send_verification_email(request.email, request.name, verification_token)
+    
+    token_payload = {
+        "user_id": user_id,
+        "email": request.email,
+        "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRY_DAYS)
+    }
+    token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    
+    # Remove sensitive fields
+    user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id", "email_verification_token"]}
+    
+    return {
+        "user": user_copy,
+        "token": token,
+        "verification_required": True,
+        "message": "Please check your email to verify your account",
+        # Include link for demo purposes (remove in production)
+        "demo_verification_link": verification_link
+    }
+
+@api_router.post("/auth/verify-email")
+async def verify_email(token: str):
+    """Verify user's email address using the token sent via email"""
+    user = await db.users.find_one({"email_verification_token": token})
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+    
+    # Check if token has expired
+    expiry = user.get("email_verification_expiry")
+    if expiry and datetime.now(timezone.utc) > expiry:
+        raise HTTPException(status_code=400, detail="Verification token has expired. Please request a new one.")
+    
+    # Already verified
+    if user.get("email_verified"):
+        return {"success": True, "message": "Email already verified"}
+    
+    # Mark email as verified
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {
+            "$set": {
+                "email_verified": True,
+                "email_verified_at": datetime.now(timezone.utc)
+            },
+            "$unset": {
+                "email_verification_token": "",
+                "email_verification_expiry": ""
+            }
+        }
+    )
+    
+    # Complete any pending referral
+    referral_completed = await complete_referral(user["user_id"])
+    
+    response = {
+        "success": True,
+        "message": "Email verified successfully! Welcome to Luna Group.",
+        "user_id": user["user_id"]
+    }
+    
+    if referral_completed:
+        response["referral_bonus"] = f"You and your friend each earned {REFERRAL_POINTS_REWARD} points!"
+    
+    return response
+
+@api_router.post("/auth/resend-verification")
+async def resend_verification_email(request: Request):
+    """Resend verification email for unverified users"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.get("email_verified"):
+        return {"success": True, "message": "Email already verified"}
+    
+    # Generate new verification token
+    verification_token = generate_verification_token()
+    verification_expiry = datetime.now(timezone.utc) + timedelta(hours=EMAIL_VERIFICATION_EXPIRY_HOURS)
+    
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {
+            "email_verification_token": verification_token,
+            "email_verification_expiry": verification_expiry
+        }}
+    )
+    
+    # Send new verification email
+    verification_link = await send_verification_email(user["email"], user["name"], verification_token)
+    
+    return {
+        "success": True,
+        "message": "Verification email sent",
+        "demo_verification_link": verification_link  # Remove in production
+    }
+
+@api_router.post("/auth/login")
+async def login(request: LoginRequest):
+    logging.info(f"Login attempt for: {request.email} (type: {type(request.email).__name__})")
+    query = {"email": request.email}
+    logging.info(f"MongoDB query: {query}")
+    user = await db.users.find_one(query)
+    logging.info(f"Query result: {user is not None}")
+    if not user:
+        # Debug: try to find ALL emails
+        all_users = await db.users.find({}, {"email": 1, "_id": 0}).to_list(100)
+        logging.warning(f"User not found: {request.email}. Available emails: {[u['email'] for u in all_users[:5]]}")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    logging.info(f"User found: {user.get('email')}, role: {user.get('role')}")
+    if not bcrypt.checkpw(request.password.encode(), user["hashed_password"].encode()):
+        logging.warning(f"Password check failed for: {request.email}")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token_payload = {
+        "user_id": user["user_id"],
+        "email": user["email"],
+        "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRY_DAYS)
+    }
+    token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    # Remove MongoDB _id and hashed_password
+    user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id"]}
+    logging.info(f"Login successful for: {request.email}")
+    return {"user": user_copy, "token": token}
+
+@api_router.get("/auth/me")
+async def get_me(request: Request):
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # Remove MongoDB _id and hashed_password
+    user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id"]}
+    return user_copy
 
 # ====== TONIGHT PASS API ======
 
@@ -203,7 +411,54 @@ async def generate_qr(request: Request, venue_id: str):
         "expires_at": expiry
     }
 
-# NOTE: Rewards API moved to routes/rewards.py
+# ====== REWARDS API ======
+
+@api_router.get("/rewards")
+async def get_rewards(category: Optional[str] = None, venue_id: Optional[str] = None):
+    query = {"is_active": True}
+    if category:
+        query["category"] = category
+    rewards = await db.rewards.find(query).to_list(100)
+    if venue_id:
+        rewards = [r for r in rewards if r.get("venue_restriction") is None or r.get("venue_restriction") == venue_id]
+    # Clean MongoDB ObjectIds
+    return clean_mongo_docs(rewards)
+
+@api_router.post("/rewards/redeem")
+async def redeem_reward(request: Request, reward_id: str, venue_id: Optional[str] = None):
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    reward = await db.rewards.find_one({"id": reward_id})
+    if not reward:
+        raise HTTPException(status_code=404, detail="Reward not found")
+    if reward.get("venue_restriction") and reward["venue_restriction"] != venue_id:
+        raise HTTPException(status_code=400, detail="Reward not available at this venue")
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if user["points_balance"] < reward["points_cost"]:
+        raise HTTPException(status_code=400, detail="Insufficient points")
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$inc": {"points_balance": -reward["points_cost"]}}
+    )
+    redemption = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["user_id"],
+        "reward_id": reward_id,
+        "reward_name": reward["name"],
+        "points_spent": reward["points_cost"],
+        "venue_redeemed": venue_id,
+        "validation_code": secrets.token_hex(4).upper(),
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=24)
+    }
+    await db.redemptions.insert_one(redemption)
+    new_user = await db.users.find_one({"user_id": user["user_id"]})
+    return {
+        "message": "Reward redeemed successfully!",
+        "redemption": clean_mongo_doc(redemption),
+        "new_balance": new_user["points_balance"]
+    }
 
 # ====== QR CODE REDEMPTION SYSTEM ======
 
@@ -305,7 +560,137 @@ async def venue_scan_qr(request: Request, scan_req: ScanQRRequest):
         "redeemed_at": datetime.now(timezone.utc).isoformat()
     }
 
-# NOTE: Missions API moved to routes/missions.py
+# ====== MISSIONS API (With Tracking) ======
+
+@api_router.get("/missions")
+async def get_missions(request: Request, venue_id: Optional[str] = None):
+    """Get missions with user progress"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    query = {"is_active": True}
+    missions = await db.missions.find(query).to_list(100)
+    
+    if venue_id:
+        missions = [m for m in missions if m.get("venue_requirements") is None or venue_id in m.get("venue_requirements", [])]
+    
+    # Get user's mission progress
+    user_progress = await db.mission_progress.find({
+        "user_id": current_user["user_id"]
+    }).to_list(100)
+    progress_map = {p["mission_id"]: p for p in user_progress}
+    
+    # Merge progress with missions
+    for mission in missions:
+        progress = progress_map.get(mission["id"], {})
+        mission["completed"] = progress.get("completed", False)
+        mission["progress"] = progress.get("progress", 0)
+        mission["claimed"] = progress.get("claimed", False)
+    
+    return clean_mongo_docs(missions)
+
+@api_router.post("/missions/progress")
+async def update_mission_progress(request: Request, progress_req: MissionProgressRequest):
+    """Update progress on a mission"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Get mission
+    mission = await db.missions.find_one({"id": progress_req.mission_id})
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+    
+    # Get or create user progress
+    user_progress = await db.mission_progress.find_one({
+        "user_id": current_user["user_id"],
+        "mission_id": progress_req.mission_id
+    })
+    
+    if user_progress and user_progress.get("completed"):
+        return {"message": "Mission already completed", "progress": user_progress}
+    
+    new_progress = (user_progress.get("progress", 0) if user_progress else 0) + progress_req.progress_increment
+    completed = new_progress >= mission.get("target", 1)
+    
+    await db.mission_progress.update_one(
+        {"user_id": current_user["user_id"], "mission_id": progress_req.mission_id},
+        {"$set": {
+            "user_id": current_user["user_id"],
+            "mission_id": progress_req.mission_id,
+            "progress": new_progress,
+            "completed": completed,
+            "claimed": False,
+            "updated_at": datetime.now(timezone.utc)
+        }},
+        upsert=True
+    )
+    
+    return {
+        "message": "Progress updated",
+        "progress": new_progress,
+        "target": mission.get("target", 1),
+        "completed": completed
+    }
+
+@api_router.post("/missions/{mission_id}/claim")
+async def claim_mission_reward(request: Request, mission_id: str):
+    """Claim reward for completed mission - one time only"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Get mission
+    mission = await db.missions.find_one({"id": mission_id})
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+    
+    # Get user progress
+    user_progress = await db.mission_progress.find_one({
+        "user_id": current_user["user_id"],
+        "mission_id": mission_id
+    })
+    
+    if not user_progress or not user_progress.get("completed"):
+        raise HTTPException(status_code=400, detail="Mission not completed")
+    
+    if user_progress.get("claimed"):
+        raise HTTPException(status_code=400, detail="Reward already claimed for this mission")
+    
+    # Award points
+    points_reward = mission.get("points_reward", 0)
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$inc": {"points_balance": points_reward}}
+    )
+    
+    # Mark as claimed
+    await db.mission_progress.update_one(
+        {"user_id": current_user["user_id"], "mission_id": mission_id},
+        {"$set": {
+            "claimed": True,
+            "claimed_at": datetime.now(timezone.utc)
+        }}
+    )
+    
+    # Record points transaction
+    await db.points_transactions.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": current_user["user_id"],
+        "amount": points_reward,
+        "type": "mission_reward",
+        "description": f"Completed mission: {mission.get('name', 'Unknown')}",
+        "mission_id": mission_id,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    # Get updated balance
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    
+    return {
+        "success": True,
+        "message": f"Claimed {points_reward} points!",
+        "points_awarded": points_reward,
+        "new_balance": user["points_balance"]
+    }
 
 # ====== VENUE STAFF/DASHBOARD API ======
 
@@ -1214,15 +1599,798 @@ async def redeem_reward_with_qr(request: Request, reward_id: str, venue_id: Opti
         "new_balance": new_user["points_balance"]
     }
 
-# NOTE: Events API moved to routes/events.py
+# ====== EVENTS API (Powered by Eventfinda) ======
 
-# NOTE: Boosts API moved to routes/boosts.py
+from eventfinda_service import (
+    eventfinda_service,
+    get_brisbane_events,
+    get_gold_coast_events,
+    get_tonight,
+    get_featured,
+    search as search_events
+)
 
-# NOTE: Auctions API moved to routes/auctions.py
+@api_router.get("/events")
+async def get_events(
+    venue_id: Optional[str] = None,
+    location: Optional[str] = "brisbane",
+    limit: int = 20,
+    category: Optional[str] = None
+):
+    """
+    Get events from Eventfinda (real-time data)
+    
+    Args:
+        venue_id: Optional filter by Luna venue ID
+        location: brisbane or gold-coast
+        limit: Number of events to return (max 50)
+        category: Optional category filter
+    """
+    try:
+        events = await eventfinda_service.get_events(
+            location=location,
+            rows=min(limit, 50),
+            category=category
+        )
+        
+        # Filter by venue if specified
+        if venue_id:
+            events = [e for e in events if e.get("venue_id") == venue_id]
+        
+        return {
+            "events": events,
+            "total": len(events),
+            "source": "eventfinda",
+            "location": location
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch events: {e}")
+        # Fallback to database events
+        now = datetime.now(timezone.utc)
+        query = {"event_date": {"$gte": now}}
+        if venue_id:
+            query["venue_id"] = venue_id
+        db_events = await db.events.find(query).sort("event_date", 1).to_list(limit)
+        return {
+            "events": clean_mongo_docs(db_events),
+            "total": len(db_events),
+            "source": "database",
+            "location": location
+        }
 
-# NOTE: Photos and Video API moved to routes/photos.py
 
-# NOTE: Referral API moved to routes/referrals.py
+@api_router.get("/events/featured")
+async def get_featured_events(location: str = "brisbane", limit: int = 5):
+    """Get featured/popular events"""
+    try:
+        events = await eventfinda_service.get_featured_events(location=location, limit=limit)
+        return {
+            "events": events,
+            "total": len(events),
+            "source": "eventfinda"
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch featured events: {e}")
+        return {"events": [], "total": 0, "source": "eventfinda", "error": str(e)}
+
+
+@api_router.get("/events/tonight")
+async def get_tonight_events(location: str = "brisbane", limit: int = 10):
+    """Get events happening tonight"""
+    try:
+        events = await eventfinda_service.get_tonight_events(location=location, limit=limit)
+        return {
+            "events": events,
+            "total": len(events),
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "source": "eventfinda"
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch tonight's events: {e}")
+        return {"events": [], "total": 0, "source": "eventfinda", "error": str(e)}
+
+
+@api_router.get("/events/weekend")
+async def get_weekend_events(location: str = "brisbane", limit: int = 20):
+    """Get events happening this weekend"""
+    try:
+        events = await eventfinda_service.get_weekend_events(location=location, limit=limit)
+        return {
+            "events": events,
+            "total": len(events),
+            "source": "eventfinda"
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch weekend events: {e}")
+        return {"events": [], "total": 0, "source": "eventfinda", "error": str(e)}
+
+
+@api_router.get("/events/upcoming")
+async def get_upcoming_events(location: str = "brisbane", limit: int = 30):
+    """Get upcoming events (next 30 days)"""
+    try:
+        events = await eventfinda_service.get_upcoming_events(location=location, limit=limit)
+        return {
+            "events": events,
+            "total": len(events),
+            "source": "eventfinda"
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch upcoming events: {e}")
+        return {"events": [], "total": 0, "source": "eventfinda", "error": str(e)}
+
+
+@api_router.get("/events/feed")
+async def get_events_feed(limit: int = 30):
+    """
+    Get events feed ONLY for Luna Group venues
+    
+    Returns categorized events: tonight, tomorrow, featured, upcoming
+    Filters events to only show those at Luna Group venues (Eclipse, After Dark, Su Casa, Juju, Night Market)
+    """
+    try:
+        # Get Luna Group events only
+        luna_events = await eventfinda_service.get_luna_group_events(limit=limit)
+        
+        # Categorize events by date
+        today = datetime.now().strftime("%Y-%m-%d")
+        tomorrow_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+        
+        tonight_events = [e for e in luna_events if e.get("date") == today]
+        tomorrow_events = [e for e in luna_events if e.get("date") == tomorrow_date]
+        featured = [e for e in luna_events if e.get("is_featured")][:5]
+        
+        return {
+            "tonight": tonight_events[:10],
+            "tomorrow": tomorrow_events[:10],
+            "featured": featured,
+            "upcoming": luna_events[:limit],
+            "total_count": len(luna_events),
+            "source": "eventfinda_luna_filtered",
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch Luna Group events feed: {e}")
+        return {
+            "tonight": [],
+            "tomorrow": [],
+            "featured": [],
+            "upcoming": [],
+            "total_count": 0,
+            "source": "eventfinda",
+            "error": str(e)
+        }
+
+
+@api_router.get("/events/search")
+async def search_events_api(
+    q: str,
+    location: str = "brisbane",
+    limit: int = 20
+):
+    """Search events by keyword"""
+    try:
+        events = await eventfinda_service.search_events(
+            query=q,
+            location=location,
+            limit=limit
+        )
+        return {
+            "events": events,
+            "total": len(events),
+            "query": q,
+            "source": "eventfinda"
+        }
+    except Exception as e:
+        logger.error(f"Failed to search events: {e}")
+        return {"events": [], "total": 0, "query": q, "source": "eventfinda", "error": str(e)}
+
+
+@api_router.get("/events/{event_id}")
+async def get_event_detail(event_id: str):
+    """
+    Get event details by ID
+    
+    Supports both Eventfinda IDs (ef_123456) and local database IDs
+    """
+    # Check if it's an Eventfinda event
+    if event_id.startswith("ef_"):
+        ef_id = int(event_id.replace("ef_", ""))
+        try:
+            event = await eventfinda_service.get_event_by_id(ef_id)
+            if event:
+                return event
+        except Exception as e:
+            logger.error(f"Failed to fetch Eventfinda event {ef_id}: {e}")
+    
+    # Fallback to database
+    event = await db.events.find_one({"id": event_id})
+    if event:
+        return clean_mongo_doc(event)
+    
+    raise HTTPException(status_code=404, detail="Event not found")
+
+# ====== BOOSTS API ======
+
+@api_router.get("/boosts")
+async def get_active_boosts(venue_id: Optional[str] = None):
+    now = datetime.now(timezone.utc)
+    query = {
+        "start_time": {"$lte": now},
+        "end_time": {"$gte": now}
+    }
+    if venue_id:
+        query["$or"] = [
+            {"venue_restriction": None},
+            {"venue_restriction": venue_id}
+        ]
+    boosts = await db.boosts.find(query).to_list(10)
+    return clean_mongo_docs(boosts)
+
+@api_router.get("/boosts/upcoming")
+async def get_upcoming_boosts(venue_id: Optional[str] = None):
+    now = datetime.now(timezone.utc)
+    query = {"start_time": {"$gt": now}}
+    if venue_id:
+        query["$or"] = [
+            {"venue_restriction": None},
+            {"venue_restriction": venue_id}
+        ]
+    boosts = await db.boosts.find(query).sort("start_time", 1).to_list(10)
+    return clean_mongo_docs(boosts)
+
+# ====== AUCTIONS API ======
+
+@api_router.get("/auctions")
+async def get_auctions(venue_id: Optional[str] = None, status: Optional[str] = None):
+    query = {}
+    if venue_id:
+        query["venue_id"] = venue_id
+    if status:
+        query["status"] = status
+    auctions = await db.auctions.find(query).sort("start_time", 1).to_list(50)
+    return clean_mongo_docs(auctions)
+
+@api_router.get("/auctions/{auction_id}")
+async def get_auction_detail(auction_id: str):
+    """Get detailed auction info with bid history"""
+    auction = await db.auctions.find_one({"id": auction_id})
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    
+    # Get bid history
+    bids = await db.bids.find({"auction_id": auction_id}).sort("timestamp", -1).to_list(20)
+    
+    auction_data = clean_mongo_doc(auction)
+    auction_data["bid_history"] = clean_mongo_docs(bids)
+    auction_data["total_bids"] = len(bids)
+    
+    return auction_data
+
+@api_router.post("/auctions/bid")
+async def place_bid(request: Request, bid_request: PlaceBidRequest):
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    auction = await db.auctions.find_one({"id": bid_request.auction_id})
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    if auction["status"] != "active":
+        raise HTTPException(status_code=400, detail="Auction not active")
+    
+    # Check max bid limit
+    max_limit = auction.get("max_bid_limit", 10000)
+    if bid_request.amount > max_limit:
+        raise HTTPException(status_code=400, detail=f"Bid cannot exceed ${max_limit}")
+    
+    min_bid = auction["current_bid"] + auction.get("min_increment", 5)
+    if bid_request.amount < min_bid:
+        raise HTTPException(status_code=400, detail=f"Bid must be at least ${min_bid}")
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    previous_winner_id = auction.get("winner_id")
+    min_increment = auction.get("min_increment", 5)
+    
+    # Process the initial bid
+    final_bid_amount = bid_request.amount
+    final_winner_id = user["user_id"]
+    final_winner_name = user["name"]
+    
+    # Check for auto-bid war - if previous bidder has auto-bid enabled
+    if previous_winner_id and previous_winner_id != user["user_id"]:
+        # Find previous bidder's auto-bid setting
+        prev_auto_bid = await db.bids.find_one(
+            {"auction_id": bid_request.auction_id, "user_id": previous_winner_id, "max_bid": {"$exists": True, "$ne": None}},
+            sort=[("timestamp", -1)]
+        )
+        
+        if prev_auto_bid and prev_auto_bid.get("max_bid"):
+            prev_max = prev_auto_bid["max_bid"]
+            
+            # Check if new bidder also has auto-bid
+            new_bidder_max = bid_request.max_bid if bid_request.max_bid else bid_request.amount
+            
+            # Auto-bid war: increment until one runs out
+            current_amount = bid_request.amount
+            current_leader = user["user_id"]
+            current_leader_name = user["name"]
+            
+            while True:
+                # Previous bidder tries to counter
+                counter_bid = current_amount + min_increment
+                
+                if counter_bid <= prev_max:
+                    # Previous bidder can counter
+                    prev_user = await db.users.find_one({"user_id": previous_winner_id})
+                    
+                    # Record the auto-bid
+                    await db.bids.insert_one({
+                        "id": str(uuid.uuid4()),
+                        "auction_id": bid_request.auction_id,
+                        "user_id": previous_winner_id,
+                        "user_name": prev_user["name"] if prev_user else "Auto-bidder",
+                        "amount": counter_bid,
+                        "max_bid": prev_max,
+                        "is_auto_bid": True,
+                        "timestamp": datetime.now(timezone.utc)
+                    })
+                    
+                    current_amount = counter_bid
+                    current_leader = previous_winner_id
+                    current_leader_name = prev_user["name"] if prev_user else "Auto-bidder"
+                    
+                    # Now check if new bidder can counter back
+                    if new_bidder_max:
+                        next_counter = current_amount + min_increment
+                        if next_counter <= new_bidder_max:
+                            # New bidder counters
+                            await db.bids.insert_one({
+                                "id": str(uuid.uuid4()),
+                                "auction_id": bid_request.auction_id,
+                                "user_id": user["user_id"],
+                                "user_name": user["name"],
+                                "amount": next_counter,
+                                "max_bid": new_bidder_max,
+                                "is_auto_bid": True,
+                                "timestamp": datetime.now(timezone.utc)
+                            })
+                            current_amount = next_counter
+                            current_leader = user["user_id"]
+                            current_leader_name = user["name"]
+                        else:
+                            # New bidder can't counter - previous bidder wins auto-bid war
+                            break
+                    else:
+                        # New bidder has no auto-bid - previous bidder wins
+                        break
+                else:
+                    # Previous bidder can't counter - notify them their max was exceeded
+                    await db.auction_notifications.insert_one({
+                        "id": str(uuid.uuid4()),
+                        "user_id": previous_winner_id,
+                        "auction_id": bid_request.auction_id,
+                        "auction_title": auction["title"],
+                        "type": "auto_bid_exhausted",
+                        "message": f"Your auto-bid limit of ${prev_max} was exceeded on {auction['title']}. Current bid: ${current_amount}",
+                        "read": False,
+                        "created_at": datetime.now(timezone.utc)
+                    })
+                    
+                    # Send push notification about auto-bid exhaustion
+                    prev_user = await db.users.find_one({"user_id": previous_winner_id})
+                    if prev_user and prev_user.get("push_tokens"):
+                        for token in prev_user.get("push_tokens", []):
+                            try:
+                                await send_push_notification_to_token(
+                                    token,
+                                    title="⚠️ Auto-Bid Limit Reached",
+                                    body=f"Your ${prev_max} limit on {auction['title']} was exceeded. Bid ${current_amount + min_increment}+ to stay ahead!",
+                                    data={"type": "auto_bid_exhausted", "auction_id": bid_request.auction_id}
+                                )
+                            except Exception as e:
+                                logging.error(f"Failed to send auto-bid exhausted notification: {e}")
+                    break
+            
+            final_bid_amount = current_amount
+            final_winner_id = current_leader
+            final_winner_name = current_leader_name
+    
+    # Update auction with final winner
+    await db.auctions.update_one(
+        {"id": bid_request.auction_id},
+        {"$set": {
+            "current_bid": final_bid_amount, 
+            "winner_id": final_winner_id, 
+            "winner_name": final_winner_name,
+            "last_bid_time": datetime.now(timezone.utc)
+        }}
+    )
+    
+    # Record the original bid (if not already recorded in auto-bid war)
+    if final_winner_id == user["user_id"] and final_bid_amount == bid_request.amount:
+        await db.bids.insert_one({
+            "id": str(uuid.uuid4()),
+            "auction_id": bid_request.auction_id,
+            "user_id": user["user_id"],
+            "user_name": user["name"],
+            "amount": bid_request.amount,
+            "max_bid": bid_request.max_bid,
+            "notify_outbid": bid_request.notify_outbid,
+            "timestamp": datetime.now(timezone.utc)
+        })
+    
+    # Store user's notification preference for this auction
+    if bid_request.notify_outbid:
+        await db.auction_notification_preferences.update_one(
+            {"user_id": user["user_id"], "auction_id": bid_request.auction_id},
+            {"$set": {
+                "user_id": user["user_id"],
+                "auction_id": bid_request.auction_id,
+                "notify_outbid": True,
+                "max_bid": bid_request.max_bid,
+                "updated_at": datetime.now(timezone.utc)
+            }},
+            upsert=True
+        )
+    
+    # Notify previous winner they've been outbid (if they lost)
+    if previous_winner_id and previous_winner_id != final_winner_id:
+        # Check if previous winner wants notifications
+        prev_user_pref = await db.auction_notification_preferences.find_one({
+            "user_id": previous_winner_id,
+            "auction_id": bid_request.auction_id
+        })
+        
+        should_notify = prev_user_pref.get("notify_outbid", True) if prev_user_pref else True
+        
+        if should_notify:
+            # Create notification record
+            notification_id = str(uuid.uuid4())
+            await db.auction_notifications.insert_one({
+                "id": notification_id,
+                "user_id": previous_winner_id,
+                "auction_id": bid_request.auction_id,
+                "auction_title": auction["title"],
+                "type": "outbid",
+                "message": f"You've been outbid on {auction['title']}! Current bid: ${final_bid_amount}",
+                "new_bid": final_bid_amount,
+                "read": False,
+                "created_at": datetime.now(timezone.utc)
+            })
+            
+            # Send push notification to outbid user
+            prev_user = await db.users.find_one({"user_id": previous_winner_id})
+            if prev_user and prev_user.get("push_tokens"):
+                push_tokens = prev_user.get("push_tokens", [])
+                for token in push_tokens:
+                    try:
+                        await send_push_notification_to_token(
+                            token,
+                            title="🔔 You've Been Outbid!",
+                            body=f"Someone bid ${final_bid_amount} on {auction['title']}. Bid now to stay ahead!",
+                            data={
+                                "type": "outbid",
+                                "auction_id": bid_request.auction_id,
+                                "new_bid": final_bid_amount
+                            }
+                        )
+                        logging.info(f"Sent outbid push notification to {previous_winner_id}")
+                    except Exception as e:
+                        logging.error(f"Failed to send push notification: {e}")
+    
+    updated_auction = await db.auctions.find_one({"id": bid_request.auction_id})
+    
+    # Return with auto-bid info
+    response = {
+        "message": "Bid placed successfully!", 
+        "auction": clean_mongo_doc(updated_auction),
+        "auto_bid_active": bid_request.max_bid is not None,
+        "your_max_bid": bid_request.max_bid,
+        "final_amount": final_bid_amount,
+        "you_are_winning": final_winner_id == user["user_id"]
+    }
+    
+    return response
+
+@api_router.get("/auctions/{auction_id}/bids")
+async def get_auction_bids(auction_id: str):
+    """Get bid history for an auction"""
+    bids = await db.bids.find({"auction_id": auction_id}).sort("timestamp", -1).to_list(50)
+    return clean_mongo_docs(bids)
+
+# ====== PHOTOS API ======
+
+# Venue folder mapping
+VENUE_PHOTO_FOLDERS = {
+    "eclipse": "eclipse",
+    "after_dark": "afterdark",
+    "su_casa_brisbane": "sucasa-brisbane",
+    "su_casa_gold_coast": "sucasa-goldcoast",
+}
+
+@api_router.get("/photos")
+async def get_user_photos(request: Request, venue_id: Optional[str] = None):
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    query = {"tagged_users": current_user["user_id"]}
+    if venue_id:
+        query["venue_id"] = venue_id
+    photos = await db.photos.find(query).sort("created_at", -1).to_list(100)
+    return clean_mongo_docs(photos)
+
+@api_router.get("/photos/venues")
+async def get_venue_galleries():
+    """Get list of all venue photo galleries with counts"""
+    galleries = []
+    photos_dir = ROOT_DIR / "static" / "photos"
+    
+    for venue_id, folder_name in VENUE_PHOTO_FOLDERS.items():
+        folder_path = photos_dir / folder_name
+        if folder_path.exists():
+            photos = list(folder_path.glob("*.jpg")) + list(folder_path.glob("*.jpeg")) + list(folder_path.glob("*.png"))
+            
+            # Get venue info
+            venue = LUNA_VENUES.get(venue_id, {})
+            
+            galleries.append({
+                "venue_id": venue_id,
+                "venue_name": venue.get("name", venue_id),
+                "folder": folder_name,
+                "photo_count": len(photos),
+                "cover_image": f"/api/photos/image/{folder_name}/{photos[0].name}" if photos else None,
+                "accent_color": venue.get("accent_color", "#E31837"),
+            })
+    
+    return galleries
+
+@api_router.get("/photos/venue/{venue_id}")
+async def get_venue_photos(venue_id: str):
+    """Get all photos for a specific venue"""
+    folder_name = VENUE_PHOTO_FOLDERS.get(venue_id)
+    if not folder_name:
+        raise HTTPException(status_code=404, detail="Venue gallery not found")
+    
+    photos_dir = ROOT_DIR / "static" / "photos" / folder_name
+    if not photos_dir.exists():
+        return []
+    
+    photos = []
+    for ext in ["*.jpg", "*.jpeg", "*.png"]:
+        for photo_path in photos_dir.glob(ext):
+            photos.append({
+                "id": photo_path.stem,
+                "filename": photo_path.name,
+                "url": f"/api/photos/image/{folder_name}/{photo_path.name}",
+                "venue_id": venue_id,
+                "likes": 0,  # Would be stored in DB in production
+                "tagged": [],  # Would be stored in DB in production
+            })
+    
+    return photos
+
+@api_router.get("/photos/image/{folder}/{filename}")
+async def serve_photo(folder: str, filename: str):
+    """Serve a photo file"""
+    from fastapi.responses import FileResponse
+    
+    # Validate folder exists in our mapping
+    valid_folders = list(VENUE_PHOTO_FOLDERS.values())
+    if folder not in valid_folders:
+        raise HTTPException(status_code=404, detail="Invalid folder")
+    
+    photo_path = ROOT_DIR / "static" / "photos" / folder / filename
+    if not photo_path.exists():
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    return FileResponse(
+        photo_path,
+        media_type="image/jpeg",
+        headers={"Cache-Control": "public, max-age=86400"}
+    )
+
+
+
+# ====== VIDEO BACKGROUND ======
+@api_router.get("/video/background")
+async def serve_background_video():
+    """Serve the background video file"""
+    from fastapi.responses import FileResponse
+    
+    video_path = ROOT_DIR / "static" / "video" / "background.mp4"
+    if not video_path.exists():
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    return FileResponse(
+        video_path,
+        media_type="video/mp4",
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "Accept-Ranges": "bytes"
+        }
+    )
+
+
+
+# ====== REFERRAL SYSTEM ======
+
+REFERRAL_POINTS_REWARD = 10  # Points awarded when referred friend signs up
+
+@api_router.get("/referral/code")
+async def get_referral_code(request: Request):
+    """Get or generate user's unique referral code"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if user already has a referral code
+    if user.get("referral_code"):
+        referral_code = user["referral_code"]
+    else:
+        # Generate unique referral code (username-based or random)
+        name_part = (user.get("name", "LUNA")[:4]).upper().replace(" ", "")
+        random_part = secrets.token_hex(3).upper()
+        referral_code = f"{name_part}{random_part}"
+        
+        # Save to user
+        await db.users.update_one(
+            {"user_id": current_user["user_id"]},
+            {"$set": {"referral_code": referral_code}}
+        )
+    
+    # Get referral stats
+    successful_referrals = await db.referrals.count_documents({
+        "referrer_user_id": current_user["user_id"],
+        "status": "completed"
+    })
+    
+    pending_referrals = await db.referrals.count_documents({
+        "referrer_user_id": current_user["user_id"],
+        "status": "pending"
+    })
+    
+    total_points_earned = successful_referrals * REFERRAL_POINTS_REWARD
+    
+    return {
+        "referral_code": referral_code,
+        "referral_link": f"https://lunagroup.app/join?ref={referral_code}",
+        "stats": {
+            "successful_referrals": successful_referrals,
+            "pending_referrals": pending_referrals,
+            "total_points_earned": total_points_earned,
+            "points_per_referral": REFERRAL_POINTS_REWARD
+        }
+    }
+
+@api_router.get("/referral/history")
+async def get_referral_history(request: Request):
+    """Get user's referral history"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    referrals = await db.referrals.find({
+        "referrer_user_id": current_user["user_id"]
+    }).sort("created_at", -1).to_list(50)
+    
+    return {
+        "referrals": clean_mongo_docs(referrals),
+        "total": len(referrals)
+    }
+
+@api_router.post("/referral/apply")
+async def apply_referral_code(referral_code: str, request: Request):
+    """Apply a referral code for a new user (called during registration)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Check if user has already used a referral code
+    existing = await db.referrals.find_one({
+        "referred_user_id": current_user["user_id"]
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already used a referral code")
+    
+    # Find the referrer
+    referrer = await db.users.find_one({"referral_code": referral_code.upper()})
+    if not referrer:
+        raise HTTPException(status_code=404, detail="Invalid referral code")
+    
+    # Can't refer yourself
+    if referrer["user_id"] == current_user["user_id"]:
+        raise HTTPException(status_code=400, detail="You cannot use your own referral code")
+    
+    # Create pending referral
+    referral = {
+        "id": str(uuid.uuid4())[:8],
+        "referrer_user_id": referrer["user_id"],
+        "referrer_name": referrer.get("name", "Luna Member"),
+        "referred_user_id": current_user["user_id"],
+        "referral_code": referral_code.upper(),
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.referrals.insert_one(referral)
+    
+    return {
+        "success": True,
+        "message": f"Referral code applied! {referrer.get('name', 'Your friend')} will receive {REFERRAL_POINTS_REWARD} points once you're verified.",
+        "referral": clean_mongo_doc(referral)
+    }
+
+async def complete_referral(referred_user_id: str):
+    """
+    Complete a referral and award points to the referrer.
+    Called automatically when a referred user is verified/completes signup.
+    """
+    # Find pending referral for this user
+    referral = await db.referrals.find_one({
+        "referred_user_id": referred_user_id,
+        "status": "pending"
+    })
+    
+    if not referral:
+        return None  # No pending referral
+    
+    # Update referral status
+    await db.referrals.update_one(
+        {"_id": referral["_id"]},
+        {"$set": {
+            "status": "completed",
+            "completed_at": datetime.now(timezone.utc)
+        }}
+    )
+    
+    # Award points to referrer
+    await db.users.update_one(
+        {"user_id": referral["referrer_user_id"]},
+        {"$inc": {"points_balance": REFERRAL_POINTS_REWARD}}
+    )
+    
+    # Create notification for referrer
+    await create_notification(
+        user_id=referral["referrer_user_id"],
+        notification_type="referral",
+        title="Referral Bonus! 🎉",
+        message=f"Your friend just joined Luna! You earned {REFERRAL_POINTS_REWARD} points.",
+        data={
+            "points_earned": REFERRAL_POINTS_REWARD,
+            "referral_id": referral["id"]
+        },
+        priority="high"
+    )
+    
+    logging.info(f"Referral completed: {referral['referrer_user_id']} earned {REFERRAL_POINTS_REWARD} points")
+    
+    return referral
+
+@api_router.post("/referral/verify/{user_id}")
+async def verify_and_complete_referral(user_id: str, request: Request):
+    """
+    Admin endpoint to verify a user and complete their referral.
+    In production, this would be triggered by email verification or first purchase.
+    """
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # For demo purposes, allow any authenticated user to trigger this
+    # In production, this would be admin-only or automatic
+    
+    result = await complete_referral(user_id)
+    
+    if result:
+        return {
+            "success": True,
+            "message": f"Referral completed! {result['referrer_name']} earned {REFERRAL_POINTS_REWARD} points.",
+            "referral": clean_mongo_doc(result)
+        }
+    else:
+        return {
+            "success": False,
+            "message": "No pending referral found for this user"
+        }
+
 
 # ====== ADMIN SEED API ======
 
