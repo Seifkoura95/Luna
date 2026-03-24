@@ -1152,7 +1152,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.bg,
   },
   scrollView: {
     flex: 1,
@@ -1166,22 +1166,24 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   welcomeText: {
-    fontSize: 14,
-    color: colors.textSecondary,
+    fontSize: 10,
+    color: colors.textTertiary,
     marginTop: spacing.md,
-    letterSpacing: 1,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   userName: {
     fontSize: 28,
-    fontWeight: '800',
-    color: colors.textPrimary,
+    fontWeight: '700',
+    color: colors.text,
     marginTop: spacing.xs,
+    letterSpacing: 0.5,
   },
   tierCard: {
     width: '100%',
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
     overflow: 'hidden',
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: colors.border,
   },
   tierCardContainer: {
@@ -1197,10 +1199,10 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 3,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    borderTopWidth: 3,
+    height: 2,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    borderTopWidth: 2,
   },
   tierHeader: {
     flexDirection: 'row',
@@ -1214,9 +1216,10 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   tierPointsValue: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: colors.textPrimary,
+    fontSize: 32,
+    fontWeight: '700',
+    color: colors.text,
+    letterSpacing: 1,
   },
   tierPointsLabel: {
     fontSize: 10,

@@ -1,22 +1,31 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Platform, StyleSheet, View, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { AppBackground } from '../../src/components/AppBackground';
+import {
+  HomeIcon,
+  LocationIcon,
+  CardIcon,
+  BoltIcon,
+  GuestIcon,
+  StarIcon,
+} from '../../src/components/LunaIcons';
 
-const TabBarIcon = ({ name, color, focused }: { name: keyof typeof Ionicons.glyphMap; color: string; focused: boolean }) => (
+// Custom tab bar icon using Luna Icons
+const TabBarIcon = ({ 
+  IconComponent, 
+  color, 
+  focused 
+}: { 
+  IconComponent: React.FC<{ size?: number; color?: string }>; 
+  color: string; 
+  focused: boolean;
+}) => (
   <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
     {focused && <View style={styles.iconGlow} />}
-    <Ionicons name={name} size={24} color={color} />
-  </View>
-);
-
-const HeaderTitle = ({ title }: { title: string }) => (
-  <View style={styles.headerTitleContainer}>
-    <Text style={styles.headerTitleText}>{title}</Text>
-    <View style={styles.headerTitleUnderline} />
+    <IconComponent size={22} color={color} />
   </View>
 );
 
@@ -29,7 +38,7 @@ const HeaderRight = () => {
       <View style={styles.pointsContainer}>
         <View style={styles.pointsGlow} />
         <View style={styles.pointsBadge}>
-          <Ionicons name="star" size={16} color={colors.gold} />
+          <StarIcon size={14} color={colors.gold} />
           <Text style={styles.pointsText}>{user.points_balance?.toLocaleString() || 0}</Text>
         </View>
       </View>
@@ -46,19 +55,19 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: colors.accent,
-          tabBarInactiveTintColor: colors.textMuted,
+          tabBarInactiveTintColor: colors.textTertiary,
           tabBarStyle: styles.tabBar,
           tabBarLabelStyle: styles.tabBarLabel,
           tabBarItemStyle: styles.tabBarItem,
           headerStyle: styles.header,
           headerTitleStyle: styles.headerTitle,
-          headerTintColor: colors.textPrimary,
+          headerTintColor: colors.text,
           headerRight: () => <HeaderRight />,
           headerShadowVisible: false,
           headerBackground: () => (
-            <View style={{ flex: 1, backgroundColor: '#000000' }} />
+            <View style={{ flex: 1, backgroundColor: colors.bg }} />
           ),
-          sceneContainerStyle: { backgroundColor: '#000000' },
+          sceneContainerStyle: { backgroundColor: colors.bg },
         }}
       >
       <Tabs.Screen
@@ -67,7 +76,7 @@ export default function TabLayout() {
           title: 'Tonight',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="radio-button-on" color={color} focused={focused} />
+            <TabBarIcon IconComponent={HomeIcon} color={color} focused={focused} />
           ),
         }}
       />
@@ -77,7 +86,7 @@ export default function TabLayout() {
           title: 'Venues',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="business" color={color} focused={focused} />
+            <TabBarIcon IconComponent={LocationIcon} color={color} focused={focused} />
           ),
         }}
       />
@@ -87,7 +96,7 @@ export default function TabLayout() {
           title: 'Wallet',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="ticket" color={color} focused={focused} />
+            <TabBarIcon IconComponent={CardIcon} color={color} focused={focused} />
           ),
         }}
       />
@@ -97,7 +106,7 @@ export default function TabLayout() {
           title: 'Auctions',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="flash" color={color} focused={focused} />
+            <TabBarIcon IconComponent={BoltIcon} color={color} focused={focused} />
           ),
         }}
       />
@@ -107,7 +116,7 @@ export default function TabLayout() {
           title: 'Profile',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="person" color={color} focused={focused} />
+            <TabBarIcon IconComponent={GuestIcon} color={color} focused={focused} />
           ),
         }}
       />
@@ -122,21 +131,22 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.bg,
   },
   tabBar: {
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: colors.surface,
     borderTopColor: colors.border,
-    borderTopWidth: 1,
+    borderTopWidth: 0.5,
     paddingTop: spacing.sm + 2,
     paddingBottom: Platform.OS === 'ios' ? 32 : 16,
     height: Platform.OS === 'ios' ? 95 : 75,
     elevation: 0,
   },
   tabBarLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
     marginTop: 6,
   },
   tabBarItem: {
@@ -151,7 +161,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   iconContainerActive: {
-    backgroundColor: colors.accentGlow,
+    backgroundColor: colors.accentDim,
   },
   iconGlow: {
     position: 'absolute',
@@ -159,36 +169,21 @@ const styles = StyleSheet.create({
     height: 36,
     backgroundColor: colors.accent,
     borderRadius: radius.md,
-    opacity: 0.2,
+    opacity: 0.15,
   },
   header: {
     backgroundColor: 'transparent',
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.5,
     borderBottomColor: colors.border,
     elevation: 0,
     height: 100,
   },
   headerTitle: {
-    color: colors.textPrimary,
-    fontWeight: '900',
-    fontSize: 18,
-    letterSpacing: 6,
-  },
-  headerTitleContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitleText: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: colors.textPrimary,
-    letterSpacing: 6,
-    marginBottom: 6,
-  },
-  headerTitleUnderline: {
-    width: 40,
-    height: 2,
-    backgroundColor: colors.accent,
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 12,
+    letterSpacing: 3,
+    textTransform: 'uppercase',
   },
   headerRight: {
     marginRight: spacing.md,
@@ -198,29 +193,28 @@ const styles = StyleSheet.create({
   },
   pointsGlow: {
     position: 'absolute',
-    top: -6,
-    left: -6,
-    right: -6,
-    bottom: -6,
-    borderRadius: radius.full,
-    backgroundColor: colors.goldGlow,
-    opacity: 0.4,
+    top: -4,
+    left: -4,
+    right: -4,
+    bottom: -4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.goldDim,
   },
   pointsBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 2,
-    borderRadius: radius.full,
-    borderWidth: 1.5,
-    borderColor: colors.gold + '40',
+    borderRadius: radius.pill,
+    borderWidth: 0.5,
+    borderColor: colors.gold + '30',
     gap: spacing.xs,
   },
   pointsText: {
     color: colors.gold,
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: 14,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
 });
