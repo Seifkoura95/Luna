@@ -250,6 +250,10 @@ export default function HomeScreen() {
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.section}>
           <View style={styles.sectionHead}>
             <Text style={styles.sectionTitle}>Trending</Text>
+            <TouchableOpacity onPress={() => router.push('/events')} style={styles.seeAll}>
+              <Text style={styles.seeAllText}>See All</Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.accent} />
+            </TouchableOpacity>
           </View>
 
           <View style={styles.trendingGrid}>
@@ -497,12 +501,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   seeAllText: {
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 1,
-    color: colors.accentVibrant,
+    color: colors.accent,
     textTransform: 'uppercase',
   },
 
