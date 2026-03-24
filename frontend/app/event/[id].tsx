@@ -15,7 +15,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { colors } from '../../src/theme/colors';
+import { colors, radius } from '../../src/theme/colors';
 import { api } from '../../src/utils/api';
 import { AppBackground } from '../../src/components/AppBackground';
 
@@ -340,7 +340,7 @@ export default function EventDetailPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.bg,
   },
   loadingContainer: {
     flex: 1,
@@ -349,8 +349,9 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   loadingText: {
-    color: colors.textMuted,
-    fontSize: 14,
+    color: colors.textTertiary,
+    fontSize: 12,
+    letterSpacing: 1,
     marginTop: 8,
   },
   errorContainer: {
@@ -360,18 +361,20 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   errorText: {
-    color: colors.textMuted,
-    fontSize: 16,
+    color: colors.textSecondary,
+    fontSize: 14,
   },
   errorButton: {
     backgroundColor: colors.accent,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 24,
+    borderRadius: radius.lg,
   },
   errorButtonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: 12,
+    letterSpacing: 1,
   },
   header: {
     position: 'absolute',
@@ -386,18 +389,22 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: radius.lg,
+    backgroundColor: colors.glass,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: colors.glassBorder,
   },
   shareButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: radius.lg,
+    backgroundColor: colors.glass,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: colors.glassBorder,
   },
   scrollView: {
     flex: 1,
@@ -427,13 +434,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 4,
+    borderRadius: radius.sm,
   },
   venueBadgeText: {
     color: '#fff',
     fontWeight: '700',
-    fontSize: 12,
-    letterSpacing: 0.5,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   eventInfo: {
     padding: 20,
@@ -441,9 +449,10 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.text,
     marginBottom: 20,
     lineHeight: 30,
+    letterSpacing: 0.5,
   },
   metaRow: {
     flexDirection: 'row',
@@ -452,16 +461,16 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   metaText: {
-    color: '#fff',
-    fontSize: 15,
+    color: colors.text,
+    fontSize: 14,
     flex: 1,
   },
   locationInfo: {
     flex: 1,
   },
   addressText: {
-    color: colors.textMuted,
-    fontSize: 13,
+    color: colors.textSecondary,
+    fontSize: 12,
     marginTop: 2,
   },
   tagsRow: {
@@ -471,31 +480,37 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   tag: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 4,
+    borderRadius: radius.sm,
+    borderWidth: 0.5,
+    borderColor: colors.border,
   },
   freeTag: {
-    backgroundColor: 'rgba(0,212,170,0.2)',
+    backgroundColor: colors.greenDim,
+    borderColor: 'rgba(34,197,94,0.2)',
   },
   tagText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    color: colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   descriptionSection: {
     marginTop: 8,
   },
   sectionTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.textTertiary,
+    fontSize: 10,
+    fontWeight: '700',
     marginBottom: 12,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   descriptionText: {
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 22,
   },
@@ -505,9 +520,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.95)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.surface,
+    borderTopWidth: 0.5,
+    borderTopColor: colors.border,
   },
   ticketButton: {
     backgroundColor: colors.accent,
@@ -515,14 +530,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     gap: 8,
   },
   ticketButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 1,
+    letterSpacing: 2,
   },
   rsvpSection: {
     paddingTop: 24,
@@ -539,46 +554,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.surfaceElevated,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     gap: 8,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    borderWidth: 0.5,
+    borderColor: colors.border,
   },
   rsvpButtonActive: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.accentDim,
     borderColor: colors.accent,
   },
   rsvpButtonText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   rsvpButtonTextActive: {
-    color: colors.textPrimary,
+    color: colors.text,
   },
   rsvpCount: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     color: colors.accent,
-    backgroundColor: colors.accent + '20',
+    backgroundColor: colors.accentDim,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: radius.pill,
   },
   friendsSection: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.surfaceElevated,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: radius.md,
+    borderWidth: 0.5,
+    borderColor: colors.border,
   },
   friendsText: {
     flex: 1,
-    fontSize: 13,
-    color: colors.textMuted,
+    fontSize: 12,
+    color: colors.textSecondary,
     lineHeight: 18,
   },
 });

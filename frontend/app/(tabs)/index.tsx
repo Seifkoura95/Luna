@@ -278,55 +278,8 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
 
-        {/* What's On - Event Cards */}
-        <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.section}>
-          <View style={styles.sectionHead}>
-            <Text style={styles.sectionTitle}>What&apos;s On</Text>
-            <TouchableOpacity onPress={() => router.push('/events')} style={styles.seeAll}>
-              <Text style={styles.seeAllText}>See All</Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.accent} />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.whatsOnScroll}
-            decelerationRate="fast"
-          >
-            {events.slice(0, 10).map((event) => (
-              <TouchableOpacity
-                key={event.id}
-                style={styles.whatsOnCard}
-                onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
-                activeOpacity={0.9}
-              >
-                <Image 
-                  source={{ uri: event.image || event.image_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800' }} 
-                  style={styles.whatsOnImage} 
-                  contentFit="cover"
-                />
-                <LinearGradient 
-                  colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']} 
-                  locations={[0, 0.5, 1]}
-                  style={styles.whatsOnOverlay}
-                >
-                  <View style={styles.whatsOnDateBadge}>
-                    <Text style={styles.whatsOnDateText}>{formatDate(event)}</Text>
-                  </View>
-                  <Text style={styles.whatsOnTitle} numberOfLines={2}>{event.title}</Text>
-                  <View style={styles.whatsOnMeta}>
-                    <Ionicons name="location-outline" size={12} color="rgba(255,255,255,0.7)" />
-                    <Text style={styles.whatsOnVenue}>{event.venue_name || event.location}</Text>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </Animated.View>
-
         {/* Venues */}
-        <Animated.View entering={FadeInDown.delay(400).duration(400)} style={styles.section}>
+        <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.section}>
           <View style={styles.sectionHead}>
             <Text style={styles.sectionTitle}>Our Venues</Text>
           </View>
