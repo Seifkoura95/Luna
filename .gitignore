@@ -81,3 +81,7 @@ agenthub/agents/youtube/db
 android-sdk/ backend/static/photos/SucasaBrisbane.zip
 app-code.zip
 app_backup.tar.gz
+-e 
+# Environment files
+*.env
+*.env.*
