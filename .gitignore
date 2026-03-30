@@ -26,7 +26,8 @@ next-env.d.ts
 *.tsbuildinfo
 
 # Production builds
-/build
+/buildpython3 -m http.server 8000
+
 dist/
 dist
 
@@ -78,3 +79,5 @@ agenthub/agents/youtube/db
 
 # Mobile development
 android-sdk/ backend/static/photos/SucasaBrisbane.zip
+app-code.zip
+app_backup.tar.gz
