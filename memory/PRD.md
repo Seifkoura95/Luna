@@ -971,6 +971,68 @@ Location: `/app/frontend/app/(tabs)/_layout.tsx`
 ### Test Report:
 - `/app/test_reports/iteration_18.json` - 100% pass rate (all features verified)
 
+## Auction Push Notifications ✅ COMPLETE (March 31, 2026)
+
+### Outbid Notifications
+Location: `/app/backend/routes/auctions.py` (lines 244-260)
+
+**Triggers:**
+- When a user is outbid on an auction
+- When auto-bid limit is exhausted
+
+**Actions:**
+1. Creates in-app notification in `auction_notifications` collection
+2. Sends push notification via Expo Push API
+3. Broadcasts outbid event via WebSocket
+
+### New Auction Alerts
+Location: `/app/backend/services/scheduled_jobs.py`
+
+**Scheduled Job:** Runs hourly via APScheduler
+
+**Targets:**
+- Users who favorited the auction's venue
+- Users who visited the venue in last 30 days
+- Users subscribed to auction updates for venue/type
+
+**Notification Content:**
+- "🔥 New Auction Live!" title
+- Auction title, venue name, starting bid
+- Deep link to auction page
+
+### Auction Won Notification
+Location: `/app/backend/services/scheduled_jobs.py`
+
+**Triggers:** When auction status changes to 'completed' with winner
+
+**Actions:**
+1. Creates high-priority in-app notification
+2. Sends WebSocket notification if user online
+3. Sends push notification with congratulations message
+4. Includes winning bid and payment instructions
+
+### Test Report:
+- `/app/test_reports/iteration_19.json` - 94% pass rate (16/17 tests, 1 transient network error)
+
+## Event Detail Page Fix ✅ COMPLETE (March 31, 2026)
+
+### Issue:
+Event detail page crashed with "Cannot read properties of undefined (reading 'body')" when ID was undefined
+
+### Fix:
+Location: `/app/frontend/app/event/[id].tsx`
+
+**Changes:**
+- Added `eventId` variable to safely handle both string and array from `useLocalSearchParams`
+- Removed early return before hooks (React rules violation)
+- Updated all API calls to use `eventId` instead of `id`
+
+**Code Pattern:**
+```typescript
+const { id } = useLocalSearchParams<{ id: string }>();
+const eventId = Array.isArray(id) ? id[0] : id;
+```
+
 
 
 
