@@ -60,6 +60,31 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="payment-success" />
+        <Stack.Screen name="payment-cancelled" />
+        <Stack.Screen name="ai-concierge" />
+        <Stack.Screen name="settings" />
+        <Stack.Screen name="rewards" />
+        <Stack.Screen name="rewards-shop" />
+        <Stack.Screen name="subscriptions" />
+        <Stack.Screen name="table-booking" />
+        <Stack.Screen name="safety" />
+        <Stack.Screen name="social" />
+        <Stack.Screen name="events" />
+        <Stack.Screen name="notifications" />
+        <Stack.Screen name="refer-friend" />
+        <Stack.Screen name="birthday-club" />
+        <Stack.Screen name="lost-found" />
+        <Stack.Screen name="photos" />
+        <Stack.Screen name="venue-dashboard" />
+        <Stack.Screen name="about" />
+        <Stack.Screen name="help-support" />
+        <Stack.Screen name="privacy-policy" />
+        <Stack.Screen name="terms-of-service" />
+        <Stack.Screen name="payment-methods" />
+        <Stack.Screen name="notification-settings" />
+        <Stack.Screen name="location-settings" />
+        <Stack.Screen name="safety-settings" />
       </Stack>
     </>
   );

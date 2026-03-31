@@ -1038,4 +1038,51 @@ export const api = {
 
   aiHealth: () =>
     apiFetch<{ status: string; ai_enabled: boolean; features: any }>('/api/ai/health', { auth: false }),
+
+  // ====== PAYMENTS API ======
+  getPaymentPackages: () =>
+    apiFetch<{ packages: any[] }>('/api/payments/packages', { auth: false }),
+
+  createCheckout: (packageId: string, originUrl: string, options?: { venueId?: string; bookingDate?: string; guests?: number }) =>
+    apiFetch<{ checkout_url: string; session_id: string }>('/api/payments/checkout', {
+      method: 'POST',
+      body: JSON.stringify({
+        package_id: packageId,
+        origin_url: originUrl,
+        venue_id: options?.venueId,
+        booking_date: options?.bookingDate,
+        guests: options?.guests
+      })
+    }),
+
+  getPaymentStatus: (sessionId: string) =>
+    apiFetch<{ status: string; payment_status: string; amount: number; currency: string; package_name: string }>(`/api/payments/status/${sessionId}`),
+
+  getPaymentHistory: () =>
+    apiFetch<{ transactions: any[] }>('/api/payments/history'),
+
+  // ====== STORIES API ======
+  createStory: (photoUrl: string, venueId: string, venueName: string, caption?: string, eventName?: string) =>
+    apiFetch<{ story: any }>('/api/stories/create', {
+      method: 'POST',
+      body: JSON.stringify({
+        photo_url: photoUrl,
+        venue_id: venueId,
+        venue_name: venueName,
+        caption,
+        event_name: eventName
+      })
+    }),
+
+  getMyStories: () =>
+    apiFetch<{ stories: any[] }>('/api/stories/my-stories'),
+
+  shareStory: (storyId: string, platform: string) =>
+    apiFetch<{ success: boolean; points_earned: number; share_data: any }>('/api/stories/share', {
+      method: 'POST',
+      body: JSON.stringify({ story_id: storyId, platform })
+    }),
+
+  getStoryFeed: (limit?: number) =>
+    apiFetch<{ stories: any[] }>(`/api/stories/feed?limit=${limit || 20}`),
 };
