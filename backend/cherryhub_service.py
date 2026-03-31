@@ -27,9 +27,11 @@ CHERRYHUB_INTEGRATION_ID = os.environ.get('CHERRYHUB_INTEGRATION_ID', '816547673
 CHERRYHUB_MOCK_MODE = os.environ.get('CHERRYHUB_MOCK_MODE', 'false').lower() == 'true'
 
 # CherryHub API Base URLs
-# Production environment (LIVE)
-CHERRYHUB_API_BASE_URL = "https://api.cherryhub.com.au"
-CHERRYHUB_AUTH_URL = "https://accounts.cherryhub.com.au/oauth2/token"
+# Staging/Test environment - use test.api.cherryhub.com.au
+# Production environment - use api.cherryhub.com.au (when ready)
+CHERRYHUB_API_BASE_URL = os.environ.get('CHERRYHUB_API_URL', 'https://test.api.cherryhub.com.au')
+CHERRYHUB_AUTH_URL = f"{CHERRYHUB_API_BASE_URL}/oauth2/v2.0/token"
+CHERRYHUB_DATA_API_VERSION = "v1"
 
 # Service Account Refresh Token (stored securely)
 CHERRYHUB_REFRESH_TOKEN = os.environ.get(
@@ -129,12 +131,18 @@ class CherryHubService:
         method: str, 
         endpoint: str, 
         data: Optional[Dict] = None,
-        params: Optional[Dict] = None
+        params: Optional[Dict] = None,
+        use_data_api: bool = True
     ) -> Dict[str, Any]:
         """Make an authenticated request to CherryHub API"""
         access_token = await token_manager.get_access_token()
         
-        url = f"{CHERRYHUB_API_BASE_URL}{endpoint}"
+        # Build URL with Data API versioning if needed
+        if use_data_api:
+            url = f"{CHERRYHUB_API_BASE_URL}/data/{CHERRYHUB_DATA_API_VERSION}{endpoint}"
+        else:
+            url = f"{CHERRYHUB_API_BASE_URL}{endpoint}"
+        
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
@@ -288,10 +296,11 @@ class CherryHubService:
                     "mock": True
                 }
         
-        endpoint = f"/{self.business_id}/members/{member_key}/dmc/passtype/{pass_type}"
+        endpoint = f"/{self.business_id}/members/{member_key}/dmc"
+        params = {"passType": pass_type}
         
         try:
-            result = await self._make_request("GET", endpoint)
+            result = await self._make_request("GET", endpoint, params=params)
             logger.info(f"Retrieved digital member card for member {member_key} ({pass_type})")
             return result
         except Exception as e:

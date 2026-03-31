@@ -570,7 +570,12 @@ A comprehensive owner's manual has been created covering:
 13. **Unused Variables**: Removed navRouter and insets from profile.tsx
 
 ## Known Infrastructure Issues
-- **CherryHub Integration**: Network DNS resolution blocked in container (use MOCK_MODE=true). The `accounts.cherryhub.com.au` OAuth endpoint does not resolve via DNS. Live integration requires verified OAuth endpoint from CherryHub support. Switched HTTP library from httpx to aiohttp for better DNS resilience.
+- **CherryHub Integration**: 
+  - **Status**: Mock mode enabled - live integration blocked by OAuth configuration
+  - **Root Cause**: Client credentials (`client_id: 4884860603804c33b5285ff051374638`) return `unauthorized_client` error from CherryHub's OAuth endpoint
+  - **API Endpoints Updated**: Now using correct staging URL `https://test.api.cherryhub.com.au` with Data API v1 paths
+  - **To Enable Live Mode**: Contact CherryHub support to configure the client application for refresh_token grant type
+  - **HTTP Client**: Switched from `httpx` to `aiohttp` for better DNS resolution in Kubernetes environment
 - **Venue Portal Caching**: CDN caches aggressively, use hard refresh (Cmd+Shift+R)
 - **Expo Tunnel**: Occasional ngrok timeout, restart expo service if needed
 
