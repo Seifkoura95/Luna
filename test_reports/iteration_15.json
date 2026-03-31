@@ -1,0 +1,113 @@
+{
+  "summary": "Tested WebSocket and Churn Prediction features. Fixed critical bug in churn routes where role-based access control was checking JWT payload instead of database user role. All 16 tests passed after fix.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "bugs_fixed": [
+    {
+      "file": "/app/backend/routes/churn.py",
+      "issue": "Role-based access control was checking current_user.get('role') from JWT payload, but JWT doesn't include role. Fixed by fetching user from database to get role.",
+      "affected_endpoints": [
+        "GET /api/churn/analyze/{user_id}",
+        "POST /api/churn/batch-analyze",
+        "POST /api/churn/trigger-winback",
+        "GET /api/churn/dashboard",
+        "GET /api/churn/campaigns"
+      ]
+    }
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_websocket_churn.py",
+    "/app/test_reports/pytest/pytest_websocket_churn.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "WebSocket manager correctly implements subscribe/broadcast pattern for real-time auction updates",
+    "Churn service calculates risk score (0-100) based on behavioral metrics: inactivity, engagement change, spend patterns",
+    "Win-back offers are correctly selected based on risk level (high/medium/low)",
+    "AI analysis integration uses Claude via Emergent LLM Key for churn insights"
+  ],
+  "updated_files": [
+    "/app/backend/routes/churn.py",
+    "/app/backend/tests/test_websocket_churn.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "N/A (backend only testing)"
+  },
+  "test_credentials": {
+    "mobile_user": {
+      "email": "luna@test.com",
+      "password": "test123"
+    },
+    "venue_staff": {
+      "email": "venue@eclipse.com",
+      "password": "venue123"
+    }
+  },
+  "seed_data_creation": "N/A - used existing test users",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "WebSocket and Churn features fully tested. WebSocket endpoints: /api/ws/stats (GET), /api/ws/auction/{id} (WS), /api/ws/auctions (WS). Churn endpoints: /api/churn/my-status, /api/churn/analyze/{user_id}, /api/churn/dashboard, /api/churn/trigger-winback, /api/churn/claim-offer, /api/churn/campaigns. All role-based access control now correctly fetches user from database.",
+  "mocked_apis": {
+    "CherryHub": "MOCKED - CHERRYHUB_MOCK_MODE=true in backend/.env",
+    "AI_Features": "LIVE - Using Claude API via Emergent LLM Key"
+  },
+  "features_verified": {
+    "websocket_stats": {
+      "status": "PASS",
+      "endpoint": "GET /api/ws/stats",
+      "details": "Returns total_global_subscribers, total_user_connections, auction_subscribers"
+    },
+    "websocket_auction_endpoint": {
+      "status": "PASS",
+      "endpoint": "WS /api/ws/auction/{auction_id}",
+      "details": "WebSocket endpoint accepts connections, sends auction state, handles ping/pong"
+    },
+    "websocket_global_endpoint": {
+      "status": "PASS",
+      "endpoint": "WS /api/ws/auctions",
+      "details": "Global WebSocket endpoint for all auction updates"
+    },
+    "churn_my_status": {
+      "status": "PASS",
+      "endpoint": "GET /api/churn/my-status",
+      "details": "Returns engagement_level (healthy/at_risk), risk_level, days_since_visit, active_offer"
+    },
+    "churn_analyze": {
+      "status": "PASS",
+      "endpoint": "GET /api/churn/analyze/{user_id}",
+      "details": "Returns detailed risk analysis with metrics, AI insights, win_back_offer"
+    },
+    "churn_dashboard": {
+      "status": "PASS",
+      "endpoint": "GET /api/churn/dashboard",
+      "details": "Returns risk_distribution, total_at_risk, churned_60d, high_risk_users, recent_campaigns"
+    },
+    "churn_trigger_winback": {
+      "status": "PASS",
+      "endpoint": "POST /api/churn/trigger-winback",
+      "details": "Creates win-back campaign with offer, awards bonus points, sends notification"
+    },
+    "churn_claim_offer": {
+      "status": "PASS",
+      "endpoint": "POST /api/churn/claim-offer",
+      "details": "User claims active win-back offer, marks as claimed"
+    },
+    "auction_bid_websocket_broadcast": {
+      "status": "PASS",
+      "endpoint": "POST /api/auctions/bid",
+      "details": "Bid placement triggers asyncio.create_task for WebSocket broadcast to subscribers"
+    },
+    "churn_risk_calculation": {
+      "status": "PASS",
+      "details": "Risk score (0-100) calculated from: inactivity (40pts), engagement decline (25pts), spend decline (15pts), points hoarding (10pts), AI adjustment (10pts)"
+    }
+  }
+}

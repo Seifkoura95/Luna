@@ -30,6 +30,8 @@ from routes.ai import router as ai_router
 from routes.payments import router as payments_router
 from routes.webhook import router as webhook_router
 from routes.stories import router as stories_router
+from routes.websocket import router as websocket_router
+from routes.churn import router as churn_router
 
 # Export all routers for easy importing
 __all__ = [
@@ -58,6 +60,8 @@ __all__ = [
     "payments_router",
     "webhook_router",
     "stories_router",
+    "websocket_router",
+    "churn_router",
 ]
 
 # List of all routers for bulk registration
@@ -87,4 +91,6 @@ ALL_ROUTERS = [
     payments_router,
     webhook_router,
     stories_router,
+    websocket_router,
+    churn_router,
 ]

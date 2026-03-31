@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 import uuid
 import logging
+import asyncio
 from datetime import datetime, timezone
 
 from database import db
@@ -12,6 +13,7 @@ from utils.auth import get_current_user
 from utils.mongo import clean_mongo_doc, clean_mongo_docs
 from models.auctions import PlaceBidRequest, AuctionSubscribeRequest
 from routes.shared import send_push_notification_to_token
+from services.websocket_manager import auction_ws_manager
 
 router = APIRouter(prefix="/auctions", tags=["Auctions"])
 logger = logging.getLogger(__name__)
@@ -170,6 +172,25 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
             "last_bid_time": datetime.now(timezone.utc)
         }}
     )
+    
+    # Broadcast bid update via WebSocket
+    asyncio.create_task(auction_ws_manager.broadcast_bid(
+        auction_id=bid_request.auction_id,
+        bid_data={
+            "amount": final_bid_amount,
+            "bidder_name": final_winner_name,
+            "bid_count": auction.get("bid_count", 0) + 1
+        }
+    ))
+    
+    # Send outbid notification via WebSocket if previous winner exists
+    if previous_winner_id and previous_winner_id != final_winner_id:
+        asyncio.create_task(auction_ws_manager.broadcast_outbid(
+            auction_id=bid_request.auction_id,
+            outbid_user_id=previous_winner_id,
+            new_high_bid=final_bid_amount,
+            new_bidder_name=final_winner_name
+        ))
     
     # Record original bid if not already recorded
     if final_winner_id == user["user_id"] and final_bid_amount == bid_request.amount:
