@@ -1033,6 +1033,66 @@ const { id } = useLocalSearchParams<{ id: string }>();
 const eventId = Array.isArray(id) ? id[0] : id;
 ```
 
+## Auction Watchlist Feature ✅ COMPLETE (March 31, 2026)
+
+### API Endpoints:
+Location: `/app/backend/routes/auctions.py`
+
+1. **POST /api/auctions/watch** - Add auction to watchlist
+   - Options: `notify_on_bid`, `notify_on_ending`, `notify_threshold` (default 3)
+   
+2. **DELETE /api/auctions/watch/{auction_id}** - Remove from watchlist
+
+3. **GET /api/auctions/watchlist** - Get user's watchlist
+   - Returns enriched data: current_bid, status, end_time, bid_count
+
+4. **GET /api/auctions/{auction_id}/activity** - Get bidding activity
+   - Returns: bids_last_5_mins, bids_last_30_mins, is_hot, activity_level
+
+### Watchlist Notifications:
+- `notify_watchlist_users()` called asynchronously on each bid
+- Notifies watchers when bidding heats up (3+ bids in 5 minutes)
+- Sends both WebSocket and push notifications
+- Rate limited: max 1 notification per user per 10 minutes
+
+### Bugs Fixed by Testing Agent:
+1. **Route ordering** - Moved `/watchlist` before `/{auction_id}` to fix 404 errors
+2. **Datetime comparison** - Added timezone-aware comparison for activity endpoint
+
+### Test Report:
+- `/app/test_reports/iteration_20.json` - 100% pass rate (14/14 backend tests)
+
+## Server.py Cleanup Analysis (March 31, 2026)
+
+### Current State:
+- `server.py`: 6,617 lines
+- 142 endpoints defined directly in server.py
+- 30+ confirmed duplicates with modular routes
+
+### Duplicated Routes Identified:
+- Auctions: subscribe, notifications, mark-read
+- Bookings: availability, reserve, guestlist, my-reservations, my-tables
+- Events: rsvp, attendees
+- Friends: request, requests, accept, decline
+- Notifications: preferences, push-token
+- Points: balance, history, record-spending
+- Subscriptions: tiers, my, subscribe, cancel, use-entry
+
+### Technical Decision:
+Modular routes in `/app/backend/routes/` take precedence due to FastAPI router registration order. The duplicates in server.py are effectively inactive but remain for historical reference.
+
+### Cleanup Approach (Future Task):
+1. Move unique endpoints to new modular route files
+2. Remove confirmed duplicate endpoint code
+3. Target: reduce server.py to ~500 lines (setup only)
+
+### Files Needing Creation:
+- `routes/crews.py` - Crew/group management
+- `routes/safety.py` - Safety/SOS features
+- `routes/lost_found.py` - Lost and found items
+- `routes/admin.py` - Admin dashboard endpoints
+- `routes/location.py` - Location sharing
+
 
 
 
