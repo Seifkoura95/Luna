@@ -64,6 +64,8 @@ export default function AuctionsScreen() {
   const [timeLeft, setTimeLeft] = useState<Record<string, string>>({});
   const [isPlacingBid, setIsPlacingBid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hotAuctions, setHotAuctions] = useState<Set<string>>(new Set());
+  const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
 
   // Auto scroll to top when tab gains focus
   useFocusEffect(
@@ -75,14 +77,61 @@ export default function AuctionsScreen() {
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await api.getAuctions();
-      setAuctions(data || []);
+      const [auctionsData, watchlistData] = await Promise.all([
+        api.getAuctions(),
+        api.getWatchlist().catch(() => [])
+      ]);
+      setAuctions(auctionsData || []);
+      
+      // Set watchlist IDs
+      const watchedIds = new Set(watchlistData.map((w: any) => w.auction_id));
+      setWatchlist(watchedIds);
+      
+      // Check hot auctions
+      if (auctionsData && auctionsData.length > 0) {
+        const hotSet = new Set<string>();
+        await Promise.all(
+          auctionsData.slice(0, 10).map(async (auction: any) => {
+            try {
+              const activity = await api.getAuctionActivity(auction.id);
+              if (activity?.is_hot || activity?.activity_level === 'hot') {
+                hotSet.add(auction.id);
+              }
+            } catch (e) {
+              // Ignore
+            }
+          })
+        );
+        setHotAuctions(hotSet);
+      }
     } catch (e) {
       console.error('Failed to fetch auctions:', e);
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  const toggleWatchlist = async (auctionId: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    
+    try {
+      if (watchlist.has(auctionId)) {
+        await api.unwatchAuction(auctionId);
+        setWatchlist(prev => {
+          const next = new Set(prev);
+          next.delete(auctionId);
+          return next;
+        });
+      } else {
+        await api.watchAuction(auctionId);
+        setWatchlist(prev => new Set(prev).add(auctionId));
+      }
+    } catch (e) {
+      console.error('Watchlist toggle failed:', e);
+    }
+  };
 
   const fetchAuctionDetail = async (auctionId: string) => {
     try {
@@ -215,69 +264,103 @@ export default function AuctionsScreen() {
     }
   };
 
-  const renderAuctionCard = (auction: Auction) => (
-    <TouchableOpacity
-      key={auction.id}
-      style={styles.auctionCard}
-      onPress={() => openAuctionDetail(auction)}
-      activeOpacity={0.8}
-    >
-      <Image source={{ uri: auction.image_url }} style={styles.auctionImage} />
-      <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.95)']}
-        style={styles.auctionOverlay}
+  const renderAuctionCard = (auction: Auction) => {
+    const isHot = hotAuctions.has(auction.id);
+    const isWatched = watchlist.has(auction.id);
+    
+    return (
+      <TouchableOpacity
+        key={auction.id}
+        style={[styles.auctionCard, isHot && styles.auctionCardHot]}
+        onPress={() => openAuctionDetail(auction)}
+        activeOpacity={0.8}
       >
-        {/* Status Badge */}
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(auction.status) + '30' }]}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor(auction.status) }]} />
-          <Text style={[styles.statusText, { color: getStatusColor(auction.status) }]}>
-            {auction.status.toUpperCase()}
-          </Text>
-        </View>
-
-        {/* Timer */}
-        {auction.status === 'active' && (
-          <View style={styles.timerBadge}>
-            <Ionicons name="time" size={14} color={colors.accent} />
-            <Text style={styles.timerText}>{timeLeft[auction.id] || 'Loading...'}</Text>
-          </View>
-        )}
-
-        {/* Content */}
-        <View style={styles.auctionContent}>
-          <Text style={styles.auctionVenue}>{auction.venue_name}</Text>
-          <Text style={styles.auctionTitle} numberOfLines={2}>{auction.title}</Text>
-          
-          <View style={styles.bidSection}>
-            <View style={styles.bidInfo}>
-              <Text style={styles.bidLabel}>
-                {auction.current_bid > 0 ? 'CURRENT BID' : 'STARTING BID'}
-              </Text>
-              <Text style={styles.bidAmount}>
-                ${auction.current_bid > 0 ? auction.current_bid : auction.starting_bid}
+        <Image source={{ uri: auction.image_url }} style={styles.auctionImage} />
+        {isHot && <View style={styles.hotGlow} />}
+        
+        {/* Watchlist Button - Outside gradient for visibility */}
+        <TouchableOpacity 
+          style={[styles.watchButton, isWatched && styles.watchButtonActive]}
+          onPress={(e) => {
+            e.stopPropagation();
+            toggleWatchlist(auction.id);
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons 
+            name={isWatched ? "eye" : "eye-outline"} 
+            size={20} 
+            color="#FFFFFF" 
+          />
+        </TouchableOpacity>
+        
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.95)']}
+          style={styles.auctionOverlay}
+        >
+          {/* Badge Row */}
+          <View style={styles.badgeRow}>
+            {/* Status Badge */}
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(auction.status) + '30' }]}>
+              <View style={[styles.statusDot, { backgroundColor: getStatusColor(auction.status) }]} />
+              <Text style={[styles.statusText, { color: getStatusColor(auction.status) }]}>
+                {auction.status.toUpperCase()}
               </Text>
             </View>
             
-            {isWinning(auction) && (
-              <View style={styles.winningBadge}>
-                <Ionicons name="trophy" size={14} color={colors.gold} />
-                <Text style={styles.winningText}>WINNING</Text>
+            {/* Hot Badge */}
+            {isHot && (
+              <View style={styles.hotBadge}>
+                <Text style={styles.hotEmoji}>🔥</Text>
+                <Text style={styles.hotText}>BIDDING WAR!</Text>
               </View>
             )}
           </View>
 
-          {/* Features Preview */}
-          <View style={styles.featuresRow}>
-            {auction.features?.slice(0, 3).map((feature, index) => (
-              <View key={index} style={styles.featureChip}>
-                <Text style={styles.featureChipText}>{feature}</Text>
+          {/* Timer */}
+          {auction.status === 'active' && (
+            <View style={styles.timerBadge}>
+              <Ionicons name="time" size={14} color={colors.accent} />
+              <Text style={styles.timerText}>{timeLeft[auction.id] || 'Loading...'}</Text>
+            </View>
+          )}
+
+          {/* Content */}
+          <View style={styles.auctionContent}>
+            <Text style={styles.auctionVenue}>{auction.venue_name}</Text>
+            <Text style={styles.auctionTitle} numberOfLines={2}>{auction.title}</Text>
+            
+            <View style={styles.bidSection}>
+              <View style={styles.bidInfo}>
+                <Text style={styles.bidLabel}>
+                  {auction.current_bid > 0 ? 'CURRENT BID' : 'STARTING BID'}
+                </Text>
+                <Text style={[styles.bidAmount, isHot && styles.bidAmountHot]}>
+                  ${auction.current_bid > 0 ? auction.current_bid : auction.starting_bid}
+                </Text>
               </View>
-            ))}
+              
+              {isWinning(auction) && (
+                <View style={styles.winningBadge}>
+                  <Ionicons name="trophy" size={14} color={colors.gold} />
+                  <Text style={styles.winningText}>WINNING</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Features Preview */}
+            <View style={styles.featuresRow}>
+              {auction.features?.slice(0, 3).map((feature, index) => (
+                <View key={index} style={styles.featureChip}>
+                  <Text style={styles.featureChipText}>{feature}</Text>
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -1893,5 +1976,63 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: colors.textPrimary,
+  },
+  // Hot auction and watchlist styles
+  auctionCardHot: {
+    borderWidth: 2,
+    borderColor: '#FF6B35',
+  },
+  hotGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 107, 53, 0.12)',
+    zIndex: 1,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginBottom: 8,
+  },
+  hotBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 107, 53, 0.95)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  hotEmoji: {
+    fontSize: 12,
+  },
+  hotText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 0.5,
+  },
+  bidAmountHot: {
+    color: '#FF6B35',
+  },
+  watchButton: {
+    position: 'absolute',
+    top: 48,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+    elevation: 10,
+  },
+  watchButtonActive: {
+    backgroundColor: 'rgba(212, 175, 55, 0.3)',
   },
 });

@@ -34,6 +34,9 @@ from routes.websocket import router as websocket_router
 from routes.churn import router as churn_router
 from routes.notification_ws import router as notification_ws_router
 from routes.scheduled_jobs import router as scheduled_jobs_router
+from routes.crews import router as crews_router
+from routes.safety import router as safety_router
+from routes.location import router as location_router
 
 # Export all routers for easy importing
 __all__ = [
@@ -99,4 +102,7 @@ ALL_ROUTERS = [
     churn_router,
     notification_ws_router,
     scheduled_jobs_router,
+    crews_router,
+    safety_router,
+    location_router,
 ]
