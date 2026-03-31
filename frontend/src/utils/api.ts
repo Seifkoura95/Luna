@@ -1036,6 +1036,12 @@ export const api = {
       body: JSON.stringify({ venue_name: venueName, event_name: eventName, time_of_day: 'night' })
     }),
 
+  aiPersonalizedEvents: (events: any[]) =>
+    apiFetch<{ events: any[]; personalized: boolean }>('/api/ai/personalized-events', {
+      method: 'POST',
+      body: JSON.stringify({ events })
+    }),
+
   aiHealth: () =>
     apiFetch<{ status: string; ai_enabled: boolean; features: any }>('/api/ai/health', { auth: false }),
 

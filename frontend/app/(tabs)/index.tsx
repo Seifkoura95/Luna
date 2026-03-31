@@ -53,6 +53,7 @@ export default function HomeScreen() {
   const [tonightEvents, setTonightEvents] = useState<any[]>([]);
   const [venues, setVenues] = useState<any[]>([]);
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
+  const [tonightPicks, setTonightPicks] = useState<any[]>([]);
 
   // Pulse animation
   const pulseAnim = useSharedValue(1);
@@ -103,12 +104,27 @@ export default function HomeScreen() {
         return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
       });
       setVenues(sortedVenues);
+      
+      // Fetch AI personalized picks if we have events
+      if (upcomingList.length > 0) {
+        try {
+          const picksResponse = await api.aiPersonalizedEvents(upcomingList.slice(0, 10));
+          if (picksResponse?.events) {
+            setTonightPicks(picksResponse.events.slice(0, 3));
+          }
+        } catch (pickError) {
+          console.log('AI picks not available:', pickError);
+          // Fallback to first 3 events
+          setTonightPicks(upcomingList.slice(0, 3));
+        }
+      }
     } catch (e) {
       console.error('Failed to fetch data:', e);
       // Set empty arrays on error to prevent crashes
       setEvents([]);
       setTonightEvents([]);
       setFeaturedEvent(null);
+      setTonightPicks([]);
     } finally {
       setLoading(false);
     }
@@ -250,6 +266,65 @@ export default function HomeScreen() {
                 </View>
               </LinearGradient>
             </TouchableOpacity>
+          </Animated.View>
+        )}
+
+        {/* Tonight's Pick - AI Personalized */}
+        {tonightPicks.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(150).duration(400)} style={styles.section}>
+            <View style={styles.tonightPickHeader}>
+              <View style={styles.tonightPickTitle}>
+                <LinearGradient
+                  colors={[colors.accent, colors.accentDark]}
+                  style={styles.tonightPickIcon}
+                >
+                  <Ionicons name="sparkles" size={14} color="#fff" />
+                </LinearGradient>
+                <View>
+                  <Text style={styles.tonightPickLabel}>TONIGHT'S PICK</Text>
+                  <Text style={styles.tonightPickSub}>Curated for you</Text>
+                </View>
+              </View>
+            </View>
+            
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.tonightPickScroll}
+            >
+              {tonightPicks.map((event, index) => (
+                <TouchableOpacity
+                  key={event.id}
+                  style={styles.tonightPickCard}
+                  onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
+                  activeOpacity={0.85}
+                  data-testid={`tonight-pick-${index}`}
+                >
+                  <Image 
+                    source={{ uri: event.image || event.image_url }} 
+                    style={styles.tonightPickImage}
+                    contentFit="cover"
+                  />
+                  <LinearGradient 
+                    colors={['transparent', 'rgba(0,0,0,0.9)']} 
+                    style={styles.tonightPickOverlay}
+                  >
+                    {event.ai_recommended && (
+                      <View style={styles.aiPickBadge}>
+                        <Ionicons name="sparkles" size={10} color={colors.accent} />
+                        <Text style={styles.aiPickBadgeText}>AI Pick</Text>
+                      </View>
+                    )}
+                    <Text style={styles.tonightPickEventTitle} numberOfLines={2}>
+                      {event.title}
+                    </Text>
+                    <Text style={styles.tonightPickVenue}>
+                      {event.venue_name || event.location}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </Animated.View>
         )}
 
@@ -761,5 +836,85 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Tonight's Pick styles
+  tonightPickHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  tonightPickTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  tonightPickIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tonightPickLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    letterSpacing: 1,
+  },
+  tonightPickSub: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
+  tonightPickScroll: {
+    paddingRight: spacing.lg,
+    gap: spacing.md,
+  },
+  tonightPickCard: {
+    width: 200,
+    height: 140,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    backgroundColor: '#1A1A1A',
+  },
+  tonightPickImage: {
+    width: '100%',
+    height: '100%',
+  },
+  tonightPickOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: spacing.sm,
+    paddingTop: spacing.lg,
+  },
+  aiPickBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.xs,
+  },
+  aiPickBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+  tonightPickEventTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    lineHeight: 18,
+  },
+  tonightPickVenue: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
 });

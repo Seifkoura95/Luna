@@ -26,7 +26,7 @@ interface DashboardProps {
   onLogout: () => void;
 }
 
-type TabType = 'overview' | 'scanner' | 'users' | 'revenue' | 'auctions' | 'points' | 'activity';
+type TabType = 'overview' | 'scanner' | 'users' | 'revenue' | 'auctions' | 'points' | 'activity' | 'ai-insights';
 
 const COLORS = {
   primary: '#E31837',
@@ -310,6 +310,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     { id: 'auctions', label: 'Auctions', icon: Gavel },
     { id: 'points', label: 'Points', icon: Award },
     { id: 'activity', label: 'Activity', icon: Activity },
+    { id: 'ai-insights', label: 'AI Insights', icon: Zap },
   ];
 
   const StatCard = ({ title, value, subtext, icon: Icon, trend, trendValue }: any) => (
@@ -1087,9 +1088,157 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       case 'auctions': return renderAuctions();
       case 'points': return renderPoints();
       case 'activity': return renderActivity();
+      case 'ai-insights': return renderAIInsights();
       default: return renderOverview();
     }
   };
+
+  // AI Insights Tab
+  const [aiInsights, setAiInsights] = useState<any>(null);
+  const [aiChatMessages, setAiChatMessages] = useState<Array<{role: string, content: string}>>([]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const sendAiMessage = async () => {
+    if (!aiInput.trim() || aiLoading) return;
+    
+    const userMessage = aiInput.trim();
+    setAiInput('');
+    setAiChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setAiLoading(true);
+    
+    try {
+      const response = await api.post('/ai/chat', { 
+        message: `As a venue manager for Luna Group, I need help with: ${userMessage}`,
+        session_id: `venue-${user?.venue_id || 'dashboard'}`
+      });
+      setAiChatMessages(prev => [...prev, { role: 'ai', content: response.data.response }]);
+    } catch (error) {
+      setAiChatMessages(prev => [...prev, { role: 'ai', content: 'Sorry, I couldn\'t process your request. Please try again.' }]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const renderAIInsights = () => (
+    <div className="space-y-6">
+      {/* AI Header */}
+      <div className="flex items-center gap-4 mb-8">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+          <Zap className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h3 className="text-xl font-heading font-bold text-white">Luna AI Insights</h3>
+          <p className="text-sm text-muted-foreground">Powered by Claude AI for venue intelligence</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* AI Chat */}
+        <div className="bg-card border border-border/50 rounded-sm p-6">
+          <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-primary" />
+            Ask Luna AI
+          </h4>
+          
+          <div className="h-80 overflow-y-auto mb-4 space-y-3 bg-surface rounded-sm p-4">
+            {aiChatMessages.length === 0 && (
+              <p className="text-muted-foreground text-sm text-center py-8">
+                Ask me about venue performance, customer trends, or get recommendations...
+              </p>
+            )}
+            {aiChatMessages.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] p-3 rounded-sm ${
+                  msg.role === 'user' 
+                    ? 'bg-primary/20 border border-primary/30 text-white' 
+                    : 'bg-surface-highlight border border-border/50 text-white'
+                }`}>
+                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                </div>
+              </div>
+            ))}
+            {aiLoading && (
+              <div className="flex justify-start">
+                <div className="bg-surface-highlight border border-border/50 p-3 rounded-sm">
+                  <p className="text-sm text-muted-foreground animate-pulse">Luna is thinking...</p>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendAiMessage()}
+              placeholder="Ask about revenue trends, customer insights..."
+              className="flex-1 px-4 py-2 bg-surface border border-border rounded-sm text-sm focus:border-primary/50 focus:outline-none text-white"
+              data-testid="ai-chat-input"
+            />
+            <button
+              onClick={sendAiMessage}
+              disabled={aiLoading || !aiInput.trim()}
+              className="px-4 py-2 bg-primary hover:bg-primary/80 disabled:bg-primary/30 text-white rounded-sm transition-colors"
+              data-testid="ai-send-btn"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Insights */}
+        <div className="space-y-4">
+          <div className="bg-card border border-border/50 rounded-sm p-6">
+            <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-success" />
+              Quick Actions
+            </h4>
+            <div className="space-y-2">
+              {[
+                { q: "What's our peak hours analysis?", icon: Clock },
+                { q: "Show me at-risk VIP customers", icon: AlertTriangle },
+                { q: "Revenue optimization suggestions", icon: DollarSign },
+                { q: "Top performing promotions", icon: Award },
+              ].map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => { setAiInput(item.q); sendAiMessage(); }}
+                  className="w-full flex items-center gap-3 p-3 bg-surface-highlight hover:bg-surface border border-border/50 hover:border-primary/30 rounded-sm transition-all text-left"
+                  data-testid={`quick-insight-${idx}`}
+                >
+                  <item.icon className="w-4 h-4 text-primary" />
+                  <span className="text-sm text-muted-foreground">{item.q}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* AI Capabilities */}
+          <div className="bg-card border border-border/50 rounded-sm p-6">
+            <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-secondary" />
+              AI Capabilities
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Churn Prediction', status: 'Active', color: 'text-success' },
+                { label: 'Smart Missions', status: 'Active', color: 'text-success' },
+                { label: 'Bid Nudging', status: 'Active', color: 'text-success' },
+                { label: 'Photo Captions', status: 'Active', color: 'text-success' },
+              ].map((cap, idx) => (
+                <div key={idx} className="p-3 bg-surface rounded-sm border border-border/50">
+                  <p className="text-xs text-muted-foreground">{cap.label}</p>
+                  <p className={`text-sm font-semibold ${cap.color}`}>{cap.status}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
