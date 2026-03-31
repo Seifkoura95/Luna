@@ -658,5 +658,49 @@ A comprehensive owner's manual has been created covering:
 - `/app/test_reports/iteration_12.json` - 100% pass rate (18/18 backend tests, frontend verified)
 - Bug fixed: DateTime parsing in churn-analysis endpoint
 
+## Stripe Payment Integration ✅ COMPLETE (March 31, 2026)
+
+### Backend Routes (`/app/backend/routes/payments.py`)
+- **12 Fixed Payment Packages** (amounts defined server-side for security):
+  - VIP Tables: Eclipse ($500), After Dark ($300), Su Casa ($250), Juju ($200)
+  - Bottle Service: Premium ($350), VIP ($600), Ultra ($1200)
+  - Luna Points: 500 ($5), 1500 ($12), 5000 ($35)
+  - Subscriptions: Luna+ Monthly ($9.99), Luna+ Yearly ($79.99)
+
+### Endpoints:
+- `GET /api/payments/packages` - List all payment packages
+- `POST /api/payments/checkout` - Create Stripe checkout session
+- `GET /api/payments/status/{session_id}` - Poll payment status
+- `GET /api/payments/history` - Get user's payment history
+- `POST /api/webhook/stripe` - Stripe webhook handler
+
+### Frontend Screens:
+- `/app/frontend/app/payment-success.tsx` - Payment success with status polling
+- `/app/frontend/app/payment-cancelled.tsx` - Payment cancelled screen
+
+### Security:
+- Amounts defined on backend only (prevents price manipulation)
+- Dynamic success/cancel URLs from frontend origin
+- Payment transactions recorded before redirect
+- Idempotent status updates (no duplicate credits)
+
+## Story Sharing Feature ✅ COMPLETE (March 31, 2026)
+
+### Backend Routes (`/app/backend/routes/stories.py`)
+- **AI-Powered Captions** - Generates captions using Claude when not provided
+- **Points for Sharing** - Awards 25 Luna Points per share
+- **Multi-Platform Support** - Instagram, Facebook, Twitter, Snapchat, TikTok, Copy Link
+
+### Endpoints:
+- `POST /api/stories/create` - Create story with optional AI caption
+- `GET /api/stories/my-stories` - Get user's stories
+- `POST /api/stories/share` - Record share and award points
+- `GET /api/stories/feed` - Public story feed with user info
+
+### Test Report:
+- `/app/test_reports/iteration_13.json` - 100% pass rate (16/16 backend tests, frontend verified)
+- Bug fixed: Added missing Stack.Screen routes in _layout.tsx
+
+
 
 
