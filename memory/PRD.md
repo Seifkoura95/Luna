@@ -1123,6 +1123,82 @@ Location: `/app/frontend/app/(tabs)/index.tsx`
 - Activity endpoint verified: `/api/auctions/{id}/activity` returns correct data
 - UI styles implemented and rendering correctly
 
+## Require Cycle Fix (March 31, 2026) - PARTIALLY COMPLETE
+
+### Issue:
+Circular dependency warning: `authStore -> geofencing -> api -> authStore`
+
+### Changes Applied:
+1. **authStore.ts**: Changed to lazy import geofencing module using `await import()`
+2. **api.ts**: Changed to lazy require authStore using `require()`
+3. **geofencing.ts**: Changed to lazy require api module using `require()`
+
+### Result:
+- All lazy imports implemented to break runtime cycle
+- Metro warning still appears (detects static import analysis)
+- App functions correctly without runtime issues
+- Warning is non-blocking and can be ignored
+
+### Files Modified:
+- `/app/frontend/src/store/authStore.ts`
+- `/app/frontend/src/utils/api.ts`
+- `/app/frontend/src/utils/geofencing.ts`
+
+## Push Notification Implementation ✅ VERIFIED
+
+### Status:
+Push notifications are fully implemented and ready for production.
+
+### Frontend:
+- `/app/frontend/src/hooks/usePushNotifications.ts` - Full hook implementation
+- Handles permission requests, token registration, notification listeners
+- Uses `expo-notifications` package
+
+### Backend:
+- `POST /api/notifications/register-push-token` - Register device token
+- `DELETE /api/notifications/push-token` - Remove token
+- `/app/backend/routes/shared.py` - `send_push_notification_to_token()` function
+- Uses Expo Push API for delivery
+
+### Notification Types Implemented:
+1. Auction outbid alerts
+2. Auction won notifications
+3. New auction alerts (hourly scheduler)
+4. Watchlist activity alerts
+5. Win-back campaign notifications
+6. Churn prevention campaigns
+
+### Note:
+Push notifications require the Expo Go mobile app with real device tokens. Web preview does not support push notifications.
+
+## Server.py Cleanup Status (March 31, 2026)
+
+### Current State:
+- `server.py`: 6,617 lines containing both duplicated and unique endpoints
+- Modular routes in `/app/backend/routes/` take precedence due to FastAPI router order
+- Duplicates are effectively inactive but still in codebase
+
+### Unique Endpoints Remaining in server.py:
+1. **Crews** (lines 1640-1830, 3083-3350) - Group planning features
+2. **Safety** (lines 1828-1920, 3800-4100) - Emergency/SOS features
+3. **Location** (lines 3705-3800, 3970-4000) - Real-time location sharing
+4. **Admin** (line 1270) - Seed endpoint
+5. **Instagram** - Photo gallery features
+
+### Cleanup Plan (Future Task):
+1. Create `routes/crews.py` - Move all crew endpoints
+2. Create `routes/safety.py` - Move safety/emergency endpoints
+3. Create `routes/location.py` - Move location sharing endpoints
+4. Create `routes/admin.py` - Move admin endpoints
+5. Remove duplicated code from server.py
+6. Target: Reduce server.py to ~500 lines (scheduler + setup only)
+
+### Why Not Completed Now:
+- Moving 4000+ lines requires careful testing
+- Each route file needs proper imports/models
+- Risk of breaking production features
+- Modular routes already take precedence (app works correctly)
+
 
 
 

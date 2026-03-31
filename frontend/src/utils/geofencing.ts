@@ -7,7 +7,15 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import api from './api';
+
+// Lazy import api to break circular dependency
+let apiModule: any = null;
+const getApi = () => {
+  if (!apiModule) {
+    apiModule = require('./api').api;
+  }
+  return apiModule;
+};
 
 const LOCATION_TASK_NAME = 'luna-geofence-tracking';
 const GEOFENCES_STORAGE_KEY = '@luna_geofences';
@@ -111,7 +119,7 @@ export async function checkLocationPermissions(): Promise<{
  */
 export async function fetchAndCacheGeofences(token: string): Promise<Geofence[]> {
   try {
-    const response = await api.get('/geofences', {
+    const response = await getApi().get('/geofences', {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -152,7 +160,7 @@ export async function checkLocationAgainstGeofences(
   token: string
 ): Promise<LocationCheckResult | null> {
   try {
-    const response = await api.post(
+    const response = await getApi().post(
       '/geofences/check-location',
       { latitude, longitude },
       { headers: { Authorization: `Bearer ${token}` } }

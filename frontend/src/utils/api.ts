@@ -1,4 +1,12 @@
-import { useAuthStore } from '../store/authStore';
+// Lazy import to break circular dependency with authStore -> geofencing -> api
+let authStoreModule: any = null;
+const getAuthStore = () => {
+  if (!authStoreModule) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    authStoreModule = require('../store/authStore');
+  }
+  return authStoreModule.useAuthStore;
+};
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
@@ -14,6 +22,7 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
   };
   
   if (auth) {
+    const useAuthStore = getAuthStore();
     const token = useAuthStore.getState().token;
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;

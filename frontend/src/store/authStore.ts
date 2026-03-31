@@ -2,7 +2,15 @@ import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { saveAuthTokenForGeofencing, clearGeofencingAuth, startBackgroundLocationTracking } from '../utils/geofencing';
+
+// Lazy import geofencing to break circular dependency
+let geofencingModule: any = null;
+const getGeofencingModule = async () => {
+  if (!geofencingModule) {
+    geofencingModule = await import('../utils/geofencing');
+  }
+  return geofencingModule;
+};
 
 interface User {
   user_id: string;
@@ -68,11 +76,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // Initialize geofencing with auth token (only on native)
     if (Platform.OS !== 'web') {
       try {
-        await saveAuthTokenForGeofencing(token);
+        const geo = await getGeofencingModule();
+        await geo.saveAuthTokenForGeofencing(token);
         // Check if user has location alerts enabled (default true)
         const locationEnabled = await AsyncStorage.getItem('@luna_location_alerts');
         if (locationEnabled !== 'false') {
-          await startBackgroundLocationTracking();
+          await geo.startBackgroundLocationTracking();
         }
       } catch (e) {
         console.error('Failed to initialize geofencing:', e);
@@ -98,7 +107,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // Clear geofencing auth (stops background tracking)
     if (Platform.OS !== 'web') {
       try {
-        await clearGeofencingAuth();
+        const geo = await getGeofencingModule();
+        await geo.clearGeofencingAuth();
       } catch (e) {
         console.error('Failed to clear geofencing auth:', e);
       }
