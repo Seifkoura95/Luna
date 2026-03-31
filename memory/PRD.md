@@ -741,6 +741,57 @@ A comprehensive owner's manual has been created covering:
 ### Test Report:
 - `/app/test_reports/iteration_14.json` - Backend 100% (11/11), Frontend 90% (CDN cache blocking venue portal)
 
+## Real-time Auction Bidding (WebSocket) ✅ COMPLETE (March 31, 2026)
+
+### Backend Services
+- **`/app/backend/services/websocket_manager.py`** - AuctionWebSocketManager
+  - Subscribe/broadcast pattern for real-time updates
+  - Per-auction and global subscription support
+  - User-specific outbid notifications
+  - Connection tracking and cleanup
+
+### WebSocket Endpoints
+- `WS /api/ws/auction/{auction_id}` - Subscribe to specific auction
+  - Receives: auction_state, new_bid, outbid, auction_ending, auction_ended
+  - Sends: ping, place_bid, get_state
+- `WS /api/ws/auctions` - Subscribe to all auction updates
+- `GET /api/ws/stats` - Get connection statistics
+
+### Integration with Bid Placement
+- Auctions route broadcasts bid updates via `asyncio.create_task`
+- Outbid users receive WebSocket notification in real-time
+- Supports auto-bid wars with live updates
+
+## Advanced Churn Prediction Automation ✅ COMPLETE (March 31, 2026)
+
+### Backend Service (`/app/backend/services/churn_service.py`)
+- **Risk Score Calculation** (0-100):
+  - Inactivity: up to 40 points (>60 days = 40pts)
+  - Engagement decline: up to 25 points (>75% drop = 25pts)
+  - Spend decline: up to 15 points (no spend with visits = 15pts)
+  - Points hoarding: up to 10 points (5000+ pts, inactive = 10pts)
+  - AI adjustment: up to 10 points (Claude analysis)
+  - Subscription protection: -15 points for active subscribers
+
+### Win-Back Offer Configuration
+- **High Risk**: VIP upgrade, free entry + drink, exclusive event invite (500 points)
+- **Medium Risk**: 2x points week, 25% discount (100-250 points)
+- **Low Risk**: Miss you reminder message (50 points)
+
+### API Endpoints (`/app/backend/routes/churn.py`)
+- `GET /api/churn/my-status` - User's engagement status
+- `GET /api/churn/analyze/{user_id}` - Detailed risk analysis (admin)
+- `POST /api/churn/batch-analyze` - Batch analysis (admin, background task)
+- `POST /api/churn/trigger-winback` - Trigger campaign (staff)
+- `GET /api/churn/dashboard` - Stats for venue dashboard
+- `GET /api/churn/campaigns` - Campaign history
+- `POST /api/churn/claim-offer` - User claims offer
+
+### Test Report:
+- `/app/test_reports/iteration_15.json` - 100% pass rate (16/16 tests)
+- Bug fixed: Role-based access control now fetches user from database
+
+
 
 
 
