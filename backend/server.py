@@ -154,6 +154,15 @@ async def lifespan(app_instance: FastAPI):
         replace_existing=True
     )
     
+    # Schedule new auction alerts every hour
+    scheduler.add_job(
+        scheduled_jobs.send_new_auction_alerts,
+        IntervalTrigger(hours=1),
+        id="new_auction_alerts",
+        name="New Auction Alerts",
+        replace_existing=True
+    )
+    
     # Also run a sync on startup (after 90 seconds to let everything initialize)
     scheduler.add_job(
         run_scheduled_sync,
@@ -165,7 +174,7 @@ async def lifespan(app_instance: FastAPI):
     
     scheduler.start()
     scheduled_jobs.is_running = True  # Set flag to indicate scheduler is running
-    logging.info("Event scheduler started - Megatix sync every 12 hours, churn analysis daily at 3AM, win-back dispatch every 4 hours")
+    logging.info("Event scheduler started - Megatix sync every 12 hours, churn analysis daily at 3AM, win-back dispatch every 4 hours, new auction alerts hourly")
     
     yield
     

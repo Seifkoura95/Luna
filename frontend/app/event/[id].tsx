@@ -48,29 +48,24 @@ export default function EventDetailPage() {
   const [attendees, setAttendees] = useState<{ going_count: number; interested_count: number; friends_going: any[]; friends_interested: any[] }>({ going_count: 0, interested_count: 0, friends_going: [], friends_interested: [] });
   const [loadingRsvp, setLoadingRsvp] = useState(false);
 
-  // Guard against undefined id
-  if (!id) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#08080A', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#fff' }}>Loading event...</Text>
-      </View>
-    );
-  }
+  // Safe ID - handle both string and array from useLocalSearchParams
+  const eventId = Array.isArray(id) ? id[0] : id;
 
   useEffect(() => {
-    if (id) {
+    if (eventId) {
       loadEvent();
       loadRsvp();
       loadAttendees();
     }
-  }, [id]);
+  }, [eventId]);
 
   const loadEvent = async () => {
+    if (!eventId) return;
     try {
       setLoading(true);
       setError(null);
-      console.log('Loading event with ID:', id);
-      const data = await api.getEventDetail(id as string);
+      console.log('Loading event with ID:', eventId);
+      const data = await api.getEventDetail(eventId);
       console.log('Event data received:', data);
       if (data) {
         setEvent(data);
@@ -87,7 +82,7 @@ export default function EventDetailPage() {
 
   const loadRsvp = async () => {
     try {
-      const data = await api.getMyEventRsvp(id as string);
+      const data = await api.getMyEventRsvp(eventId as string);
       setRsvpStatus(data.rsvp?.status || null);
     } catch (err) {
       console.log('No RSVP found');
@@ -96,7 +91,7 @@ export default function EventDetailPage() {
 
   const loadAttendees = async () => {
     try {
-      const data = await api.getEventAttendees(id as string);
+      const data = await api.getEventAttendees(eventId as string);
       setAttendees(data);
     } catch (err) {
       console.log('Failed to load attendees');
@@ -110,7 +105,7 @@ export default function EventDetailPage() {
     handleHaptic();
     
     try {
-      await api.rsvpToEvent(id as string, status, false);
+      await api.rsvpToEvent(eventId as string, status, false);
       setRsvpStatus(status);
       loadAttendees();
     } catch (err: any) {

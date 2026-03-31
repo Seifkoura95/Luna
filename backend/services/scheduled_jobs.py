@@ -4,6 +4,7 @@ Includes churn analysis cron job and push notification dispatcher.
 """
 import asyncio
 import logging
+import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -14,6 +15,7 @@ from database import db
 from services.churn_service import churn_service
 from services.notification_ws_manager import notification_ws_manager
 from services.ai_service import luna_ai
+from routes.shared import send_push_notification_to_token
 
 logger = logging.getLogger(__name__)
 
@@ -286,6 +288,170 @@ class ScheduledJobsManager:
                 
         except Exception as e:
             logger.error(f"Event reminders error: {e}")
+    
+    async def send_new_auction_alerts(self):
+        """
+        Send push notifications for new auctions at favorite venues.
+        Runs every hour to notify users of fresh auction opportunities.
+        """
+        try:
+            now = datetime.now(timezone.utc)
+            one_hour_ago = now - timedelta(hours=1)
+            
+            # Find recently created auctions
+            new_auctions = await db.auctions.find({
+                "status": "active",
+                "start_time": {"$gte": one_hour_ago},
+                "new_auction_notification_sent": {"$ne": True}
+            }).to_list(20)
+            
+            notifications_sent = 0
+            
+            for auction in new_auctions:
+                auction_id = auction.get("id")
+                venue_id = auction.get("venue_id")
+                
+                # Find users who have favorited this venue or visited recently
+                potential_users = set()
+                
+                # Users who favorited the venue
+                favorites = await db.user_favorites.find({"venue_id": venue_id}).to_list(100)
+                for fav in favorites:
+                    potential_users.add(fav.get("user_id"))
+                
+                # Users who visited this venue in last 30 days
+                recent_visitors = await db.check_ins.distinct("user_id", {
+                    "venue_id": venue_id,
+                    "check_in_time": {"$gte": now - timedelta(days=30)}
+                })
+                potential_users.update(recent_visitors[:50])
+                
+                # Users subscribed to auction updates for this venue
+                subscribers = await db.auction_subscribers.find({
+                    "$or": [
+                        {"venue_id": venue_id},
+                        {"auction_type": auction.get("auction_type")}
+                    ]
+                }).to_list(100)
+                for sub in subscribers:
+                    potential_users.add(sub.get("user_id"))
+                
+                for user_id in potential_users:
+                    # Check user's notification preferences
+                    prefs = await db.notification_preferences.find_one({"user_id": user_id})
+                    if prefs and not prefs.get("auction_updates", True):
+                        continue
+                    
+                    # Send WebSocket notification if online
+                    if notification_ws_manager.is_user_online(user_id):
+                        await notification_ws_manager.send_to_user(user_id, {
+                            "type": "new_auction",
+                            "title": "New VIP Experience!",
+                            "message": f"🔥 {auction.get('title')} just launched at {auction.get('venue_name')}!",
+                            "data": {
+                                "auction_id": auction_id,
+                                "venue_id": venue_id,
+                                "starting_bid": auction.get("starting_bid")
+                            }
+                        })
+                    
+                    # Send push notification
+                    user = await db.users.find_one({"user_id": user_id})
+                    if user and user.get("push_tokens"):
+                        for token in user.get("push_tokens", []):
+                            try:
+                                await send_push_notification_to_token(
+                                    token=token,
+                                    title="🔥 New Auction Live!",
+                                    body=f"{auction.get('title')} at {auction.get('venue_name')} - Starting at ${auction.get('starting_bid')}!",
+                                    data={
+                                        "type": "new_auction",
+                                        "auction_id": auction_id,
+                                        "venue_id": venue_id
+                                    }
+                                )
+                                notifications_sent += 1
+                            except Exception as e:
+                                logger.error(f"New auction push notification failed: {e}")
+                
+                # Mark notification as sent for this auction
+                await db.auctions.update_one(
+                    {"id": auction_id},
+                    {"$set": {"new_auction_notification_sent": True}}
+                )
+            
+            if notifications_sent > 0:
+                logger.info(f"Sent {notifications_sent} new auction notifications")
+            
+        except Exception as e:
+            logger.error(f"New auction alerts error: {e}")
+    
+    async def send_auction_won_notification(self, auction_id: str):
+        """
+        Send notification when an auction ends and winner is determined.
+        Called when auction status changes to 'completed'.
+        """
+        try:
+            auction = await db.auctions.find_one({"id": auction_id})
+            if not auction or not auction.get("winner_id"):
+                return
+            
+            winner_id = auction.get("winner_id")
+            winner = await db.users.find_one({"user_id": winner_id})
+            
+            if not winner:
+                return
+            
+            # Create in-app notification
+            await db.notifications.insert_one({
+                "id": str(uuid.uuid4())[:8],
+                "user_id": winner_id,
+                "type": "auction_won",
+                "title": "🎉 Congratulations! You Won!",
+                "message": f"You won {auction.get('title')} at {auction.get('venue_name')} for ${auction.get('current_bid')}!",
+                "data": {
+                    "auction_id": auction_id,
+                    "winning_bid": auction.get("current_bid"),
+                    "venue_id": auction.get("venue_id")
+                },
+                "priority": "high",
+                "read": False,
+                "created_at": datetime.now(timezone.utc)
+            })
+            
+            # Send WebSocket notification
+            if notification_ws_manager.is_user_online(winner_id):
+                await notification_ws_manager.send_to_user(winner_id, {
+                    "type": "auction_won",
+                    "title": "🎉 Congratulations! You Won!",
+                    "message": f"You won {auction.get('title')} for ${auction.get('current_bid')}!",
+                    "data": {
+                        "auction_id": auction_id,
+                        "winning_bid": auction.get("current_bid")
+                    }
+                })
+            
+            # Send push notification
+            if winner.get("push_tokens"):
+                for token in winner.get("push_tokens", []):
+                    try:
+                        await send_push_notification_to_token(
+                            token=token,
+                            title="🎉 You Won the Auction!",
+                            body=f"Congratulations! You won {auction.get('title')} for ${auction.get('current_bid')}. Complete payment to confirm.",
+                            data={
+                                "type": "auction_won",
+                                "auction_id": auction_id,
+                                "winning_bid": auction.get("current_bid")
+                            }
+                        )
+                    except Exception as e:
+                        logger.error(f"Auction won push notification failed: {e}")
+            
+            logger.info(f"Sent auction won notification to {winner_id} for auction {auction_id}")
+            
+        except Exception as e:
+            logger.error(f"Auction won notification error: {e}")
 
 
 async def send_win_back_push_notification(user: dict, offer: dict) -> bool:
