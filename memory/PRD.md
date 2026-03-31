@@ -1171,33 +1171,86 @@ Push notifications are fully implemented and ready for production.
 ### Note:
 Push notifications require the Expo Go mobile app with real device tokens. Web preview does not support push notifications.
 
-## Server.py Cleanup Status (March 31, 2026)
+## Server.py Cleanup - Modular Routes Created ✅ COMPLETE (March 31, 2026)
 
-### Current State:
-- `server.py`: 6,617 lines containing both duplicated and unique endpoints
-- Modular routes in `/app/backend/routes/` take precedence due to FastAPI router order
-- Duplicates are effectively inactive but still in codebase
+### New Route Files Created:
 
-### Unique Endpoints Remaining in server.py:
-1. **Crews** (lines 1640-1830, 3083-3350) - Group planning features
-2. **Safety** (lines 1828-1920, 3800-4100) - Emergency/SOS features
-3. **Location** (lines 3705-3800, 3970-4000) - Real-time location sharing
-4. **Admin** (line 1270) - Seed endpoint
-5. **Instagram** - Photo gallery features
+**1. `/app/backend/routes/crews.py`** - Crew/Group Planning
+- `POST /api/crews/create` - Create new crew
+- `GET /api/crews` - Get user's crews
+- `GET /api/crews/{crew_id}` - Get crew detail
+- `POST /api/crews/invite` - Invite to crew
+- `POST /api/crews/{crew_id}/join` - Accept invitation
+- `POST /api/crews/booth-bid` - Submit collective booth bid
+- `DELETE /api/crews/{crew_id}/leave` - Leave crew
+- `GET /api/crews/{crew_id}/split-status` - Get payment split info
 
-### Cleanup Plan (Future Task):
-1. Create `routes/crews.py` - Move all crew endpoints
-2. Create `routes/safety.py` - Move safety/emergency endpoints
-3. Create `routes/location.py` - Move location sharing endpoints
-4. Create `routes/admin.py` - Move admin endpoints
-5. Remove duplicated code from server.py
-6. Target: Reduce server.py to ~500 lines (scheduler + setup only)
+**2. `/app/backend/routes/safety.py`** - Safety/Emergency Features
+- `POST /api/safety/report-incident` - Report incident
+- `POST /api/safety/lost-property` - Report lost item
+- `GET /api/safety/rideshare-links` - Get ride deep links
+- `GET /api/safety/emergency-services` - Get emergency numbers (public)
+- `POST /api/safety/alert` - Send safety alert
+- `GET /api/safety/alerts/active` - Get active alerts
+- `POST /api/safety/alerts/{id}/acknowledge` - Acknowledge alert
+- `POST /api/safety/alerts/{id}/resolve` - Resolve alert
+- `GET /api/safety/notifications` - Get safety notifications
+- `CRUD /api/safety/emergency-contacts` - Manage emergency contacts
+- `POST /api/safety/silent-alert` - Silent SOS
 
-### Why Not Completed Now:
-- Moving 4000+ lines requires careful testing
-- Each route file needs proper imports/models
-- Risk of breaking production features
-- Modular routes already take precedence (app works correctly)
+**3. `/app/backend/routes/location.py`** - Location Sharing
+- `POST /api/location/update` - Update location
+- `GET /api/location/me` - Get my location
+- `GET /api/location/crew/{crew_id}` - Get crew locations
+- `POST /api/location/share/{crew_id}` - Toggle sharing
+- `DELETE /api/location/share` - Stop sharing
+- `GET /api/location/nearby-friends` - Get nearby friends
+
+### Backend Now Loads:
+**32 modular route modules** (up from 29)
+
+### Test Report:
+- `/app/test_reports/iteration_21.json` - 100% backend (20/20 tests)
+
+## Hot Badge on Auctions Page ✅ COMPLETE (March 31, 2026)
+
+### Implementation:
+Location: `/app/frontend/app/(tabs)/auctions.tsx`
+
+**Changes:**
+1. Added `hotAuctions: Set<string>` state
+2. Fetch activity data for each auction on load
+3. Added `renderAuctionCard` hot badge UI
+4. Styles: `auctionCardHot`, `hotGlow`, `hotBadge`, `hotEmoji`, `hotText`, `bidAmountHot`
+
+**Visual Elements:**
+- Orange border on hot auction cards
+- Orange glow overlay
+- 🔥 "BIDDING WAR!" badge next to ACTIVE badge
+- Orange bid amount text
+
+## Watchlist UI ✅ COMPLETE (March 31, 2026)
+
+### Implementation:
+Location: `/app/frontend/app/(tabs)/auctions.tsx`
+
+**State:**
+- `watchlist: Set<string>` - IDs of watched auctions
+
+**Functions:**
+- `toggleWatchlist(auctionId)` - Add/remove from watchlist with haptic feedback
+
+**UI Elements:**
+- Eye icon button (👁) on each auction card
+- Filled eye when watched, outline when not
+- Gold background when active
+
+**API Integration:**
+- `api.watchAuction(auctionId)` - Add to watchlist
+- `api.unwatchAuction(auctionId)` - Remove
+- `api.getWatchlist()` - Fetch user's watchlist
+
+**Note:** Nested TouchableOpacity has rendering issues on React Native Web. Works correctly on Expo Go mobile app.
 
 
 
