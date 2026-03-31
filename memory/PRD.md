@@ -1093,6 +1093,36 @@ Modular routes in `/app/backend/routes/` take precedence due to FastAPI router r
 - `routes/admin.py` - Admin dashboard endpoints
 - `routes/location.py` - Location sharing
 
+## Hot Auction Badge Feature ✅ COMPLETE (March 31, 2026)
+
+### Implementation:
+Location: `/app/frontend/app/(tabs)/index.tsx`
+
+**Activity Detection:**
+- Fetches auction activity via `GET /api/auctions/{id}/activity`
+- Checks `is_hot` or `activity_level === 'hot'` (5+ bids in 5 mins)
+- Stores hot auction IDs in state: `hotAuctions: Set<string>`
+
+**UI Elements:**
+1. **Orange Border**: Hot auction cards have `borderColor: '#FF6B35'`
+2. **Orange Glow Overlay**: Semi-transparent orange overlay
+3. **🔥 BIDDING WAR! Badge**: Displayed next to LIVE badge
+4. **Orange Bid Value**: Current bid amount turns orange
+
+**Styles Added:**
+- `auctionCardHot` - Orange border styling
+- `auctionHotGlow` - Orange overlay effect  
+- `auctionHotBadge` - Fire emoji badge container
+- `auctionBidValueHot` - Orange text for bid amount
+
+### API Integration:
+- `api.getAuctionActivity(auctionId)` - Returns activity metrics
+- Response: `{ is_hot, activity_level, bids_last_5_mins, bids_last_30_mins }`
+
+### Test Report:
+- Activity endpoint verified: `/api/auctions/{id}/activity` returns correct data
+- UI styles implemented and rendering correctly
+
 
 
 

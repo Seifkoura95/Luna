@@ -142,6 +142,8 @@ export const api = {
   },
   getAuctionDetail: (auctionId: string) =>
     apiFetch<any>(`/api/auctions/${auctionId}`, { auth: false }),
+  getAuctionActivity: (auctionId: string) =>
+    apiFetch<any>(`/api/auctions/${auctionId}/activity`, { auth: false }),
   getAuctionBids: (auctionId: string) =>
     apiFetch<any[]>(`/api/auctions/${auctionId}/bids`, { auth: false }),
   placeBid: (auctionId: string, amount: number, maxBid?: number, notifyOutbid: boolean = true) =>
@@ -152,6 +154,16 @@ export const api = {
   getUserWonAuctions: () => apiFetch<any[]>('/api/auctions/user/won'),
   claimAuctionPrize: (auctionId: string) =>
     apiFetch<any>(`/api/auctions/${auctionId}/claim`, { method: 'POST' }),
+  
+  // Auction Watchlist
+  watchAuction: (auctionId: string, notifyOnBid: boolean = true, notifyOnEnding: boolean = true, notifyThreshold: number = 3) =>
+    apiFetch<any>('/api/auctions/watch', { 
+      method: 'POST', 
+      body: JSON.stringify({ auction_id: auctionId, notify_on_bid: notifyOnBid, notify_on_ending: notifyOnEnding, notify_threshold: notifyThreshold }) 
+    }),
+  unwatchAuction: (auctionId: string) =>
+    apiFetch<any>(`/api/auctions/watch/${auctionId}`, { method: 'DELETE' }),
+  getWatchlist: () => apiFetch<any[]>('/api/auctions/watchlist'),
   
   // Auction Notifications
   subscribeToAuction: (auctionId: string, notifyOutbid: boolean = true) =>

@@ -55,8 +55,9 @@ export default function HomeScreen() {
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
   const [tonightPicks, setTonightPicks] = useState<any[]>([]);
   const [activeAuctions, setActiveAuctions] = useState<any[]>([]);
+  const [hotAuctions, setHotAuctions] = useState<Set<string>>(new Set());
 
-  // Pulse animation
+  // Pulse animation for hot auctions
   const pulseAnim = useSharedValue(1);
 
   useEffect(() => {
@@ -109,6 +110,24 @@ export default function HomeScreen() {
       
       // Set active auctions
       setActiveAuctions(auctionsData || []);
+      
+      // Check which auctions are "hot" (high bidding activity)
+      if (auctionsData && auctionsData.length > 0) {
+        const hotSet = new Set<string>();
+        await Promise.all(
+          auctionsData.slice(0, 5).map(async (auction: any) => {
+            try {
+              const activity = await api.getAuctionActivity(auction.id);
+              if (activity?.is_hot || activity?.activity_level === 'hot') {
+                hotSet.add(auction.id);
+              }
+            } catch (e) {
+              // Ignore activity fetch errors
+            }
+          })
+        );
+        setHotAuctions(hotSet);
+      }
       
       // Fetch AI personalized picks if we have events
       if (upcomingList.length > 0) {
@@ -349,40 +368,54 @@ export default function HomeScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.auctionScroll}
             >
-              {activeAuctions.slice(0, 5).map((auction, index) => (
-                <TouchableOpacity
-                  key={auction.id}
-                  style={styles.auctionCard}
-                  onPress={() => { handleHaptic(); router.push(`/auctions?id=${auction.id}`); }}
-                  activeOpacity={0.85}
-                  data-testid={`auction-card-${index}`}
-                >
-                  <Image 
-                    source={{ uri: auction.image_url || 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=400' }} 
-                    style={styles.auctionImage}
-                    contentFit="cover"
-                  />
-                  <LinearGradient 
-                    colors={['transparent', 'rgba(0,0,0,0.95)']} 
-                    style={styles.auctionOverlay}
+              {activeAuctions.slice(0, 5).map((auction, index) => {
+                const isHot = hotAuctions.has(auction.id);
+                return (
+                  <TouchableOpacity
+                    key={auction.id}
+                    style={[styles.auctionCard, isHot && styles.auctionCardHot]}
+                    onPress={() => { handleHaptic(); router.push(`/auctions?id=${auction.id}`); }}
+                    activeOpacity={0.85}
+                    data-testid={`auction-card-${index}`}
                   >
-                    <View style={styles.auctionLiveBadge}>
-                      <View style={styles.auctionLiveDot} />
-                      <Text style={styles.auctionLiveText}>LIVE</Text>
-                    </View>
-                    <Text style={styles.auctionTitle} numberOfLines={2}>
-                      {auction.title}
-                    </Text>
-                    <Text style={styles.auctionVenue}>
-                      {auction.venue_name}
-                    </Text>
-                    <View style={styles.auctionBidRow}>
-                      <Text style={styles.auctionBidLabel}>Current Bid</Text>
-                      <Text style={styles.auctionBidValue}>${auction.current_bid?.toLocaleString() || auction.starting_bid?.toLocaleString()}</Text>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-              ))}
+                    <Image 
+                      source={{ uri: auction.image_url || 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=400' }} 
+                      style={styles.auctionImage}
+                      contentFit="cover"
+                    />
+                    {isHot && (
+                      <View style={styles.auctionHotGlow} />
+                    )}
+                    <LinearGradient 
+                      colors={['transparent', 'rgba(0,0,0,0.95)']} 
+                      style={styles.auctionOverlay}
+                    >
+                      <View style={styles.auctionBadgeRow}>
+                        <View style={styles.auctionLiveBadge}>
+                          <View style={styles.auctionLiveDot} />
+                          <Text style={styles.auctionLiveText}>LIVE</Text>
+                        </View>
+                        {isHot && (
+                          <View style={styles.auctionHotBadge}>
+                            <Text style={styles.auctionHotEmoji}>🔥</Text>
+                            <Text style={styles.auctionHotText}>BIDDING WAR!</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.auctionTitle} numberOfLines={2}>
+                        {auction.title}
+                      </Text>
+                      <Text style={styles.auctionVenue}>
+                        {auction.venue_name}
+                      </Text>
+                      <View style={styles.auctionBidRow}>
+                        <Text style={styles.auctionBidLabel}>Current Bid</Text>
+                        <Text style={[styles.auctionBidValue, isHot && styles.auctionBidValueHot]}>${auction.current_bid?.toLocaleString() || auction.starting_bid?.toLocaleString()}</Text>
+                      </View>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
           </Animated.View>
         )}
@@ -974,8 +1007,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radius.full,
-    alignSelf: 'flex-start',
-    marginBottom: spacing.xs,
   },
   auctionLiveDot: {
     width: 6,
@@ -986,6 +1017,44 @@ const styles = StyleSheet.create({
   auctionLiveText: {
     fontSize: 10,
     fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 0.5,
+  },
+  auctionBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+    flexWrap: 'wrap',
+  },
+  auctionCardHot: {
+    borderWidth: 2,
+    borderColor: '#FF6B35',
+  },
+  auctionHotGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 107, 53, 0.15)',
+    zIndex: 1,
+  },
+  auctionHotBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(255, 107, 53, 0.95)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+  },
+  auctionHotEmoji: {
+    fontSize: 10,
+  },
+  auctionHotText: {
+    fontSize: 9,
+    fontWeight: '800',
     color: '#fff',
     letterSpacing: 0.5,
   },
@@ -1019,5 +1088,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: colors.gold,
+  },
+  auctionBidValueHot: {
+    color: '#FF6B35',
   },
 });
