@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing } from '../theme/colors';
+import { colors, spacing, radius } from '../theme/colors';
 import { GoldStarIcon } from './GoldStarIcon';
 import { useAuthStore } from '../store/authStore';
 
@@ -15,6 +16,7 @@ interface PageHeaderProps {
   showPoints?: boolean;
   showLogo?: boolean;
   compactLogo?: boolean;
+  showAccent?: boolean;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ 
@@ -23,7 +25,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   description,
   showPoints = false,
   showLogo = true,
-  compactLogo = false
+  compactLogo = false,
+  showAccent = true,
 }) => {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
@@ -37,6 +40,17 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             style={compactLogo ? styles.logoCompact : styles.logo}
             contentFit="contain"
           />
+          {/* Blue accent divider under logo */}
+          {showAccent && (
+            <View style={styles.accentContainer}>
+              <LinearGradient
+                colors={['transparent', colors.accent, 'transparent']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.accentLine}
+              />
+            </View>
+          )}
         </View>
       )}
       
@@ -67,56 +81,70 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 12,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
   },
   logoContainer: {
-    marginBottom: 6,
+    marginBottom: spacing.xs,
+    alignItems: 'center',
   },
   logo: {
-    width: 160,
-    height: 48,
+    width: 180,
+    height: 52,
   },
   logoCompact: {
-    width: 120,
-    height: 36,
+    width: 140,
+    height: 40,
+  },
+  accentContainer: {
+    marginTop: spacing.sm,
+    width: 100,
+    alignItems: 'center',
+  },
+  accentLine: {
+    width: '100%',
+    height: 2,
+    borderRadius: 1,
   },
   pageTitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
-    letterSpacing: 2,
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   subtitle: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.35)',
-    marginTop: 2,
+    color: colors.textTertiary,
+    marginTop: 3,
   },
   description: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.35)',
+    fontSize: 12,
+    color: colors.textTertiary,
     textAlign: 'center',
-    marginTop: 2,
+    marginTop: 3,
+    maxWidth: 280,
+    lineHeight: 18,
   },
   pointsBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(212,175,55,0.12)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 5,
-    marginTop: 10,
+    backgroundColor: colors.goldDim,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    gap: 6,
+    marginTop: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.15)',
+    borderColor: colors.borderGold,
   },
   pointsText: {
     color: colors.gold,
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: 14,
+    letterSpacing: 0.3,
   },
 });
 

@@ -1,100 +1,134 @@
-// Luna Group UI Kit v2.0 - Dark Edition Design Tokens
+// Luna Group UI Kit v3.0 - Premium Dark Edition Design Tokens
+// Complete rewrite with proper depth, glassmorphism, and premium feel
+
 export const colors = {
-  // Primary Backgrounds - Deep blacks
-  bg: '#08080A',
-  background: '#08080A',
-  surface: '#0F0F12',
-  surfaceElevated: '#161619',
-  surfaceFloat: '#1E1E24',
-  surfaceHover: '#242430',
+  // Primary Backgrounds - Layered depth system
+  bg: '#050507',
+  background: '#050507',
+  surface: '#0C0C10',
+  surfaceElevated: '#131318',
+  surfaceFloat: '#1A1A22',
+  surfaceHover: '#22222C',
+  surfaceActive: '#2A2A36',
   
-  // Legacy mappings for compatibility
-  backgroundElevated: '#0F0F12',
-  backgroundCard: '#0F0F12',
-  backgroundCardHover: '#161619',
+  // Legacy mappings
+  backgroundElevated: '#0C0C10',
+  backgroundCard: '#0C0C10',
+  backgroundCardHover: '#131318',
   
-  // Glassmorphism backgrounds
-  glass: 'rgba(15, 15, 18, 0.85)',
-  glassLight: 'rgba(255, 255, 255, 0.04)',
-  glassBorder: 'rgba(255, 255, 255, 0.06)',
-  glassHighlight: 'rgba(255, 255, 255, 0.12)',
+  // True Glassmorphism System
+  glass: 'rgba(12, 12, 16, 0.75)',
+  glassMid: 'rgba(18, 18, 24, 0.82)',
+  glassHigh: 'rgba(24, 24, 32, 0.88)',
+  glassLight: 'rgba(255, 255, 255, 0.03)',
+  glassBorder: 'rgba(255, 255, 255, 0.08)',
+  glassBorderStrong: 'rgba(255, 255, 255, 0.14)',
+  glassBorderSubtle: 'rgba(255, 255, 255, 0.05)',
+  glassHighlight: 'rgba(255, 255, 255, 0.18)',
+  glassShine: 'rgba(255, 255, 255, 0.25)',
   
-  // Text - High contrast with hierarchy
-  text: '#F0F0F5',
-  textPrimary: '#F0F0F5',
-  textSecondary: 'rgba(240, 240, 245, 0.5)',
-  textTertiary: 'rgba(240, 240, 245, 0.25)',
-  textMuted: 'rgba(240, 240, 245, 0.4)',
-  textDisabled: 'rgba(240, 240, 245, 0.2)',
+  // Text - High contrast hierarchy
+  text: '#F5F5FA',
+  textPrimary: '#F5F5FA',
+  textSecondary: 'rgba(245, 245, 250, 0.65)',
+  textTertiary: 'rgba(245, 245, 250, 0.40)',
+  textMuted: 'rgba(245, 245, 250, 0.50)',
+  textDisabled: 'rgba(245, 245, 250, 0.25)',
+  textInverse: '#050507',
   
-  // Borders
-  border: 'rgba(255, 255, 255, 0.06)',
-  borderHover: 'rgba(255, 255, 255, 0.12)',
-  borderStrong: 'rgba(255, 255, 255, 0.18)',
-  borderLight: 'rgba(255, 255, 255, 0.08)',
-  borderAccent: 'rgba(37, 99, 235, 0.3)',
+  // Border System - Hierarchical
+  border: 'rgba(255, 255, 255, 0.08)',
+  borderHover: 'rgba(255, 255, 255, 0.14)',
+  borderStrong: 'rgba(255, 255, 255, 0.20)',
+  borderLight: 'rgba(255, 255, 255, 0.05)',
+  borderAccent: 'rgba(37, 99, 235, 0.40)',
+  borderGold: 'rgba(212, 168, 50, 0.40)',
+  borderCard: 'rgba(255, 255, 255, 0.10)',
   
-  // Brand Accent - Blue (Primary actions)
+  // Brand Accent - Electric Blue
   accent: '#2563EB',
-  accentDim: 'rgba(37, 99, 235, 0.14)',
+  accentDim: 'rgba(37, 99, 235, 0.16)',
   accentBright: '#3B82F6',
   accentVibrant: '#60A5FA',
   accentDark: '#1D4ED8',
-  accentLight: '#60A5FA',
-  accentGlow: 'rgba(37, 99, 235, 0.25)',
+  accentLight: '#93C5FD',
+  accentGlow: 'rgba(37, 99, 235, 0.35)',
+  accentSoft: 'rgba(37, 99, 235, 0.12)',
   
-  // Premium Gold - VIP Status
-  gold: '#C9A84C',
-  goldDim: 'rgba(201, 168, 76, 0.13)',
-  goldBright: '#E2C06E',
-  goldDark: '#A68B3D',
-  goldLight: '#E2C06E',
-  goldGlow: 'rgba(201, 168, 76, 0.2)',
+  // Premium Gold - Rich & Vibrant
+  gold: '#D4A832',
+  goldDim: 'rgba(212, 168, 50, 0.15)',
+  goldBright: '#F0C850',
+  goldDark: '#B8922A',
+  goldLight: '#F5D878',
+  goldGlow: 'rgba(212, 168, 50, 0.30)',
+  goldSoft: 'rgba(212, 168, 50, 0.12)',
+  goldShine: '#FFE082',
   
-  // Status Colors
-  success: '#22C55E',
-  green: '#22C55E',
-  greenDim: 'rgba(34, 197, 94, 0.12)',
-  successGlow: 'rgba(34, 197, 94, 0.2)',
+  // Status Colors - Vivid
+  success: '#10B981',
+  green: '#10B981',
+  greenDim: 'rgba(16, 185, 129, 0.14)',
+  greenBright: '#34D399',
+  successGlow: 'rgba(16, 185, 129, 0.30)',
   
   error: '#EF4444',
   red: '#EF4444',
-  redDim: 'rgba(239, 68, 68, 0.12)',
-  errorGlow: 'rgba(239, 68, 68, 0.2)',
+  redDim: 'rgba(239, 68, 68, 0.14)',
+  redBright: '#F87171',
+  errorGlow: 'rgba(239, 68, 68, 0.30)',
   
   warning: '#F97316',
   orange: '#F97316',
-  orangeDim: 'rgba(249, 115, 22, 0.12)',
-  warningGlow: 'rgba(249, 115, 22, 0.2)',
+  orangeDim: 'rgba(249, 115, 22, 0.14)',
+  orangeBright: '#FB923C',
+  warningGlow: 'rgba(249, 115, 22, 0.30)',
   
   info: '#3B82F6',
-  infoGlow: 'rgba(59, 130, 246, 0.2)',
+  infoDim: 'rgba(59, 130, 246, 0.14)',
+  infoGlow: 'rgba(59, 130, 246, 0.30)',
   
-  // Tier Colors - Premium Metallic Feel
+  // Hot/Trending
+  hot: '#FF6B6B',
+  hotDim: 'rgba(255, 107, 107, 0.14)',
+  hotGlow: 'rgba(255, 107, 107, 0.35)',
+  
+  // Tier Colors - Premium Metallic
   bronze: '#CD7F32',
-  bronzeGlow: 'rgba(205, 127, 50, 0.2)',
+  bronzeDim: 'rgba(205, 127, 50, 0.15)',
+  bronzeGlow: 'rgba(205, 127, 50, 0.30)',
+  
   silver: '#C0C0C0',
-  silverGlow: 'rgba(192, 192, 192, 0.2)',
-  goldTier: '#C9A84C',
-  platinum: '#E5E4E2',
-  platinumGlow: 'rgba(229, 228, 226, 0.15)',
+  silverDim: 'rgba(192, 192, 192, 0.15)',
+  silverGlow: 'rgba(192, 192, 192, 0.25)',
+  
+  goldTier: '#D4A832',
+  
+  platinum: '#E8E8E8',
+  platinumDim: 'rgba(232, 232, 232, 0.15)',
+  platinumGlow: 'rgba(232, 232, 232, 0.20)',
+  
   black: '#1A1A1A',
   
   // Queue Status
-  queueLow: '#22C55E',
+  queueLow: '#10B981',
   queueMedium: '#F97316',
   queueHigh: '#EF4444',
   
   // Overlays
-  overlay: 'rgba(8, 8, 10, 0.85)',
-  overlayLight: 'rgba(8, 8, 10, 0.6)',
+  overlay: 'rgba(5, 5, 7, 0.88)',
+  overlayLight: 'rgba(5, 5, 7, 0.65)',
+  overlayDark: 'rgba(0, 0, 0, 0.92)',
   
   // Gradients (as arrays for LinearGradient)
-  gradientAccent: ['#3B82F6', '#2563EB'],
-  gradientGold: ['#E2C06E', '#C9A84C', '#A68B3D'],
-  gradientDark: ['#161619', '#0F0F12', '#08080A'],
-  gradientCard: ['#161619', '#0F0F12'],
-  gradientGlass: ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.02)'],
+  gradientAccent: ['#3B82F6', '#2563EB', '#1D4ED8'],
+  gradientGold: ['#F5D878', '#D4A832', '#B8922A'],
+  gradientDark: ['#1A1A22', '#0C0C10', '#050507'],
+  gradientCard: ['#1A1A22', '#131318', '#0C0C10'],
+  gradientGlass: ['rgba(255,255,255,0.10)', 'rgba(255,255,255,0.03)'],
+  gradientHot: ['#FF6B6B', '#FF8E53', '#FFD93D'],
+  gradientPremium: ['#D4A832', '#F0C850', '#D4A832'],
+  gradientPurple: ['#A855F7', '#7C3AED', '#6D28D9'],
 };
 
 export const tierColors: Record<string, string> = {
@@ -103,7 +137,6 @@ export const tierColors: Record<string, string> = {
   gold: colors.goldTier,
   platinum: colors.platinum,
   black: colors.gold,
-  // New tiers matching app
   lunar: colors.silver,
   nova: colors.gold,
   supernova: colors.goldBright,
@@ -118,40 +151,40 @@ export const tierGlows: Record<string, string> = {
   black: colors.goldGlow,
 };
 
-// Typography Scale - Luna UI Kit
+// Typography Scale - Premium Luna UI Kit
 export const typography = {
-  // Display - Bebas Neue style (bold, condensed)
+  // Display - Bold Impact
   display: {
     fontSize: 80,
-    fontWeight: '700' as const,
-    letterSpacing: 2,
-    lineHeight: 0.95,
+    fontWeight: '800' as const,
+    letterSpacing: -1,
+    lineHeight: 0.92,
   },
   hero: {
-    fontSize: 52,
-    fontWeight: '700' as const,
-    letterSpacing: 2,
+    fontSize: 48,
+    fontWeight: '800' as const,
+    letterSpacing: -0.5,
   },
   h1: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '700' as const,
-    letterSpacing: 1.5,
+    letterSpacing: -0.3,
   },
   h2: {
     fontSize: 24,
     fontWeight: '700' as const,
-    letterSpacing: 1,
+    letterSpacing: -0.2,
   },
   h3: {
     fontSize: 18,
     fontWeight: '600' as const,
-    letterSpacing: 0.5,
+    letterSpacing: 0,
   },
-  // Body - Outfit style
+  // Body
   subtitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    letterSpacing: 0.3,
+    fontSize: 17,
+    fontWeight: '600' as const,
+    letterSpacing: 0.2,
   },
   body: {
     fontSize: 15,
@@ -166,26 +199,37 @@ export const typography = {
   caption: {
     fontSize: 13,
     fontWeight: '500' as const,
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
-  // Labels - Uppercase with tracking
+  // Labels - Readable Size
   label: {
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '700' as const,
-    letterSpacing: 2,
+    letterSpacing: 0.8,
     textTransform: 'uppercase' as const,
   },
   labelSmall: {
-    fontSize: 9,
+    fontSize: 11,
+    fontWeight: '700' as const,
+    letterSpacing: 1,
+    textTransform: 'uppercase' as const,
+  },
+  overline: {
+    fontSize: 12,
     fontWeight: '700' as const,
     letterSpacing: 1.5,
     textTransform: 'uppercase' as const,
   },
-  overline: {
-    fontSize: 11,
+  // Numbers - Tight tracking for premium feel
+  number: {
+    fontSize: 34,
+    fontWeight: '800' as const,
+    letterSpacing: -0.5,
+  },
+  numberSmall: {
+    fontSize: 24,
     fontWeight: '700' as const,
-    letterSpacing: 2.5,
-    textTransform: 'uppercase' as const,
+    letterSpacing: -0.3,
   },
 };
 
@@ -200,41 +244,100 @@ export const spacing = {
   xxxl: 64,
 };
 
-// Border Radius - Luna UI Kit
+// Border Radius - Bold & Modern
 export const radius = {
-  xs: 6,
-  sm: 8,
-  md: 10,
-  lg: 12,
-  xl: 14,
-  xxl: 18,
+  xs: 8,
+  sm: 10,
+  md: 14,
+  lg: 18,
+  xl: 22,
+  xxl: 28,
+  xxxl: 36,
   pill: 100,
   full: 9999,
 };
 
-// Shadows (for elevated elements)
+// Shadows - Rich depth system
 export const shadows = {
   card: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    elevation: 6,
   },
   elevated: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.55,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  subtle: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   glow: (color: string) => ({
     shadowColor: color,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOpacity: 0.50,
+    shadowRadius: 20,
+    elevation: 12,
   }),
+  blueGlow: {
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.40,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  goldGlow: {
+    shadowColor: '#D4A832',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.40,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  hotGlow: {
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.40,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  inner: {
+    // For inset shadows (use with care on RN)
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.30,
+    shadowRadius: 4,
+    elevation: 0,
+  },
+};
+
+// Glass Card Presets
+export const glassPresets = {
+  card: {
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorderStrong,
+    borderRadius: radius.lg,
+  },
+  cardSubtle: {
+    backgroundColor: colors.glassMid,
+    borderWidth: 0.5,
+    borderColor: colors.glassBorder,
+    borderRadius: radius.md,
+  },
+  cardBold: {
+    backgroundColor: colors.glassHigh,
+    borderWidth: 1.5,
+    borderColor: colors.glassBorderStrong,
+    borderRadius: radius.xl,
+  },
 };
 
 // Button styles matching UI Kit
@@ -245,9 +348,9 @@ export const buttonStyles = {
     borderRadius: radius.md,
   },
   secondary: {
-    backgroundColor: colors.surfaceElevated,
-    borderColor: colors.border,
-    borderWidth: 0.5,
+    backgroundColor: colors.glass,
+    borderColor: colors.glassBorderStrong,
+    borderWidth: 1,
     color: colors.text,
     borderRadius: radius.md,
   },
@@ -258,22 +361,29 @@ export const buttonStyles = {
   },
   gold: {
     backgroundColor: colors.gold,
-    color: '#08080A',
+    color: colors.textInverse,
     borderRadius: radius.md,
   },
   outline: {
     backgroundColor: 'transparent',
     borderColor: colors.accent,
-    borderWidth: 0.5,
+    borderWidth: 1.5,
     color: colors.accentVibrant,
     borderRadius: radius.md,
   },
   danger: {
     backgroundColor: colors.redDim,
-    borderColor: 'rgba(239, 68, 68, 0.2)',
-    borderWidth: 0.5,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+    borderWidth: 1,
     color: colors.red,
     borderRadius: radius.md,
+  },
+  glass: {
+    backgroundColor: colors.glass,
+    borderColor: colors.glassBorderStrong,
+    borderWidth: 1,
+    color: colors.text,
+    borderRadius: radius.lg,
   },
 };
 
