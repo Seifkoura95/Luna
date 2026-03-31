@@ -570,7 +570,7 @@ A comprehensive owner's manual has been created covering:
 13. **Unused Variables**: Removed navRouter and insets from profile.tsx
 
 ## Known Infrastructure Issues
-- **CherryHub Integration**: Network DNS resolution blocked in container (use MOCK_MODE=true)
+- **CherryHub Integration**: Network DNS resolution blocked in container (use MOCK_MODE=true). The `accounts.cherryhub.com.au` OAuth endpoint does not resolve via DNS. Live integration requires verified OAuth endpoint from CherryHub support. Switched HTTP library from httpx to aiohttp for better DNS resilience.
 - **Venue Portal Caching**: CDN caches aggressively, use hard refresh (Cmd+Shift+R)
 - **Expo Tunnel**: Occasional ngrok timeout, restart expo service if needed
 

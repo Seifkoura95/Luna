@@ -8,7 +8,7 @@ This service handles:
 """
 
 import os
-import httpx
+import aiohttp
 import logging
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -66,9 +66,10 @@ class CherryHubTokenManager:
         if not self.refresh_token:
             raise ValueError("No refresh token configured for CherryHub")
         
-        async with httpx.AsyncClient() as client:
+        timeout = aiohttp.ClientTimeout(total=30)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             try:
-                response = await client.post(
+                async with session.post(
                     CHERRYHUB_AUTH_URL,
                     data={
                         "grant_type": "refresh_token",
@@ -78,27 +79,26 @@ class CherryHubTokenManager:
                     },
                     headers={
                         "Content-Type": "application/x-www-form-urlencoded"
-                    },
-                    timeout=30.0
-                )
+                    }
+                ) as response:
+                    if response.status != 200:
+                        text = await response.text()
+                        logger.error(f"CherryHub token refresh failed: {response.status} - {text}")
+                        raise Exception(f"Token refresh failed: {response.status}")
+                    
+                    data = await response.json()
+                    self.access_token = data.get("access_token")
+                    expires_in = data.get("expires_in", 3600)  # Default 1 hour
+                    self.token_expiry = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+                    
+                    # Update refresh token if a new one is provided
+                    if "refresh_token" in data:
+                        self.refresh_token = data["refresh_token"]
+                        logger.info("CherryHub refresh token updated")
+                    
+                    logger.info(f"CherryHub access token refreshed, expires at {self.token_expiry}")
                 
-                if response.status_code != 200:
-                    logger.error(f"CherryHub token refresh failed: {response.status_code} - {response.text}")
-                    raise Exception(f"Token refresh failed: {response.status_code}")
-                
-                data = response.json()
-                self.access_token = data.get("access_token")
-                expires_in = data.get("expires_in", 3600)  # Default 1 hour
-                self.token_expiry = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
-                
-                # Update refresh token if a new one is provided
-                if "refresh_token" in data:
-                    self.refresh_token = data["refresh_token"]
-                    logger.info("CherryHub refresh token updated")
-                
-                logger.info(f"CherryHub access token refreshed, expires at {self.token_expiry}")
-                
-            except httpx.RequestError as e:
+            except aiohttp.ClientError as e:
                 logger.error(f"CherryHub token refresh request error: {e}")
                 raise
 
@@ -141,26 +141,41 @@ class CherryHubService:
             "Accept": "application/json"
         }
         
-        async with httpx.AsyncClient() as client:
+        timeout = aiohttp.ClientTimeout(total=30)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             try:
                 if method.upper() == "GET":
-                    response = await client.get(url, headers=headers, params=params, timeout=30.0)
+                    async with session.get(url, headers=headers, params=params) as response:
+                        if response.status >= 400:
+                            text = await response.text()
+                            logger.error(f"CherryHub API error: {response.status} - {text}")
+                            raise Exception(f"CherryHub API error: {response.status}")
+                        return await response.json() if response.content_length else {}
                 elif method.upper() == "POST":
-                    response = await client.post(url, headers=headers, json=data, timeout=30.0)
+                    async with session.post(url, headers=headers, json=data) as response:
+                        if response.status >= 400:
+                            text = await response.text()
+                            logger.error(f"CherryHub API error: {response.status} - {text}")
+                            raise Exception(f"CherryHub API error: {response.status}")
+                        return await response.json() if response.content_length else {}
                 elif method.upper() == "PUT":
-                    response = await client.put(url, headers=headers, json=data, timeout=30.0)
+                    async with session.put(url, headers=headers, json=data) as response:
+                        if response.status >= 400:
+                            text = await response.text()
+                            logger.error(f"CherryHub API error: {response.status} - {text}")
+                            raise Exception(f"CherryHub API error: {response.status}")
+                        return await response.json() if response.content_length else {}
                 elif method.upper() == "DELETE":
-                    response = await client.delete(url, headers=headers, timeout=30.0)
+                    async with session.delete(url, headers=headers) as response:
+                        if response.status >= 400:
+                            text = await response.text()
+                            logger.error(f"CherryHub API error: {response.status} - {text}")
+                            raise Exception(f"CherryHub API error: {response.status}")
+                        return await response.json() if response.content_length else {}
                 else:
                     raise ValueError(f"Unsupported HTTP method: {method}")
                 
-                if response.status_code >= 400:
-                    logger.error(f"CherryHub API error: {response.status_code} - {response.text}")
-                    raise Exception(f"CherryHub API error: {response.status_code}")
-                
-                return response.json() if response.text else {}
-                
-            except httpx.RequestError as e:
+            except aiohttp.ClientError as e:
                 logger.error(f"CherryHub API request error: {e}")
                 raise
     
