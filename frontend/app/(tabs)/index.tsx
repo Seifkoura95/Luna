@@ -28,6 +28,9 @@ import { colors, spacing, radius } from '../../src/theme/colors';
 import { api } from '../../src/utils/api';
 import { useAuthStore } from '../../src/store/authStore';
 import { AppBackground } from '../../src/components/AppBackground';
+import { SectionTitle } from '../../src/components/SectionTitle';
+import { EmptyState } from '../../src/components/EmptyState';
+import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';
 
 const { width } = Dimensions.get('window');
 const VENUE_CARD_WIDTH = width * 0.72;
@@ -45,6 +48,7 @@ export default function HomeScreen() {
   const scrollRef = useRef<ScrollView>(null);
   
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<any[]>([]);
   const [tonightEvents, setTonightEvents] = useState<any[]>([]);
   const [venues, setVenues] = useState<any[]>([]);
@@ -69,6 +73,7 @@ export default function HomeScreen() {
   );
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       // Fetch events feed from Eventfinda (real-time data)
       const [eventsFeed, venuesData] = await Promise.all([
@@ -104,6 +109,8 @@ export default function HomeScreen() {
       setEvents([]);
       setTonightEvents([]);
       setFeaturedEvent(null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -248,45 +255,66 @@ export default function HomeScreen() {
 
         {/* Trending */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.section}>
-          <View style={styles.sectionHead}>
-            <Text style={styles.sectionTitle}>Trending</Text>
-            <TouchableOpacity onPress={() => router.push('/events')} style={styles.seeAll}>
-              <Text style={styles.seeAllText}>See All</Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.accent} />
-            </TouchableOpacity>
-          </View>
+          <SectionTitle 
+            title="Trending" 
+            onSeeAll={() => router.push('/events')}
+            icon="flame"
+            iconColor={colors.orange}
+          />
 
-          <View style={styles.trendingGrid}>
-            {events.slice(1, 7).map((event, index) => (
-              <View key={event.id} style={styles.trendingCard}>
-                <TouchableOpacity
-                  style={styles.trendingCardInner}
-                  onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
-                  activeOpacity={0.85}
-                >
-                  <Image source={{ uri: event.image || event.image_url }} style={styles.trendingImage} contentFit="cover" />
-                  <LinearGradient 
-                    colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} 
-                    locations={[0, 0.4, 1]}
-                    style={styles.trendingOverlay}
+          {loading ? (
+            <View style={styles.trendingGrid}>
+              {[1, 2, 3, 4].map((i) => (
+                <View key={i} style={styles.trendingCard}>
+                  <CardSkeleton style={{ marginBottom: 0, height: 140 }} />
+                </View>
+              ))}
+            </View>
+          ) : events.length > 0 ? (
+            <View style={styles.trendingGrid}>
+              {events.slice(0, 6).map((event, index) => (
+                <View key={event.id} style={styles.trendingCard}>
+                  <TouchableOpacity
+                    style={styles.trendingCardInner}
+                    onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
+                    activeOpacity={0.85}
+                    data-testid={`trending-event-${index}`}
                   >
-                    <View style={styles.trendingRank}>
-                      <Text style={styles.trendingRankText}>{index + 1}</Text>
-                    </View>
-                    <Text style={styles.trendingTitle} numberOfLines={2}>{event.title}</Text>
-                    <Text style={styles.trendingVenue}>{event.venue_name || event.location}</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
+                    <Image source={{ uri: event.image || event.image_url }} style={styles.trendingImage} contentFit="cover" />
+                    <LinearGradient 
+                      colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} 
+                      locations={[0, 0.4, 1]}
+                      style={styles.trendingOverlay}
+                    >
+                      <View style={styles.trendingRank}>
+                        <Text style={styles.trendingRankText}>{index + 1}</Text>
+                      </View>
+                      <Text style={styles.trendingTitle} numberOfLines={2}>{event.title}</Text>
+                      <Text style={styles.trendingVenue}>{event.venue_name || event.location}</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <EmptyState
+              icon="calendar-outline"
+              title="No events tonight"
+              subtitle="Check back later for exciting happenings at Luna venues"
+              actionText="Browse All Events"
+              onAction={() => router.push('/events')}
+              iconColor={colors.accent}
+            />
+          )}
         </Animated.View>
 
         {/* Venues */}
         <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.section}>
-          <View style={styles.sectionHead}>
-            <Text style={styles.sectionTitle}>Our Venues</Text>
-          </View>
+          <SectionTitle 
+            title="Our Venues" 
+            icon="location"
+            iconColor={colors.gold}
+          />
 
           <ScrollView
             horizontal

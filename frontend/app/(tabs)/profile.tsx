@@ -26,6 +26,7 @@ import { SafetyAlert } from '../../src/components/SafetyAlert';
 import { CrewMap } from '../../src/components/CrewMap';
 import { PageHeader } from '../../src/components/PageHeader';
 import { MembershipCard } from '../../src/components/MembershipCard';
+import { SectionTitle } from '../../src/components/SectionTitle';
 
 
 const { width } = Dimensions.get('window');
@@ -563,20 +564,71 @@ export default function ProfileScreen() {
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>QUICK ACTIONS</Text>
-          <View style={styles.actionsGrid}>
-            {quickActions.map((item) => (
+          <SectionTitle 
+            title="Quick Actions" 
+            icon="flash"
+            iconColor={colors.accent}
+          />
+          
+          {/* Primary CTAs - Full width */}
+          <View style={styles.primaryCtaRow}>
+            <TouchableOpacity
+              style={styles.primaryCta}
+              onPress={handleGetQR}
+              activeOpacity={0.85}
+              data-testid="tonights-pass-cta"
+            >
+              <LinearGradient
+                colors={[colors.accent, colors.accentDark]}
+                style={styles.primaryCtaGradient}
+              >
+                <View style={styles.primaryCtaIcon}>
+                  <Ionicons name="qr-code" size={24} color={colors.textPrimary} />
+                </View>
+                <View style={styles.primaryCtaText}>
+                  <Text style={styles.primaryCtaTitle}>Tonight's Pass</Text>
+                  <Text style={styles.primaryCtaSubtitle}>Show at entrance</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textPrimary} />
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.primaryCta}
+              onPress={() => router.push('/table-booking?venue_id=eclipse&venue_name=Eclipse')}
+              activeOpacity={0.85}
+              data-testid="vip-tables-cta"
+            >
+              <LinearGradient
+                colors={[colors.gold, colors.goldDark]}
+                style={styles.primaryCtaGradient}
+              >
+                <View style={styles.primaryCtaIcon}>
+                  <Ionicons name="diamond" size={24} color={colors.bg} />
+                </View>
+                <View style={styles.primaryCtaText}>
+                  <Text style={[styles.primaryCtaTitle, { color: colors.bg }]}>VIP Tables</Text>
+                  <Text style={[styles.primaryCtaSubtitle, { color: 'rgba(0,0,0,0.6)' }]}>Book your booth</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.bg} />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {/* 3-Column Grid for secondary actions */}
+          <View style={styles.actionsGrid3Col}>
+            {quickActions.filter(item => !['qr', 'vip_tables'].includes(item.id)).map((item) => (
               <TouchableOpacity
                 key={item.id}
-                style={styles.actionCard}
+                style={styles.actionCard3Col}
                 onPress={item.onPress}
                 activeOpacity={0.7}
+                data-testid={`quick-action-${item.id}`}
               >
-                <View style={[styles.actionIcon, { backgroundColor: item.color + '20' }]}>
-                  <Ionicons name={item.icon as any} size={24} color={item.color} />
+                <View style={[styles.actionIcon3Col, { backgroundColor: item.color + '20' }]}>
+                  <Ionicons name={item.icon as any} size={20} color={item.color} />
                 </View>
-                <Text style={styles.actionTitle}>{item.title}</Text>
-                <Text style={styles.actionSubtitle}>{item.subtitle}</Text>
+                <Text style={styles.actionTitle3Col} numberOfLines={1}>{item.title}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1563,6 +1615,75 @@ const styles = StyleSheet.create({
   actionSubtitle: {
     fontSize: 12,
     color: colors.textMuted,
+  },
+  // Primary CTAs
+  primaryCtaRow: {
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  primaryCta: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  primaryCtaGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    paddingVertical: spacing.lg,
+  },
+  primaryCtaIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  primaryCtaText: {
+    flex: 1,
+  },
+  primaryCtaTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  primaryCtaSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  // 3-Column Grid
+  actionsGrid3Col: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    justifyContent: 'flex-start',
+  },
+  actionCard3Col: {
+    width: (width - spacing.lg * 2 - spacing.sm * 2) / 3,
+    backgroundColor: '#0A0A0A',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionIcon3Col: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  actionTitle3Col: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    textAlign: 'center',
   },
   subscriptionCard: {
     borderRadius: radius.lg,

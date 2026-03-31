@@ -436,6 +436,33 @@ export default function WalletScreen() {
           showPoints={false} 
         />
 
+        {/* Demo Mode Banner - Indicating mock data */}
+        <TouchableOpacity 
+          style={styles.demoBanner}
+          activeOpacity={0.9}
+          data-testid="demo-mode-banner"
+        >
+          <LinearGradient
+            colors={['rgba(249, 115, 22, 0.15)', 'rgba(249, 115, 22, 0.08)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.demoBannerGradient}
+          >
+            <View style={styles.demoBannerContent}>
+              <View style={styles.demoBannerIcon}>
+                <Ionicons name="flask" size={16} color={colors.orange} />
+              </View>
+              <View style={styles.demoBannerText}>
+                <Text style={styles.demoBannerTitle}>Demo Mode</Text>
+                <Text style={styles.demoBannerSubtitle}>Tickets below are sample data for preview</Text>
+              </View>
+            </View>
+            <View style={styles.demoBannerBadge}>
+              <Text style={styles.demoBannerBadgeText}>PREVIEW</Text>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+
         {/* Leaderboard Section - Fun Scoreboard Style */}
         <View style={styles.leaderboardSection}>
           <View style={styles.leaderboardHeader}>
@@ -1651,5 +1678,58 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
     marginTop: spacing.sm,
+  },
+  // Demo Banner styles
+  demoBanner: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.orange + '30',
+  },
+  demoBannerGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  demoBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  demoBannerIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.orange + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  demoBannerText: {
+    gap: 2,
+  },
+  demoBannerTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.orange,
+  },
+  demoBannerSubtitle: {
+    fontSize: 11,
+    color: colors.textSecondary,
+  },
+  demoBannerBadge: {
+    backgroundColor: colors.orange + '25',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.xs,
+  },
+  demoBannerBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.orange,
+    letterSpacing: 1,
   },
 });
