@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Platform, StyleSheet, View, Text } from 'react-native';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { AppBackground } from '../../src/components/AppBackground';
+import { api } from '../../src/utils/api';
 import {
   HomeIcon,
   LocationIcon,
@@ -14,19 +15,24 @@ import {
   LunaAIIcon,
 } from '../../src/components/LunaIcons';
 
-// Custom tab bar icon using Luna Icons
+// Custom tab bar icon using Luna Icons with optional badge
 const TabBarIcon = ({ 
   IconComponent, 
   color, 
-  focused 
+  focused,
+  badge,
 }: { 
   IconComponent: React.FC<{ size?: number; color?: string }>; 
   color: string; 
   focused: boolean;
+  badge?: boolean;
 }) => (
   <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
     {focused && <View style={styles.iconGlow} />}
     <IconComponent size={22} color={color} />
+    {badge && (
+      <View style={styles.badgeDot} />
+    )}
   </View>
 );
 
@@ -48,6 +54,25 @@ const HeaderRight = () => {
 };
 
 export default function TabLayout() {
+  const [hasBirthdayReward, setHasBirthdayReward] = useState(false);
+  const user = useAuthStore((state) => state.user);
+
+  // Check for unclaimed birthday rewards
+  useEffect(() => {
+    const checkBirthdayRewards = async () => {
+      if (!user) return;
+      try {
+        const status = await api.getBirthdayStatus();
+        // Check if there are unclaimed rewards
+        const hasUnclaimed = status?.available_rewards?.length > 0 || 
+                            (status?.is_birthday_period && status?.rewards_claimed < status?.total_rewards);
+        setHasBirthdayReward(hasUnclaimed);
+      } catch (e) {
+        // Silent fail - badge just won't show
+      }
+    };
+    checkBirthdayRewards();
+  }, [user]);
   return (
     <View style={styles.rootContainer}>
       {/* Simple black background with Luna glow */}
@@ -117,7 +142,7 @@ export default function TabLayout() {
           title: 'Profile',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon IconComponent={GuestIcon} color={color} focused={focused} />
+            <TabBarIcon IconComponent={GuestIcon} color={color} focused={focused} badge={hasBirthdayReward} />
           ),
         }}
       />
@@ -218,5 +243,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  badgeDot: {
+    position: 'absolute',
+    top: 2,
+    right: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF6B9D',
+    borderWidth: 1.5,
+    borderColor: colors.surface,
   },
 });

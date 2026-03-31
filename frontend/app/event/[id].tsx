@@ -48,6 +48,15 @@ export default function EventDetailPage() {
   const [attendees, setAttendees] = useState<{ going_count: number; interested_count: number; friends_going: any[]; friends_interested: any[] }>({ going_count: 0, interested_count: 0, friends_going: [], friends_interested: [] });
   const [loadingRsvp, setLoadingRsvp] = useState(false);
 
+  // Guard against undefined id
+  if (!id) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#08080A', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: '#fff' }}>Loading event...</Text>
+      </View>
+    );
+  }
+
   useEffect(() => {
     if (id) {
       loadEvent();

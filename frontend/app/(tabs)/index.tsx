@@ -54,6 +54,7 @@ export default function HomeScreen() {
   const [venues, setVenues] = useState<any[]>([]);
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
   const [tonightPicks, setTonightPicks] = useState<any[]>([]);
+  const [activeAuctions, setActiveAuctions] = useState<any[]>([]);
 
   // Pulse animation
   const pulseAnim = useSharedValue(1);
@@ -77,9 +78,10 @@ export default function HomeScreen() {
     setLoading(true);
     try {
       // Fetch events feed from Eventfinda (real-time data)
-      const [eventsFeed, venuesData] = await Promise.all([
+      const [eventsFeed, venuesData, auctionsData] = await Promise.all([
         api.getEventsFeed(30),
         api.getVenues(),
+        api.getAuctions(undefined, 'active'),
       ]);
       
       // Safely access event arrays with fallback to empty arrays
@@ -105,6 +107,9 @@ export default function HomeScreen() {
       });
       setVenues(sortedVenues);
       
+      // Set active auctions
+      setActiveAuctions(auctionsData || []);
+      
       // Fetch AI personalized picks if we have events
       if (upcomingList.length > 0) {
         try {
@@ -125,6 +130,7 @@ export default function HomeScreen() {
       setTonightEvents([]);
       setFeaturedEvent(null);
       setTonightPicks([]);
+      setActiveAuctions([]);
     } finally {
       setLoading(false);
     }
@@ -321,6 +327,59 @@ export default function HomeScreen() {
                     <Text style={styles.tonightPickVenue}>
                       {event.venue_name || event.location}
                     </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </Animated.View>
+        )}
+
+        {/* Live Auctions Carousel */}
+        {activeAuctions.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(175).duration(400)} style={styles.section}>
+            <SectionTitle 
+              title="Live Auctions" 
+              onSeeAll={() => router.push('/auctions')}
+              icon="flash"
+              iconColor={colors.gold}
+            />
+            
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.auctionScroll}
+            >
+              {activeAuctions.slice(0, 5).map((auction, index) => (
+                <TouchableOpacity
+                  key={auction.id}
+                  style={styles.auctionCard}
+                  onPress={() => { handleHaptic(); router.push(`/auctions?id=${auction.id}`); }}
+                  activeOpacity={0.85}
+                  data-testid={`auction-card-${index}`}
+                >
+                  <Image 
+                    source={{ uri: auction.image_url || 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=400' }} 
+                    style={styles.auctionImage}
+                    contentFit="cover"
+                  />
+                  <LinearGradient 
+                    colors={['transparent', 'rgba(0,0,0,0.95)']} 
+                    style={styles.auctionOverlay}
+                  >
+                    <View style={styles.auctionLiveBadge}>
+                      <View style={styles.auctionLiveDot} />
+                      <Text style={styles.auctionLiveText}>LIVE</Text>
+                    </View>
+                    <Text style={styles.auctionTitle} numberOfLines={2}>
+                      {auction.title}
+                    </Text>
+                    <Text style={styles.auctionVenue}>
+                      {auction.venue_name}
+                    </Text>
+                    <View style={styles.auctionBidRow}>
+                      <Text style={styles.auctionBidLabel}>Current Bid</Text>
+                      <Text style={styles.auctionBidValue}>${auction.current_bid?.toLocaleString() || auction.starting_bid?.toLocaleString()}</Text>
+                    </View>
                   </LinearGradient>
                 </TouchableOpacity>
               ))}
@@ -882,5 +941,83 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  // Auction carousel styles
+  auctionScroll: {
+    paddingRight: spacing.lg,
+    gap: spacing.md,
+  },
+  auctionCard: {
+    width: 220,
+    height: 160,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    backgroundColor: '#1A1A1A',
+  },
+  auctionImage: {
+    width: '100%',
+    height: '100%',
+  },
+  auctionOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: spacing.sm,
+    paddingTop: spacing.xl,
+  },
+  auctionLiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(227, 24, 55, 0.9)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.xs,
+  },
+  auctionLiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#fff',
+  },
+  auctionLiveText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 0.5,
+  },
+  auctionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    lineHeight: 18,
+  },
+  auctionVenue: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  auctionBidRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+    paddingTop: spacing.xs,
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  auctionBidLabel: {
+    fontSize: 10,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  auctionBidValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.gold,
   },
 });
