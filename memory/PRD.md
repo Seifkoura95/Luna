@@ -853,6 +853,23 @@ A comprehensive owner's manual has been created covering:
 - `/app/test_reports/iteration_16.json` - 100% pass rate (16/16 tests)
 - Bug fixed: `scheduler_running` flag now correctly set in server lifespan
 
+## 4-Point UI Polish (March 31, 2026) ✅ VERIFIED
+
+### Changes Applied:
+1. **Background Glow Color**: Changed from red tinge to blue (`rgba(59, 130, 246, 0.35)`) in `/app/frontend/src/components/AppBackground.tsx`
+2. **Particle Colors**: Replaced red particles (#E31837) with blue (#2563EB) for consistency
+3. **Logo Sizing**: PageHeader logo at 160x48px (normal), 120x36px (compact) in `/app/frontend/src/components/PageHeader.tsx`
+4. **Header Spacing**: Reduced padding to `insets.top + 16` and `marginBottom: 12`
+
+### Verification Status:
+- Login screen: Blue glow visible (subtle due to 35% opacity)
+- Home page: Logo properly sized with appropriate spacing
+- Profile page: Clean layout with well-positioned badges and quick actions
+- Wallet page: Leaderboard functioning with scoreboard design
+
+### Note:
+Web preview may show slight color variations due to browser rendering. Native Expo Go app displays colors most accurately.
+
 
 
 

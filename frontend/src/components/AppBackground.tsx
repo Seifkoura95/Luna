@@ -121,7 +121,7 @@ const generateParticles = (count: number) => {
   const particles = [];
   const colors = [
     '#ffffff',      // White
-    '#E31837',      // Luna Red
+    '#2563EB',      // Blue (replaced red)
     '#D4AF37',      // Gold
     '#8B5CF6',      // Purple
     '#00D4AA',      // Cyan
@@ -160,7 +160,7 @@ export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
 
       {/* Subtle ambient glows for depth */}
       <LinearGradient
-        colors={['rgba(37, 99, 235, 0.12)', 'transparent']}
+        colors={['rgba(59, 130, 246, 0.35)', 'transparent']}
         style={styles.topLeftGlow}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
