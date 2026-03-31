@@ -9,8 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +24,8 @@ import { api } from '../../src/utils/api';
 import { AppBackground } from '../../src/components/AppBackground';
 import { useFocusEffect } from 'expo-router';
 
+const { width, height } = Dimensions.get('window');
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -27,32 +33,109 @@ interface Message {
   timestamp: Date;
 }
 
-const QUICK_QUESTIONS = [
-  "What's on tonight?",
-  "Book a VIP table",
-  "What's the dress code?",
-  "How do Luna Points work?",
+// Revenue-driving quick question categories with icons and colors
+const QUICK_CATEGORIES = [
+  {
+    id: 'tonight',
+    icon: 'flame',
+    title: "What's Hot",
+    gradient: ['#FF6B6B', '#EE5A5A'],
+    questions: [
+      "What's the vibe tonight?",
+      "Best club right now?",
+      "Any events ending soon?",
+    ]
+  },
+  {
+    id: 'vip',
+    icon: 'diamond',
+    title: 'VIP Access',
+    gradient: ['#FFD700', '#FFA500'],
+    questions: [
+      "Book me a VIP table",
+      "Bottle service prices?",
+      "Skip the queue tonight",
+    ]
+  },
+  {
+    id: 'points',
+    icon: 'star',
+    title: 'My Rewards',
+    gradient: ['#00D9FF', '#0099FF'],
+    questions: [
+      "How many points do I have?",
+      "What can I redeem?",
+      "Double points deals?",
+    ]
+  },
+  {
+    id: 'info',
+    icon: 'information-circle',
+    title: 'Quick Info',
+    gradient: ['#A855F7', '#7C3AED'],
+    questions: [
+      "Dress code tonight?",
+      "What time does it close?",
+      "Entry fee?",
+    ]
+  },
+];
+
+// Suggested prompts that appear inline
+const INLINE_SUGGESTIONS = [
+  "Get me in VIP tonight",
+  "What's the move this weekend?",
+  "Surprise me with something fun",
+  "Where's the afterparty?",
 ];
 
 export default function LunaAIScreen() {
   const user = useAuthStore((state) => state.user);
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [showQuickCards, setShowQuickCards] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Pulse animation for the AI indicator
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.15,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, []);
 
   // Reset chat on screen focus
   useFocusEffect(
     useCallback(() => {
-      // Initialize with welcome message
       if (messages.length === 0) {
+        const hour = new Date().getHours();
+        let greeting = 'Hey';
+        if (hour >= 18) greeting = 'Hey night owl';
+        else if (hour >= 12) greeting = 'What\'s good';
+        else greeting = 'Morning';
+
         const welcomeMessage: Message = {
           id: 'welcome',
           role: 'assistant',
-          content: `Hey ${user?.name?.split(' ')[0] || 'there'}! I'm Luna, your VIP concierge. Ask me about tonight's events, book tables, or anything about your Luna experience.`,
+          content: `${greeting}, ${user?.name?.split(' ')[0] || 'babe'}! I'm Luna - your personal nightlife concierge. Need the hottest spots, VIP access, or just wanna know what's worth your time tonight? Ask away.`,
           timestamp: new Date(),
         };
         setMessages([welcomeMessage]);
@@ -65,10 +148,13 @@ export default function LunaAIScreen() {
     if (!messageText || isLoading) return;
 
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    // Add user message
+    // Hide quick cards after first message
+    setShowQuickCards(false);
+    setSelectedCategory(null);
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -82,16 +168,14 @@ export default function LunaAIScreen() {
     try {
       const response = await api.aiChat(messageText, sessionId || undefined);
       
-      // Store session ID for conversation continuity
       if (response.session_id) {
         setSessionId(response.session_id);
       }
 
-      // Add assistant response
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.response || "I'm having trouble responding right now. Please try again.",
+        content: response.response || "Hmm, I'm having a moment. Try that again?",
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, assistantMessage]);
@@ -100,7 +184,7 @@ export default function LunaAIScreen() {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "Sorry, I couldn't process that. Please try again in a moment.",
+        content: "Oops, something went sideways. Give it another shot?",
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -109,29 +193,99 @@ export default function LunaAIScreen() {
     }
   };
 
-  const renderMessage = ({ item }: { item: Message }) => {
+  const handleCategorySelect = (categoryId: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
+    setSelectedCategory(selectedCategory === categoryId ? null : categoryId);
+  };
+
+  const renderMessage = ({ item, index }: { item: Message; index: number }) => {
     const isUser = item.role === 'user';
     
     return (
-      <View style={[styles.messageContainer, isUser && styles.userMessageContainer]}>
+      <Animated.View 
+        style={[
+          styles.messageWrapper,
+          isUser && styles.userMessageWrapper,
+          { opacity: 1 }
+        ]}
+      >
         {!isUser && (
-          <View style={styles.avatarContainer}>
+          <View style={styles.aiAvatarWrapper}>
             <LinearGradient
-              colors={[colors.accent, colors.accentDark]}
-              style={styles.avatar}
+              colors={['#FF6B6B', '#FF8E53']}
+              style={styles.aiAvatar}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
             >
-              <Ionicons name="sparkles" size={14} color="#fff" />
+              <Ionicons name="sparkles" size={16} color="#fff" />
             </LinearGradient>
+            <View style={styles.aiOnlineIndicator} />
           </View>
         )}
         <View style={[
           styles.messageBubble,
-          isUser ? styles.userBubble : styles.assistantBubble
+          isUser ? styles.userBubble : styles.aiBubble
         ]}>
-          <Text style={[styles.messageText, isUser && styles.userMessageText]}>
-            {item.content}
-          </Text>
+          {isUser ? (
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.userBubbleGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Text style={styles.userMessageText}>{item.content}</Text>
+            </LinearGradient>
+          ) : (
+            <Text style={styles.aiMessageText}>{item.content}</Text>
+          )}
         </View>
+      </Animated.View>
+    );
+  };
+
+  const renderQuickCategory = (category: typeof QUICK_CATEGORIES[0]) => {
+    const isSelected = selectedCategory === category.id;
+    
+    return (
+      <View key={category.id} style={styles.categoryWrapper}>
+        <TouchableOpacity
+          style={[styles.categoryCard, isSelected && styles.categoryCardSelected]}
+          onPress={() => handleCategorySelect(category.id)}
+          activeOpacity={0.85}
+        >
+          <LinearGradient
+            colors={category.gradient}
+            style={styles.categoryGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name={category.icon as any} size={22} color="#fff" />
+          </LinearGradient>
+          <Text style={styles.categoryTitle}>{category.title}</Text>
+          <Ionicons 
+            name={isSelected ? "chevron-up" : "chevron-down"} 
+            size={16} 
+            color={colors.textMuted} 
+          />
+        </TouchableOpacity>
+        
+        {isSelected && (
+          <View style={styles.categoryQuestions}>
+            {category.questions.map((question, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={styles.questionPill}
+                onPress={() => handleSendMessage(question)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.questionPillText}>{question}</Text>
+                <Ionicons name="arrow-forward-circle" size={18} color={category.gradient[0]} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
     );
   };
@@ -140,20 +294,44 @@ export default function LunaAIScreen() {
     <View style={styles.container}>
       <AppBackground />
       
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <View style={styles.headerContent}>
-          <LinearGradient
-            colors={[colors.accent, colors.accentDark]}
-            style={styles.headerIcon}
-          >
-            <Ionicons name="sparkles" size={18} color="#fff" />
-          </LinearGradient>
-          <View>
-            <Text style={styles.headerTitle}>Luna AI</Text>
-            <Text style={styles.headerSubtitle}>Your VIP Concierge</Text>
+      {/* Premium Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <BlurView intensity={40} style={styles.headerBlur}>
+          <View style={styles.headerContent}>
+            <Animated.View style={[styles.headerIconWrapper, { transform: [{ scale: pulseAnim }] }]}>
+              <LinearGradient
+                colors={['#FF6B6B', '#FF8E53', '#FFD93D']}
+                style={styles.headerIcon}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Ionicons name="sparkles" size={20} color="#fff" />
+              </LinearGradient>
+            </Animated.View>
+            <View style={styles.headerTextWrapper}>
+              <View style={styles.headerTitleRow}>
+                <Text style={styles.headerTitle}>Luna</Text>
+                <View style={styles.aiTag}>
+                  <Text style={styles.aiTagText}>AI</Text>
+                </View>
+              </View>
+              <Text style={styles.headerSubtitle}>Your nightlife bestie</Text>
+            </View>
+            <View style={styles.headerActions}>
+              <TouchableOpacity 
+                style={styles.newChatBtn}
+                onPress={() => {
+                  setMessages([]);
+                  setSessionId(null);
+                  setShowQuickCards(true);
+                  setSelectedCategory(null);
+                }}
+              >
+                <Ionicons name="add-circle-outline" size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </BlurView>
       </View>
 
       <KeyboardAvoidingView 
@@ -169,78 +347,101 @@ export default function LunaAIScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messagesList}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           ListFooterComponent={
             isLoading ? (
-              <View style={styles.loadingContainer}>
-                <View style={styles.avatarContainer}>
+              <View style={styles.typingWrapper}>
+                <View style={styles.aiAvatarWrapper}>
                   <LinearGradient
-                    colors={[colors.accent, colors.accentDark]}
-                    style={styles.avatar}
+                    colors={['#FF6B6B', '#FF8E53']}
+                    style={styles.aiAvatar}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
                   >
-                    <Ionicons name="sparkles" size={14} color="#fff" />
+                    <Ionicons name="sparkles" size={16} color="#fff" />
                   </LinearGradient>
                 </View>
-                <View style={styles.typingIndicator}>
-                  <ActivityIndicator size="small" color={colors.accent} />
-                  <Text style={styles.typingText}>Luna is thinking...</Text>
+                <View style={styles.typingBubble}>
+                  <View style={styles.typingDots}>
+                    <Animated.View style={[styles.typingDot, { backgroundColor: '#FF6B6B' }]} />
+                    <Animated.View style={[styles.typingDot, { backgroundColor: '#FF8E53' }]} />
+                    <Animated.View style={[styles.typingDot, { backgroundColor: '#FFD93D' }]} />
+                  </View>
                 </View>
               </View>
             ) : null
           }
         />
 
-        {/* Quick Questions */}
-        {messages.length <= 1 && (
-          <View style={styles.quickQuestionsContainer}>
-            <Text style={styles.quickQuestionsLabel}>QUICK QUESTIONS</Text>
-            <View style={styles.quickQuestionsGrid}>
-              {QUICK_QUESTIONS.map((question, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.quickQuestionButton}
-                  onPress={() => handleSendMessage(question)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.quickQuestionText}>{question}</Text>
-                </TouchableOpacity>
-              ))}
+        {/* Quick Question Cards - Premium Design */}
+        {showQuickCards && messages.length <= 1 && (
+          <View style={styles.quickCardsContainer}>
+            <Text style={styles.quickCardsTitle}>What can Luna help with?</Text>
+            <View style={styles.categoriesGrid}>
+              {QUICK_CATEGORIES.map(renderQuickCategory)}
+            </View>
+            
+            {/* Inline Suggestions */}
+            <View style={styles.inlineSuggestionsWrapper}>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.inlineSuggestions}
+              >
+                {INLINE_SUGGESTIONS.map((suggestion, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.inlineSuggestionPill}
+                    onPress={() => handleSendMessage(suggestion)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="flash" size={14} color="#FFD93D" />
+                    <Text style={styles.inlineSuggestionText}>{suggestion}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           </View>
         )}
 
-        {/* Input Area */}
+        {/* Premium Input Area */}
         <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8 }]}>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.input}
-              placeholder="Ask Luna anything..."
-              placeholderTextColor={colors.textMuted}
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-              maxLength={500}
-              returnKeyType="send"
-              onSubmitEditing={() => handleSendMessage()}
-            />
-            <TouchableOpacity
-              style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.sendButtonDisabled]}
-              onPress={() => handleSendMessage()}
-              disabled={!inputText.trim() || isLoading}
-              activeOpacity={0.7}
-            >
-              <LinearGradient
-                colors={inputText.trim() && !isLoading ? [colors.accent, colors.accentDark] : [colors.surfaceElevated, colors.surface]}
-                style={styles.sendButtonGradient}
+          <BlurView intensity={60} style={styles.inputBlur}>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                placeholder="Ask Luna anything..."
+                placeholderTextColor={colors.textMuted}
+                value={inputText}
+                onChangeText={setInputText}
+                multiline
+                maxLength={500}
+                returnKeyType="send"
+                onSubmitEditing={() => handleSendMessage()}
+              />
+              <TouchableOpacity
+                style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.sendButtonDisabled]}
+                onPress={() => handleSendMessage()}
+                disabled={!inputText.trim() || isLoading}
+                activeOpacity={0.85}
               >
-                <Ionicons 
-                  name="send" 
-                  size={18} 
-                  color={inputText.trim() && !isLoading ? '#fff' : colors.textMuted} 
-                />
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
+                <LinearGradient
+                  colors={inputText.trim() && !isLoading 
+                    ? ['#FF6B6B', '#FF8E53'] 
+                    : [colors.surfaceElevated, colors.surface]}
+                  style={styles.sendButtonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Ionicons 
+                    name="arrow-up" 
+                    size={20} 
+                    color={inputText.trim() && !isLoading ? '#fff' : colors.textMuted} 
+                  />
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -252,34 +453,76 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
+  // Header Styles
   header: {
+    borderBottomWidth: 0,
+    zIndex: 10,
+  },
+  headerBlur: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 0.5,
-    borderBottomColor: colors.border,
+    paddingVertical: spacing.md,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+  },
+  headerIconWrapper: {
+    marginRight: spacing.md,
   },
   headerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  headerTextWrapper: {
+    flex: 1,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     color: colors.textPrimary,
+    letterSpacing: -0.5,
+  },
+  aiTag: {
+    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.3)',
+  },
+  aiTagText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FF6B6B',
+    letterSpacing: 1,
   },
   headerSubtitle: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textSecondary,
-    marginTop: 1,
+    marginTop: 2,
+    fontWeight: '500',
   },
+  headerActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  newChatBtn: {
+    padding: spacing.xs,
+  },
+  // Chat Container
   chatContainer: {
     flex: 1,
   },
@@ -288,132 +531,222 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
   },
-  messageContainer: {
+  // Message Styles
+  messageWrapper: {
     flexDirection: 'row',
-    marginBottom: spacing.md,
-    alignItems: 'flex-start',
+    marginBottom: spacing.lg,
+    alignItems: 'flex-end',
   },
-  userMessageContainer: {
+  userMessageWrapper: {
     justifyContent: 'flex-end',
   },
-  avatarContainer: {
+  aiAvatarWrapper: {
+    position: 'relative',
     marginRight: spacing.sm,
   },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  aiAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  aiOnlineIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#00D26A',
+    borderWidth: 2,
+    borderColor: colors.bg,
+  },
   messageBubble: {
-    maxWidth: '80%',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: radius.lg,
+    maxWidth: '78%',
+    borderRadius: radius.lg + 4,
   },
   userBubble: {
-    backgroundColor: colors.accent,
     borderBottomRightRadius: radius.xs,
   },
-  assistantBubble: {
-    backgroundColor: colors.surfaceElevated,
-    borderBottomLeftRadius: radius.xs,
-    borderWidth: 0.5,
-    borderColor: colors.border,
+  userBubbleGradient: {
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg + 4,
+    borderBottomRightRadius: radius.xs,
   },
-  messageText: {
-    fontSize: 15,
-    color: colors.textPrimary,
-    lineHeight: 22,
+  aiBubble: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomLeftRadius: radius.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
   },
   userMessageText: {
+    fontSize: 15,
     color: '#fff',
+    lineHeight: 22,
+    fontWeight: '500',
   },
-  loadingContainer: {
+  aiMessageText: {
+    fontSize: 15,
+    color: colors.textPrimary,
+    lineHeight: 23,
+    fontWeight: '400',
+  },
+  // Typing Indicator
+  typingWrapper: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     marginBottom: spacing.md,
   },
-  typingIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+  typingBubble: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: radius.lg,
-    borderWidth: 0.5,
-    borderColor: colors.border,
-    gap: spacing.sm,
+    borderBottomLeftRadius: radius.xs,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  typingText: {
-    fontSize: 13,
-    color: colors.textSecondary,
+  typingDots: {
+    flexDirection: 'row',
+    gap: 6,
   },
-  quickQuestionsContainer: {
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  // Quick Cards
+  quickCardsContainer: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
-  quickQuestionsLabel: {
-    fontSize: 10,
+  quickCardsTitle: {
+    fontSize: 16,
     fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 1.5,
-    marginBottom: spacing.sm,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+    letterSpacing: -0.3,
   },
-  quickQuestionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  categoriesGrid: {
     gap: spacing.sm,
   },
-  quickQuestionButton: {
-    backgroundColor: colors.surfaceElevated,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
-    borderWidth: 0.5,
-    borderColor: colors.border,
+  categoryWrapper: {
+    marginBottom: spacing.xs,
   },
-  quickQuestionText: {
-    fontSize: 13,
+  categoryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  categoryCardSelected: {
+    borderColor: 'rgba(255, 107, 107, 0.3)',
+    backgroundColor: 'rgba(255, 107, 107, 0.08)',
+  },
+  categoryGradient: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  categoryTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.textPrimary,
+  },
+  categoryQuestions: {
+    marginTop: spacing.sm,
+    paddingLeft: spacing.sm,
+    gap: spacing.xs,
+  },
+  questionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  questionPillText: {
+    fontSize: 14,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
+  // Inline Suggestions
+  inlineSuggestionsWrapper: {
+    marginTop: spacing.lg,
+  },
+  inlineSuggestions: {
+    gap: spacing.sm,
+    paddingRight: spacing.lg,
+  },
+  inlineSuggestionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 217, 61, 0.1)',
+    borderRadius: radius.full,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 217, 61, 0.2)',
+  },
+  inlineSuggestionText: {
+    fontSize: 13,
+    color: '#FFD93D',
+    fontWeight: '600',
+  },
+  // Input Area
   inputContainer: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
-    borderTopWidth: 0.5,
-    borderTopColor: colors.border,
-    backgroundColor: colors.bg,
+  },
+  inputBlur: {
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.lg,
-    borderWidth: 0.5,
-    borderColor: colors.border,
-    paddingLeft: spacing.md,
-    paddingRight: spacing.xs,
-    paddingVertical: spacing.xs,
+    paddingLeft: spacing.md + 2,
+    paddingRight: spacing.xs + 2,
+    paddingVertical: spacing.xs + 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.textPrimary,
-    maxHeight: 100,
-    paddingVertical: spacing.sm,
+    maxHeight: 120,
+    paddingVertical: spacing.sm + 2,
+    fontWeight: '500',
   },
   sendButton: {
     marginLeft: spacing.sm,
+    marginBottom: 2,
   },
   sendButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   sendButtonGradient: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
