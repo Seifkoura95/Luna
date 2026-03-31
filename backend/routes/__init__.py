@@ -32,6 +32,8 @@ from routes.webhook import router as webhook_router
 from routes.stories import router as stories_router
 from routes.websocket import router as websocket_router
 from routes.churn import router as churn_router
+from routes.notification_ws import router as notification_ws_router
+from routes.scheduled_jobs import router as scheduled_jobs_router
 
 # Export all routers for easy importing
 __all__ = [
@@ -62,6 +64,8 @@ __all__ = [
     "stories_router",
     "websocket_router",
     "churn_router",
+    "notification_ws_router",
+    "scheduled_jobs_router",
 ]
 
 # List of all routers for bulk registration
@@ -93,4 +97,6 @@ ALL_ROUTERS = [
     stories_router,
     websocket_router,
     churn_router,
+    notification_ws_router,
+    scheduled_jobs_router,
 ]

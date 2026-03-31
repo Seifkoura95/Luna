@@ -1,0 +1,102 @@
+{
+  "summary": "Tested WebSocket Notifications, Scheduled Jobs, and Push Notification Integration features. Fixed bug where scheduler_running was always false because the flag wasn't being set in server.py lifespan. All 16 tests passed after fix.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "bugs_fixed": [
+    {
+      "file": "/app/backend/server.py",
+      "issue": "scheduler_running flag was always false because scheduled_jobs.is_running was never set to True in the lifespan. Fixed by adding 'scheduled_jobs.is_running = True' after scheduler.start()",
+      "line": 167
+    }
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_notification_ws_jobs.py",
+    "/app/test_reports/pytest/pytest_notification_ws_jobs.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "NotificationWebSocketManager correctly implements user connection tracking with send_to_user, broadcast, and specialized notification methods (win_back, outbid, points_earned, event_reminder)",
+    "ScheduledJobsManager has 4 jobs configured: daily_churn_analysis (3AM), win_back_dispatch (4h), auction_ending_notifications (5m), event_reminders (15m)",
+    "Push notification integration uses Expo's push API via send_push_notification_to_token in routes/shared.py",
+    "WebSocket endpoint /api/ws/notifications requires JWT token for authentication and handles ping/pong, mark_read, get_unread messages"
+  ],
+  "updated_files": [
+    "/app/backend/server.py",
+    "/app/backend/tests/test_notification_ws_jobs.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "N/A (backend only testing)"
+  },
+  "test_credentials": {
+    "mobile_user": {
+      "email": "luna@test.com",
+      "password": "test123"
+    },
+    "venue_staff": {
+      "email": "venue@eclipse.com",
+      "password": "venue123"
+    }
+  },
+  "seed_data_creation": "N/A - used existing test users",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "WebSocket Notifications, Scheduled Jobs, and Push Notification features fully tested. Notification WS endpoints: /api/ws/notifications/stats (GET), /api/ws/notifications/online/{user_id} (GET), /api/ws/notifications (WS). Jobs endpoints: /api/jobs/status, /api/jobs/churn-summary, /api/jobs/win-back-summary, /api/jobs/trigger. All 4 scheduled jobs confirmed running: daily_churn_analysis, win_back_dispatch, auction_ending_notifications, event_reminders.",
+  "mocked_apis": {
+    "CherryHub": "MOCKED - CHERRYHUB_MOCK_MODE=true in backend/.env",
+    "Push_Notifications": "MOCKED - No real device tokens, uses Expo push API",
+    "AI_Features": "LIVE - Using Claude API via Emergent LLM Key"
+  },
+  "features_verified": {
+    "notification_ws_stats": {
+      "status": "PASS",
+      "endpoint": "GET /api/ws/notifications/stats",
+      "details": "Returns total_connections, unique_users, online_users list"
+    },
+    "notification_user_online_check": {
+      "status": "PASS",
+      "endpoint": "GET /api/ws/notifications/online/{user_id}",
+      "details": "Returns user_id and online boolean status"
+    },
+    "notification_ws_endpoint": {
+      "status": "PASS",
+      "endpoint": "WS /api/ws/notifications?token={jwt}",
+      "details": "WebSocket endpoint accepts connections with JWT token, handles ping/pong, mark_read, get_unread"
+    },
+    "jobs_status": {
+      "status": "PASS",
+      "endpoint": "GET /api/jobs/status",
+      "details": "Returns scheduler_running (true), jobs list (4 jobs), recent_runs. Requires admin/venue_manager role"
+    },
+    "churn_summary": {
+      "status": "PASS",
+      "endpoint": "GET /api/jobs/churn-summary",
+      "details": "Returns stats with risk_distribution, total_at_risk, churned_60d, last_analysis_run"
+    },
+    "win_back_summary": {
+      "status": "PASS",
+      "endpoint": "GET /api/jobs/win-back-summary",
+      "details": "Returns total_campaigns, campaigns_last_7_days, claimed_campaigns, conversion_rate"
+    },
+    "trigger_job": {
+      "status": "PASS",
+      "endpoint": "POST /api/jobs/trigger",
+      "details": "Admin-only endpoint to manually trigger scheduled jobs"
+    },
+    "scheduler_running": {
+      "status": "PASS",
+      "details": "Scheduler confirmed running with 4 jobs: daily_churn_analysis (3AM), win_back_dispatch (4h), auction_ending_notifications (5m), event_reminders (15m)"
+    },
+    "push_notification_integration": {
+      "status": "PASS",
+      "details": "Push notification function available in routes/shared.py, used by win-back dispatch job (MOCKED - no real device tokens)"
+    }
+  }
+}

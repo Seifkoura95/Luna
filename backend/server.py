@@ -13,6 +13,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 import httpx
 from bs4 import BeautifulSoup
 from pathlib import Path
@@ -102,6 +103,9 @@ async def lifespan(app_instance: FastAPI):
     """Application lifespan handler - manages scheduler startup/shutdown"""
     global _megatix_sync_func
     
+    # Import scheduled jobs service
+    from services.scheduled_jobs import scheduled_jobs
+    
     # Startup
     logging.info("Starting Luna Group VIP API with scheduler...")
     
@@ -123,6 +127,33 @@ async def lifespan(app_instance: FastAPI):
         replace_existing=True
     )
     
+    # Schedule daily churn analysis at 3 AM
+    scheduler.add_job(
+        scheduled_jobs.run_daily_churn_analysis,
+        CronTrigger(hour=3, minute=0),
+        id="daily_churn_analysis",
+        name="Daily Churn Analysis",
+        replace_existing=True
+    )
+    
+    # Schedule win-back campaign dispatch every 4 hours
+    scheduler.add_job(
+        scheduled_jobs.dispatch_win_back_campaigns,
+        IntervalTrigger(hours=4),
+        id="win_back_dispatch",
+        name="Win-back Campaign Dispatch",
+        replace_existing=True
+    )
+    
+    # Schedule auction ending notifications every 5 minutes
+    scheduler.add_job(
+        scheduled_jobs.send_auction_ending_notifications,
+        IntervalTrigger(minutes=5),
+        id="auction_ending_notifications",
+        name="Auction Ending Notifications",
+        replace_existing=True
+    )
+    
     # Also run a sync on startup (after 90 seconds to let everything initialize)
     scheduler.add_job(
         run_scheduled_sync,
@@ -133,7 +164,8 @@ async def lifespan(app_instance: FastAPI):
     )
     
     scheduler.start()
-    logging.info("Event scheduler started - Megatix sync every 12 hours, notifications every 6 hours")
+    scheduled_jobs.is_running = True  # Set flag to indicate scheduler is running
+    logging.info("Event scheduler started - Megatix sync every 12 hours, churn analysis daily at 3AM, win-back dispatch every 4 hours")
     
     yield
     
