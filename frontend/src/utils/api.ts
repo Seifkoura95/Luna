@@ -1019,4 +1019,23 @@ export const api = {
 
   redeemBirthdayReward: (rewardClaimId: string) =>
     apiFetch<{ success: boolean; message: string }>(`/api/birthday/redeem/${rewardClaimId}`, { method: 'POST' }),
+
+  // ====== AI FEATURES API ======
+  aiChat: (message: string, sessionId?: string) =>
+    apiFetch<{ response: string; session_id: string }>('/api/ai/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, session_id: sessionId })
+    }),
+
+  aiSmartMission: () =>
+    apiFetch<{ mission: any }>('/api/ai/smart-mission', { method: 'POST' }),
+
+  aiPhotoCaption: (venueName: string, eventName?: string) =>
+    apiFetch<{ caption: string; suggestions: string[] }>('/api/ai/photo-caption', {
+      method: 'POST',
+      body: JSON.stringify({ venue_name: venueName, event_name: eventName, time_of_day: 'night' })
+    }),
+
+  aiHealth: () =>
+    apiFetch<{ status: string; ai_enabled: boolean; features: any }>('/api/ai/health', { auth: false }),
 };

@@ -26,6 +26,7 @@ from routes.venue_admin import router as venue_admin_router
 from routes.geofences import router as geofences_router
 from routes.birthday import router as birthday_router
 from routes.leaderboard import router as leaderboard_router
+from routes.ai import router as ai_router
 
 # Export all routers for easy importing
 __all__ = [
@@ -50,6 +51,7 @@ __all__ = [
     "geofences_router",
     "birthday_router",
     "leaderboard_router",
+    "ai_router",
 ]
 
 # List of all routers for bulk registration
@@ -75,4 +77,5 @@ ALL_ROUTERS = [
     geofences_router,
     birthday_router,
     leaderboard_router,
+    ai_router,
 ]
