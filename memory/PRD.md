@@ -791,6 +791,69 @@ A comprehensive owner's manual has been created covering:
 - `/app/test_reports/iteration_15.json` - 100% pass rate (16/16 tests)
 - Bug fixed: Role-based access control now fetches user from database
 
+## WebSocket Real-time Notifications Feed ✅ COMPLETE (March 31, 2026)
+
+### Backend Service (`/app/backend/services/notification_ws_manager.py`)
+- **NotificationWebSocketManager** class
+- Single-session per user (replaces old connection)
+- Specialized notification methods:
+  - `send_win_back_notification()` - Win-back campaign alerts
+  - `send_outbid_notification()` - Auction outbid alerts
+  - `send_points_earned()` - Points earned notifications
+  - `send_event_reminder()` - Event starting soon alerts
+  - `broadcast()` - Send to all connected users
+
+### WebSocket Endpoints (`/app/backend/routes/notification_ws.py`)
+- `WS /api/ws/notifications?token={jwt}` - Connect to notification feed
+  - Receives: connected, notification, broadcast, unread_count, unread_notifications
+  - Sends: ping, mark_read, mark_all_read, get_unread
+- `GET /api/ws/notifications/stats` - Connection statistics
+- `GET /api/ws/notifications/online/{user_id}` - Check if user is online
+
+## Scheduled Churn Analysis Cron Job ✅ COMPLETE (March 31, 2026)
+
+### ScheduledJobsManager (`/app/backend/services/scheduled_jobs.py`)
+- **4 Scheduled Jobs**:
+  1. `daily_churn_analysis` - Daily at 3 AM, analyzes 500 users per run
+  2. `win_back_dispatch` - Every 4 hours, targets high-risk users
+  3. `auction_ending_notifications` - Every 5 minutes, alerts bidders
+  4. `event_reminders` - Every 15 minutes, reminds venue visitors
+
+### Jobs API Endpoints (`/app/backend/routes/scheduled_jobs.py`)
+- `GET /api/jobs/status` - Scheduler status and job list (admin)
+- `GET /api/jobs/churn-summary` - Churn analysis results (staff)
+- `GET /api/jobs/win-back-summary` - Campaign metrics (staff)
+- `POST /api/jobs/trigger` - Manually trigger a job (admin)
+- `POST /api/jobs/start-scheduler` / `stop-scheduler` - Control scheduler (admin)
+
+### Server Integration (`/app/backend/server.py`)
+- Jobs registered in FastAPI lifespan handler
+- Scheduler starts automatically on server startup
+- Logs confirm: "churn analysis daily at 3AM, win-back dispatch every 4 hours"
+
+## Push Notification Integration for Win-back ✅ COMPLETE (March 31, 2026)
+
+### Implementation
+- `send_win_back_push_notification()` in scheduled_jobs.py
+- Uses AI-generated messages via `luna_ai.generate_auction_nudge()`
+- Integrates with Expo push notification API via `send_push_notification_to_token()`
+- Sends to all registered push tokens for user
+- Falls back to static message if AI unavailable
+
+### Win-back Campaign Flow:
+1. Churn analysis identifies high-risk users
+2. Win-back dispatch job runs every 4 hours
+3. For each high-risk user without recent campaign:
+   - Trigger win-back campaign (creates record, awards points)
+   - Send WebSocket notification if online
+   - Send push notification to device tokens
+   - Update `last_win_back_sent` timestamp
+
+### Test Report:
+- `/app/test_reports/iteration_16.json` - 100% pass rate (16/16 tests)
+- Bug fixed: `scheduler_running` flag now correctly set in server lifespan
+
+
 
 
 
