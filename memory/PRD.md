@@ -914,6 +914,63 @@ Profile Page → Quick Actions Grid → "Birthday Club" (pink balloon icon)
 - `POST /api/birthday/claim/{reward_id}` - Claim a birthday reward  
 - `POST /api/birthday/redeem/{claim_id}` - Redeem a claimed reward
 
+## Auctions Integration ✅ COMPLETE (March 31, 2026)
+
+### Home Page Live Auctions Carousel
+Location: `/app/frontend/app/(tabs)/index.tsx`
+
+**Features:**
+- Horizontal ScrollView carousel showing up to 5 active auctions
+- Each card displays:
+  - 🔴 LIVE badge with pulsing dot
+  - Auction title
+  - Venue name
+  - Current bid amount (gold color)
+  - "SEE ALL >" link navigates to dedicated Auctions page
+
+**Styles:**
+- Card size: 220x160px with rounded corners
+- Gradient overlay for text readability
+- Premium dark aesthetic matching app theme
+
+### Dedicated Auctions Page
+Location: `/app/frontend/app/(tabs)/auctions.tsx`
+
+**Features:**
+- Full-screen auction browser
+- "ACTIVE NOW" section with live countdown timers
+- Filter by venue or auction type
+- Real-time bid updates via WebSocket
+- Bid placement with deposit requirements
+
+### Venue Page Auctions Section
+Location: `/app/frontend/app/venue/[id].tsx`
+
+**Features:**
+- "Active Auctions" section on each venue detail page
+- Shows auctions specific to that venue
+- Direct navigation to auction bidding
+
+## Birthday Badge Notification ✅ COMPLETE (March 31, 2026)
+
+### Implementation
+Location: `/app/frontend/app/(tabs)/_layout.tsx`
+
+**Features:**
+- Pink dot badge on Profile tab when unclaimed birthday rewards exist
+- Checks `/api/birthday/status` on component mount
+- Badge appears when:
+  - `available_rewards.length > 0` OR
+  - `is_birthday_period && rewards_claimed < total_rewards`
+
+**Style:**
+- 8px pink dot (#FF6B9D)
+- Positioned top-right of Profile icon
+- White border for visibility
+
+### Test Report:
+- `/app/test_reports/iteration_18.json` - 100% pass rate (all features verified)
+
 
 
 
