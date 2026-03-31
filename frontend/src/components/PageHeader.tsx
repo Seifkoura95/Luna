@@ -29,13 +29,15 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const user = useAuthStore((state) => state.user);
 
   return (
-    <View style={[styles.header, { paddingTop: insets.top + 48 }]}>
+    <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
       {showLogo && (
-        <Image 
-          source={{ uri: LUNA_GROUP_LOGO }} 
-          style={styles.logo}
-          contentFit="contain"
-        />
+        <View style={styles.logoContainer}>
+          <Image 
+            source={{ uri: LUNA_GROUP_LOGO }} 
+            style={compactLogo ? styles.logoCompact : styles.logo}
+            contentFit="contain"
+          />
+        </View>
       )}
       
       {title && (
@@ -52,7 +54,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       
       {showPoints && (
         <View style={styles.pointsBadge}>
-          <GoldStarIcon size={16} />
+          <GoldStarIcon size={14} />
           <Text style={styles.pointsText}>
             {user?.points_balance?.toLocaleString() || 0} pts
           </Text>
@@ -66,49 +68,55 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 12,
+  },
+  logoContainer: {
+    marginBottom: 6,
   },
   logo: {
-    width: 260,
-    height: 75,
-    marginBottom: 10,
+    width: 160,
+    height: 48,
+  },
+  logoCompact: {
+    width: 120,
+    height: 36,
   },
   pageTitle: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.6)',
-    letterSpacing: 2.5,
+    color: 'rgba(255,255,255,0.5)',
+    letterSpacing: 2,
     textTransform: 'uppercase',
-    marginTop: 8,
+    marginTop: 4,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.4)',
-    marginTop: 4,
+    color: 'rgba(255,255,255,0.35)',
+    marginTop: 2,
   },
   description: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.35)',
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 2,
   },
   pointsBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(212,175,55,0.15)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
-    marginTop: 14,
+    backgroundColor: 'rgba(212,175,55,0.12)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 5,
+    marginTop: 10,
     borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.2)',
+    borderColor: 'rgba(212,175,55,0.15)',
   },
   pointsText: {
     color: colors.gold,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
   },
 });
 

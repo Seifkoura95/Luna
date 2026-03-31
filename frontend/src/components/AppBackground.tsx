@@ -160,7 +160,7 @@ export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
 
       {/* Subtle ambient glows for depth */}
       <LinearGradient
-        colors={['rgba(227, 24, 55, 0.15)', 'transparent']}
+        colors={['rgba(37, 99, 235, 0.12)', 'transparent']}
         style={styles.topLeftGlow}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
