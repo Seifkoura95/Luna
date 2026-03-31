@@ -11,6 +11,7 @@ import {
   BoltIcon,
   GuestIcon,
   StarIcon,
+  LunaAIIcon,
 } from '../../src/components/LunaIcons';
 
 // Custom tab bar icon using Luna Icons
@@ -91,22 +92,22 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="luna-ai"
+        options={{
+          title: 'Luna AI',
+          headerShown: false,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon IconComponent={LunaAIIcon} color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="wallet"
         options={{
           title: 'Wallet',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon IconComponent={CardIcon} color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="auctions"
-        options={{
-          title: 'Auctions',
-          headerShown: false,
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon IconComponent={BoltIcon} color={color} focused={focused} />
           ),
         }}
       />
@@ -123,6 +124,7 @@ export default function TabLayout() {
       {/* Hidden screens */}
       <Tabs.Screen name="photos" options={{ href: null }} />
       <Tabs.Screen name="leaderboard" options={{ href: null }} />
+      <Tabs.Screen name="auctions" options={{ href: null }} />
     </Tabs>
     </View>
   );

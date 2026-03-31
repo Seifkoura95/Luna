@@ -399,6 +399,25 @@ export const AuctionIcon = ({ size = 22, color = colors.text, strokeWidth = 1.5 
   </Svg>
 );
 
+// Luna AI Chat Icon - Custom chat bubble with sparkle
+export const LunaAIIcon = ({ size = 22, color = colors.text, strokeWidth = 1.5 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 22 22" fill="none">
+    <Path
+      d="M11 2C5.5 2 2 6 2 10c0 2 1 3.5 2 4.5V18l3-2c1.3.6 2.6 1 4 1 5.5 0 9-4 9-7s-3.5-8-9-8z"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M11 6v1M11 10v1M15 8l-1 1M7 8l1 1"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
 export default {
   HomeIcon,
   EventsIcon,
@@ -436,4 +455,5 @@ export default {
   CrownIcon,
   LogoutIcon,
   AuctionIcon,
+  LunaAIIcon,
 };

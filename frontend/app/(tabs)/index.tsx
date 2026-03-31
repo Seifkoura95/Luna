@@ -449,21 +449,6 @@ export default function HomeScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-
-      {/* Floating AI Concierge Button */}
-      <TouchableOpacity
-        style={styles.aiFloatingButton}
-        onPress={() => { handleHaptic(); router.push('/ai-concierge'); }}
-        activeOpacity={0.85}
-        data-testid="ai-concierge-fab"
-      >
-        <LinearGradient
-          colors={[colors.accent, colors.accentDark]}
-          style={styles.aiFloatingButtonGradient}
-        >
-          <Ionicons name="sparkles" size={24} color={colors.textPrimary} />
-        </LinearGradient>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -817,25 +802,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.5)',
     marginTop: 2,
-  },
-  // AI Floating Button
-  aiFloatingButton: {
-    position: 'absolute',
-    bottom: 100,
-    right: 20,
-    zIndex: 1000,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  aiFloatingButtonGradient: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   // Tonight's Pick styles
   tonightPickHeader: {
