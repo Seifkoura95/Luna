@@ -701,6 +701,47 @@ A comprehensive owner's manual has been created covering:
 - `/app/test_reports/iteration_13.json` - 100% pass rate (16/16 backend tests, frontend verified)
 - Bug fixed: Added missing Stack.Screen routes in _layout.tsx
 
+## AI "Tonight's Pick" Cards ✅ COMPLETE (March 31, 2026)
+
+### Implementation (`/app/frontend/app/(tabs)/index.tsx`)
+- **AI-Curated Events**: Fetches from `/api/ai/personalized-events` on page load
+- **Horizontal Scroll**: 200px wide cards with gradient overlays
+- **"AI Pick" Badge**: Shows on events with `ai_recommended: true`
+- **Fallback**: Uses first 3 events if AI unavailable
+
+### UI Components:
+- Header with sparkles icon + "TONIGHT'S PICK" + "Curated for you" subtitle
+- Horizontal ScrollView with event cards
+- Each card shows: Image, AI Pick badge, Event title, Venue name
+
+## Story Sharing UI ✅ COMPLETE (March 31, 2026)
+
+### Frontend Screen (`/app/frontend/app/stories.tsx`)
+- **Points Banner**: "Earn 25 Luna Points for every story you share!"
+- **My Stories**: Horizontal scroll of user's stories
+- **Community Feed**: Vertical list with user info (name, tier badge)
+- **Share Modal**: Platform selection (Instagram, Facebook, Twitter, Snapchat, TikTok, Copy)
+- **Empty State**: "No stories yet - Be the first to share a moment!"
+
+### Share Platforms:
+- Platform-specific icons and colors
+- Records share and awards 25 points
+- Uses native Share API for cross-platform support
+
+## Venue Portal AI Insights ✅ COMPLETE (March 31, 2026)
+
+### Implementation (`/app/venue-portal/src/pages/Dashboard.tsx`)
+- **AI Chat Interface**: Send messages to Luna AI for venue insights
+- **Quick Actions**: Pre-built questions (peak hours, at-risk VIPs, revenue optimization, promotions)
+- **AI Capabilities Grid**: Shows status of AI features (Churn Prediction, Smart Missions, etc.)
+
+### Note:
+⚠️ **CDN Caching Issue**: AI Insights tab requires hard refresh (Cmd+Shift+R) to appear due to platform-level CDN caching.
+
+### Test Report:
+- `/app/test_reports/iteration_14.json` - Backend 100% (11/11), Frontend 90% (CDN cache blocking venue portal)
+
+
 
 
 
