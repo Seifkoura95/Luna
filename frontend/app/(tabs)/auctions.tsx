@@ -969,10 +969,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0A0A0A',
+    backgroundColor: colors.glass,
     padding: spacing.md,
     borderRadius: radius.lg,
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
   compactBidLeft: {},
   compactBidLabel: {

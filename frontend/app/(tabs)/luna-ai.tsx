@@ -214,7 +214,7 @@ export default function LunaAIScreen() {
         {!isUser && (
           <View style={styles.aiAvatarWrapper}>
             <LinearGradient
-              colors={['#FF6B6B', '#FF8E53']}
+              colors={[colors.accent, colors.accentDark]}
               style={styles.aiAvatar}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -300,7 +300,7 @@ export default function LunaAIScreen() {
           <View style={styles.headerContent}>
             <Animated.View style={[styles.headerIconWrapper, { transform: [{ scale: pulseAnim }] }]}>
               <LinearGradient
-                colors={['#FF6B6B', '#FF8E53', '#FFD93D']}
+                colors={[colors.accent, colors.accentDark, colors.accentBright]}
                 style={styles.headerIcon}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -353,7 +353,7 @@ export default function LunaAIScreen() {
               <View style={styles.typingWrapper}>
                 <View style={styles.aiAvatarWrapper}>
                   <LinearGradient
-                    colors={['#FF6B6B', '#FF8E53']}
+                    colors={[colors.accent, colors.accentDark]}
                     style={styles.aiAvatar}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
@@ -363,9 +363,9 @@ export default function LunaAIScreen() {
                 </View>
                 <View style={styles.typingBubble}>
                   <View style={styles.typingDots}>
-                    <Animated.View style={[styles.typingDot, { backgroundColor: '#FF6B6B' }]} />
-                    <Animated.View style={[styles.typingDot, { backgroundColor: '#FF8E53' }]} />
-                    <Animated.View style={[styles.typingDot, { backgroundColor: '#FFD93D' }]} />
+                    <Animated.View style={[styles.typingDot, { backgroundColor: colors.accent }]} />
+                    <Animated.View style={[styles.typingDot, { backgroundColor: colors.accentBright }]} />
+                    <Animated.View style={[styles.typingDot, { backgroundColor: colors.accentVibrant }]} />
                   </View>
                 </View>
               </View>
@@ -395,7 +395,7 @@ export default function LunaAIScreen() {
                     onPress={() => handleSendMessage(suggestion)}
                     activeOpacity={0.8}
                   >
-                    <Ionicons name="flash" size={14} color="#FFD93D" />
+                    <Ionicons name="flash" size={12} color={colors.accent} />
                     <Text style={styles.inlineSuggestionText}>{suggestion}</Text>
                   </TouchableOpacity>
                 ))}
@@ -427,7 +427,7 @@ export default function LunaAIScreen() {
               >
                 <LinearGradient
                   colors={inputText.trim() && !isLoading 
-                    ? ['#FF6B6B', '#FF8E53'] 
+                    ? [colors.accent, colors.accentDark] 
                     : [colors.surfaceElevated, colors.surface]}
                   style={styles.sendButtonGradient}
                   start={{ x: 0, y: 0 }}
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#FF6B6B',
+    shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -496,17 +496,17 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   aiTag: {
-    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    backgroundColor: colors.accentDim,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 107, 107, 0.3)',
+    borderColor: colors.accentGlow,
   },
   aiTagText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#FF6B6B',
+    color: colors.accent,
     letterSpacing: 1,
   },
   headerSubtitle: {
@@ -621,92 +621,96 @@ const styles = StyleSheet.create({
   },
   // Quick Cards
   quickCardsContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    maxHeight: 280,
   },
   quickCardsTitle: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: spacing.md,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
     letterSpacing: -0.3,
   },
   categoriesGrid: {
-    gap: spacing.sm,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
   },
   categoryWrapper: {
+    width: '48%',
     marginBottom: spacing.xs,
   },
   categoryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: radius.lg,
-    padding: spacing.md,
+    backgroundColor: colors.glass,
+    borderRadius: radius.md,
+    padding: spacing.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: colors.glassBorder,
   },
   categoryCardSelected: {
-    borderColor: 'rgba(255, 107, 107, 0.3)',
-    backgroundColor: 'rgba(255, 107, 107, 0.08)',
+    borderColor: colors.accentGlow,
+    backgroundColor: colors.accentDim,
   },
   categoryGradient: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    marginRight: spacing.sm,
   },
   categoryTitle: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.textPrimary,
   },
   categoryQuestions: {
-    marginTop: spacing.sm,
-    paddingLeft: spacing.sm,
-    gap: spacing.xs,
+    marginTop: spacing.xs,
+    paddingLeft: spacing.xs,
+    gap: 4,
   },
   questionPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.md,
+    backgroundColor: colors.glass,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.xs + 2,
+    paddingHorizontal: spacing.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: colors.glassBorderSubtle,
   },
   questionPillText: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '500',
   },
   // Inline Suggestions
   inlineSuggestionsWrapper: {
-    marginTop: spacing.lg,
+    marginTop: spacing.sm,
   },
   inlineSuggestions: {
-    gap: spacing.sm,
+    gap: spacing.xs,
     paddingRight: spacing.lg,
   },
   inlineSuggestionPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 217, 61, 0.1)',
+    backgroundColor: colors.accentDim,
     borderRadius: radius.full,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    gap: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255, 217, 61, 0.2)',
+    borderColor: colors.accentGlow,
   },
   inlineSuggestionText: {
-    fontSize: 13,
-    color: '#FFD93D',
+    fontSize: 11,
+    color: colors.accent,
     fontWeight: '600',
   },
   // Input Area
