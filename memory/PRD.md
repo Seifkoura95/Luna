@@ -870,6 +870,50 @@ A comprehensive owner's manual has been created covering:
 ### Note:
 Web preview may show slight color variations due to browser rendering. Native Expo Go app displays colors most accurately.
 
+## Luna AI Navigation Integration ✅ COMPLETE (March 31, 2026)
+
+### Changes Applied:
+1. **New Tab in Navigation**: Moved AI Concierge from floating button to bottom navigation as "Luna AI" tab
+2. **Custom Icon**: Created `LunaAIIcon` component in `/app/frontend/src/components/LunaIcons.tsx` - a chat bubble design with sparkle accents
+3. **New Tab Screen**: Created `/app/frontend/app/(tabs)/luna-ai.tsx` with full chat interface
+4. **Removed Floating Button**: Removed the sparkle FAB from home page (`/app/frontend/app/(tabs)/index.tsx`)
+
+### Luna AI Tab Features:
+- Welcome message personalized with user's name
+- Quick question buttons for common queries
+- Full chat interface with message bubbles
+- Session continuity for multi-turn conversations
+- Loading indicator while AI processes responses
+- Powered by Claude via Emergent LLM Key
+
+### Navigation Order (5 tabs):
+TONIGHT | VENUES | LUNA AI | WALLET | PROFILE
+
+### Test Report:
+- `/app/test_reports/iteration_17.json` - 100% pass rate (13/13 tests)
+- All features verified: Luna AI tab, chat functionality, quick questions, floating button removed, Birthday Club access
+
+## Birthday Club Frontend ✅ VERIFIED (March 31, 2026)
+
+### Status:
+The Birthday Club frontend already existed at `/app/frontend/app/birthday-club.tsx` and is fully functional.
+
+### Access Path:
+Profile Page → Quick Actions Grid → "Birthday Club" (pink balloon icon)
+
+### Features Verified:
+- Birthday countdown display
+- Available rewards listing
+- Claimed rewards with redemption status
+- QR code generation for redeemed rewards
+- "How It Works" information section
+- Pull-to-refresh functionality
+
+### Backend Endpoints:
+- `GET /api/birthday/status` - Get birthday status and rewards
+- `POST /api/birthday/claim/{reward_id}` - Claim a birthday reward  
+- `POST /api/birthday/redeem/{claim_id}` - Redeem a claimed reward
+
 
 
 
