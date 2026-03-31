@@ -6,6 +6,7 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
+  Pressable,
   Image,
   Modal,
   TextInput,
@@ -278,21 +279,21 @@ export default function AuctionsScreen() {
         <Image source={{ uri: auction.image_url }} style={styles.auctionImage} />
         {isHot && <View style={styles.hotGlow} />}
         
-        {/* Watchlist Button - Outside gradient for visibility */}
-        <TouchableOpacity 
-          style={[styles.watchButton, isWatched && styles.watchButtonActive]}
-          onPress={(e) => {
-            e.stopPropagation();
-            toggleWatchlist(auction.id);
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        {/* Watchlist Button - Using Pressable for better web support */}
+        <Pressable 
+          style={({ pressed }) => [
+            styles.watchButton, 
+            isWatched && styles.watchButtonActive,
+            pressed && { opacity: 0.7 }
+          ]}
+          onPress={() => toggleWatchlist(auction.id)}
         >
           <Ionicons 
             name={isWatched ? "eye" : "eye-outline"} 
             size={20} 
-            color="#FFFFFF" 
+            color={isWatched ? "#D4AF37" : "#FFFFFF"} 
           />
-        </TouchableOpacity>
+        </Pressable>
         
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.95)']}
