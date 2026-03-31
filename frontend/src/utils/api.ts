@@ -72,6 +72,46 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ email, password }), auth: false }
     ),
   
+  // CherryHub Login (dual auth)
+  cherryHubLogin: (email: string) =>
+    apiFetch<{ user: any; token: string; cherryhub_login: boolean; new_user?: boolean; newly_linked?: boolean; mock?: boolean }>(
+      '/api/cherryhub/login',
+      { method: 'POST', body: JSON.stringify({ email }), auth: false }
+    ),
+  
+  // CherryHub Link Account (for existing users)
+  cherryHubLink: (email?: string, createIfNotExists: boolean = true) =>
+    apiFetch<{ success: boolean; member_key: string; message: string; new_account?: boolean; existing_account?: boolean }>(
+      '/api/cherryhub/link',
+      { method: 'POST', body: JSON.stringify({ email, create_if_not_exists: createIfNotExists }) }
+    ),
+  
+  // CherryHub Points Operations
+  cherryHubAwardPoints: (points: number, reason: string, source: string = 'app_reward') =>
+    apiFetch<{ success: boolean; points_awarded: number; cherryhub_synced: boolean }>(
+      '/api/cherryhub/points/award',
+      { method: 'POST', body: JSON.stringify({ points, reason, source }) }
+    ),
+  
+  cherryHubRedeemPoints: (points: number, reason: string, redemptionType: string = 'reward') =>
+    apiFetch<{ success: boolean; points_redeemed: number; new_balance: number; cherryhub_synced: boolean }>(
+      '/api/cherryhub/points/redeem',
+      { method: 'POST', body: JSON.stringify({ points, reason, redemption_type: redemptionType }) }
+    ),
+  
+  // CherryHub Wallet Pass
+  cherryHubGetWalletPass: (platform: 'ios' | 'android') =>
+    apiFetch<{ success: boolean; platform: string; pass_data?: string; pass_url?: string }>(
+      '/api/cherryhub/wallet-pass',
+      { method: 'POST', body: JSON.stringify({ platform }) }
+    ),
+  
+  // CherryHub Transactions
+  cherryHubGetTransactions: (limit: number = 20) =>
+    apiFetch<{ transactions: any[]; count: number }>(
+      `/api/cherryhub/transactions?limit=${limit}`
+    ),
+  
   getMe: () => apiFetch<any>('/api/auth/me'),
   
   // QR & Check-in

@@ -13,6 +13,7 @@ import {
   Dimensions,
   Platform,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
@@ -147,6 +148,8 @@ export default function WalletScreen() {
   // CherryHub state
   const [cherryHubStatus, setCherryHubStatus] = useState<{registered: boolean, member_key: string | null}>({registered: false, member_key: null});
   const [cherryHubPoints, setCherryHubPoints] = useState<number>(0);
+  const [walletPassLoading, setWalletPassLoading] = useState(false);
+  const [linkingCherryHub, setLinkingCherryHub] = useState(false);
   // Leaderboard state
   const [leaderboardData, setLeaderboardData] = useState<any>(null);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
@@ -259,6 +262,71 @@ export default function WalletScreen() {
         },
       ]
     );
+  };
+
+  // Handle adding to digital wallet (Apple/Google)
+  const handleAddToWallet = async () => {
+    if (!cherryHubStatus.member_key) {
+      Alert.alert('Not Connected', 'Please link your CherryHub account first.');
+      return;
+    }
+
+    setWalletPassLoading(true);
+    try {
+      const platform = Platform.OS === 'ios' ? 'ios' : 'android';
+      const result = await api.cherryHubGetWalletPass(platform);
+      
+      if (Platform.OS === 'ios' && result.pass_data) {
+        // For iOS, we'd need to handle the pkpass file
+        // This would typically require native modules to add to Apple Wallet
+        Alert.alert('Apple Wallet', 'Apple Wallet pass generated! In a production app, this would be automatically added to your Apple Wallet.');
+      } else if (result.pass_url) {
+        const canOpen = await Linking.canOpenURL(result.pass_url);
+        if (canOpen) {
+          await Linking.openURL(result.pass_url);
+        } else {
+          Alert.alert('Error', 'Cannot open Google Wallet on this device');
+        }
+      } else {
+        Alert.alert('Info', 'Wallet pass feature is currently in mock mode. When CherryHub credentials are configured, your digital membership card will be available.');
+      }
+      
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to get wallet pass');
+    } finally {
+      setWalletPassLoading(false);
+    }
+  };
+
+  // Handle linking CherryHub account
+  const handleLinkCherryHub = async () => {
+    setLinkingCherryHub(true);
+    try {
+      const result = await api.cherryHubLink(undefined, true);
+      
+      if (result.success) {
+        setCherryHubStatus({ registered: true, member_key: result.member_key });
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        
+        if (result.new_account) {
+          Alert.alert('Account Created!', 'Your CherryHub membership has been created and linked.');
+        } else {
+          Alert.alert('Linked!', 'Your existing CherryHub account has been linked.');
+        }
+        
+        // Refresh data
+        fetchData(true);
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to link CherryHub account');
+    } finally {
+      setLinkingCherryHub(false);
+    }
   };
 
   const formatEventDate = (dateString: string) => {
@@ -657,6 +725,59 @@ export default function WalletScreen() {
             )}
           </View>
           <MembershipCard compact={true} />
+          
+          {/* Wallet Buttons */}
+          <View style={styles.walletButtonsContainer}>
+            {cherryHubStatus.registered ? (
+              <TouchableOpacity
+                style={styles.walletPassButton}
+                onPress={handleAddToWallet}
+                disabled={walletPassLoading}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={['#FF6B6B', '#D63031']}
+                  style={styles.walletPassGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  {walletPassLoading ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <>
+                      <Ionicons name="wallet-outline" size={18} color="#FFF" />
+                      <Text style={styles.walletPassText}>
+                        {Platform.OS === 'ios' ? 'Add to Apple Wallet' : 'Add to Google Wallet'}
+                      </Text>
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.linkCherryHubButton}
+                onPress={handleLinkCherryHub}
+                disabled={linkingCherryHub}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={[colors.accent, colors.accentDark]}
+                  style={styles.walletPassGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  {linkingCherryHub ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <>
+                      <Ionicons name="link-outline" size={18} color="#FFF" />
+                      <Text style={styles.walletPassText}>Link CherryHub Account</Text>
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* Active Missions */}
@@ -1731,5 +1852,30 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.orange,
     letterSpacing: 1,
+  },
+  // Wallet button styles
+  walletButtonsContainer: {
+    marginTop: spacing.md,
+  },
+  walletPassButton: {
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  linkCherryHubButton: {
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  walletPassGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  walletPassText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
 });

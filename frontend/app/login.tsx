@@ -12,6 +12,7 @@ import {
   StatusBar,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
@@ -36,6 +37,9 @@ export default function LoginScreen() {
   const [name, setName] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cherryHubLoading, setCherryHubLoading] = useState(false);
+  const [showCherryHubLogin, setShowCherryHubLogin] = useState(false);
+  const [cherryHubEmail, setCherryHubEmail] = useState('');
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   
@@ -79,6 +83,36 @@ export default function LoginScreen() {
       Alert.alert('Authentication Failed', e.message || 'Please try again');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCherryHubLogin = async () => {
+    if (!cherryHubEmail) {
+      Alert.alert('Error', 'Please enter your CherryHub email');
+      return;
+    }
+
+    setCherryHubLoading(true);
+    try {
+      const result = await api.cherryHubLogin(cherryHubEmail);
+      useAuthStore.getState().login(result.user, result.token);
+      
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      
+      // Show appropriate message based on login type
+      if (result.new_user) {
+        Alert.alert('Welcome to Luna!', 'Your CherryHub account has been linked. Enjoy 500 bonus points!');
+      } else if (result.newly_linked) {
+        Alert.alert('Account Linked!', 'Your CherryHub membership is now connected to Luna.');
+      }
+      
+      router.replace('/(tabs)');
+    } catch (e: any) {
+      Alert.alert('CherryHub Login Failed', e.message || 'Please check your email and try again');
+    } finally {
+      setCherryHubLoading(false);
     }
   };
 
@@ -283,6 +317,83 @@ export default function LoginScreen() {
                   </LinearGradient>
                 </TouchableOpacity>
 
+                {/* CherryHub Login Section - Login Mode Only */}
+                {isLogin && (
+                  <View style={styles.cherryHubSection}>
+                    <View style={styles.dividerContainer}>
+                      <View style={styles.dividerLine} />
+                      <Text style={styles.dividerText}>OR</Text>
+                      <View style={styles.dividerLine} />
+                    </View>
+
+                    {!showCherryHubLogin ? (
+                      <TouchableOpacity
+                        style={styles.cherryHubButton}
+                        onPress={() => {
+                          if (Platform.OS !== 'web') Haptics.selectionAsync();
+                          setShowCherryHubLogin(true);
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <View style={styles.cherryHubButtonContent}>
+                          <Ionicons name="card-outline" size={22} color="#FF6B6B" />
+                          <Text style={styles.cherryHubButtonText}>Sign in with CherryHub</Text>
+                        </View>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.cherryHubForm}>
+                        <Text style={styles.cherryHubTitle}>CherryHub Member Login</Text>
+                        <View
+                          style={[
+                            styles.inputContainer,
+                            focusedField === 'cherryhub' && styles.inputContainerFocused,
+                          ]}
+                        >
+                          <Ionicons
+                            name="mail-outline"
+                            size={20}
+                            color={focusedField === 'cherryhub' ? '#FF6B6B' : colors.textMuted}
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            style={styles.input}
+                            placeholder="CherryHub email address"
+                            placeholderTextColor={colors.textMuted + '60'}
+                            value={cherryHubEmail}
+                            onChangeText={setCherryHubEmail}
+                            onFocus={() => setFocusedField('cherryhub')}
+                            onBlur={() => setFocusedField(null)}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                          />
+                        </View>
+                        <View style={styles.cherryHubActions}>
+                          <TouchableOpacity
+                            style={styles.cherryHubCancelButton}
+                            onPress={() => {
+                              setShowCherryHubLogin(false);
+                              setCherryHubEmail('');
+                            }}
+                          >
+                            <Text style={styles.cherryHubCancelText}>Cancel</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.cherryHubSubmitButton, cherryHubLoading && styles.submitButtonDisabled]}
+                            onPress={handleCherryHubLogin}
+                            disabled={cherryHubLoading}
+                          >
+                            {cherryHubLoading ? (
+                              <ActivityIndicator color="#FFF" size="small" />
+                            ) : (
+                              <Text style={styles.cherryHubSubmitText}>Continue</Text>
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                )}
+
                 {/* Footer Links */}
                 <View style={styles.footer}>
                   <Text style={styles.footerText}>
@@ -462,5 +573,91 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     textAlign: 'center',
     lineHeight: 16,
+  },
+  // CherryHub Login Styles
+  cherryHubSection: {
+    marginTop: spacing.md,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    paddingHorizontal: spacing.md,
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textTertiary,
+    letterSpacing: 1,
+  },
+  cherryHubButton: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: '#FF6B6B40',
+    overflow: 'hidden',
+  },
+  cherryHubButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md + 2,
+    gap: spacing.sm,
+  },
+  cherryHubButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FF6B6B',
+    letterSpacing: 0.5,
+  },
+  cherryHubForm: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: '#FF6B6B30',
+  },
+  cherryHubTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FF6B6B',
+    textAlign: 'center',
+    marginBottom: spacing.md,
+    letterSpacing: 0.5,
+  },
+  cherryHubActions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  cherryHubCancelButton: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+  },
+  cherryHubCancelText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  cherryHubSubmitButton: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: '#FF6B6B',
+    alignItems: 'center',
+  },
+  cherryHubSubmitText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
 });

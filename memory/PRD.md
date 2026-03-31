@@ -578,12 +578,47 @@ A comprehensive owner's manual has been created covering:
     - `refresh_token` grant: **UNAUTHORIZED** (`"The client application isn't permitted to request an authorization code."`)
   - **Conclusion**: CherryHub likely requires the **authorization_code** OAuth flow, which needs user login interaction and redirect URIs configured in their portal
   - **To Enable Live Mode**: Contact CherryHub support to:
-    1. Configure the client application for the appropriate grant type
-    2. Set up redirect URIs if using authorization_code flow
-    3. Obtain properly scoped credentials
+    1. Configure the client application for the appropriate grant type OR
+    2. Provide an `Ocp-Apim-Subscription-Key` for Azure API Management
+    3. User has already contacted CherryHub support (April 2026)
   - **HTTP Client**: Using `aiohttp` for better DNS resolution in Kubernetes environment
 - **Venue Portal Caching**: CDN caches aggressively, use hard refresh (Cmd+Shift+R)
 - **Expo Tunnel**: Occasional ngrok timeout, restart expo service if needed
+
+## CherryHub Full Integration ✅ (April 2026)
+
+### Backend Routes (`/app/backend/routes/cherryhub.py`)
+- **POST /api/cherryhub/login** - CherryHub login (dual auth support)
+- **POST /api/cherryhub/link** - Link existing user to CherryHub account
+- **POST /api/cherryhub/points/award** - Award points with real-time CherryHub sync
+- **POST /api/cherryhub/points/redeem** - Redeem points with real-time CherryHub sync
+- **GET /api/cherryhub/transactions** - Get points transaction history
+
+### Frontend Changes
+1. **Login Page (`/app/frontend/app/login.tsx`)**
+   - Added "Sign in with CherryHub" button below main login
+   - CherryHub email input form when CherryHub login selected
+   - Dual auth flow: creates/links CherryHub accounts automatically
+
+2. **Wallet Page (`/app/frontend/app/(tabs)/wallet.tsx`)**
+   - Added "Add to Apple Wallet" / "Add to Google Wallet" button (platform-aware)
+   - Added "Link CherryHub Account" button for unlinked users
+   - Real-time CherryHub points display
+
+3. **API Methods (`/app/frontend/src/utils/api.ts`)**
+   - `cherryHubLogin(email)` - CherryHub login flow
+   - `cherryHubLink(email, createIfNotExists)` - Link account
+   - `cherryHubAwardPoints(points, reason, source)` - Award points
+   - `cherryHubRedeemPoints(points, reason, type)` - Redeem points
+   - `cherryHubGetWalletPass(platform)` - Get digital wallet pass
+   - `cherryHubGetTransactions(limit)` - Get transaction history
+
+### Integration Features
+- **Dual Login**: Users can login with either app credentials OR CherryHub email
+- **Auto-linking**: CherryHub login automatically links/creates local accounts
+- **Real-time Points Sync**: Points awarded via missions/rewards sync to CherryHub immediately
+- **Digital Wallet Passes**: Apple Wallet (iOS) and Google Wallet (Android) support
+- **Transaction History**: Full points transaction log with CherryHub sync status
 
 ## 7-Point UI/UX Polish ✅ COMPLETE (March 31, 2026)
 
