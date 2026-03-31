@@ -571,11 +571,17 @@ A comprehensive owner's manual has been created covering:
 
 ## Known Infrastructure Issues
 - **CherryHub Integration**: 
-  - **Status**: Mock mode enabled - live integration blocked by OAuth configuration
-  - **Root Cause**: Client credentials (`client_id: 4884860603804c33b5285ff051374638`) return `unauthorized_client` error from CherryHub's OAuth endpoint
-  - **API Endpoints Updated**: Now using correct staging URL `https://test.api.cherryhub.com.au` with Data API v1 paths
-  - **To Enable Live Mode**: Contact CherryHub support to configure the client application for refresh_token grant type
-  - **HTTP Client**: Switched from `httpx` to `aiohttp` for better DNS resolution in Kubernetes environment
+  - **Status**: Mock mode enabled - live integration requires OAuth configuration by CherryHub
+  - **API Endpoints**: Now correctly configured for `https://test.api.cherryhub.com.au/data/v1/` with Data API paths
+  - **OAuth Findings from Testing**:
+    - `client_credentials` grant: **UNSUPPORTED** (`"grant_type 'client_credentials' is unsupported."`)
+    - `refresh_token` grant: **UNAUTHORIZED** (`"The client application isn't permitted to request an authorization code."`)
+  - **Conclusion**: CherryHub likely requires the **authorization_code** OAuth flow, which needs user login interaction and redirect URIs configured in their portal
+  - **To Enable Live Mode**: Contact CherryHub support to:
+    1. Configure the client application for the appropriate grant type
+    2. Set up redirect URIs if using authorization_code flow
+    3. Obtain properly scoped credentials
+  - **HTTP Client**: Using `aiohttp` for better DNS resolution in Kubernetes environment
 - **Venue Portal Caching**: CDN caches aggressively, use hard refresh (Cmd+Shift+R)
 - **Expo Tunnel**: Occasional ngrok timeout, restart expo service if needed
 

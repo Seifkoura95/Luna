@@ -64,45 +64,73 @@ class CherryHubTokenManager:
         return datetime.now(timezone.utc) < (self.token_expiry - timedelta(minutes=5))
     
     async def _refresh_access_token(self) -> None:
-        """Refresh the access token using the refresh token"""
-        if not self.refresh_token:
-            raise ValueError("No refresh token configured for CherryHub")
-        
+        """Get access token using client credentials or refresh token"""
         timeout = aiohttp.ClientTimeout(total=30)
         async with aiohttp.ClientSession(timeout=timeout) as session:
+            # First try client_credentials grant (server-to-server)
             try:
                 async with session.post(
                     CHERRYHUB_AUTH_URL,
                     data={
-                        "grant_type": "refresh_token",
+                        "grant_type": "client_credentials",
                         "client_id": CHERRYHUB_CLIENT_ID,
                         "client_secret": CHERRYHUB_CLIENT_SECRET,
-                        "refresh_token": self.refresh_token,
+                        "scope": "api",  # Common scope for API access
                     },
                     headers={
                         "Content-Type": "application/x-www-form-urlencoded"
                     }
                 ) as response:
-                    if response.status != 200:
+                    if response.status == 200:
+                        data = await response.json()
+                        self.access_token = data.get("access_token")
+                        expires_in = data.get("expires_in", 3600)
+                        self.token_expiry = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+                        logger.info(f"CherryHub access token obtained via client_credentials, expires in {expires_in}s")
+                        return
+                    else:
                         text = await response.text()
-                        logger.error(f"CherryHub token refresh failed: {response.status} - {text}")
-                        raise Exception(f"Token refresh failed: {response.status}")
-                    
-                    data = await response.json()
-                    self.access_token = data.get("access_token")
-                    expires_in = data.get("expires_in", 3600)  # Default 1 hour
-                    self.token_expiry = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
-                    
-                    # Update refresh token if a new one is provided
-                    if "refresh_token" in data:
-                        self.refresh_token = data["refresh_token"]
-                        logger.info("CherryHub refresh token updated")
-                    
-                    logger.info(f"CherryHub access token refreshed, expires at {self.token_expiry}")
-                
-            except aiohttp.ClientError as e:
-                logger.error(f"CherryHub token refresh request error: {e}")
-                raise
+                        logger.warning(f"CherryHub client_credentials failed: {response.status} - {text}")
+            except Exception as e:
+                logger.warning(f"CherryHub client_credentials error: {e}")
+            
+            # Fallback to refresh_token grant if available
+            if self.refresh_token:
+                try:
+                    async with session.post(
+                        CHERRYHUB_AUTH_URL,
+                        data={
+                            "grant_type": "refresh_token",
+                            "client_id": CHERRYHUB_CLIENT_ID,
+                            "client_secret": CHERRYHUB_CLIENT_SECRET,
+                            "refresh_token": self.refresh_token,
+                        },
+                        headers={
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        }
+                    ) as response:
+                        if response.status != 200:
+                            text = await response.text()
+                            logger.error(f"CherryHub token refresh failed: {response.status} - {text}")
+                            raise Exception(f"Token refresh failed: {response.status}")
+                        
+                        data = await response.json()
+                        self.access_token = data.get("access_token")
+                        expires_in = data.get("expires_in", 3600)
+                        self.token_expiry = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+                        
+                        if "refresh_token" in data:
+                            self.refresh_token = data["refresh_token"]
+                            logger.info("CherryHub refresh token updated")
+                        
+                        logger.info(f"CherryHub access token refreshed, expires at {self.token_expiry}")
+                        return
+                        
+                except aiohttp.ClientError as e:
+                    logger.error(f"CherryHub token refresh request error: {e}")
+                    raise
+            
+            raise Exception("Unable to obtain CherryHub access token")
 
 
 # Global token manager instance
