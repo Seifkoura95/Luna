@@ -17,6 +17,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
+import { useDataStore } from '../../src/store/dataStore';
 import { api, apiFetch } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -127,6 +128,7 @@ const MOCK_TICKETS = {
 
 export default function WalletScreen() {
   const user = useAuthStore((state) => state.user);
+  const { isWalletCacheValid, getWalletData, setWalletData } = useDataStore();
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -156,7 +158,17 @@ export default function WalletScreen() {
     }, [])
   );
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (forceRefresh = false) => {
+    // Check cache first (skip API calls if data is still valid)
+    if (!forceRefresh && isWalletCacheValid()) {
+      const cached = getWalletData();
+      if (cached) {
+        setLeaderboardData({ leaders: cached.leaderboard });
+        setLeaderboardLoading(false);
+        return;
+      }
+    }
+    
     try {
       const [ticketsData, eventsData, pointsRes, subRes, cherryStatus] = await Promise.all([
         api.getTickets().catch(() => null),
@@ -188,13 +200,23 @@ export default function WalletScreen() {
       }
       
       // Fetch leaderboard data
+      let leaderboard: any[] = [];
       try {
         const leaderboardRes = await apiFetch<any>('/api/leaderboard?period=all_time&category=points&limit=10');
         setLeaderboardData(leaderboardRes);
+        leaderboard = leaderboardRes?.leaders || [];
       } catch (e) {
         console.log('Failed to fetch leaderboard:', e);
       }
       setLeaderboardLoading(false);
+      
+      // Cache the data
+      setWalletData({
+        leaderboard,
+        missions: [],
+        subscriptions: subRes ? [subRes] : [],
+        upcomingEvents: eventsData || [],
+      });
     } catch (e) {
       console.error('Failed to fetch wallet data:', e);
       // Use mock data on error
@@ -209,7 +231,7 @@ export default function WalletScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    await fetchData(true); // Force refresh bypasses cache
     setRefreshing(false);
   };
 
@@ -1159,13 +1181,6 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 2,
-    marginBottom: spacing.md,
   },
   ticketCard: {
     borderRadius: radius.lg,

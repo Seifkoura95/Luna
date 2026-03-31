@@ -554,6 +554,21 @@ A comprehensive owner's manual has been created covering:
   - Routes now served from modular `/app/backend/routes/` directory
   - Backup saved at `/app/backend/server.py.backup`
 
+## 13-Point Code Quality Fixes ✅ COMPLETE (March 31, 2026)
+1. **AppBackground Performance**: Reduced particles from 65 to 30
+2. **API Caching (Profile)**: Added Zustand TTL caching (5-minute TTL) via `dataStore.ts`
+3. **API Caching (Wallet)**: Added leaderboard caching to prevent API spam on focus
+4. **Image Caching**: expo-image uses disk caching by default
+5. **Bundle Size**: Removed `@shopify/react-native-skia` dependency
+6. **AppBackground Props**: Already clean (no unused props)
+7. **Profile Imports**: Removed RotatingMoon, FierySun, GoldStarIcon, useSafeAreaInsets, useRouter
+8. **Wallet Styles**: Removed duplicate sectionTitle style definition
+9. **API Methods**: Removed 6+ duplicate methods from api.ts (registerPushToken, sendTestNotification, etc.)
+10. **Profile QuickActions**: Removed duplicate "Lost & Found" entry
+11. **Venue Detail**: Added missing transport styles (transportBtnContent, transportIcon, transportTextContainer, transportTitle, transportSubtext)
+12. **Auth Gates**: Already handled by expo-router _layout.tsx
+13. **Unused Variables**: Removed navRouter and insets from profile.tsx
+
 ## Known Infrastructure Issues
 - **CherryHub Integration**: Network DNS resolution blocked in container (use MOCK_MODE=true)
 - **Venue Portal Caching**: CDN caches aggressively, use hard refresh (Cmd+Shift+R)

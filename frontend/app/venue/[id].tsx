@@ -1106,6 +1106,31 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.1)',
     marginBottom: spacing.sm,
   },
+  transportBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  transportIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  transportTextContainer: {
+    flex: 1,
+  },
+  transportTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  transportSubtext: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
   transportButtons: {
     marginTop: spacing.sm,
   },

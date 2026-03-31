@@ -16,20 +16,16 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
+import { useDataStore } from '../../src/store/dataStore';
 import { api } from '../../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router, useFocusEffect } from 'expo-router';
 import { AppBackground } from '../../src/components/AppBackground';
-import { RotatingMoon } from '../../src/components/RotatingMoon';
-import { FierySun } from '../../src/components/FierySun';
-import { GoldStarIcon } from '../../src/components/GoldStarIcon';
 import { SafetyAlert } from '../../src/components/SafetyAlert';
 import { CrewMap } from '../../src/components/CrewMap';
 import { PageHeader } from '../../src/components/PageHeader';
 import { MembershipCard } from '../../src/components/MembershipCard';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 
 
 const { width } = Dimensions.get('window');
@@ -45,8 +41,7 @@ const TIER_CONFIG: Record<string, { color: string; icon: string; next: string; p
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
-  const insets = useSafeAreaInsets();
-  const navRouter = useRouter();
+  const { isProfileCacheValid, getProfileData, setProfileData, clearCache } = useDataStore();
   
   const scrollRef = useRef<ScrollView>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -91,7 +86,19 @@ export default function ProfileScreen() {
     ).join(' ');
   };
 
-  const fetchData = async () => {
+  const fetchData = async (forceRefresh = false) => {
+    // Check cache first (skip API calls if data is still valid)
+    if (!forceRefresh && isProfileCacheValid()) {
+      const cached = getProfileData();
+      if (cached) {
+        setCrews(cached.crews);
+        setStats(cached.userStats);
+        setCherryHubStatus(cached.cherryHubStatus);
+        setCherryHubPoints(cached.pointsBalance);
+        return;
+      }
+    }
+    
     try {
       const [statsData, reservationsData, crewsData, subData, venuesData, cherryStatus] = await Promise.all([
         api.getUserStats().catch(() => null),
@@ -108,15 +115,26 @@ export default function ProfileScreen() {
       setVenues(venuesData || []);
       setCherryHubStatus(cherryStatus);
       
+      let pointsBalance = 0;
       // Fetch CherryHub points if registered
       if (cherryStatus?.registered) {
         try {
           const pointsData = await api.cherryHubGetPoints();
-          setCherryHubPoints(pointsData.points || 0);
+          pointsBalance = pointsData.points || 0;
+          setCherryHubPoints(pointsBalance);
         } catch (e) {
           console.log('Failed to fetch CherryHub points');
         }
       }
+      
+      // Cache the data
+      setProfileData({
+        crews: crewsData || [],
+        reservations: reservationsData,
+        userStats: statsData,
+        cherryHubStatus: cherryStatus,
+        pointsBalance: pointsBalance,
+      });
     } catch (e) {
       console.error('Failed to fetch profile data:', e);
     }
@@ -137,7 +155,7 @@ export default function ProfileScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([fetchData(), refreshUser()]);
+    await Promise.all([fetchData(true), refreshUser()]); // Force refresh bypasses cache
     setRefreshing(false);
   };
 
@@ -149,6 +167,7 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
+            clearCache(); // Clear data cache on logout
             await logout();
             router.replace('/login');
           } catch (e) {
@@ -458,14 +477,6 @@ export default function ProfileScreen() {
       subtitle: 'Emergency alert',
       color: '#E31837',
       onPress: () => router.push('/safety'),
-    },
-    {
-      id: 'lost-found',
-      icon: 'search',
-      title: 'Lost & Found',
-      subtitle: 'Report items',
-      color: '#FF9500',
-      onPress: () => router.push('/lost-found'),
     },
   ];
 

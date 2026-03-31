@@ -569,11 +569,6 @@ export const api = {
   
   getSmartSuggestions: () =>
     apiFetch<{ suggestions: any[]; generated_at: string }>('/api/notifications/smart-suggestions'),
-  
-  sendTestNotification: () =>
-    apiFetch<{ success: boolean; notification: any }>('/api/notifications/send-test', {
-      method: 'POST'
-    }),
 
   // ====== REFERRAL SYSTEM ======
   getReferralCode: () =>
@@ -594,18 +589,6 @@ export const api = {
   applyReferralCode: (code: string) =>
     apiFetch<{ success: boolean; message: string; referral: any }>(`/api/referral/apply?referral_code=${code}`, {
       method: 'POST'
-    }),
-
-  // ====== PUSH NOTIFICATIONS ======
-  registerPushToken: (token: string) =>
-    apiFetch<{ success: boolean }>('/api/push/register', {
-      method: 'POST',
-      body: JSON.stringify({ push_token: token })
-    }),
-  
-  unregisterPushToken: () =>
-    apiFetch<{ success: boolean }>('/api/push/unregister', {
-      method: 'DELETE'
     }),
 
   // ====== EMAIL VERIFICATION ======
@@ -783,9 +766,6 @@ export const api = {
     apiFetch<any>(`/api/redemptions/${redemptionId}`),
 
   // ====== MISSIONS API ======
-  getMissions: (venueId?: string) =>
-    apiFetch<any[]>(`/api/missions${venueId ? `?venue_id=${venueId}` : ''}`),
-
   updateMissionProgress: (missionId: string, progressIncrement: number = 1) =>
     apiFetch<{
       message: string;
@@ -872,10 +852,7 @@ export const api = {
       body: JSON.stringify({ email, password, name, venue_id: venueId, role })
     }),
 
-  // ====== SAFETY & EMERGENCY API ======
-  getEmergencyContacts: () =>
-    apiFetch<{ contacts: any[] }>('/api/safety/emergency-contacts'),
-
+  // ====== SAFETY & EMERGENCY API (Extended) ======
   addEmergencyContact: (name: string, phone: string, relationship: string, email?: string) =>
     apiFetch<{ success: boolean; contact: any }>('/api/safety/emergency-contacts', {
       method: 'POST',
@@ -898,21 +875,6 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ latitude, longitude, venue_id: venueId, activation_method: activationMethod })
     }),
-
-  sendSafetyAlert: (alertType: string, latitude: number, longitude: number, venueId?: string, crewId?: string, message?: string) =>
-    apiFetch<any>('/api/safety/alert', {
-      method: 'POST',
-      body: JSON.stringify({ alert_type: alertType, latitude, longitude, venue_id: venueId, crew_id: crewId, message })
-    }),
-
-  getActiveSafetyAlerts: () =>
-    apiFetch<{ alerts: any[] }>('/api/safety/alerts/active'),
-
-  acknowledgeSafetyAlert: (alertId: string) =>
-    apiFetch<{ success: boolean }>(`/api/safety/alerts/${alertId}/acknowledge`, { method: 'POST' }),
-
-  resolveSafetyAlert: (alertId: string) =>
-    apiFetch<{ success: boolean }>(`/api/safety/alerts/${alertId}/resolve`, { method: 'POST' }),
 
   // ====== FRIENDS & SOCIAL API ======
   getFriends: () =>
