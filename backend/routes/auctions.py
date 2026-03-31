@@ -2,11 +2,12 @@
 Auctions API endpoints with auto-bid and notification support
 """
 from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 from typing import Optional
 import uuid
 import logging
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from database import db
 from utils.auth import get_current_user
@@ -29,6 +30,33 @@ async def get_auctions(venue_id: Optional[str] = None, status: Optional[str] = N
         query["status"] = status
     auctions = await db.auctions.find(query).sort("start_time", 1).to_list(50)
     return clean_mongo_docs(auctions)
+
+
+# NOTE: /watchlist must be defined BEFORE /{auction_id} to avoid route conflict
+@router.get("/watchlist")
+async def get_watchlist(request: Request):
+    """Get user's auction watchlist"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    watchlist = await db.auction_watchlist.find({
+        "user_id": current_user["user_id"]
+    }).to_list(50)
+    
+    # Enrich with current auction data
+    enriched = []
+    for item in watchlist:
+        auction = await db.auctions.find_one({"id": item["auction_id"]})
+        if auction:
+            enriched.append({
+                **clean_mongo_doc(item),
+                "current_bid": auction.get("current_bid"),
+                "status": auction.get("status"),
+                "end_time": auction.get("end_time"),
+                "bid_count": await db.bids.count_documents({"auction_id": item["auction_id"]})
+            })
+    
+    return enriched
 
 
 @router.get("/{auction_id}")
@@ -259,6 +287,9 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
                     except Exception as e:
                         logger.error(f"Failed to send push notification: {e}")
     
+    # Notify watchlist users about bidding activity
+    asyncio.create_task(notify_watchlist_users(bid_request.auction_id, final_bid_amount, final_winner_name))
+    
     updated_auction = await db.auctions.find_one({"id": bid_request.auction_id})
     
     return {
@@ -329,3 +360,169 @@ async def mark_auction_notifications_read(request: Request, notification_ids: Op
         "success": True,
         "marked_count": result.modified_count
     }
+
+
+# ============ WATCHLIST FEATURE ============
+
+class WatchlistRequest(BaseModel):
+    auction_id: str
+    notify_on_bid: bool = True
+    notify_on_ending: bool = True
+    notify_threshold: Optional[int] = 3  # Notify when X bids in 5 mins
+
+
+@router.post("/watch")
+async def watch_auction(request: Request, watch_request: WatchlistRequest):
+    """Add auction to user's watchlist for activity notifications"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    auction = await db.auctions.find_one({"id": watch_request.auction_id})
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    
+    await db.auction_watchlist.update_one(
+        {"user_id": current_user["user_id"], "auction_id": watch_request.auction_id},
+        {"$set": {
+            "user_id": current_user["user_id"],
+            "auction_id": watch_request.auction_id,
+            "auction_title": auction.get("title"),
+            "venue_name": auction.get("venue_name"),
+            "notify_on_bid": watch_request.notify_on_bid,
+            "notify_on_ending": watch_request.notify_on_ending,
+            "notify_threshold": watch_request.notify_threshold,
+            "created_at": datetime.now(timezone.utc),
+            "last_notified": None
+        }},
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "message": f"Now watching {auction.get('title')}",
+        "watchlist_id": f"{current_user['user_id']}_{watch_request.auction_id}"
+    }
+
+
+@router.delete("/watch/{auction_id}")
+async def unwatch_auction(request: Request, auction_id: str):
+    """Remove auction from user's watchlist"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    result = await db.auction_watchlist.delete_one({
+        "user_id": current_user["user_id"],
+        "auction_id": auction_id
+    })
+    
+    return {
+        "success": result.deleted_count > 0,
+        "message": "Removed from watchlist" if result.deleted_count > 0 else "Not in watchlist"
+    }
+
+
+@router.get("/{auction_id}/activity")
+async def get_auction_activity(auction_id: str):
+    """Get recent bidding activity for an auction (last 30 mins)"""
+    thirty_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=30)
+    
+    recent_bids = await db.bids.find({
+        "auction_id": auction_id,
+        "timestamp": {"$gte": thirty_mins_ago}
+    }).sort("timestamp", -1).to_list(20)
+    
+    # Calculate activity metrics - handle both offset-aware and offset-naive timestamps
+    five_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
+    
+    def is_recent_bid(bid):
+        ts = bid.get("timestamp")
+        if ts is None:
+            return False
+        # Make timestamp timezone-aware if it's naive
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        return ts >= five_mins_ago
+    
+    bids_last_5_mins = len([b for b in recent_bids if is_recent_bid(b)])
+    
+    return {
+        "auction_id": auction_id,
+        "recent_bids": clean_mongo_docs(recent_bids),
+        "bids_last_5_mins": bids_last_5_mins,
+        "bids_last_30_mins": len(recent_bids),
+        "is_hot": bids_last_5_mins >= 3,
+        "activity_level": "hot" if bids_last_5_mins >= 5 else "active" if bids_last_5_mins >= 2 else "normal"
+    }
+
+
+async def notify_watchlist_users(auction_id: str, bid_amount: float, bidder_name: str):
+    """Notify users watching this auction about bidding activity"""
+    try:
+        auction = await db.auctions.find_one({"id": auction_id})
+        if not auction:
+            return
+        
+        # Get recent bid count
+        five_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
+        recent_bid_count = await db.bids.count_documents({
+            "auction_id": auction_id,
+            "timestamp": {"$gte": five_mins_ago}
+        })
+        
+        # Find watchers
+        watchers = await db.auction_watchlist.find({
+            "auction_id": auction_id,
+            "notify_on_bid": True
+        }).to_list(100)
+        
+        for watcher in watchers:
+            user_id = watcher.get("user_id")
+            threshold = watcher.get("notify_threshold", 3)
+            last_notified = watcher.get("last_notified")
+            
+            # Don't spam - only notify if threshold met and not notified in last 10 mins
+            ten_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=10)
+            if last_notified and last_notified > ten_mins_ago:
+                continue
+            
+            if recent_bid_count >= threshold:
+                # Create notification
+                await db.auction_notifications.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "auction_id": auction_id,
+                    "auction_title": auction.get("title"),
+                    "type": "watchlist_activity",
+                    "message": f"🔥 {recent_bid_count} bids in the last 5 minutes on {auction.get('title')}! Current bid: ${bid_amount}",
+                    "new_bid": bid_amount,
+                    "activity_level": "hot" if recent_bid_count >= 5 else "active",
+                    "read": False,
+                    "created_at": datetime.now(timezone.utc)
+                })
+                
+                # Send push notification
+                user = await db.users.find_one({"user_id": user_id})
+                if user and user.get("push_tokens"):
+                    for token in user.get("push_tokens", []):
+                        try:
+                            await send_push_notification_to_token(
+                                token,
+                                title=f"🔥 Hot Auction: {auction.get('title')}",
+                                body=f"{recent_bid_count} bids in 5 mins! Current: ${bid_amount}. Don't miss out!",
+                                data={
+                                    "type": "watchlist_activity",
+                                    "auction_id": auction_id,
+                                    "current_bid": bid_amount
+                                }
+                            )
+                        except Exception as e:
+                            logger.error(f"Watchlist push notification failed: {e}")
+                
+                # Update last notified
+                await db.auction_watchlist.update_one(
+                    {"user_id": user_id, "auction_id": auction_id},
+                    {"$set": {"last_notified": datetime.now(timezone.utc)}}
+                )
+                
+    except Exception as e:
+        logger.error(f"Watchlist notification error: {e}")

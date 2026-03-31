@@ -1,0 +1,95 @@
+{
+  "summary": "Tested auction watchlist feature (4 new endpoints) and verified existing auction/bidding functionality. Fixed 2 bugs: route ordering issue for /watchlist endpoint and datetime comparison error in /activity endpoint. All 14 backend tests pass. Frontend Live Auctions carousel and auction detail page working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_auction_watchlist.py",
+    "/app/test_reports/pytest/pytest_watchlist.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fixed route ordering in auctions.py - /watchlist must be defined BEFORE /{auction_id} to avoid FastAPI route conflict",
+    "Fixed datetime comparison in get_auction_activity() - timestamps from MongoDB may be offset-naive, added timezone handling"
+  ],
+  "updated_files": [
+    "/app/backend/routes/auctions.py",
+    "/app/backend/tests/test_auction_watchlist.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% (Live Auctions carousel, auction detail, bidding UI all working)"
+  },
+  "test_credentials": {
+    "email": "luna@test.com",
+    "password": "test123"
+  },
+  "seed_data_creation": "N/A - used existing test user and seeded auctions",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Auction watchlist feature fully tested and working. 4 endpoints verified: POST /api/auctions/watch (add to watchlist), DELETE /api/auctions/watch/{id} (remove), GET /api/auctions/watchlist (get user's watchlist), GET /api/auctions/{id}/activity (get bidding activity). notify_watchlist_users() function is called asynchronously on each bid to alert watchers when bidding heats up (3+ bids in 5 mins). Route ordering fix applied - static routes must come before parameterized routes in FastAPI.",
+  "mocked_apis": {
+    "CherryHub": "MOCKED - CherryHub membership API uses mock mode",
+    "Push Notifications": "MOCKED on web preview - requires real Expo push tokens from mobile app"
+  },
+  "features_verified": {
+    "watchlist_add": {
+      "status": "PASS",
+      "endpoint": "POST /api/auctions/watch",
+      "details": "Add auction to watchlist with notify_on_bid, notify_on_ending, notify_threshold options"
+    },
+    "watchlist_remove": {
+      "status": "PASS",
+      "endpoint": "DELETE /api/auctions/watch/{auction_id}",
+      "details": "Remove auction from watchlist, returns success:false if not in watchlist"
+    },
+    "watchlist_get": {
+      "status": "PASS",
+      "endpoint": "GET /api/auctions/watchlist",
+      "details": "Get user's watchlist enriched with current auction data (current_bid, status, bid_count)"
+    },
+    "auction_activity": {
+      "status": "PASS",
+      "endpoint": "GET /api/auctions/{auction_id}/activity",
+      "details": "Get recent bidding activity with bids_last_5_mins, bids_last_30_mins, is_hot, activity_level"
+    },
+    "bidding_with_watchlist": {
+      "status": "PASS",
+      "details": "Bidding still works correctly with watchlist integration. notify_watchlist_users() called on each bid"
+    },
+    "live_auctions_carousel": {
+      "status": "PASS",
+      "details": "Home page shows LIVE AUCTIONS section with horizontal carousel, LIVE badges, current bids"
+    },
+    "auction_detail_page": {
+      "status": "PASS",
+      "details": "Auction detail shows countdown timer, current bid, min increment, deposit, bid buttons, auto-bid option"
+    }
+  },
+  "bugs_fixed": {
+    "route_ordering": {
+      "file": "/app/backend/routes/auctions.py",
+      "issue": "GET /api/auctions/watchlist was returning 404 'Auction not found'",
+      "root_cause": "FastAPI route ordering - /{auction_id} was defined before /watchlist, so 'watchlist' was being matched as an auction_id",
+      "fix": "Moved /watchlist route definition BEFORE /{auction_id} route"
+    },
+    "datetime_comparison": {
+      "file": "/app/backend/routes/auctions.py",
+      "issue": "GET /api/auctions/{id}/activity was returning 500 error",
+      "root_cause": "TypeError: can't compare offset-naive and offset-aware datetimes - MongoDB timestamps may be offset-naive",
+      "fix": "Added is_recent_bid() helper function that makes timestamps timezone-aware before comparison"
+    }
+  },
+  "backend_tests_summary": {
+    "total": 14,
+    "passed": 14,
+    "failed": 0,
+    "test_file": "/app/backend/tests/test_auction_watchlist.py"
+  }
+}
