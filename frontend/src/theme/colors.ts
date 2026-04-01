@@ -3,29 +3,39 @@
 
 export const colors = {
   // Primary Backgrounds - Layered depth system
-  bg: '#08080C',
-  background: '#08080C',
-  surface: '#151520',
-  surfaceElevated: '#1C1C2A',
-  surfaceFloat: '#242434',
-  surfaceHover: '#2C2C3E',
-  surfaceActive: '#343448',
+  bg: '#0A0A10',
+  background: '#0A0A10',
+  surface: '#181824',
+  surfaceElevated: '#202030',
+  surfaceFloat: '#282840',
+  surfaceHover: '#303048',
+  surfaceActive: '#383850',
   
   // Legacy mappings - MUCH BRIGHTER for card visibility
-  backgroundElevated: '#181824',
-  backgroundCard: '#1A1A28',
-  backgroundCardHover: '#242436',
+  backgroundElevated: '#1C1C2C',
+  backgroundCard: '#202034',
+  backgroundCardHover: '#282844',
   
-  // True Glassmorphism System - MUCH BRIGHTER
-  glass: 'rgba(28, 28, 42, 0.92)',
-  glassMid: 'rgba(36, 36, 52, 0.94)',
-  glassHigh: 'rgba(44, 44, 62, 0.96)',
-  glassLight: 'rgba(255, 255, 255, 0.08)',
-  glassBorder: 'rgba(255, 255, 255, 0.16)',
-  glassBorderStrong: 'rgba(255, 255, 255, 0.24)',
-  glassBorderSubtle: 'rgba(255, 255, 255, 0.10)',
-  glassHighlight: 'rgba(255, 255, 255, 0.28)',
-  glassShine: 'rgba(255, 255, 255, 0.35)',
+  // Card Gradient Colors - Subtle accent tints
+  cardGradientStart: '#1E1E2E',
+  cardGradientEnd: '#14141E',
+  cardGradientBlue: 'rgba(37, 99, 235, 0.08)',
+  cardGradientGold: 'rgba(212, 168, 50, 0.06)',
+  cardGradientPurple: 'rgba(139, 92, 246, 0.06)',
+  cardAccentBorder: 'rgba(37, 99, 235, 0.25)',
+  
+  // True Glassmorphism System - WITH ACCENT TINTS
+  glass: '#1E1E30',
+  glassMid: '#252540',
+  glassHigh: '#2C2C4A',
+  glassAccent: 'rgba(37, 99, 235, 0.15)',
+  glassGold: 'rgba(212, 168, 50, 0.12)',
+  glassLight: 'rgba(255, 255, 255, 0.10)',
+  glassBorder: 'rgba(255, 255, 255, 0.20)',
+  glassBorderStrong: 'rgba(255, 255, 255, 0.28)',
+  glassBorderSubtle: 'rgba(255, 255, 255, 0.14)',
+  glassHighlight: 'rgba(255, 255, 255, 0.32)',
+  glassShine: 'rgba(255, 255, 255, 0.40)',
   
   // Text - High contrast hierarchy
   text: '#F5F5FA',

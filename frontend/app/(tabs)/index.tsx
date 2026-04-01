@@ -850,10 +850,12 @@ const styles = StyleSheet.create({
   friendsCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 14,
     padding: 16,
     gap: 14,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
   friendsAvatars: {
     flexDirection: 'row',
