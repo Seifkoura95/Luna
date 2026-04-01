@@ -1600,6 +1600,29 @@ users: {
 - Added `headerShown: false` to hidden tab screens (auctions, photos, leaderboard)
 - Removes duplicate navigation header showing points badge
 
+---
+
+## Session Updates (April 1, 2026 - Batch 4)
+
+### Navigation Order Updated ✅
+- Swapped Luna AI and Wallet positions in bottom tab bar
+- New order: Tonight → Venues → Wallet → Luna AI → Profile
+
+### Wallet Pass Expiry Reminder System ✅
+**Location:** `/app/backend/services/scheduled_jobs.py`
+
+**How it works:**
+- Scheduled job runs every 2 hours
+- Finds wallet passes expiring in the next 20-28 hours
+- Sends push notification: "⏰ Reward Expiring Soon! Your {title} expires in ~{hours} hours..."
+- Creates in-app notification
+- Marks pass as `expiry_reminder_sent: true` to avoid duplicate notifications
+
+**Job Details:**
+- Job ID: `wallet_pass_expiry_reminders`
+- Interval: Every 2 hours
+- Notification data includes: `screen: "wallet"` for deep linking
+
 
 
 

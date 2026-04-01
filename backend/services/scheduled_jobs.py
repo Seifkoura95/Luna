@@ -70,6 +70,15 @@ class ScheduledJobsManager:
             replace_existing=True
         )
         
+        # Wallet pass expiry reminders - Every 2 hours
+        self.scheduler.add_job(
+            self.send_wallet_pass_expiry_reminders,
+            IntervalTrigger(hours=2),
+            id="wallet_pass_expiry_reminders",
+            name="Wallet Pass Expiry Reminders",
+            replace_existing=True
+        )
+        
         self.scheduler.start()
         self.is_running = True
         logger.info("Scheduled jobs manager started")
@@ -498,3 +507,102 @@ async def send_win_back_push_notification(user: dict, offer: dict) -> bool:
 
 # Global instance
 scheduled_jobs = ScheduledJobsManager()
+
+
+# Add the wallet pass expiry reminder method to the class
+async def _send_wallet_pass_expiry_reminders_impl():
+    """
+    Send push notifications for wallet passes expiring in the next 24 hours.
+    Runs every 2 hours to remind users of expiring rewards.
+    """
+    logger.info("Starting wallet pass expiry reminder check...")
+    
+    try:
+        now = datetime.now(timezone.utc)
+        reminder_window_start = now + timedelta(hours=20)  # 20-28 hours from now
+        reminder_window_end = now + timedelta(hours=28)
+        
+        # Find passes expiring soon that haven't been reminded yet
+        expiring_passes = await db.wallet_passes.find({
+            "status": "active",
+            "redeemed": False,
+            "expires_at": {
+                "$gte": reminder_window_start,
+                "$lte": reminder_window_end
+            },
+            "expiry_reminder_sent": {"$ne": True}
+        }).to_list(100)
+        
+        reminders_sent = 0
+        
+        for wallet_pass in expiring_passes:
+            user_id = wallet_pass.get("user_id")
+            pass_title = wallet_pass.get("title", "Reward")
+            pass_id = wallet_pass.get("id")
+            
+            # Get user for push token
+            user = await db.users.find_one({"user_id": user_id})
+            if not user or not user.get("push_tokens"):
+                continue
+            
+            # Calculate hours until expiry
+            expires_at = wallet_pass.get("expires_at")
+            if isinstance(expires_at, datetime):
+                hours_left = int((expires_at - now).total_seconds() / 3600)
+            else:
+                hours_left = 24
+            
+            # Send push notification
+            for token in user.get("push_tokens", []):
+                try:
+                    await send_push_notification_to_token(
+                        token=token,
+                        title="⏰ Reward Expiring Soon!",
+                        body=f"Your {pass_title} expires in ~{hours_left} hours. Use it before it's gone!",
+                        data={
+                            "type": "wallet_pass_expiry",
+                            "pass_id": pass_id,
+                            "screen": "wallet"
+                        }
+                    )
+                    reminders_sent += 1
+                except Exception as e:
+                    logger.error(f"Expiry reminder push failed: {e}")
+            
+            # Mark as reminded
+            await db.wallet_passes.update_one(
+                {"id": pass_id},
+                {"$set": {"expiry_reminder_sent": True}}
+            )
+            
+            # Also create in-app notification
+            await db.notifications.insert_one({
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "type": "wallet_pass_expiry",
+                "title": "Reward Expiring Soon",
+                "message": f"Your {pass_title} expires in ~{hours_left} hours!",
+                "data": {"pass_id": pass_id},
+                "read": False,
+                "created_at": now
+            })
+        
+        logger.info(f"Wallet pass expiry check complete: {reminders_sent} reminders sent for {len(expiring_passes)} expiring passes")
+        
+        # Store job run record
+        await db.scheduled_job_runs.insert_one({
+            "job_name": "wallet_pass_expiry_reminders",
+            "completed_at": now,
+            "status": "completed",
+            "results": {
+                "passes_checked": len(expiring_passes),
+                "reminders_sent": reminders_sent
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Wallet pass expiry reminder job failed: {e}")
+
+
+# Monkey-patch the method onto the class
+ScheduledJobsManager.send_wallet_pass_expiry_reminders = lambda self: _send_wallet_pass_expiry_reminders_impl()

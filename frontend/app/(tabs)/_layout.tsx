@@ -117,22 +117,22 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="luna-ai"
-        options={{
-          title: 'Luna AI',
-          headerShown: false,
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon IconComponent={LunaAIIcon} color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="wallet"
         options={{
           title: 'Wallet',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon IconComponent={CardIcon} color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="luna-ai"
+        options={{
+          title: 'Luna AI',
+          headerShown: false,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon IconComponent={LunaAIIcon} color={color} focused={focused} />
           ),
         }}
       />
