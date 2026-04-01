@@ -286,3 +286,244 @@ async def get_me(request: Request):
     # Remove sensitive fields
     user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id"]}
     return user_copy
+
+
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+
+class UpdateProfileRequest(BaseModel):
+    """Request model for profile updates"""
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    bio: Optional[str] = None
+    instagram_handle: Optional[str] = None
+    favorite_venue: Optional[str] = None
+    music_preferences: Optional[list] = None
+    notification_preferences: Optional[dict] = None
+
+
+@router.put("/profile")
+async def update_profile(request: Request, profile_data: UpdateProfileRequest):
+    """Update user profile information"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user_id = current_user["user_id"]
+    
+    # Get current user
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Build update dict with only provided fields
+    update_data = {}
+    
+    if profile_data.name is not None:
+        update_data["name"] = profile_data.name.strip()
+    
+    if profile_data.phone is not None:
+        # Clean phone number
+        phone = profile_data.phone.strip()
+        # Basic validation - allow digits, +, -, spaces, parentheses
+        import re
+        phone_clean = re.sub(r'[^\d+\-\s\(\)]', '', phone)
+        if len(phone_clean) >= 8:  # Minimum phone length
+            update_data["phone"] = phone_clean
+        elif phone == "":  # Allow clearing
+            update_data["phone"] = None
+    
+    if profile_data.date_of_birth is not None:
+        # Validate date format (YYYY-MM-DD)
+        try:
+            if profile_data.date_of_birth:
+                dob = datetime.strptime(profile_data.date_of_birth, "%Y-%m-%d")
+                # Check age (must be at least 18)
+                today = datetime.now()
+                age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                if age < 18:
+                    raise HTTPException(status_code=400, detail="You must be at least 18 years old")
+                if age > 120:
+                    raise HTTPException(status_code=400, detail="Invalid date of birth")
+                update_data["date_of_birth"] = profile_data.date_of_birth
+            else:
+                update_data["date_of_birth"] = None
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    if profile_data.gender is not None:
+        if profile_data.gender in ["male", "female", "non-binary", "prefer-not-to-say", ""]:
+            update_data["gender"] = profile_data.gender if profile_data.gender else None
+    
+    if profile_data.bio is not None:
+        # Limit bio length
+        bio = profile_data.bio.strip()[:500]
+        update_data["bio"] = bio
+    
+    if profile_data.instagram_handle is not None:
+        # Clean Instagram handle
+        handle = profile_data.instagram_handle.strip().lstrip('@')
+        if len(handle) <= 30:  # Instagram max username length
+            update_data["instagram_handle"] = handle if handle else None
+    
+    if profile_data.favorite_venue is not None:
+        update_data["favorite_venue"] = profile_data.favorite_venue
+    
+    if profile_data.music_preferences is not None:
+        # Validate music preferences
+        valid_genres = ["house", "techno", "hip-hop", "rnb", "pop", "latin", "edm", "dnb", "disco", "afrobeats", "rock", "indie", "other"]
+        filtered_prefs = [g for g in profile_data.music_preferences if g.lower() in valid_genres]
+        update_data["music_preferences"] = filtered_prefs
+    
+    if profile_data.notification_preferences is not None:
+        # Validate notification preferences
+        valid_keys = ["push_enabled", "email_enabled", "sms_enabled", "events", "auctions", "rewards", "crew", "marketing"]
+        filtered_prefs = {k: v for k, v in profile_data.notification_preferences.items() if k in valid_keys}
+        update_data["notification_preferences"] = filtered_prefs
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    # Add updated timestamp
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    # Update user
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": update_data}
+    )
+    
+    # Return updated user
+    updated_user = await db.users.find_one({"user_id": user_id})
+    user_copy = {k: v for k, v in updated_user.items() if k not in ["hashed_password", "_id"]}
+    
+    logger.info(f"Profile updated for user: {user_id[:8]}...")
+    
+    return {
+        "success": True,
+        "message": "Profile updated successfully",
+        "user": user_copy
+    }
+
+
+class ChangeEmailRequest(BaseModel):
+    """Request model for email change"""
+    new_email: EmailStr
+    password: str
+
+
+@router.post("/change-email")
+async def change_email(request: Request, email_data: ChangeEmailRequest):
+    """Request email change (requires password verification)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user_id = current_user["user_id"]
+    
+    # Get current user with password
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Verify password
+    if not bcrypt.checkpw(email_data.password.encode('utf-8'), user["hashed_password"].encode('utf-8')):
+        raise HTTPException(status_code=401, detail="Incorrect password")
+    
+    # Check if new email is already in use
+    existing = await db.users.find_one({"email": email_data.new_email})
+    if existing and existing["user_id"] != user_id:
+        raise HTTPException(status_code=400, detail="Email already in use")
+    
+    # For now, directly update email (in production, you'd send a verification email)
+    await db.users.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "email": email_data.new_email,
+                "email_updated_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    logger.info(f"Email changed for user: {user_id[:8]}...")
+    
+    return {
+        "success": True,
+        "message": "Email updated successfully",
+        "new_email": email_data.new_email
+    }
+
+
+class ChangePasswordRequest(BaseModel):
+    """Request model for password change"""
+    current_password: str
+    new_password: str
+
+
+@router.post("/change-password")
+async def change_password(request: Request, password_data: ChangePasswordRequest):
+    """Change user password"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user_id = current_user["user_id"]
+    
+    # Get current user
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Verify current password
+    if not bcrypt.checkpw(password_data.current_password.encode('utf-8'), user["hashed_password"].encode('utf-8')):
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+    
+    # Validate new password
+    if len(password_data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # Hash new password
+    new_hashed = bcrypt.hashpw(password_data.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    # Update password
+    await db.users.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "hashed_password": new_hashed,
+                "password_updated_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    logger.info(f"Password changed for user: {user_id[:8]}...")
+    
+    return {
+        "success": True,
+        "message": "Password updated successfully"
+    }
+
+
+@router.delete("/account")
+async def delete_account(request: Request):
+    """Delete user account (soft delete)"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user_id = current_user["user_id"]
+    
+    # Soft delete - mark account as deleted
+    await db.users.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "deleted": True,
+                "deleted_at": datetime.now(timezone.utc),
+                "email": f"deleted_{user_id}@deleted.local"  # Anonymize email
+            }
+        }
+    )
+    
+    logger.info(f"Account deleted for user: {user_id[:8]}...")
+    
+    return {
+        "success": True,
+        "message": "Account deleted successfully"
+    }
+

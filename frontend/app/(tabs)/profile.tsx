@@ -482,6 +482,7 @@ export default function ProfileScreen() {
   ];
 
   const settingsItems = [
+    { id: 'edit-profile', icon: 'person', title: 'Edit Profile', route: '/edit-profile' },
     { id: 'settings', icon: 'settings', title: 'Settings', route: '/settings' },
     { id: 'notifications', icon: 'notifications', title: 'Notifications', route: '/notification-settings' },
     { id: 'payment', icon: 'card', title: 'Payment Methods', route: '/payment-methods' },

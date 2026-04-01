@@ -1414,6 +1414,45 @@ users: {
 
 ---
 
+## Profile Management System (April 2026) ✅ COMPLETE
+
+### Backend Endpoints Added (`routes/auth.py`):
+- `PUT /api/auth/profile` - Update profile (name, phone, DOB, gender, bio, Instagram, music prefs, notification prefs)
+- `POST /api/auth/change-email` - Change email (requires password verification)
+- `POST /api/auth/change-password` - Change password
+- `DELETE /api/auth/account` - Soft delete account
+
+### Frontend Implementation:
+- Created `/app/edit-profile.tsx` - Full profile editing screen with:
+  - Profile photo placeholder
+  - Basic Information: Name, Email (change), Phone, Date of Birth, Gender
+  - About You: Bio, Instagram Handle, Music Preferences (12 genres)
+  - Notifications: Push, Email, Events, Auctions, Rewards toggles
+  - Security: Change Password section
+  - Danger Zone: Delete Account button
+
+### User Data Schema Extended:
+```
+users: {
+  name, email, phone, date_of_birth, gender, bio,
+  instagram_handle, favorite_venue, music_preferences[],
+  notification_preferences: {
+    push_enabled, email_enabled, sms_enabled,
+    events, auctions, rewards, crew, marketing
+  },
+  updated_at, email_updated_at, password_updated_at
+}
+```
+
+### Validation Rules:
+- Age verification: Must be 18+ years old
+- Phone: Minimum 8 characters
+- Bio: Max 500 characters
+- Instagram handle: Max 30 characters
+- Password: Minimum 6 characters
+
+---
+
 ## Remaining/Upcoming Work
 
 ### P0 - Immediate:

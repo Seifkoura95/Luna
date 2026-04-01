@@ -114,6 +114,40 @@ export const api = {
   
   getMe: () => apiFetch<any>('/api/auth/me'),
   
+  // Profile Management
+  updateProfile: (data: {
+    name?: string;
+    phone?: string;
+    date_of_birth?: string;
+    gender?: string;
+    bio?: string;
+    instagram_handle?: string;
+    favorite_venue?: string;
+    music_preferences?: string[];
+    notification_preferences?: Record<string, boolean>;
+  }) => apiFetch<{ success: boolean; message: string; user: any }>(
+    '/api/auth/profile',
+    { method: 'PUT', body: JSON.stringify(data) }
+  ),
+  
+  changeEmail: (newEmail: string, password: string) =>
+    apiFetch<{ success: boolean; message: string; new_email: string }>(
+      '/api/auth/change-email',
+      { method: 'POST', body: JSON.stringify({ new_email: newEmail, password }) }
+    ),
+  
+  changePassword: (currentPassword: string, newPassword: string) =>
+    apiFetch<{ success: boolean; message: string }>(
+      '/api/auth/change-password',
+      { method: 'POST', body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }) }
+    ),
+  
+  deleteAccount: () =>
+    apiFetch<{ success: boolean; message: string }>(
+      '/api/auth/account',
+      { method: 'DELETE' }
+    ),
+  
   // QR & Check-in
   getQRData: (venueId: string) => apiFetch<{ qr_data: string; expires_at: number }>(`/api/checkin/qr?venue_id=${venueId}`),
   
