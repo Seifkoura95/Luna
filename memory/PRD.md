@@ -1336,6 +1336,47 @@ Location: `/app/frontend/app/(tabs)/auctions.tsx`
 
 ---
 
+## Backend Cleanup (April 2026) ✅ COMPLETE
+
+### server.py Refactoring:
+- **Before**: 6,617 lines (massive monolithic file with duplicate endpoints)
+- **After**: 597 lines (clean, modular architecture)
+- **Reduction**: 91% code reduction
+
+### What Was Removed:
+- All duplicate endpoint definitions that now exist in `/app/backend/routes/` modules
+- Redundant authentication, venue dashboard, booking, ticket, crew, safety, payment, notification endpoints that are now handled by 33 modular route modules
+
+### What Was Kept:
+- Application lifespan and scheduler setup (APScheduler for Megatix sync, churn analysis, win-back campaigns, auction alerts)
+- Modular route registration (`from routes import ALL_ROUTERS`)
+- Unique endpoints not in routes/:
+  - `/api/venues/{venue_id}` - Venue detail with live status
+  - `/api/promo/*` - Promo code system
+  - `/api/vouchers` - User vouchers
+  - `/api/instagram/*` - Instagram feed integration
+  - `/api/venue-portal/*` - Venue portal static file serving
+- CORS middleware and root endpoint
+
+### Backend Architecture:
+```
+/app/backend/
+├── server.py           # Clean entry point (597 lines)
+├── routes/             # 33 modular route modules
+│   ├── __init__.py     # Exports ALL_ROUTERS
+│   ├── auth.py
+│   ├── auctions.py
+│   ├── cherryhub.py
+│   ├── crews.py
+│   ├── payments.py
+│   └── ... (28 more)
+├── services/           # Business logic services
+├── models/             # Pydantic models
+└── utils/              # Utilities (auth, qr, etc.)
+```
+
+---
+
 ## Remaining/Upcoming Work
 
 ### P0 - Immediate:
@@ -1347,7 +1388,7 @@ Location: `/app/frontend/app/(tabs)/auctions.tsx`
 
 ### P2 - Medium Priority:
 - Push Notification Device Token Registration
-- server.py Cleanup (remove duplicate endpoint code)
+- ~~server.py Cleanup (remove duplicate endpoint code)~~ ✅ COMPLETED
 
 ### Blocked Items:
 - CherryHub Live API - requires `Ocp-Apim-Subscription-Key` from vendor
