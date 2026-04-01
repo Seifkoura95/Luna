@@ -1521,6 +1521,48 @@ users: {
 - Redeem Rewards: PASS (section rendering correctly)
 - Birthday Club: PASS (accessible and functional)
 
+---
+
+## Session Updates (April 1, 2026 - Batch 2)
+
+### Profile Page Updates ✅
+1. **Membership Card** - Renamed "Tonight's Pass" to "Membership Card" with card icon
+   - Updated primary CTA card and quick actions list
+   - Shows Digital ID for CherryHub membership
+
+2. **Photo Gallery Removed** - Removed from quick actions (per user request)
+
+### Excessive Scrolling Fix ✅
+- Reduced bottom spacer from 100px to 20px on all main pages:
+  - `profile.tsx`
+  - `wallet.tsx`
+  - `index.tsx`
+  - `auctions.tsx`
+  - `leaderboard.tsx`
+
+### Luna AI Fixes ✅
+1. **Su Casa Brisbane Location Corrected**
+   - Changed from "South Bank" to "Fortitude Valley" (correct location)
+   - Updated cuisine type to "Asian fusion" (was incorrectly "Mediterranean")
+
+2. **No Asterisks Formatting**
+   - Added explicit instruction in system prompt to never use ** around venue names or tiers
+   - AI now uses plain text formatting
+
+### DOB Picker Web Fix ✅
+- Added Platform check in `edit-profile.tsx`
+- Web platform now shows text input with YYYY-MM-DD format
+- Mobile platforms still use native DateTimePicker
+
+### Files Modified This Session
+- `/app/backend/services/ai_service.py` - Updated LUNA_CONTEXT
+- `/app/frontend/app/(tabs)/profile.tsx` - Membership Card, removed Photo Gallery, reduced scroll padding
+- `/app/frontend/app/(tabs)/wallet.tsx` - Reduced scroll padding
+- `/app/frontend/app/(tabs)/index.tsx` - Reduced scroll padding
+- `/app/frontend/app/(tabs)/auctions.tsx` - Reduced scroll padding
+- `/app/frontend/app/(tabs)/leaderboard.tsx` - Reduced scroll padding
+- `/app/frontend/app/edit-profile.tsx` - Web DOB fallback
+
 
 
 

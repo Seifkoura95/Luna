@@ -400,10 +400,10 @@ export default function ProfileScreen() {
 
   const quickActions = [
     {
-      id: 'qr',
-      icon: 'qr-code',
-      title: "Tonight's Pass",
-      subtitle: 'Show at entrance',
+      id: 'membership',
+      icon: 'card',
+      title: 'Membership Card',
+      subtitle: 'Digital ID',
       color: colors.accent,
       onPress: handleGetQR,
     },
@@ -430,14 +430,6 @@ export default function ProfileScreen() {
       subtitle: 'Tickets & Rewards',
       color: colors.gold,
       onPress: () => router.push('/(tabs)/wallet'),
-    },
-    {
-      id: 'photos',
-      icon: 'images',
-      title: 'Photo Gallery',
-      subtitle: 'Venue photos',
-      color: '#FF6B6B',
-      onPress: () => router.push('/photos'),
     },
     {
       id: 'social',
@@ -706,18 +698,18 @@ export default function ProfileScreen() {
               style={styles.primaryCta}
               onPress={handleGetQR}
               activeOpacity={0.85}
-              data-testid="tonights-pass-cta"
+              data-testid="membership-card-cta"
             >
               <LinearGradient
                 colors={[colors.accent, colors.accentDark]}
                 style={styles.primaryCtaGradient}
               >
                 <View style={styles.primaryCtaIcon}>
-                  <Ionicons name="qr-code" size={24} color={colors.textPrimary} />
+                  <Ionicons name="card" size={24} color={colors.textPrimary} />
                 </View>
                 <View style={styles.primaryCtaText}>
-                  <Text style={styles.primaryCtaTitle}>Tonight's Pass</Text>
-                  <Text style={styles.primaryCtaSubtitle}>Show at entrance</Text>
+                  <Text style={styles.primaryCtaTitle}>Membership Card</Text>
+                  <Text style={styles.primaryCtaSubtitle}>Digital ID</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.textPrimary} />
               </LinearGradient>
@@ -747,7 +739,7 @@ export default function ProfileScreen() {
 
           {/* 3-Column Grid for secondary actions */}
           <View style={styles.actionsGrid3Col}>
-            {quickActions.filter(item => !['qr', 'vip_tables'].includes(item.id)).map((item) => (
+            {quickActions.filter(item => !['membership', 'vip_tables'].includes(item.id)).map((item) => (
               <TouchableOpacity
                 key={item.id}
                 style={styles.actionCard3Col}
@@ -836,7 +828,7 @@ export default function ProfileScreen() {
           <Text style={styles.footerText}>Made with ♥ in Brisbane</Text>
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* CherryHub Digital Pass Modal */}

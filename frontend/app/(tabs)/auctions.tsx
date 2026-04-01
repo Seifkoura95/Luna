@@ -415,7 +415,7 @@ export default function AuctionsScreen() {
           </View>
         )}
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* Premium Auction Detail Modal */}

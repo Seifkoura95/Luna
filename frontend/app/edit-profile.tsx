@@ -334,18 +334,33 @@ export default function EditProfileScreen() {
             
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Date of Birth</Text>
-              <TouchableOpacity 
-                style={styles.dateButton}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Text style={styles.dateButtonText}>
-                  {formatDisplayDate(dateOfBirth)}
-                </Text>
-                <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
+              {Platform.OS === 'web' ? (
+                // Web fallback - use text input with date format
+                <TextInput
+                  style={styles.input}
+                  value={dateOfBirth}
+                  onChangeText={(text) => {
+                    // Accept format YYYY-MM-DD
+                    setDateOfBirth(text);
+                  }}
+                  placeholder="YYYY-MM-DD (e.g., 1995-06-15)"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="default"
+                />
+              ) : (
+                <TouchableOpacity 
+                  style={styles.dateButton}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={styles.dateButtonText}>
+                    {formatDisplayDate(dateOfBirth)}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+              )}
             </View>
             
-            {showDatePicker && (
+            {showDatePicker && Platform.OS !== 'web' && (
               <DateTimePicker
                 value={dateOfBirth ? new Date(dateOfBirth) : new Date(2000, 0, 1)}
                 mode="date"
