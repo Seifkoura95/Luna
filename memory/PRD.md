@@ -1470,6 +1470,57 @@ users: {
 - CherryHub Live API - requires `Ocp-Apim-Subscription-Key` from vendor
 - Venue Portal Caching - platform-level CDN issue (use hard refresh/incognito)
 
+---
+
+## Recent Updates (April 2026)
+
+### Unified Points System ✅ VERIFIED (April 1, 2026)
+- Profile page now uses `pointsData?.points_balance` from `/api/points/balance` as single source of truth
+- Points display correctly (19,851 pts for test user) on both Profile and Wallet pages
+- Removed dependency on separate CherryHub points fetch for display
+
+### Redeem Rewards Section on Wallet Page ✅ COMPLETE (April 1, 2026)
+**Location:** `/app/frontend/app/(tabs)/wallet.tsx` (lines 630-740)
+
+**Features:**
+- **YOUR POINTS** balance card with gold gradient
+- **Redeem Now** CTA button linking to full rewards page
+- **Horizontally scrollable featured rewards** showing 5 rewards:
+  - Complimentary Premium Cocktail (200 pts)
+  - Fast Lane Access - Any Venue (300 pts)
+  - Luna Credits - $50 (600 pts)
+  - Eclipse VIP Booth - 4 Hours (1,500 pts)
+  - Premium Bottle Service (800 pts)
+- Each reward shows icon, name, point cost, and "can afford" indicator
+- **View All** link to navigate to full rewards page
+
+**Styles:**
+- Glassmorphism cards with gradient backgrounds
+- Gold accent colors for points and affordable rewards
+- Muted styling for rewards user cannot afford
+
+### Birthday Club Feature ✅ VERIFIED (April 1, 2026)
+**Location:** `/app/frontend/app/birthday-club.tsx`
+
+**Status:** Frontend screen already exists and is fully functional
+- Accessible via Profile > Quick Actions > Birthday Club (pink balloon icon)
+- Shows birthday countdown (e.g., "Your birthday is in 351 days!")
+- Available rewards: Free Entry, Free Drink, 250 Bonus Points, 2x Points Week
+- Claimed rewards section with redemption QR codes
+- "How It Works" information section
+
+**Backend:** `/app/backend/routes/birthday.py`
+- `GET /api/birthday/status` - Birthday status and available rewards
+- `POST /api/birthday/claim/{reward_id}` - Claim birthday reward
+- `GET /api/birthday/my-rewards` - Claimed rewards history
+
+### Test Report
+- `/app/test_reports/iteration_23.json` - Backend 89% (8/9), Frontend verified
+- Unified points: PASS
+- Leaderboard: PASS (scoreboard with top 5 users)
+- Redeem Rewards: PASS (section rendering correctly)
+- Birthday Club: PASS (accessible and functional)
+
 
 
 
