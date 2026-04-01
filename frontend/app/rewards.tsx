@@ -332,7 +332,17 @@ export default function RewardsScreen() {
 
   const getProgressToNext = () => {
     const nextMilestone = POINT_MILESTONES.find(m => m.points > currentPoints);
-    if (!nextMilestone) return { progress: 100, pointsNeeded: 0, milestone: POINT_MILESTONES[POINT_MILESTONES.length - 1] };
+    
+    // User has achieved all milestones - they're a Legend!
+    if (!nextMilestone) {
+      const lastMilestone = POINT_MILESTONES[POINT_MILESTONES.length - 1];
+      return { 
+        progress: 100, 
+        pointsNeeded: 0, 
+        milestone: lastMilestone,
+        isMaxLevel: true
+      };
+    }
     
     const previousMilestone = POINT_MILESTONES.filter(m => m.points <= currentPoints).pop();
     const startPoints = previousMilestone?.points || 0;
@@ -342,7 +352,8 @@ export default function RewardsScreen() {
     return { 
       progress: Math.min(progress, 100), 
       pointsNeeded: nextMilestone.points - currentPoints,
-      milestone: nextMilestone 
+      milestone: nextMilestone,
+      isMaxLevel: false
     };
   };
 
@@ -380,7 +391,7 @@ export default function RewardsScreen() {
             <View style={[styles.accentBorder, { borderColor: colors.gold }]} />
             
             <View style={styles.pointsRow}>
-              <GoldStarIcon size={48} />
+              <GoldStarIcon size={36} />
               <View>
                 <Text style={[styles.pointsValue, ]}>
                   {currentPoints.toLocaleString()}
@@ -395,7 +406,7 @@ export default function RewardsScreen() {
                   colors={[colors.gold, colors.goldDark]}
                   style={styles.buyPointsGradient}
                 >
-                  <Ionicons name="add" size={16} color="#000" />
+                  <Ionicons name="add" size={14} color="#000" />
                   <Text style={styles.buyPointsText}>Buy</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -403,18 +414,28 @@ export default function RewardsScreen() {
 
             {/* Progress to next milestone */}
             <View style={styles.progressSection}>
-              <View style={styles.progressHeader}>
-                <Text style={styles.progressLabel}>Next: {progressInfo.milestone.title}</Text>
-                <Text style={styles.progressPoints}>{progressInfo.pointsNeeded} pts to go</Text>
-              </View>
-              <View style={styles.progressBar}>
-                <LinearGradient
-                  colors={[progressInfo.milestone.color, progressInfo.milestone.color + '80']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={[styles.progressFill, { width: `${progressInfo.progress}%` }]}
-                />
-              </View>
+              {progressInfo.isMaxLevel ? (
+                <View style={styles.legendStatus}>
+                  <Ionicons name="trophy" size={16} color={colors.gold} />
+                  <Text style={styles.legendText}>LEGEND STATUS ACHIEVED</Text>
+                  <Ionicons name="trophy" size={16} color={colors.gold} />
+                </View>
+              ) : (
+                <>
+                  <View style={styles.progressHeader}>
+                    <Text style={styles.progressLabel}>Next: {progressInfo.milestone.title}</Text>
+                    <Text style={styles.progressPoints}>{progressInfo.pointsNeeded.toLocaleString()} pts to go</Text>
+                  </View>
+                  <View style={styles.progressBar}>
+                    <LinearGradient
+                      colors={[progressInfo.milestone.color, progressInfo.milestone.color + '80']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[styles.progressFill, { width: `${progressInfo.progress}%` }]}
+                    />
+                  </View>
+                </>
+              )}
             </View>
           </LinearGradient>
         </View>
@@ -505,7 +526,11 @@ export default function RewardsScreen() {
         {/* Milestones Tab */}
         {activeTab === 'milestones' && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, ]}>POINT MILESTONES</Text>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="trophy" size={16} color={colors.gold} />
+              <Text style={styles.sectionTitle}>POINT MILESTONES</Text>
+            </View>
+            <Text style={styles.sectionSubtitle}>Unlock rewards as you earn more points</Text>
             
             {POINT_MILESTONES.map((milestone, index) => {
               const isUnlocked = currentPoints >= milestone.points;
@@ -522,51 +547,57 @@ export default function RewardsScreen() {
                   onPress={() => handleClaimReward(milestone)}
                   activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={isUnlocked ? [milestone.color + '20', '#0D0D0D'] : ['#1A1A1A', '#0D0D0D']}
-                    style={styles.milestoneGradient}
-                  >
+                  <View style={styles.milestoneRow}>
                     <View style={[
-                      styles.milestoneIcon,
-                      { backgroundColor: isUnlocked ? milestone.color + '30' : colors.border }
+                      styles.milestoneIconContainer,
+                      { backgroundColor: isUnlocked ? milestone.color + '20' : colors.border + '50' }
                     ]}>
                       {isUnlocked ? (
-                        <Text style={styles.milestoneBadge}>{milestone.badge}</Text>
+                        <Ionicons 
+                          name={
+                            milestone.id === 'bronze' ? 'medal' :
+                            milestone.id === 'silver' ? 'medal-outline' :
+                            milestone.id === 'gold' ? 'star' :
+                            milestone.id === 'platinum' ? 'diamond' :
+                            'trophy'
+                          } 
+                          size={22} 
+                          color={milestone.color} 
+                        />
                       ) : (
-                        <Ionicons name="lock-closed" size={24} color={colors.textMuted} />
+                        <Ionicons name="lock-closed" size={18} color={colors.textMuted} />
                       )}
                     </View>
 
-                    <View style={styles.milestoneContent}>
-                      <View style={styles.milestoneHeader}>
+                    <View style={styles.milestoneInfo}>
+                      <View style={styles.milestoneNameRow}>
                         <Text style={[
-                          styles.milestoneTitle,
+                          styles.milestoneName,
                           { color: isUnlocked ? milestone.color : colors.textMuted },
-                          
                         ]}>
                           {milestone.title}
                         </Text>
                         <Text style={[
-                          styles.milestonePoints,
-                          { color: isUnlocked ? colors.textPrimary : colors.textMuted }
+                          styles.milestonePointsNeeded,
+                          { color: isUnlocked ? colors.textSecondary : colors.textMuted }
                         ]}>
                           {milestone.points.toLocaleString()} pts
                         </Text>
                       </View>
                       
-                      <View style={styles.milestoneRewards}>
+                      <View style={styles.milestoneRewardsList}>
                         {milestone.rewards.map((reward, rIndex) => (
-                          <View key={rIndex} style={styles.rewardTag}>
+                          <View key={rIndex} style={styles.milestoneRewardTag}>
                             <Ionicons 
                               name={reward.type === 'drinks' ? 'wine' : 
                                     reward.type === 'entries' ? 'ticket' : 
                                     reward.type === 'booth' ? 'people' : 
                                     reward.type === 'fastlane' ? 'flash' : 'gift'}
-                              size={12}
+                              size={10}
                               color={isUnlocked ? milestone.color : colors.textMuted}
                             />
                             <Text style={[
-                              styles.rewardText,
+                              styles.milestoneRewardText,
                               { color: isUnlocked ? colors.textSecondary : colors.textMuted }
                             ]}>
                               {reward.label}
@@ -576,26 +607,22 @@ export default function RewardsScreen() {
                       </View>
                     </View>
 
-                    <View style={styles.milestoneStatus}>
+                    <View style={styles.milestoneAction}>
                       {isClaimed ? (
-                        <View style={[styles.statusBadge, { backgroundColor: colors.success + '30' }]}>
-                          <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                          <Text style={[styles.statusText, { color: colors.success }]}>Claimed</Text>
+                        <View style={[styles.milestoneStatusBadge, { backgroundColor: colors.success + '20' }]}>
+                          <Ionicons name="checkmark" size={14} color={colors.success} />
                         </View>
                       ) : isUnlocked ? (
-                        <View style={[styles.statusBadge, { backgroundColor: milestone.color + '30' }]}>
-                          <Ionicons name="gift" size={16} color={milestone.color} />
-                          <Text style={[styles.statusText, { color: milestone.color }]}>Claim</Text>
+                        <View style={[styles.milestoneStatusBadge, { backgroundColor: milestone.color + '20' }]}>
+                          <Ionicons name="gift" size={14} color={milestone.color} />
                         </View>
                       ) : (
-                        <View style={styles.lockedBadge}>
-                          <Text style={styles.lockedText}>
-                            {(milestone.points - currentPoints).toLocaleString()} pts
-                          </Text>
-                        </View>
+                        <Text style={styles.milestoneLocked}>
+                          {(milestone.points - currentPoints).toLocaleString()}
+                        </Text>
                       )}
                     </View>
-                  </LinearGradient>
+                  </View>
                 </TouchableOpacity>
               );
             })}
@@ -842,12 +869,12 @@ const styles = StyleSheet.create({
   },
   pointsCard: {
     marginHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
     borderRadius: radius.lg,
     overflow: 'hidden',
   },
   pointsCardGradient: {
-    padding: spacing.lg,
+    padding: spacing.md,
     position: 'relative',
   },
   accentBorder: {
@@ -855,25 +882,25 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 3,
-    borderTopWidth: 3,
+    height: 2,
+    borderTopWidth: 2,
   },
   pointsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.lg,
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   pointsValue: {
-    fontSize: 36,
-    fontWeight: '900',
+    fontSize: 28,
+    fontWeight: '800',
     color: colors.textPrimary,
   },
   pointsLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
     color: colors.textSecondary,
-    letterSpacing: 2,
+    letterSpacing: 1.5,
   },
   buyPointsButton: {
     marginLeft: 'auto',
@@ -919,6 +946,21 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 4,
   },
+  legendStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.gold + '15',
+    borderRadius: radius.md,
+  },
+  legendText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.gold,
+    letterSpacing: 1.5,
+  },
   // Tab Container
   tabContainer: {
     flexDirection: 'row',
@@ -952,15 +994,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.xl,
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 2,
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     marginBottom: spacing.xs,
   },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 1.5,
+  },
   sectionSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textMuted,
     marginBottom: spacing.md,
   },
@@ -1040,7 +1087,7 @@ const styles = StyleSheet.create({
   milestoneCard: {
     borderRadius: radius.lg,
     overflow: 'hidden',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -1050,6 +1097,71 @@ const styles = StyleSheet.create({
   milestoneClaimed: {
     opacity: 0.7,
   },
+  milestoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  milestoneIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  milestoneInfo: {
+    flex: 1,
+  },
+  milestoneNameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  milestoneName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  milestonePointsNeeded: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  milestoneRewardsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  milestoneRewardTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  milestoneRewardText: {
+    fontSize: 9,
+    fontWeight: '500',
+  },
+  milestoneAction: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  milestoneStatusBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  milestoneLocked: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  // Old styles kept for backwards compat
   milestoneGradient: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1057,14 +1169,14 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   milestoneIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
   milestoneBadge: {
-    fontSize: 28,
+    fontSize: 22,
   },
   milestoneContent: {
     flex: 1,
@@ -1076,29 +1188,29 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   milestoneTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '600',
   },
   milestonePoints: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
   milestoneRewards: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: 4,
   },
   rewardTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
     backgroundColor: 'rgba(255,255,255,0.05)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: radius.full,
   },
   rewardText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '500',
   },
   milestoneStatus: {
