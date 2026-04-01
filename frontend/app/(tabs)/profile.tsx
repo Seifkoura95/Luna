@@ -27,6 +27,8 @@ import { CrewMap } from '../../src/components/CrewMap';
 import { PageHeader } from '../../src/components/PageHeader';
 import { MembershipCard } from '../../src/components/MembershipCard';
 import { SectionTitle } from '../../src/components/SectionTitle';
+import { GoldStarIcon } from '../../src/components/GoldStarIcon';
+import { ActivityIndicator } from 'react-native';
 
 
 const { width } = Dimensions.get('window');
@@ -78,6 +80,7 @@ export default function ProfileScreen() {
   const [cherryHubStatus, setCherryHubStatus] = useState<{registered: boolean, member_key: string | null}>({registered: false, member_key: null});
   const [cherryHubPoints, setCherryHubPoints] = useState<number>(0);
   const [walletPassLoading, setWalletPassLoading] = useState(false);
+  const [linkingCherryHub, setLinkingCherryHub] = useState(false);
 
   // Helper function to capitalize name properly
   const formatName = (name: string | undefined) => {
@@ -202,6 +205,26 @@ export default function ProfileScreen() {
         },
       ]
     );
+  };
+
+  // Handle linking CherryHub account
+  const handleLinkCherryHub = async () => {
+    setLinkingCherryHub(true);
+    try {
+      const result = await api.cherryHubRegister(false);
+      if (result.status === 'success' || result.status === 'already_registered') {
+        setCherryHubStatus({ registered: true, member_key: result.member_key });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (result.status === 'success') {
+          Alert.alert('Account Created!', 'Your CherryHub membership has been created and linked.');
+        } else {
+          Alert.alert('Linked!', 'Your existing CherryHub account has been linked.');
+        }
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to link CherryHub account');
+    }
+    setLinkingCherryHub(false);
   };
 
   const handleGetQR = async () => {
@@ -561,6 +584,97 @@ export default function ProfileScreen() {
             <Text style={styles.statValue}>{stats?.auctions_won || 0}</Text>
             <Text style={styles.statLabel}>Auctions Won</Text>
           </View>
+        </View>
+
+        {/* Compact Points & Membership Card */}
+        <View style={styles.section}>
+          <SectionTitle 
+            title="Rewards & Membership" 
+            icon="star"
+            iconColor={colors.gold}
+          />
+          
+          {/* Compact Points Card */}
+          <View style={styles.compactPointsCard}>
+            <LinearGradient
+              colors={[colors.glass, 'rgba(212, 175, 55, 0.08)']}
+              style={styles.compactPointsGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.compactPointsLeft}>
+                <View style={styles.compactPointsIconWrap}>
+                  <GoldStarIcon size={20} />
+                </View>
+                <View>
+                  <Text style={styles.compactPointsLabel}>LUNA POINTS</Text>
+                  <Text style={styles.compactPointsValue}>{cherryHubPoints.toLocaleString()}</Text>
+                </View>
+              </View>
+              <View style={styles.compactPointsRight}>
+                <View style={styles.compactTierBadge}>
+                  <Ionicons 
+                    name={TIER_CONFIG[user?.tier || 'bronze']?.icon as any} 
+                    size={14} 
+                    color={TIER_CONFIG[user?.tier || 'bronze']?.color} 
+                  />
+                  <Text style={[styles.compactTierText, { color: TIER_CONFIG[user?.tier || 'bronze']?.color }]}>
+                    {(user?.tier || 'bronze').toUpperCase()}
+                  </Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.compactRedeemBtn}
+                  onPress={() => router.push('/wallet')}
+                >
+                  <Text style={styles.compactRedeemText}>Redeem</Text>
+                  <Ionicons name="chevron-forward" size={14} color={colors.gold} />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </View>
+          
+          {/* CherryHub Status */}
+          {cherryHubStatus.registered ? (
+            <View style={styles.cherryHubConnected}>
+              <View style={styles.cherryHubConnectedLeft}>
+                <View style={styles.cherryHubStatusDot} />
+                <View>
+                  <Text style={styles.cherryHubConnectedTitle}>CherryHub Linked</Text>
+                  <Text style={styles.cherryHubConnectedSub}>Member #{cherryHubStatus.member_key?.slice(-8)}</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.cherryHubDisconnectBtn}
+                onPress={handleCherryHubLogout}
+              >
+                <Ionicons name="unlink" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={styles.linkCherryHubBtn}
+              onPress={handleLinkCherryHub}
+              disabled={linkingCherryHub}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[colors.accentDim, 'rgba(37, 99, 235, 0.15)']}
+                style={styles.linkCherryHubGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                {linkingCherryHub ? (
+                  <ActivityIndicator size="small" color={colors.accent} />
+                ) : (
+                  <>
+                    <Ionicons name="link" size={18} color={colors.accent} />
+                    <Text style={styles.linkCherryHubText}>Link CherryHub Account</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.accent} />
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Quick Actions */}
@@ -2323,5 +2437,129 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  // Compact Points Card Styles
+  compactPointsCard: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.gold + '30',
+  },
+  compactPointsGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  compactPointsLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  compactPointsIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.gold + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactPointsLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.gold,
+    letterSpacing: 1,
+  },
+  compactPointsValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    letterSpacing: -0.5,
+  },
+  compactPointsRight: {
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
+  compactTierBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  compactTierText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  compactRedeemBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  compactRedeemText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.gold,
+  },
+  // CherryHub Status Styles
+  cherryHubConnected: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.glass,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  cherryHubConnectedLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  cherryHubStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.success,
+  },
+  cherryHubConnectedTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  cherryHubConnectedSub: {
+    fontSize: 11,
+    color: colors.textMuted,
+  },
+  cherryHubDisconnectBtn: {
+    padding: spacing.xs,
+  },
+  linkCherryHubBtn: {
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.accent + '30',
+  },
+  linkCherryHubGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  linkCherryHubText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.accent,
   },
 });
