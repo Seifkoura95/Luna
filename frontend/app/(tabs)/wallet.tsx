@@ -153,6 +153,9 @@ export default function WalletScreen() {
   // Leaderboard state
   const [leaderboardData, setLeaderboardData] = useState<any>(null);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+  // Rewards state
+  const [rewards, setRewards] = useState<any[]>([]);
+  const [rewardsLoading, setRewardsLoading] = useState(true);
 
   // Auto scroll to top when tab gains focus
   useFocusEffect(
@@ -213,6 +216,15 @@ export default function WalletScreen() {
       }
       setLeaderboardLoading(false);
       
+      // Fetch rewards
+      try {
+        const rewardsRes = await api.getRewards();
+        setRewards(rewardsRes || []);
+      } catch (e) {
+        console.log('Failed to fetch rewards:', e);
+      }
+      setRewardsLoading(false);
+      
       // Cache the data
       setWalletData({
         leaderboard,
@@ -225,6 +237,7 @@ export default function WalletScreen() {
       // Use mock data on error
       setTickets(MOCK_TICKETS);
       setLeaderboardLoading(false);
+      setRewardsLoading(false);
     }
   }, []);
 
@@ -610,6 +623,117 @@ export default function WalletScreen() {
             <View style={styles.emptyLeaderboard}>
               <Ionicons name="trophy-outline" size={32} color={colors.textMuted} />
               <Text style={styles.emptyLeaderboardText}>Loading leaderboard...</Text>
+            </View>
+          )}
+        </View>
+
+        {/* =============== REDEEM REWARDS SECTION =============== */}
+        <View style={styles.redeemSection}>
+          <View style={styles.redeemHeader}>
+            <View style={styles.redeemTitleRow}>
+              <Ionicons name="gift" size={18} color={colors.gold} />
+              <Text style={styles.redeemTitle}>REDEEM REWARDS</Text>
+            </View>
+            <TouchableOpacity 
+              onPress={() => router.push('/rewards')} 
+              style={styles.viewAllRewardsBtn}
+            >
+              <Text style={styles.viewAllRewardsText}>View All</Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.accent} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Points Balance Card */}
+          <View style={styles.pointsBalanceCard}>
+            <LinearGradient
+              colors={[colors.glass, 'rgba(212, 175, 55, 0.1)']}
+              style={styles.pointsBalanceGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.pointsBalanceLeft}>
+                <Text style={styles.pointsBalanceLabel}>YOUR POINTS</Text>
+                <Text style={styles.pointsBalanceValue}>
+                  {(pointsData?.points_balance || user?.points_balance || 0).toLocaleString()}
+                </Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.redeemNowBtn}
+                onPress={() => router.push('/rewards')}
+              >
+                <LinearGradient
+                  colors={[colors.gold, '#B8960D']}
+                  style={styles.redeemNowGradient}
+                >
+                  <Ionicons name="gift-outline" size={16} color={colors.bg} />
+                  <Text style={styles.redeemNowText}>Redeem Now</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+
+          {/* Featured Rewards */}
+          {rewardsLoading ? (
+            <ActivityIndicator size="small" color={colors.accent} style={{ marginVertical: 20 }} />
+          ) : rewards.length > 0 ? (
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.rewardsScrollContainer}
+            >
+              {rewards.slice(0, 5).map((reward: any) => {
+                const userPoints = pointsData?.points_balance || user?.points_balance || 0;
+                const canAfford = userPoints >= (reward.points_cost || 0);
+                
+                return (
+                  <TouchableOpacity
+                    key={reward.id || reward.name}
+                    style={[styles.rewardCard, !canAfford && styles.rewardCardDisabled]}
+                    onPress={() => router.push('/rewards')}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={canAfford ? [colors.glass, 'rgba(37, 99, 235, 0.1)'] : [colors.glass, 'rgba(100,100,100,0.1)']}
+                      style={styles.rewardCardGradient}
+                    >
+                      <View style={[styles.rewardIconWrap, { backgroundColor: canAfford ? colors.accent + '20' : colors.textMuted + '20' }]}>
+                        <Ionicons 
+                          name={
+                            reward.name?.toLowerCase().includes('cocktail') ? 'wine' :
+                            reward.name?.toLowerCase().includes('fast') ? 'flash' :
+                            reward.name?.toLowerCase().includes('booth') ? 'people' :
+                            reward.name?.toLowerCase().includes('bottle') ? 'beer' :
+                            reward.name?.toLowerCase().includes('credit') ? 'card' :
+                            reward.name?.toLowerCase().includes('dining') ? 'restaurant' :
+                            reward.name?.toLowerCase().includes('merch') ? 'shirt' :
+                            'gift'
+                          } 
+                          size={24} 
+                          color={canAfford ? colors.accent : colors.textMuted} 
+                        />
+                      </View>
+                      <Text style={[styles.rewardCardName, !canAfford && styles.rewardCardNameDisabled]} numberOfLines={2}>
+                        {reward.name}
+                      </Text>
+                      <View style={[styles.rewardCostBadge, { backgroundColor: canAfford ? colors.gold + '20' : colors.textMuted + '20' }]}>
+                        <Text style={[styles.rewardCostText, { color: canAfford ? colors.gold : colors.textMuted }]}>
+                          {reward.points_cost?.toLocaleString()} pts
+                        </Text>
+                      </View>
+                      {canAfford && (
+                        <View style={styles.canAffordBadge}>
+                          <Ionicons name="checkmark-circle" size={12} color={colors.success} />
+                        </View>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyRewards}>
+              <Ionicons name="gift-outline" size={32} color={colors.textMuted} />
+              <Text style={styles.emptyRewardsText}>No rewards available</Text>
             </View>
           )}
         </View>
@@ -1658,5 +1782,145 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.5,
+  },
+  // =============== REDEEM REWARDS STYLES ===============
+  redeemSection: {
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.md,
+  },
+  redeemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  redeemTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  redeemTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    letterSpacing: 1,
+  },
+  viewAllRewardsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  viewAllRewardsText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+  pointsBalanceCard: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  pointsBalanceGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.md,
+  },
+  pointsBalanceLeft: {
+    flex: 1,
+  },
+  pointsBalanceLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  pointsBalanceValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.gold,
+  },
+  redeemNowBtn: {
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  redeemNowGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  redeemNowText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.bg,
+  },
+  rewardsScrollContainer: {
+    paddingRight: spacing.md,
+    gap: spacing.sm,
+  },
+  rewardCard: {
+    width: 140,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  rewardCardDisabled: {
+    opacity: 0.6,
+  },
+  rewardCardGradient: {
+    padding: spacing.md,
+    alignItems: 'center',
+    minHeight: 140,
+    justifyContent: 'space-between',
+  },
+  rewardIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  rewardCardName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+    lineHeight: 16,
+  },
+  rewardCardNameDisabled: {
+    color: colors.textMuted,
+  },
+  rewardCostBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+  },
+  rewardCostText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  canAffordBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+  },
+  emptyRewards: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: radius.lg,
+  },
+  emptyRewardsText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: spacing.sm,
   },
 });
