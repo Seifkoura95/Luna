@@ -12,6 +12,8 @@ import {
   Dimensions,
   ScrollView,
   Animated,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -23,6 +25,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { AppBackground } from '../../src/components/AppBackground';
 import { useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -122,7 +125,50 @@ export default function LunaAIScreen() {
     return () => pulse.stop();
   }, []);
 
-  // Reset chat on screen focus
+  // Load messages from storage on mount
+  useEffect(() => {
+    const loadMessages = async () => {
+      try {
+        const savedMessages = await AsyncStorage.getItem('luna_chat_messages');
+        const savedSessionId = await AsyncStorage.getItem('luna_chat_session');
+        if (savedMessages) {
+          const parsed = JSON.parse(savedMessages);
+          // Convert timestamp strings back to Date objects
+          const messagesWithDates = parsed.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp)
+          }));
+          setMessages(messagesWithDates);
+          setShowQuickCards(messagesWithDates.length <= 1);
+        }
+        if (savedSessionId) {
+          setSessionId(savedSessionId);
+        }
+      } catch (e) {
+        console.log('Failed to load chat history');
+      }
+    };
+    loadMessages();
+  }, []);
+
+  // Save messages whenever they change
+  useEffect(() => {
+    const saveMessages = async () => {
+      try {
+        if (messages.length > 0) {
+          await AsyncStorage.setItem('luna_chat_messages', JSON.stringify(messages));
+        }
+        if (sessionId) {
+          await AsyncStorage.setItem('luna_chat_session', sessionId);
+        }
+      } catch (e) {
+        console.log('Failed to save chat history');
+      }
+    };
+    saveMessages();
+  }, [messages, sessionId]);
+
+  // Initialize welcome message if no messages exist
   useFocusEffect(
     useCallback(() => {
       if (messages.length === 0) {
@@ -140,8 +186,13 @@ export default function LunaAIScreen() {
         };
         setMessages([welcomeMessage]);
       }
-    }, [])
+    }, [messages.length])
   );
+
+  // Dismiss keyboard on tap outside
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
 
   const handleSendMessage = async (text?: string) => {
     const messageText = text || inputText.trim();
@@ -291,40 +342,46 @@ export default function LunaAIScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <AppBackground />
-      
-      {/* Premium Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <BlurView intensity={40} style={styles.headerBlur}>
-          <View style={styles.headerContent}>
-            <Animated.View style={[styles.headerIconWrapper, { transform: [{ scale: pulseAnim }] }]}>
-              <LinearGradient
-                colors={[colors.accent, colors.accentDark, colors.accentBright]}
-                style={styles.headerIcon}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Ionicons name="sparkles" size={20} color="#fff" />
-              </LinearGradient>
-            </Animated.View>
-            <View style={styles.headerTextWrapper}>
-              <View style={styles.headerTitleRow}>
-                <Text style={styles.headerTitle}>Luna</Text>
-                <View style={styles.aiTag}>
-                  <Text style={styles.aiTagText}>AI</Text>
+    <TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
+      <View style={styles.container}>
+        <AppBackground />
+        
+        {/* Premium Header */}
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+          <BlurView intensity={40} style={styles.headerBlur}>
+            <View style={styles.headerContent}>
+              <Animated.View style={[styles.headerIconWrapper, { transform: [{ scale: pulseAnim }] }]}>
+                <LinearGradient
+                  colors={[colors.accent, colors.accentDark, colors.accentBright]}
+                  style={styles.headerIcon}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Ionicons name="sparkles" size={20} color="#fff" />
+                </LinearGradient>
+              </Animated.View>
+              <View style={styles.headerTextWrapper}>
+                <View style={styles.headerTitleRow}>
+                  <Text style={styles.headerTitle}>Luna</Text>
+                  <View style={styles.aiTag}>
+                    <Text style={styles.aiTagText}>AI</Text>
+                  </View>
                 </View>
+                <Text style={styles.headerSubtitle}>Your nightlife bestie</Text>
               </View>
-              <Text style={styles.headerSubtitle}>Your nightlife bestie</Text>
-            </View>
-            <View style={styles.headerActions}>
-              <TouchableOpacity 
-                style={styles.newChatBtn}
-                onPress={() => {
-                  setMessages([]);
-                  setSessionId(null);
-                  setShowQuickCards(true);
-                  setSelectedCategory(null);
+              <View style={styles.headerActions}>
+                <TouchableOpacity 
+                  style={styles.newChatBtn}
+                  onPress={async () => {
+                    setMessages([]);
+                    setSessionId(null);
+                    setShowQuickCards(true);
+                    setSelectedCategory(null);
+                    // Clear persisted chat
+                    try {
+                    await AsyncStorage.removeItem('luna_chat_messages');
+                    await AsyncStorage.removeItem('luna_chat_session');
+                  } catch (e) {}
                 }}
               >
                 <Ionicons name="add-circle-outline" size={24} color={colors.textSecondary} />
@@ -444,7 +501,8 @@ export default function LunaAIScreen() {
           </BlurView>
         </View>
       </KeyboardAvoidingView>
-    </View>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 
