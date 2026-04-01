@@ -826,7 +826,6 @@ export default function ProfileScreen() {
         <View style={styles.footer}>
           <Text style={styles.footerText}>Luna Group Hospitality App</Text>
           <Text style={styles.footerSubtext}>made by Simple Dev</Text>
-          <Text style={styles.footerText}>Made with ♥ in Brisbane</Text>
         </View>
 
         <View style={{ height: 20 }} />
