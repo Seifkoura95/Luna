@@ -464,11 +464,14 @@ async def get_cherryhub_status(request: Request):
     cherryhub_linked = bool(cherryhub_member_key)
     
     return {
-        "connected": cherryhub_linked,
+        "registered": cherryhub_linked,  # Frontend expects 'registered'
+        "connected": cherryhub_linked,   # Keep for backwards compatibility
         "member_key": cherryhub_member_key,
         "mock_mode": CHERRYHUB_MOCK_MODE,
         "linked_at": current_user.get("cherryhub_linked_at"),
-        "status": current_user.get("cherryhub_status", "active" if cherryhub_linked else "not_linked")
+        "registered_at": current_user.get("cherryhub_linked_at"),  # Alias
+        "status": current_user.get("cherryhub_status", "active" if cherryhub_linked else "not_linked"),
+        "message": "CherryHub account linked" if cherryhub_linked else "No CherryHub account linked"
     }
 
 
@@ -488,7 +491,7 @@ async def get_cherryhub_points(request: Request):
         }
     
     # Get points from CherryHub (or mock)
-    points_data = await cherryhub_service.get_points_balance(member_key)
+    points_data = await cherryhub_service.get_member_points_balance(member_key)
     
     return {
         "points": points_data.get("balance", current_user.get("points", 0)),

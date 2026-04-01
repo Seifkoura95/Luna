@@ -81,6 +81,7 @@ export default function ProfileScreen() {
   const [cherryHubPoints, setCherryHubPoints] = useState<number>(0);
   const [walletPassLoading, setWalletPassLoading] = useState(false);
   const [linkingCherryHub, setLinkingCherryHub] = useState(false);
+  const [pointsData, setPointsData] = useState<any>(null);
 
   // Helper function to capitalize name properly
   const formatName = (name: string | undefined) => {
@@ -99,18 +100,22 @@ export default function ProfileScreen() {
         setStats(cached.userStats);
         setCherryHubStatus(cached.cherryHubStatus);
         setCherryHubPoints(cached.pointsBalance);
+        if (cached.pointsData) {
+          setPointsData(cached.pointsData);
+        }
         return;
       }
     }
     
     try {
-      const [statsData, reservationsData, crewsData, subData, venuesData, cherryStatus] = await Promise.all([
+      const [statsData, reservationsData, crewsData, subData, venuesData, cherryStatus, pointsRes] = await Promise.all([
         api.getUserStats().catch(() => null),
         api.getMyReservations().catch(() => null),
         api.getCrews().catch(() => []),
         api.getMySubscription().catch(() => null),
         api.getVenues().catch(() => []),
         api.cherryHubStatus().catch(() => ({registered: false, member_key: null})),
+        api.getPointsBalance().catch(() => null),
       ]);
       setStats(statsData);
       setReservations(reservationsData);
@@ -118,13 +123,15 @@ export default function ProfileScreen() {
       setSubscriptionData(subData);
       setVenues(venuesData || []);
       setCherryHubStatus(cherryStatus);
+      setPointsData(pointsRes);
       
-      let pointsBalance = 0;
-      // Fetch CherryHub points if registered
+      let pointsBalance = pointsRes?.points_balance || 0;
+      
+      // Fetch CherryHub points if registered (they override local points)
       if (cherryStatus?.registered) {
         try {
-          const pointsData = await api.cherryHubGetPoints();
-          pointsBalance = pointsData.points || 0;
+          const chPointsData = await api.cherryHubGetPoints();
+          pointsBalance = chPointsData.points || 0;
           setCherryHubPoints(pointsBalance);
         } catch (e) {
           console.log('Failed to fetch CherryHub points');
@@ -138,6 +145,7 @@ export default function ProfileScreen() {
         userStats: statsData,
         cherryHubStatus: cherryStatus,
         pointsBalance: pointsBalance,
+        pointsData: pointsRes,
       });
     } catch (e) {
       console.error('Failed to fetch profile data:', e);
@@ -608,18 +616,20 @@ export default function ProfileScreen() {
                 </View>
                 <View>
                   <Text style={styles.compactPointsLabel}>LUNA POINTS</Text>
-                  <Text style={styles.compactPointsValue}>{cherryHubPoints.toLocaleString()}</Text>
+                  <Text style={styles.compactPointsValue}>
+                    {(cherryHubStatus.registered ? cherryHubPoints : (pointsData?.points_balance || user?.points_balance || 0)).toLocaleString()}
+                  </Text>
                 </View>
               </View>
               <View style={styles.compactPointsRight}>
                 <View style={styles.compactTierBadge}>
                   <Ionicons 
-                    name={TIER_CONFIG[user?.tier || 'bronze']?.icon as any} 
+                    name={TIER_CONFIG[pointsData?.tier_id || user?.tier || 'bronze']?.icon as any} 
                     size={14} 
-                    color={TIER_CONFIG[user?.tier || 'bronze']?.color} 
+                    color={TIER_CONFIG[pointsData?.tier_id || user?.tier || 'bronze']?.color} 
                   />
-                  <Text style={[styles.compactTierText, { color: TIER_CONFIG[user?.tier || 'bronze']?.color }]}>
-                    {(user?.tier || 'bronze').toUpperCase()}
+                  <Text style={[styles.compactTierText, { color: TIER_CONFIG[pointsData?.tier_id || user?.tier || 'bronze']?.color }]}>
+                    {(pointsData?.tier_name || user?.tier || 'bronze').toUpperCase()}
                   </Text>
                 </View>
                 <TouchableOpacity 
@@ -675,6 +685,26 @@ export default function ProfileScreen() {
               </LinearGradient>
             </TouchableOpacity>
           )}
+          
+          {/* Subscription/Upgrade Button */}
+          <TouchableOpacity 
+            style={styles.upgradeBtn}
+            onPress={() => router.push('/subscriptions')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={[colors.gold + '20', colors.gold + '10']}
+              style={styles.upgradeBtnGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Ionicons name="diamond" size={16} color={colors.gold} />
+              <Text style={styles.upgradeBtnText}>
+                {subscriptionData?.is_subscribed ? 'Manage Subscription' : 'Upgrade Membership'}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.gold} />
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         {/* Quick Actions */}
@@ -2561,5 +2591,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.accent,
+  },
+  // Upgrade Button Styles
+  upgradeBtn: {
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.gold + '30',
+  },
+  upgradeBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  upgradeBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.gold,
   },
 });
