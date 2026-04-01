@@ -1377,6 +1377,43 @@ Location: `/app/frontend/app/(tabs)/auctions.tsx`
 
 ---
 
+## Push Notification System (April 2026) ✅ COMPLETE
+
+### Backend Endpoints:
+- `POST /api/notifications/register-push-token` - Register device Expo push token
+- `GET /api/notifications/push-status` - Get user's push token status
+- `POST /api/notifications/test-push` - Send test notification to user's device
+- `DELETE /api/notifications/push-token` - Remove a specific push token
+- `DELETE /api/notifications/push-tokens/all` - Remove all push tokens
+
+### Frontend Implementation:
+- `src/hooks/usePushNotifications.ts` - Enhanced hook with:
+  - Expo push token registration on app launch
+  - Android notification channels (default, auctions, events)
+  - Notification tap handling with expo-router navigation
+  - Permission status tracking
+
+### Database Schema:
+```
+users: {
+  push_token: string,              // Current active token
+  push_tokens: string[],           // Array of all registered tokens
+  push_token_updated_at: datetime, // Last registration timestamp
+  push_device_type: string         // "ios", "android", "expo"
+}
+```
+
+### Notification Types Supported:
+- `event` - Navigate to event detail page
+- `auction` - Navigate to auctions tab
+- `booking` - Navigate to profile (bookings)
+- `crew` - Navigate to crew page
+- `wallet` / `rewards` - Navigate to wallet tab
+- `geofence` / `nearby_venue` - Navigate to venue page
+- `chat` - Navigate to Luna AI tab
+
+---
+
 ## Remaining/Upcoming Work
 
 ### P0 - Immediate:
@@ -1387,7 +1424,7 @@ Location: `/app/frontend/app/(tabs)/auctions.tsx`
 - CherryHub Live API (waiting on vendor for Azure Subscription Key)
 
 ### P2 - Medium Priority:
-- Push Notification Device Token Registration
+- ~~Push Notification Device Token Registration~~ ✅ COMPLETED
 - ~~server.py Cleanup (remove duplicate endpoint code)~~ ✅ COMPLETED
 
 ### Blocked Items:

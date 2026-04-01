@@ -2,8 +2,9 @@
 Notifications API endpoints
 """
 from fastapi import APIRouter, HTTPException, Request
-from typing import Optional
+from typing import Optional, List
 import uuid
+import logging
 from datetime import datetime, timezone
 from pydantic import BaseModel
 
@@ -12,6 +13,7 @@ from utils.auth import get_current_user
 from utils.mongo import clean_mongo_docs
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
+logger = logging.getLogger(__name__)
 
 
 class NotificationPreferencesRequest(BaseModel):
@@ -24,7 +26,15 @@ class NotificationPreferencesRequest(BaseModel):
 
 
 class RegisterPushTokenRequest(BaseModel):
-    token: str
+    """Request model for push token registration"""
+    push_token: str = None  # Support both field names
+    token: str = None
+    device_type: str = "expo"
+    
+    @property
+    def get_token(self) -> str:
+        """Get the token from whichever field is provided"""
+        return self.push_token or self.token
 
 
 @router.get("")
@@ -125,13 +135,24 @@ async def register_push_token(request: Request, token_req: RegisterPushTokenRequ
     auth_header = request.headers.get("authorization")
     current_user = get_current_user(auth_header)
     
+    # Get the token from whichever field is provided
+    token = token_req.get_token
+    if not token:
+        raise HTTPException(status_code=400, detail="Push token is required")
+    
     await db.users.update_one(
         {"user_id": current_user["user_id"]},
         {
-            "$set": {"push_token": token_req.token},
-            "$addToSet": {"push_tokens": token_req.token}
+            "$set": {
+                "push_token": token,
+                "push_token_updated_at": datetime.now(timezone.utc).isoformat(),
+                "push_device_type": token_req.device_type
+            },
+            "$addToSet": {"push_tokens": token}
         }
     )
+    
+    logger.info(f"Push token registered for user {current_user['user_id'][:8]}...")
     
     return {"success": True, "message": "Push token registered"}
 
@@ -162,3 +183,121 @@ async def get_unread_count(request: Request):
     })
     
     return {"unread_count": count}
+
+
+@router.get("/push-status")
+async def get_push_token_status(request: Request):
+    """Get user's push notification token status"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one(
+        {"user_id": current_user["user_id"]},
+        {"push_token": 1, "push_tokens": 1, "push_token_updated_at": 1, "push_device_type": 1, "_id": 0}
+    )
+    
+    if not user:
+        return {
+            "has_push_token": False,
+            "push_tokens_count": 0,
+            "last_updated": None,
+            "device_type": None
+        }
+    
+    push_tokens = user.get("push_tokens", [])
+    
+    return {
+        "has_push_token": bool(user.get("push_token")),
+        "push_tokens_count": len(push_tokens),
+        "last_updated": user.get("push_token_updated_at"),
+        "device_type": user.get("push_device_type", "unknown"),
+        "current_token_prefix": user.get("push_token", "")[:20] + "..." if user.get("push_token") else None
+    }
+
+
+@router.post("/test-push")
+async def send_test_push_notification(request: Request):
+    """Send a test push notification to the current user"""
+    import httpx
+    
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    push_token = user.get("push_token")
+    if not push_token:
+        raise HTTPException(status_code=400, detail="No push token registered. Please enable notifications in the app.")
+    
+    # Validate it's an Expo push token
+    if not push_token.startswith("ExponentPushToken["):
+        raise HTTPException(status_code=400, detail="Invalid push token format. Expected Expo push token.")
+    
+    # Send test notification via Expo
+    message = {
+        "to": push_token,
+        "sound": "default",
+        "title": "Luna VIP Test",
+        "body": "Push notifications are working! You're all set to receive updates.",
+        "data": {
+            "type": "test",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    }
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://exp.host/--/api/v2/push/send",
+                json=message,
+                headers={"Content-Type": "application/json"}
+            )
+            result = response.json()
+            
+            if response.status_code != 200:
+                logger.error(f"Expo push failed: {result}")
+                raise HTTPException(status_code=500, detail="Failed to send push notification")
+            
+            # Check for Expo-specific errors
+            if result.get("data") and result["data"].get("status") == "error":
+                error_message = result["data"].get("message", "Unknown error")
+                logger.error(f"Expo push error: {error_message}")
+                return {
+                    "success": False,
+                    "error": error_message,
+                    "details": result["data"].get("details")
+                }
+            
+            logger.info(f"Test push sent to user {current_user['user_id'][:8]}...")
+            
+            return {
+                "success": True,
+                "message": "Test notification sent! Check your device.",
+                "expo_response": result
+            }
+            
+    except httpx.RequestError as e:
+        logger.error(f"Failed to send test push: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to send notification: {str(e)}")
+
+
+@router.delete("/push-tokens/all")
+async def remove_all_push_tokens(request: Request):
+    """Remove all push tokens for the current user"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {
+            "$set": {"push_token": None, "push_tokens": []},
+            "$unset": {"push_token_updated_at": "", "push_device_type": ""}
+        }
+    )
+    
+    logger.info(f"All push tokens removed for user {current_user['user_id'][:8]}...")
+    
+    return {"success": True, "message": "All push tokens removed"}
+
