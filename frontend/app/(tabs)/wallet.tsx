@@ -738,10 +738,69 @@ export default function WalletScreen() {
           )}
         </View>
 
+        {/* Tab Selector - My Tickets */}
+        <View style={styles.ticketsSection}>
+          <View style={styles.ticketsSectionHeader}>
+            <Ionicons name="ticket" size={18} color={colors.gold} />
+            <Text style={styles.redeemTitle}>MY TICKETS</Text>
+          </View>
+          <View style={styles.tabContainer}>
+            {(['active', 'upcoming', 'history'] as TabType[]).map((tab) => (
+              <TouchableOpacity
+                key={tab}
+                style={[styles.tab, activeTab === tab && styles.tabActive]}
+                onPress={() => {
+                  setActiveTab(tab);
+                  if (Platform.OS !== 'web') Haptics.selectionAsync();
+                }}
+              >
+                <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+                  {tab === 'active' ? 'TONIGHT' : tab === 'upcoming' ? 'UPCOMING' : 'HISTORY'}
+                </Text>
+                {tickets[tab]?.length > 0 && (
+                  <View style={[styles.tabBadge, activeTab === tab && styles.tabBadgeActive]}>
+                    <Text style={[styles.tabBadgeText, activeTab === tab && styles.tabBadgeTextActive]}>
+                      {tickets[tab].length}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Tickets List */}
+          <View style={styles.ticketsList}>
+            {currentTickets.length > 0 ? (
+              currentTickets.map(renderTicketCard)
+            ) : (
+              <View style={styles.emptyState}>
+                <Ionicons 
+                  name={activeTab === 'active' ? 'moon' : activeTab === 'upcoming' ? 'calendar-outline' : 'time-outline'} 
+                  size={48} 
+                  color={colors.textMuted} 
+                />
+                <Text style={styles.emptyTitle}>
+                  {activeTab === 'active' 
+                    ? 'No tickets for tonight' 
+                    : activeTab === 'upcoming' 
+                      ? 'No upcoming tickets' 
+                      : 'No past tickets'}
+                </Text>
+                <Text style={styles.emptySubtitle}>
+                  Browse events below to get tickets
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+
         {/* Active Missions */}
         <View style={styles.missionsSection}>
           <View style={styles.missionHeader}>
-            <Text style={styles.sectionTitle}>ACTIVE MISSIONS</Text>
+            <View style={styles.missionTitleRow}>
+              <Ionicons name="flag" size={18} color={colors.accent} />
+              <Text style={styles.redeemTitle}>MISSIONS</Text>
+            </View>
             <TouchableOpacity onPress={() => router.push('/rewards')}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
@@ -771,56 +830,6 @@ export default function WalletScreen() {
               </View>
             </View>
           ))}
-        </View>
-
-        {/* Tab Selector */}
-        <View style={styles.tabContainer}>
-          {(['active', 'upcoming', 'history'] as TabType[]).map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, activeTab === tab && styles.tabActive]}
-              onPress={() => {
-                setActiveTab(tab);
-                if (Platform.OS !== 'web') Haptics.selectionAsync();
-              }}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                {tab === 'active' ? 'TONIGHT' : tab === 'upcoming' ? 'UPCOMING' : 'HISTORY'}
-              </Text>
-              {tickets[tab]?.length > 0 && (
-                <View style={[styles.tabBadge, activeTab === tab && styles.tabBadgeActive]}>
-                  <Text style={[styles.tabBadgeText, activeTab === tab && styles.tabBadgeTextActive]}>
-                    {tickets[tab].length}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Tickets List */}
-        <View style={styles.section}>
-          {currentTickets.length > 0 ? (
-            currentTickets.map(renderTicketCard)
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons 
-                name={activeTab === 'active' ? 'moon' : activeTab === 'upcoming' ? 'calendar-outline' : 'time-outline'} 
-                size={48} 
-                color={colors.textMuted} 
-              />
-              <Text style={styles.emptyTitle}>
-                {activeTab === 'active' 
-                  ? 'No tickets for tonight' 
-                  : activeTab === 'upcoming' 
-                    ? 'No upcoming tickets' 
-                    : 'No past tickets'}
-              </Text>
-              <Text style={styles.emptySubtitle}>
-                Browse events below to get tickets
-              </Text>
-            </View>
-          )}
         </View>
 
         {/* Upcoming Events Section */}
@@ -1162,6 +1171,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.md,
+  },
+  missionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  ticketsSection: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  ticketsSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  ticketsList: {
+    // Container for tickets
   },
   sectionTitle: {
     fontSize: 12,

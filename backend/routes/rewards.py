@@ -134,6 +134,28 @@ async def redeem_reward_with_qr(request: Request, reward_id: str, venue_id: Opti
     
     await db.redemptions.insert_one(redemption)
     
+    # Also add to wallet_passes for unified wallet view
+    wallet_pass = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["user_id"],
+        "type": "reward_redemption",
+        "reward_type": reward.get("category", "general"),
+        "title": reward["name"],
+        "description": reward.get("description", ""),
+        "qr_code": qr_code,
+        "status": "active",
+        "one_time_use": True,
+        "redeemed": False,
+        "redeemed_at": None,
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=48),
+        "created_at": datetime.now(timezone.utc),
+        "redemption_id": redemption_id,
+        "venue_name": "Any Luna Group Venue",
+        "points_cost": reward["points_cost"],
+        "icon": "gift"
+    }
+    await db.wallet_passes.insert_one(wallet_pass)
+    
     await db.points_transactions.insert_one({
         "id": str(uuid.uuid4()),
         "user_id": user["user_id"],
@@ -209,4 +231,115 @@ async def generate_checkin_qr(request: Request, venue_id: str):
         "venue_name": LUNA_VENUES[venue_id]["name"],
         "generated_at": timestamp,
         "expires_at": expiry
+    }
+
+
+
+@router.post("/validate-qr")
+async def validate_and_redeem_qr(request: Request, qr_code: str):
+    """Validate and redeem a QR code (one-time use) - for venue staff"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    # Check if user is venue staff
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if user.get("role") not in ["staff", "manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Only venue staff can validate QR codes")
+    
+    # Check redemptions collection first
+    redemption = await db.redemptions.find_one({"qr_code": qr_code})
+    if redemption:
+        if redemption.get("status") == "redeemed":
+            raise HTTPException(status_code=400, detail="This QR code has already been used")
+        
+        if redemption.get("expires_at") and datetime.now(timezone.utc) > redemption.get("expires_at"):
+            raise HTTPException(status_code=400, detail="This QR code has expired")
+        
+        # Mark as redeemed
+        await db.redemptions.update_one(
+            {"id": redemption["id"]},
+            {"$set": {
+                "status": "redeemed",
+                "redeemed_at": datetime.now(timezone.utc),
+                "redeemed_by": current_user["user_id"]
+            }}
+        )
+        
+        # Also mark the wallet pass
+        await db.wallet_passes.update_one(
+            {"redemption_id": redemption["id"]},
+            {"$set": {
+                "redeemed": True,
+                "redeemed_at": datetime.now(timezone.utc),
+                "status": "used"
+            }}
+        )
+        
+        return {
+            "success": True,
+            "message": "Reward redeemed successfully!",
+            "reward_name": redemption.get("reward_name"),
+            "user_id": redemption.get("user_id")
+        }
+    
+    # Check wallet passes for birthday rewards
+    wallet_pass = await db.wallet_passes.find_one({"qr_code": qr_code})
+    if wallet_pass:
+        if wallet_pass.get("redeemed"):
+            raise HTTPException(status_code=400, detail="This QR code has already been used")
+        
+        if wallet_pass.get("expires_at") and datetime.now(timezone.utc) > wallet_pass.get("expires_at"):
+            raise HTTPException(status_code=400, detail="This QR code has expired")
+        
+        # Mark wallet pass as redeemed
+        await db.wallet_passes.update_one(
+            {"id": wallet_pass["id"]},
+            {"$set": {
+                "redeemed": True,
+                "redeemed_at": datetime.now(timezone.utc),
+                "status": "used",
+                "redeemed_by": current_user["user_id"]
+            }}
+        )
+        
+        # If it's a birthday reward, also mark the birthday_rewards record
+        if wallet_pass.get("birthday_reward_id"):
+            await db.birthday_rewards.update_one(
+                {"id": wallet_pass["birthday_reward_id"]},
+                {"$set": {
+                    "redeemed": True,
+                    "redeemed_at": datetime.now(timezone.utc)
+                }}
+            )
+        
+        return {
+            "success": True,
+            "message": "Reward redeemed successfully!",
+            "reward_name": wallet_pass.get("title"),
+            "user_id": wallet_pass.get("user_id")
+        }
+    
+    raise HTTPException(status_code=404, detail="QR code not found or invalid")
+
+
+@router.get("/wallet-passes")
+async def get_wallet_passes(request: Request):
+    """Get all wallet passes for the current user"""
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    passes = await db.wallet_passes.find(
+        {"user_id": current_user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    active = [p for p in passes if p.get("status") == "active" and not p.get("redeemed")]
+    used = [p for p in passes if p.get("redeemed") or p.get("status") == "used"]
+    expired = [p for p in passes if p.get("status") == "expired"]
+    
+    return {
+        "active": active,
+        "used": used,
+        "expired": expired,
+        "total": len(passes)
     }

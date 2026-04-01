@@ -203,6 +203,11 @@ async def claim_birthday_reward(reward_id: str, authorization: str = Header(None
     if existing:
         raise HTTPException(status_code=400, detail="You've already claimed this reward this year")
     
+    # Generate unique QR code for redeemable rewards
+    qr_code = None
+    if reward["type"] in ["entry", "drink"]:
+        qr_code = f"LUNA-BDAY-{reward_id.upper()}-{user_id[:8]}-{uuid.uuid4().hex[:8].upper()}"
+    
     # Create the reward claim
     claim_record = {
         "id": str(uuid.uuid4()),
@@ -215,7 +220,8 @@ async def claim_birthday_reward(reward_id: str, authorization: str = Header(None
         "claimed_at": datetime.now(timezone.utc),
         "redeemed": False,
         "redeemed_at": None,
-        "expires_at": datetime.now(timezone.utc) + timedelta(days=7)
+        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+        "qr_code": qr_code
     }
     
     await db.birthday_rewards.insert_one(claim_record)
@@ -237,6 +243,28 @@ async def claim_birthday_reward(reward_id: str, authorization: str = Header(None
             "created_at": datetime.now(timezone.utc)
         })
     
+    # For entry and drink rewards, add to wallet as a ticket/pass
+    if reward["type"] in ["entry", "drink"]:
+        wallet_item = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "type": "birthday_reward",
+            "reward_type": reward["type"],
+            "title": reward["name"],
+            "description": reward["description"],
+            "qr_code": qr_code,
+            "status": "active",
+            "one_time_use": True,
+            "redeemed": False,
+            "redeemed_at": None,
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+            "created_at": datetime.now(timezone.utc),
+            "birthday_reward_id": claim_record["id"],
+            "venue_name": "Any Luna Group Venue",
+            "icon": reward.get("icon", "gift")
+        }
+        await db.wallet_passes.insert_one(wallet_item)
+    
     # Remove _id for response
     claim_record.pop("_id", None)
     
@@ -245,7 +273,9 @@ async def claim_birthday_reward(reward_id: str, authorization: str = Header(None
     return {
         "success": True,
         "message": f"🎉 {reward['name']} claimed! {reward['description']}",
-        "reward": claim_record
+        "reward": claim_record,
+        "qr_code": qr_code,
+        "added_to_wallet": reward["type"] in ["entry", "drink"]
     }
 
 
@@ -284,7 +314,7 @@ async def redeem_birthday_reward(reward_claim_id: str, authorization: str = Head
     if claim.get("expires_at") and datetime.now(timezone.utc) > claim.get("expires_at"):
         raise HTTPException(status_code=400, detail="Reward has expired")
     
-    # Mark as redeemed
+    # Mark birthday reward as redeemed
     await db.birthday_rewards.update_one(
         {"id": reward_claim_id},
         {"$set": {
@@ -293,7 +323,32 @@ async def redeem_birthday_reward(reward_claim_id: str, authorization: str = Head
         }}
     )
     
+    # Also mark the wallet pass as redeemed (one-time use)
+    await db.wallet_passes.update_one(
+        {"birthday_reward_id": reward_claim_id},
+        {"$set": {
+            "redeemed": True,
+            "redeemed_at": datetime.now(timezone.utc),
+            "status": "used"
+        }}
+    )
+    
     return {
         "success": True,
         "message": "Reward redeemed successfully! Show this to staff."
     }
+
+
+
+@router.get("/wallet-passes")
+async def get_birthday_wallet_passes(authorization: str = Header(None)):
+    """Get user's birthday reward passes in wallet"""
+    user = get_current_user(authorization)
+    user_id = user.get("user_id")
+    
+    passes = await db.wallet_passes.find(
+        {"user_id": user_id, "type": "birthday_reward"},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    return {"passes": passes}

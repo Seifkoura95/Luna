@@ -1563,6 +1563,43 @@ users: {
 - `/app/frontend/app/(tabs)/leaderboard.tsx` - Reduced scroll padding
 - `/app/frontend/app/edit-profile.tsx` - Web DOB fallback
 
+---
+
+## Session Updates (April 1, 2026 - Batch 3)
+
+### Wallet Page Restructure ✅
+**Changes to `/app/frontend/app/(tabs)/wallet.tsx`:**
+1. **Tickets section** moved directly under Redeem Rewards
+2. **Missions section** renamed to "MISSIONS" with consistent styling (icon + title row)
+3. Section order now: Leaderboard → Redeem Rewards → My Tickets → Missions → Events
+
+### Birthday Club QR Code System ✅
+**Backend Changes to `/app/backend/routes/birthday.py`:**
+- Claiming Free Entry or Free Drink rewards now automatically:
+  - Generates a unique one-time use QR code
+  - Creates a wallet pass in `wallet_passes` collection
+  - Returns `added_to_wallet: true` flag
+- Redemption marks both `birthday_rewards` and `wallet_passes` as used
+- New endpoint: `GET /api/birthday/wallet-passes`
+
+### Rewards QR System Enhancement ✅
+**Backend Changes to `/app/backend/routes/rewards.py`:**
+- `POST /rewards/redeem-with-qr` now also creates wallet passes
+- New endpoint: `POST /validate-qr` - For venue staff to validate and redeem QR codes (one-time use)
+- New endpoint: `GET /wallet-passes` - Get all user's wallet passes (active, used, expired)
+
+### QR Code Format
+- Birthday rewards: `LUNA-BDAY-{REWARD_TYPE}-{USER_ID_SHORT}-{RANDOM_CODE}`
+- Regular rewards: `LUNA-{REDEMPTION_ID_SHORT}-{SIGNATURE}`
+
+### Database Collections Updated
+- `wallet_passes`: Unified collection for all redeemable QR passes
+  - Fields: `id, user_id, type, title, qr_code, status, one_time_use, redeemed, expires_at`
+
+### Auctions Page Header Fix ✅
+- Added `headerShown: false` to hidden tab screens (auctions, photos, leaderboard)
+- Removes duplicate navigation header showing points badge
+
 
 
 
