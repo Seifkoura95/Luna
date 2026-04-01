@@ -99,7 +99,6 @@ export default function ProfileScreen() {
         setCrews(cached.crews);
         setStats(cached.userStats);
         setCherryHubStatus(cached.cherryHubStatus);
-        setCherryHubPoints(cached.pointsBalance);
         if (cached.pointsData) {
           setPointsData(cached.pointsData);
         }
@@ -125,26 +124,12 @@ export default function ProfileScreen() {
       setCherryHubStatus(cherryStatus);
       setPointsData(pointsRes);
       
-      let pointsBalance = pointsRes?.points_balance || 0;
-      
-      // Fetch CherryHub points if registered (they override local points)
-      if (cherryStatus?.registered) {
-        try {
-          const chPointsData = await api.cherryHubGetPoints();
-          pointsBalance = chPointsData.points || 0;
-          setCherryHubPoints(pointsBalance);
-        } catch (e) {
-          console.log('Failed to fetch CherryHub points');
-        }
-      }
-      
       // Cache the data
       setProfileData({
         crews: crewsData || [],
         reservations: reservationsData,
         userStats: statsData,
         cherryHubStatus: cherryStatus,
-        pointsBalance: pointsBalance,
         pointsData: pointsRes,
       });
     } catch (e) {
@@ -410,7 +395,7 @@ export default function ProfileScreen() {
 
   const tierConfig = TIER_CONFIG[user?.tier || 'bronze'];
   // Use CherryHub points if available, otherwise fall back to local points
-  const currentPoints = cherryHubStatus.registered ? cherryHubPoints : (user?.points_balance || 0);
+  const currentPoints = pointsData?.points_balance || user?.points_balance || user?.points || 0;
   const progressToNext = Math.min((currentPoints / tierConfig.pointsNeeded) * 100, 100);
 
   const quickActions = [
@@ -617,7 +602,7 @@ export default function ProfileScreen() {
                 <View>
                   <Text style={styles.compactPointsLabel}>LUNA POINTS</Text>
                   <Text style={styles.compactPointsValue}>
-                    {(cherryHubStatus.registered ? cherryHubPoints : (pointsData?.points_balance || user?.points_balance || 0)).toLocaleString()}
+                    {(pointsData?.points_balance || user?.points_balance || user?.points || 0).toLocaleString()}
                   </Text>
                 </View>
               </View>
