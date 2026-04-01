@@ -192,7 +192,8 @@ export default function SettingsScreen() {
 
         {/* App Info */}
         <View style={styles.appInfo}>
-          <Text style={styles.appVersion}>Luna Group v1.0.0</Text>
+          <Text style={styles.appVersion}>Luna Group Hospitality App</Text>
+          <Text style={styles.appSubtext}>made by Simple Dev</Text>
           <Text style={styles.appCopyright}>2025 Luna Group Pty Ltd</Text>
         </View>
       </ScrollView>
@@ -400,6 +401,11 @@ const styles = StyleSheet.create({
   appVersion: {
     fontSize: 13,
     color: colors.textMuted,
+    marginBottom: 2,
+  },
+  appSubtext: {
+    fontSize: 11,
+    color: colors.textTertiary,
     marginBottom: 4,
   },
   appCopyright: {

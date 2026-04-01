@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 100,
+    paddingBottom: 30,
   },
   imageContainer: {
     height: 300,

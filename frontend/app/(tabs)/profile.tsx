@@ -824,7 +824,8 @@ export default function ProfileScreen() {
 
         {/* App Version */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Luna Group v1.0.0</Text>
+          <Text style={styles.footerText}>Luna Group Hospitality App</Text>
+          <Text style={styles.footerSubtext}>made by Simple Dev</Text>
           <Text style={styles.footerText}>Made with ♥ in Brisbane</Text>
         </View>
 
@@ -1968,6 +1969,11 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 12,
     color: colors.textMuted,
+    marginBottom: 2,
+  },
+  footerSubtext: {
+    fontSize: 11,
+    color: colors.textTertiary,
     marginBottom: 4,
   },
   modalOverlay: {

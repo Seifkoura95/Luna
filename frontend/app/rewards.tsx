@@ -679,7 +679,7 @@ export default function RewardsScreen() {
           </View>
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* Promo Code Modal */}

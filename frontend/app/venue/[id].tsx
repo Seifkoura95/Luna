@@ -593,7 +593,7 @@ export default function VenueDetailScreen() {
           )}
 
           {/* Bottom Spacer */}
-          <View style={{ height: 100 }} />
+          <View style={{ height: 20 }} />
         </View>
       </Animated.ScrollView>
 

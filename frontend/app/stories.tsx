@@ -265,7 +265,7 @@ export default function Stories() {
           )}
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* Share Modal */}

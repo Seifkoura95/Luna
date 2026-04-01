@@ -98,7 +98,8 @@ export default function AboutPage() {
 
         {/* App Info */}
         <View style={styles.appInfo}>
-          <Text style={styles.appVersion}>Luna Group VIP v1.0.0</Text>
+          <Text style={styles.appVersion}>Luna Group Hospitality App</Text>
+          <Text style={styles.appSubtext}>made by Simple Dev</Text>
           <Text style={styles.appCopyright}>© 2024 Luna Group Hospitality. All rights reserved.</Text>
         </View>
       </ScrollView>
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: 100,
+    paddingBottom: 30,
   },
   header: {
     flexDirection: 'row',
@@ -206,6 +207,11 @@ const styles = StyleSheet.create({
   appVersion: {
     fontSize: 14,
     color: colors.textMuted,
+    marginBottom: 2,
+  },
+  appSubtext: {
+    fontSize: 12,
+    color: colors.textTertiary,
     marginBottom: spacing.xs,
   },
   appCopyright: {

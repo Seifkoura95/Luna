@@ -1623,6 +1623,29 @@ users: {
 - Interval: Every 2 hours
 - Notification data includes: `screen: "wallet"` for deep linking
 
+---
+
+## Session Updates (April 1, 2026 - Batch 5)
+
+### Profile Footer Updated ✅
+- Changed "Luna Group v1.0.0" to:
+  - "Luna Group Hospitality App"
+  - "made by Simple Dev"
+- Applied to: `profile.tsx`, `settings.tsx`, `about.tsx`
+
+### Excessive Scrolling Fixed ✅
+**Changed `height: 100` spacer to `height: 20` in:**
+- Tab pages: `profile.tsx`, `wallet.tsx`, `index.tsx`, `auctions.tsx`, `leaderboard.tsx`
+- Sub-pages: `venue/[id].tsx`, `birthday-club.tsx`, `table-booking.tsx`, `rewards.tsx`, `refer-friend.tsx`, `stories.tsx`
+
+**Changed `paddingBottom: 100` to `paddingBottom: 30` in:**
+- `payment-methods.tsx`, `venue-dashboard.tsx`, `location-settings.tsx`, `about.tsx`
+- `event/[id].tsx`, `events.tsx`, `safety-settings.tsx`, `notification-settings.tsx`
+- `help-support.tsx`, `safety.tsx`
+
+### Files Modified (20+ pages)
+All pages now have consistent scroll behavior without excessive bottom padding.
+
 
 
 
