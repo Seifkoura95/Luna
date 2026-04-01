@@ -147,9 +147,9 @@ export default function TabLayout() {
         }}
       />
       {/* Hidden screens */}
-      <Tabs.Screen name="photos" options={{ href: null }} />
-      <Tabs.Screen name="leaderboard" options={{ href: null }} />
-      <Tabs.Screen name="auctions" options={{ href: null }} />
+      <Tabs.Screen name="photos" options={{ href: null, headerShown: false }} />
+      <Tabs.Screen name="leaderboard" options={{ href: null, headerShown: false }} />
+      <Tabs.Screen name="auctions" options={{ href: null, headerShown: false }} />
     </Tabs>
     </View>
   );
