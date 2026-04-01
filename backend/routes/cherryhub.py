@@ -451,3 +451,179 @@ async def get_points_transactions(request: Request, limit: int = 20):
         "transactions": transactions,
         "count": len(transactions)
     }
+
+
+# ============== Status & Points Endpoints ==============
+
+@router.get("/status")
+async def get_cherryhub_status(request: Request):
+    """Get CherryHub connection status for current user"""
+    current_user = await get_authenticated_user(request)
+    
+    cherryhub_member_key = current_user.get("cherryhub_member_key")
+    cherryhub_linked = bool(cherryhub_member_key)
+    
+    return {
+        "connected": cherryhub_linked,
+        "member_key": cherryhub_member_key,
+        "mock_mode": CHERRYHUB_MOCK_MODE,
+        "linked_at": current_user.get("cherryhub_linked_at"),
+        "status": current_user.get("cherryhub_status", "active" if cherryhub_linked else "not_linked")
+    }
+
+
+@router.get("/points")
+async def get_cherryhub_points(request: Request):
+    """Get user's CherryHub points balance"""
+    current_user = await get_authenticated_user(request)
+    
+    member_key = current_user.get("cherryhub_member_key")
+    if not member_key:
+        # Return local points if not linked
+        return {
+            "points": current_user.get("points", 0),
+            "source": "local",
+            "member_key": None,
+            "mock_mode": CHERRYHUB_MOCK_MODE
+        }
+    
+    # Get points from CherryHub (or mock)
+    points_data = await cherryhub_service.get_points_balance(member_key)
+    
+    return {
+        "points": points_data.get("balance", current_user.get("points", 0)),
+        "source": "cherryhub" if not CHERRYHUB_MOCK_MODE else "mock",
+        "member_key": member_key,
+        "mock_mode": CHERRYHUB_MOCK_MODE,
+        "tier": points_data.get("tier"),
+        "lifetime_points": points_data.get("lifetime_points")
+    }
+
+
+class CherryHubRegisterRequest(BaseModel):
+    """Request model for CherryHub registration"""
+    email: EmailStr
+    first_name: str
+    last_name: str
+    phone: Optional[str] = None
+    date_of_birth: Optional[str] = None
+
+
+@router.post("/register")
+async def register_cherryhub_member_endpoint(request: Request, body: CherryHubRegisterRequest):
+    """Register user as a new CherryHub member"""
+    current_user = await get_authenticated_user(request)
+    user_id = current_user["user_id"]
+    
+    # Check if already registered
+    if current_user.get("cherryhub_member_key"):
+        raise HTTPException(status_code=400, detail="Already registered with CherryHub")
+    
+    # Register with CherryHub
+    result = await register_cherryhub_member(
+        email=body.email,
+        first_name=body.first_name,
+        last_name=body.last_name,
+        phone=body.phone,
+        date_of_birth=body.date_of_birth
+    )
+    
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Registration failed"))
+    
+    # Update user with CherryHub data
+    await db.users.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "cherryhub_member_key": result.get("member_key"),
+                "cherryhub_registered_at": datetime.now(timezone.utc).isoformat(),
+                "cherryhub_data": result.get("member_data"),
+                "cherryhub_email": body.email
+            }
+        }
+    )
+    
+    return {
+        "success": True,
+        "member_key": result.get("member_key"),
+        "message": "Successfully registered with CherryHub"
+    }
+
+
+class WalletPassRequest(BaseModel):
+    """Request model for wallet pass generation"""
+    pass_type: str = "apple"  # apple or google
+
+
+@router.post("/wallet-pass")
+async def generate_wallet_pass(request: Request, body: WalletPassRequest):
+    """Generate Apple or Google Wallet pass for membership"""
+    current_user = await get_authenticated_user(request)
+    
+    member_key = current_user.get("cherryhub_member_key")
+    if not member_key:
+        raise HTTPException(status_code=400, detail="Not linked to CherryHub")
+    
+    # Generate wallet pass (mock for now)
+    pass_url = f"https://wallet.lunagroup.com.au/pass/{member_key}?type={body.pass_type}"
+    
+    return {
+        "success": True,
+        "pass_type": body.pass_type,
+        "pass_url": pass_url,
+        "member_key": member_key,
+        "message": f"{'Apple' if body.pass_type == 'apple' else 'Google'} Wallet pass ready"
+    }
+
+
+class BuyPointsRequest(BaseModel):
+    """Request model for buying points"""
+    amount: int  # Points to buy
+    payment_method_id: Optional[str] = None
+
+
+@router.post("/buy-points")
+async def buy_cherryhub_points(request: Request, body: BuyPointsRequest):
+    """Purchase CherryHub points"""
+    current_user = await get_authenticated_user(request)
+    user_id = current_user["user_id"]
+    
+    member_key = current_user.get("cherryhub_member_key")
+    if not member_key:
+        raise HTTPException(status_code=400, detail="Not linked to CherryHub")
+    
+    # Calculate price ($1 = 100 points)
+    price_cents = body.amount  # 1 point = 1 cent
+    
+    # In mock mode, just add the points
+    if CHERRYHUB_MOCK_MODE:
+        current_points = current_user.get("points", 0)
+        new_balance = current_points + body.amount
+        
+        await db.users.update_one(
+            {"user_id": user_id},
+            {
+                "$set": {"points": new_balance},
+                "$push": {
+                    "points_history": {
+                        "amount": body.amount,
+                        "type": "purchase",
+                        "description": f"Purchased {body.amount} points",
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    }
+                }
+            }
+        )
+        
+        return {
+            "success": True,
+            "points_added": body.amount,
+            "new_balance": new_balance,
+            "price_cents": price_cents,
+            "mock_mode": True
+        }
+    
+    # Live mode would integrate with Stripe and CherryHub
+    raise HTTPException(status_code=501, detail="Live point purchase not yet implemented")
+

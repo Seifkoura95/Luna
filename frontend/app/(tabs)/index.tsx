@@ -306,8 +306,8 @@ export default function HomeScreen() {
                   <Ionicons name="sparkles" size={14} color="#fff" />
                 </LinearGradient>
                 <View>
-                  <Text style={styles.tonightPickLabel}>TONIGHT'S PICK</Text>
-                  <Text style={styles.tonightPickSub}>Curated for you</Text>
+                  <Text style={styles.tonightPickLabel}>FOR YOU</Text>
+                  <Text style={styles.tonightPickSub}>Personalized picks</Text>
                 </View>
               </View>
             </View>

@@ -38,7 +38,8 @@ interface EventDetail {
 }
 
 export default function EventDetailPage() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string }>();
+  const id = params?.id;
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [event, setEvent] = useState<EventDetail | null>(null);
@@ -92,7 +93,12 @@ export default function EventDetailPage() {
   const loadAttendees = async () => {
     try {
       const data = await api.getEventAttendees(eventId as string);
-      setAttendees(data);
+      setAttendees({
+        going_count: data?.going_count || 0,
+        interested_count: data?.interested_count || 0,
+        friends_going: data?.friends_going || [],
+        friends_interested: data?.friends_interested || []
+      });
     } catch (err) {
       console.log('Failed to load attendees');
     }
@@ -285,7 +291,7 @@ export default function EventDetailPage() {
                 <Text style={[styles.rsvpButtonText, rsvpStatus === 'going' && styles.rsvpButtonTextActive]}>
                   Going
                 </Text>
-                {attendees.going_count > 0 && (
+                {(attendees?.going_count || 0) > 0 && (
                   <Text style={styles.rsvpCount}>{attendees.going_count}</Text>
                 )}
               </TouchableOpacity>
@@ -303,20 +309,20 @@ export default function EventDetailPage() {
                 <Text style={[styles.rsvpButtonText, rsvpStatus === 'interested' && styles.rsvpButtonTextActive]}>
                   Interested
                 </Text>
-                {attendees.interested_count > 0 && (
+                {(attendees?.interested_count || 0) > 0 && (
                   <Text style={styles.rsvpCount}>{attendees.interested_count}</Text>
                 )}
               </TouchableOpacity>
             </View>
 
             {/* Friends Going */}
-            {(attendees.friends_going.length > 0 || attendees.friends_interested.length > 0) && (
+            {((attendees?.friends_going?.length || 0) > 0 || (attendees?.friends_interested?.length || 0) > 0) && (
               <View style={styles.friendsSection}>
                 <Ionicons name="people" size={16} color={colors.textMuted} />
                 <Text style={styles.friendsText}>
-                  {attendees.friends_going.length > 0 && `${attendees.friends_going.map(f => f.name).join(', ')} ${attendees.friends_going.length === 1 ? 'is' : 'are'} going`}
-                  {attendees.friends_going.length > 0 && attendees.friends_interested.length > 0 && ' • '}
-                  {attendees.friends_interested.length > 0 && `${attendees.friends_interested.length} friend${attendees.friends_interested.length === 1 ? '' : 's'} interested`}
+                  {(attendees?.friends_going?.length || 0) > 0 && `${attendees.friends_going.map(f => f.name).join(', ')} ${attendees.friends_going.length === 1 ? 'is' : 'are'} going`}
+                  {(attendees?.friends_going?.length || 0) > 0 && (attendees?.friends_interested?.length || 0) > 0 && ' • '}
+                  {(attendees?.friends_interested?.length || 0) > 0 && `${attendees.friends_interested.length} friend${attendees.friends_interested.length === 1 ? '' : 's'} interested`}
                 </Text>
               </View>
             )}
