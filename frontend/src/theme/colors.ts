@@ -3,29 +3,29 @@
 
 export const colors = {
   // Primary Backgrounds - Layered depth system
-  bg: '#050507',
-  background: '#050507',
-  surface: '#0F0F14',
-  surfaceElevated: '#161620',
-  surfaceFloat: '#1E1E28',
-  surfaceHover: '#262632',
-  surfaceActive: '#2E2E3C',
+  bg: '#08080C',
+  background: '#08080C',
+  surface: '#151520',
+  surfaceElevated: '#1C1C2A',
+  surfaceFloat: '#242434',
+  surfaceHover: '#2C2C3E',
+  surfaceActive: '#343448',
   
-  // Legacy mappings - BRIGHTENED for better contrast
-  backgroundElevated: '#121218',
-  backgroundCard: '#14141C',
-  backgroundCardHover: '#1C1C26',
+  // Legacy mappings - MUCH BRIGHTER for card visibility
+  backgroundElevated: '#181824',
+  backgroundCard: '#1A1A28',
+  backgroundCardHover: '#242436',
   
-  // True Glassmorphism System - BRIGHTENED
-  glass: 'rgba(20, 20, 28, 0.85)',
-  glassMid: 'rgba(26, 26, 36, 0.88)',
-  glassHigh: 'rgba(32, 32, 44, 0.92)',
-  glassLight: 'rgba(255, 255, 255, 0.05)',
-  glassBorder: 'rgba(255, 255, 255, 0.12)',
-  glassBorderStrong: 'rgba(255, 255, 255, 0.18)',
-  glassBorderSubtle: 'rgba(255, 255, 255, 0.08)',
-  glassHighlight: 'rgba(255, 255, 255, 0.22)',
-  glassShine: 'rgba(255, 255, 255, 0.30)',
+  // True Glassmorphism System - MUCH BRIGHTER
+  glass: 'rgba(28, 28, 42, 0.92)',
+  glassMid: 'rgba(36, 36, 52, 0.94)',
+  glassHigh: 'rgba(44, 44, 62, 0.96)',
+  glassLight: 'rgba(255, 255, 255, 0.08)',
+  glassBorder: 'rgba(255, 255, 255, 0.16)',
+  glassBorderStrong: 'rgba(255, 255, 255, 0.24)',
+  glassBorderSubtle: 'rgba(255, 255, 255, 0.10)',
+  glassHighlight: 'rgba(255, 255, 255, 0.28)',
+  glassShine: 'rgba(255, 255, 255, 0.35)',
   
   // Text - High contrast hierarchy
   text: '#F5F5FA',
@@ -36,14 +36,14 @@ export const colors = {
   textDisabled: 'rgba(245, 245, 250, 0.25)',
   textInverse: '#050507',
   
-  // Border System - Hierarchical - ENHANCED VISIBILITY
-  border: 'rgba(255, 255, 255, 0.12)',
-  borderHover: 'rgba(255, 255, 255, 0.18)',
-  borderStrong: 'rgba(255, 255, 255, 0.25)',
-  borderLight: 'rgba(255, 255, 255, 0.08)',
-  borderAccent: 'rgba(37, 99, 235, 0.50)',
-  borderGold: 'rgba(212, 168, 50, 0.50)',
-  borderCard: 'rgba(255, 255, 255, 0.14)',
+  // Border System - Hierarchical - HIGH VISIBILITY
+  border: 'rgba(255, 255, 255, 0.18)',
+  borderHover: 'rgba(255, 255, 255, 0.25)',
+  borderStrong: 'rgba(255, 255, 255, 0.32)',
+  borderLight: 'rgba(255, 255, 255, 0.12)',
+  borderAccent: 'rgba(37, 99, 235, 0.60)',
+  borderGold: 'rgba(212, 168, 50, 0.60)',
+  borderCard: 'rgba(255, 255, 255, 0.20)',
   
   // Brand Accent - Electric Blue
   accent: '#2563EB',
