@@ -324,7 +324,63 @@ def get_seed_data():
     ]
     
     # Real Events from venues - Using latest Eclipse Brisbane events
+    # Brisbane is UTC+10, so 9pm Brisbane = 11:00 UTC
+    brisbane_tonight_9pm = now.replace(hour=11, minute=0, second=0, microsecond=0) + timedelta(hours=10)  # 9pm Brisbane tonight
+    brisbane_tonight_10pm = now.replace(hour=12, minute=0, second=0, microsecond=0) + timedelta(hours=10)  # 10pm Brisbane tonight
+    
     events = [
+        # TONIGHT - Eclipse Friday Night (9pm Brisbane time)
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "eclipse",
+            "venue_name": "Eclipse",
+            "title": "FRIDAY NIGHT HOUSE PARTY",
+            "description": "Brisbane's hottest Friday night party! House, techno, and good vibes all night long.",
+            "event_date": now + timedelta(hours=8),  # 8 hours from now
+            "event_end_date": now + timedelta(hours=15),  # 15 hours from now
+            "ticket_url": "https://eclipsebrisbane.com.au/tickets",
+            "ticket_price": 25.00,
+            "image_url": "https://images.unsplash.com/photo-1571266028243-d220c6a8b0e9?w=800",
+            "category": "club_night",
+            "featured": True,
+            "featured_artist": {
+                "name": "Resident DJs",
+                "image": "https://images.unsplash.com/photo-1571266028243-d220c6a8b0e9?w=400",
+                "bio": "Eclipse resident DJ crew"
+            }
+        },
+        # TONIGHT - After Dark (10pm Brisbane time)
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "after_dark",
+            "venue_name": "After Dark",
+            "title": "LATE NIGHT SESSIONS",
+            "description": "Underground house and techno all night. No dress code, just good music.",
+            "event_date": now + timedelta(hours=9),  # 9 hours from now
+            "event_end_date": now + timedelta(hours=15),  # 15 hours from now
+            "ticket_url": "https://afterdark.com.au/tickets",
+            "ticket_price": 20.00,
+            "image_url": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800",
+            "category": "club_night",
+            "featured": True,
+            "featured_artist": None
+        },
+        # TONIGHT - Su Casa Happy Hour
+        {
+            "id": str(uuid.uuid4()),
+            "venue_id": "su_casa_brisbane",
+            "venue_name": "Su Casa Brisbane",
+            "title": "FRIDAY HAPPY HOUR",
+            "description": "Kick off your weekend with $8 cocktails and live DJ sets on the rooftop.",
+            "event_date": now + timedelta(hours=5),  # 5 hours from now
+            "event_end_date": now + timedelta(hours=9),  # 9 hours from now
+            "ticket_url": "",
+            "ticket_price": 0,
+            "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800",
+            "category": "happy_hour",
+            "featured": True,
+            "featured_artist": None
+        },
         # Eclipse Events - Real upcoming events
         {
             "id": str(uuid.uuid4()),

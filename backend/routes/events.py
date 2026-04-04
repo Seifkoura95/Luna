@@ -23,7 +23,7 @@ async def get_events(
     limit: int = 20,
     category: Optional[str] = None
 ):
-    """Get events from Eventfinda (real-time data)"""
+    """Get events from Eventfinda (real-time data) with database fallback"""
     try:
         events = await eventfinda_service.get_events(
             location=location,
@@ -31,28 +31,34 @@ async def get_events(
             category=category
         )
         
-        if venue_id:
-            events = [e for e in events if e.get("venue_id") == venue_id]
-        
-        return {
-            "events": events,
-            "total": len(events),
-            "source": "eventfinda",
-            "location": location
-        }
+        # If Eventfinda returns events, use them
+        if events and len(events) > 0:
+            if venue_id:
+                events = [e for e in events if e.get("venue_id") == venue_id]
+            
+            return {
+                "events": events,
+                "total": len(events),
+                "source": "eventfinda",
+                "location": location
+            }
     except Exception as e:
-        logger.error(f"Failed to fetch events: {e}")
-        now = datetime.now(timezone.utc)
-        query = {"event_date": {"$gte": now}}
-        if venue_id:
-            query["venue_id"] = venue_id
-        db_events = await db.events.find(query).sort("event_date", 1).to_list(limit)
-        return {
-            "events": clean_mongo_docs(db_events),
-            "total": len(db_events),
-            "source": "database",
-            "location": location
-        }
+        logger.warning(f"Eventfinda fetch failed: {e}")
+    
+    # Fallback to database events
+    logger.info("Using database events as fallback")
+    now = datetime.now(timezone.utc)
+    query = {"event_date": {"$gte": now - timedelta(hours=6)}}  # Include events from tonight
+    if venue_id:
+        query["venue_id"] = venue_id
+    
+    db_events = await db.events.find(query).sort("event_date", 1).to_list(limit)
+    return {
+        "events": clean_mongo_docs(db_events),
+        "total": len(db_events),
+        "source": "database",
+        "location": location
+    }
 
 
 @router.get("/featured")
@@ -119,36 +125,67 @@ async def get_upcoming_events(location: str = "brisbane", limit: int = 30):
 @router.get("/feed")
 async def get_events_feed(limit: int = 30):
     """Get events feed ONLY for Luna Group venues"""
+    luna_events = []
+    source = "database"
+    
+    # Try Eventfinda first
     try:
         luna_events = await eventfinda_service.get_luna_group_events(limit=limit)
-        
-        today = datetime.now().strftime("%Y-%m-%d")
-        tomorrow_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        
-        tonight_events = [e for e in luna_events if e.get("date") == today]
-        tomorrow_events = [e for e in luna_events if e.get("date") == tomorrow_date]
-        featured = [e for e in luna_events if e.get("is_featured")][:5]
-        
-        return {
-            "tonight": tonight_events[:10],
-            "tomorrow": tomorrow_events[:10],
-            "featured": featured,
-            "upcoming": luna_events[:limit],
-            "total_count": len(luna_events),
-            "source": "eventfinda_luna_filtered",
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }
+        if luna_events and len(luna_events) > 0:
+            source = "eventfinda_luna_filtered"
     except Exception as e:
-        logger.error(f"Failed to fetch Luna Group events feed: {e}")
-        return {
-            "tonight": [],
-            "tomorrow": [],
-            "featured": [],
-            "upcoming": [],
-            "total_count": 0,
-            "source": "eventfinda",
-            "error": str(e)
-        }
+        logger.warning(f"Eventfinda fetch failed: {e}")
+    
+    # Fallback to database events if Eventfinda returns nothing
+    if not luna_events or len(luna_events) == 0:
+        logger.info("Using database events for feed")
+        now = datetime.now(timezone.utc)
+        db_events = await db.events.find(
+            {"event_date": {"$gte": now - timedelta(hours=6)}}
+        ).sort("event_date", 1).to_list(limit)
+        
+        # Convert database events to feed format
+        luna_events = []
+        for e in db_events:
+            event_date = e.get("event_date")
+            if isinstance(event_date, datetime):
+                date_str = event_date.strftime("%Y-%m-%d")
+            else:
+                date_str = str(event_date)[:10] if event_date else ""
+            
+            luna_events.append({
+                "id": str(e.get("id", e.get("_id", ""))),
+                "title": e.get("title", ""),
+                "venue_id": e.get("venue_id", ""),
+                "venue_name": e.get("venue_name", ""),
+                "date": date_str,
+                "time": event_date.strftime("%H:%M") if isinstance(event_date, datetime) else "",
+                "image_url": e.get("image_url", ""),
+                "description": e.get("description", ""),
+                "ticket_price": e.get("ticket_price", 0),
+                "ticket_url": e.get("ticket_url", ""),
+                "category": e.get("category", "event"),
+                "is_featured": e.get("featured", False),
+                "featured_artist": e.get("featured_artist"),
+            })
+        source = "database"
+    
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    tomorrow_date = (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
+    
+    tonight_events = [e for e in luna_events if e.get("date", "")[:10] == today]
+    tomorrow_events = [e for e in luna_events if e.get("date", "")[:10] == tomorrow_date]
+    featured = [e for e in luna_events if e.get("is_featured")][:5]
+    
+    return {
+        "tonight": tonight_events[:10],
+        "tomorrow": tomorrow_events[:10],
+        "featured": featured,
+        "upcoming": luna_events[:limit],
+        "total_count": len(luna_events),
+        "source": source,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
 
 
 @router.get("/search")

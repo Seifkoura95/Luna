@@ -175,8 +175,44 @@ logger.info(f"Loaded {len(ALL_ROUTERS)} modular route modules")
 @api_router.post("/admin/seed")
 async def seed_data():
     """Seed sample data for development"""
-    # This is just a placeholder - actual seeding is handled by startup scripts
-    return {"message": "Data seeding triggered", "success": True}
+    from seed_data import get_seed_data
+    
+    seed = get_seed_data()
+    
+    # Seed events - delete old and insert new
+    await db.events.delete_many({})
+    if seed.get("events"):
+        events_to_insert = []
+        for e in seed["events"]:
+            # Convert datetime objects to ISO strings for consistency
+            event = e.copy()
+            if "event_date" in event and hasattr(event["event_date"], "isoformat"):
+                pass  # Keep datetime object for MongoDB
+            events_to_insert.append(event)
+        await db.events.insert_many(events_to_insert)
+        logger.info(f"Seeded {len(events_to_insert)} events")
+    
+    # Seed rewards
+    if seed.get("rewards"):
+        await db.rewards.delete_many({})
+        await db.rewards.insert_many(seed["rewards"])
+        logger.info(f"Seeded {len(seed['rewards'])} rewards")
+    
+    # Seed auctions
+    if seed.get("auctions"):
+        await db.auctions.delete_many({})
+        await db.auctions.insert_many(seed["auctions"])
+        logger.info(f"Seeded {len(seed['auctions'])} auctions")
+    
+    return {
+        "message": "Data seeding triggered",
+        "success": True,
+        "seeded": {
+            "events": len(seed.get("events", [])),
+            "rewards": len(seed.get("rewards", [])),
+            "auctions": len(seed.get("auctions", []))
+        }
+    }
 
 
 # User stats endpoint
