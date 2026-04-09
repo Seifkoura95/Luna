@@ -68,6 +68,7 @@ class CherryHubTokenManager:
         timeout = aiohttp.ClientTimeout(total=30)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             # First try client_credentials grant (server-to-server)
+            # Request the specific scopes CherryHub requires
             try:
                 async with session.post(
                     CHERRYHUB_AUTH_URL,
@@ -75,7 +76,7 @@ class CherryHubTokenManager:
                         "grant_type": "client_credentials",
                         "client_id": CHERRYHUB_CLIENT_ID,
                         "client_secret": CHERRYHUB_CLIENT_SECRET,
-                        "scope": "api",  # Common scope for API access
+                        "scope": "Members-Points.Manage Members.Read api",
                     },
                     headers={
                         "Content-Type": "application/x-www-form-urlencoded"
