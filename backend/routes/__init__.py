@@ -38,6 +38,11 @@ from routes.crews import router as crews_router
 from routes.safety import router as safety_router
 from routes.location import router as location_router
 from routes.cherryhub import router as cherryhub_router
+from routes.promo import router as promo_router
+from routes.vouchers import router as vouchers_router
+from routes.instagram import router as instagram_router
+from routes.admin import router as admin_router
+from routes.users import router as users_router
 
 # Export all routers for easy importing
 __all__ = [
@@ -107,4 +112,9 @@ ALL_ROUTERS = [
     safety_router,
     location_router,
     cherryhub_router,
+    promo_router,
+    vouchers_router,
+    instagram_router,
+    admin_router,
+    users_router,
 ]

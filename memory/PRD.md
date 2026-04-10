@@ -1651,3 +1651,49 @@ All pages now have consistent scroll behavior without excessive bottom padding.
 
 
 
+
+
+
+---
+
+## Session Updates (December 2025 - Server.py Cleanup & Modular Routes)
+
+### server.py Cleanup ✅ COMPLETE
+**Before**: 681 lines (with duplicate endpoint code)
+**After**: 241 lines (91% reduction from original 7745 lines)
+
+**What was extracted to modular routes:**
+1. `/api/admin/seed` → `routes/admin.py` (new)
+2. `/api/users/stats` → `routes/users.py` (new)
+3. `/api/promo/*` → `routes/promo.py` (new)
+4. `/api/vouchers` → `routes/vouchers.py` (new)
+5. `/api/instagram/*` → `routes/instagram.py` (new)
+6. `/api/venues/{id}` → Already in `routes/venues.py` (removed duplicate)
+
+**New Route Files Created:**
+- `/app/backend/routes/admin.py` - Admin seeding, stats
+- `/app/backend/routes/users.py` - User statistics
+- `/app/backend/routes/promo.py` - Promo code system
+- `/app/backend/routes/vouchers.py` - User vouchers
+- `/app/backend/routes/instagram.py` - Instagram integration
+
+**Final Backend Architecture:**
+- 38 modular route modules in `/app/backend/routes/`
+- server.py contains only: lifespan handler, scheduler, venue-portal static serving, CORS, root endpoint
+
+### Birthday Club Feature ✅ VERIFIED
+**Status**: Already fully implemented - both backend and frontend complete
+- **Backend**: `/app/backend/routes/birthday.py` (355 lines)
+- **Frontend**: `/app/frontend/app/birthday-club.tsx` (739 lines)
+- **Access**: Profile > Quick Actions > Birthday Club
+- **APIs**: `/api/birthday/status`, `/api/birthday/claim/{id}`, `/api/birthday/redeem/{id}`
+- **Rewards**: Free Entry, Free Drink, 250 Bonus Points, 2x Points Week
+
+### Test Results
+- All API endpoints verified working via curl tests
+- Birthday API: Working (shows days until birthday, claimed rewards)
+- Leaderboard API: Working (88 participants, rankings displayed)
+- Promo API: Working (validation returns correct response)
+- Admin Seed: Working (seeds events, rewards, auctions)
+- Users Stats: Working (visits, auctions won, streak)
+
