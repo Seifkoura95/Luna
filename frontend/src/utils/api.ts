@@ -160,6 +160,34 @@ export const api = {
       '/api/auth/reset-password',
       { method: 'POST', body: JSON.stringify({ token, new_password: newPassword }), auth: false }
     ),
+
+  // Logout
+  logout: () =>
+    apiFetch<{ success: boolean; message: string }>(
+      '/api/auth/logout',
+      { method: 'POST' }
+    ),
+
+  logoutAllDevices: () =>
+    apiFetch<{ success: boolean; message: string }>(
+      '/api/auth/logout-all',
+      { method: 'POST' }
+    ),
+
+  // Avatar / Profile Photo
+  uploadAvatar: (imageBase64: string) =>
+    apiFetch<{ success: boolean; avatar_url: string; message: string }>(
+      '/api/auth/avatar',
+      { method: 'POST', body: JSON.stringify({ image: imageBase64 }) }
+    ),
+
+  deleteAvatar: () =>
+    apiFetch<{ success: boolean; message: string }>(
+      '/api/auth/avatar',
+      { method: 'DELETE' }
+    ),
+
+  getAvatarUrl: (userId: string) => `/api/auth/avatar/${userId}`,
   
   // QR & Check-in
   getQRData: (venueId: string) => apiFetch<{ qr_data: string; expires_at: number }>(`/api/checkin/qr?venue_id=${venueId}`),

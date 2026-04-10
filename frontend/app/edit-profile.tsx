@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
@@ -21,6 +22,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBackground } from '../src/components/AppBackground';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 
 const MUSIC_GENRES = [
   'house', 'techno', 'hip-hop', 'rnb', 'pop', 'latin', 'edm', 'dnb', 'disco', 'afrobeats', 'rock', 'indie'
@@ -39,6 +41,8 @@ export default function EditProfileScreen() {
   
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
   
   // Form state
   const [name, setName] = useState(user?.name || '');
@@ -212,6 +216,103 @@ export default function EditProfileScreen() {
     return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
+  const handlePickAvatar = async () => {
+    try {
+      // Request permission
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'We need camera roll permissions to upload your photo.');
+        return;
+      }
+
+      // Pick image
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (result.canceled || !result.assets || !result.assets[0]) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      
+      if (!asset.base64) {
+        Alert.alert('Error', 'Failed to process image. Please try again.');
+        return;
+      }
+
+      setUploadingAvatar(true);
+
+      // Get mime type
+      const uri = asset.uri;
+      const ext = uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const mimeType = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+      
+      // Create data URL
+      const imageData = `data:${mimeType};base64,${asset.base64}`;
+
+      // Upload
+      const response = await api.uploadAvatar(imageData);
+      
+      if (response.success) {
+        setAvatarUrl(response.avatar_url);
+        // Update user in store
+        if (user) {
+          setUser({ ...user, avatar_url: response.avatar_url });
+        }
+        Alert.alert('Success', 'Profile photo updated!');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to upload photo');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    Alert.alert(
+      'Remove Photo',
+      'Are you sure you want to remove your profile photo?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setUploadingAvatar(true);
+              const response = await api.deleteAvatar();
+              if (response.success) {
+                setAvatarUrl('');
+                if (user) {
+                  setUser({ ...user, avatar_url: undefined });
+                }
+              }
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to remove photo');
+            } finally {
+              setUploadingAvatar(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Get full avatar URL
+  const getAvatarSource = () => {
+    if (!avatarUrl) return null;
+    // If it's a relative URL, prepend the API base
+    if (avatarUrl.startsWith('/api/')) {
+      return { uri: `${process.env.EXPO_PUBLIC_API_URL || ''}${avatarUrl}` };
+    }
+    return { uri: avatarUrl };
+  };
+
   return (
     <View style={styles.container}>
       <AppBackground />
@@ -249,17 +350,45 @@ export default function EditProfileScreen() {
         >
           {/* Profile Photo Section */}
           <View style={styles.photoSection}>
-            <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={[colors.accent, colors.accentDark]}
-                style={styles.avatarGradient}
-              >
-                <Text style={styles.avatarText}>
-                  {name ? name.charAt(0).toUpperCase() : '?'}
-                </Text>
-              </LinearGradient>
-            </View>
-            <Text style={styles.photoHint}>Tap to change photo</Text>
+            <TouchableOpacity 
+              style={styles.avatarContainer}
+              onPress={handlePickAvatar}
+              disabled={uploadingAvatar}
+              activeOpacity={0.8}
+            >
+              {uploadingAvatar ? (
+                <View style={styles.avatarLoading}>
+                  <ActivityIndicator size="large" color={colors.accent} />
+                </View>
+              ) : avatarUrl && getAvatarSource() ? (
+                <Image 
+                  source={getAvatarSource()!} 
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <LinearGradient
+                  colors={[colors.accent, colors.accentDark]}
+                  style={styles.avatarGradient}
+                >
+                  <Text style={styles.avatarText}>
+                    {name ? name.charAt(0).toUpperCase() : '?'}
+                  </Text>
+                </LinearGradient>
+              )}
+              <View style={styles.avatarEditBadge}>
+                <Ionicons name="camera" size={14} color="#FFFFFF" />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handlePickAvatar} disabled={uploadingAvatar}>
+              <Text style={styles.photoHint}>
+                {uploadingAvatar ? 'Uploading...' : 'Tap to change photo'}
+              </Text>
+            </TouchableOpacity>
+            {avatarUrl && (
+              <TouchableOpacity onPress={handleDeleteAvatar} disabled={uploadingAvatar}>
+                <Text style={styles.removePhotoHint}>Remove photo</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Basic Info Section */}
@@ -648,6 +777,7 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginBottom: spacing.sm,
+    position: 'relative',
   },
   avatarGradient: {
     width: 100,
@@ -655,6 +785,32 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  avatarLoading: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: colors.bg,
   },
   avatarText: {
     fontSize: 40,
@@ -664,6 +820,11 @@ const styles = StyleSheet.create({
   photoHint: {
     fontSize: 14,
     color: colors.textMuted,
+  },
+  removePhotoHint: {
+    fontSize: 13,
+    color: colors.error,
+    marginTop: 4,
   },
   section: {
     backgroundColor: colors.glass,

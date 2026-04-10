@@ -650,3 +650,253 @@ async def reset_password(request: Request):
         "success": True,
         "message": "Password has been reset successfully. You can now log in with your new password."
     }
+
+
+
+# ========== LOGOUT / TOKEN INVALIDATION ==========
+
+@router.post("/logout")
+async def logout(request: Request):
+    """
+    Logout user and invalidate their current token.
+    Adds token to blacklist so it can't be used again.
+    """
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user_id = current_user["user_id"]
+    
+    # Extract token from header
+    token = None
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+    
+    if token:
+        # Add token to blacklist collection
+        await db.token_blacklist.insert_one({
+            "token": token,
+            "user_id": user_id,
+            "invalidated_at": datetime.now(timezone.utc),
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=7)  # Keep for token expiry period
+        })
+        
+        # Create TTL index if not exists (tokens auto-delete after expiry)
+        try:
+            await db.token_blacklist.create_index("expires_at", expireAfterSeconds=0)
+        except:
+            pass  # Index might already exist
+    
+    logger.info(f"User logged out: {user_id[:8]}...")
+    
+    return {
+        "success": True,
+        "message": "Logged out successfully"
+    }
+
+
+@router.post("/logout-all")
+async def logout_all_devices(request: Request):
+    """
+    Logout user from all devices by incrementing their token version.
+    All existing tokens become invalid.
+    """
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user_id = current_user["user_id"]
+    
+    # Increment token version - all tokens with old version become invalid
+    await db.users.update_one(
+        {"user_id": user_id},
+        {
+            "$inc": {"token_version": 1},
+            "$set": {"all_tokens_invalidated_at": datetime.now(timezone.utc)}
+        }
+    )
+    
+    logger.info(f"All sessions invalidated for user: {user_id[:8]}...")
+    
+    return {
+        "success": True,
+        "message": "Logged out from all devices successfully"
+    }
+
+
+# ========== AVATAR / PROFILE PHOTO ==========
+
+import base64
+import os
+from pathlib import Path
+
+UPLOAD_DIR = Path(__file__).parent.parent / "uploads" / "avatars"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5MB
+
+
+@router.post("/avatar")
+async def upload_avatar(request: Request):
+    """
+    Upload a profile avatar image.
+    Accepts base64 encoded image data or multipart form data.
+    """
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user_id = current_user["user_id"]
+    
+    content_type = request.headers.get("content-type", "")
+    
+    if "application/json" in content_type:
+        # Handle base64 encoded image
+        try:
+            body = await request.json()
+            image_data = body.get("image")
+            
+            if not image_data:
+                raise HTTPException(status_code=400, detail="No image data provided")
+            
+            # Parse data URL if present
+            if image_data.startswith("data:"):
+                # Format: data:image/jpeg;base64,/9j/4AAQ...
+                header, encoded = image_data.split(",", 1)
+                mime_type = header.split(":")[1].split(";")[0]
+            else:
+                encoded = image_data
+                mime_type = "image/jpeg"  # Default
+            
+            if mime_type not in ALLOWED_IMAGE_TYPES:
+                raise HTTPException(status_code=400, detail=f"Invalid image type: {mime_type}")
+            
+            # Decode base64
+            try:
+                image_bytes = base64.b64decode(encoded)
+            except:
+                raise HTTPException(status_code=400, detail="Invalid base64 encoding")
+            
+            if len(image_bytes) > MAX_AVATAR_SIZE:
+                raise HTTPException(status_code=400, detail="Image too large. Max 5MB allowed.")
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid request: {str(e)}")
+    
+    elif "multipart/form-data" in content_type:
+        # Handle multipart form upload
+        from fastapi import UploadFile
+        form = await request.form()
+        file = form.get("avatar") or form.get("image") or form.get("file")
+        
+        if not file:
+            raise HTTPException(status_code=400, detail="No file uploaded")
+        
+        mime_type = file.content_type
+        if mime_type not in ALLOWED_IMAGE_TYPES:
+            raise HTTPException(status_code=400, detail=f"Invalid image type: {mime_type}")
+        
+        image_bytes = await file.read()
+        
+        if len(image_bytes) > MAX_AVATAR_SIZE:
+            raise HTTPException(status_code=400, detail="Image too large. Max 5MB allowed.")
+    
+    else:
+        raise HTTPException(status_code=400, detail="Content-Type must be application/json or multipart/form-data")
+    
+    # Generate filename
+    ext = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+        "image/gif": ".gif"
+    }.get(mime_type, ".jpg")
+    
+    filename = f"{user_id}{ext}"
+    filepath = UPLOAD_DIR / filename
+    
+    # Delete old avatar if exists (different extension)
+    for old_file in UPLOAD_DIR.glob(f"{user_id}.*"):
+        try:
+            old_file.unlink()
+        except:
+            pass
+    
+    # Save new avatar
+    with open(filepath, "wb") as f:
+        f.write(image_bytes)
+    
+    # Generate avatar URL
+    avatar_url = f"/api/auth/avatar/{user_id}"
+    
+    # Update user record
+    await db.users.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "avatar_url": avatar_url,
+                "avatar_updated_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    logger.info(f"Avatar uploaded for user: {user_id[:8]}...")
+    
+    return {
+        "success": True,
+        "avatar_url": avatar_url,
+        "message": "Avatar uploaded successfully"
+    }
+
+
+@router.get("/avatar/{user_id}")
+async def get_avatar(user_id: str):
+    """
+    Get a user's avatar image.
+    Returns the image file directly.
+    """
+    from fastapi.responses import FileResponse
+    
+    # Find avatar file
+    for ext in [".jpg", ".png", ".webp", ".gif"]:
+        filepath = UPLOAD_DIR / f"{user_id}{ext}"
+        if filepath.exists():
+            media_type = {
+                ".jpg": "image/jpeg",
+                ".png": "image/png",
+                ".webp": "image/webp",
+                ".gif": "image/gif"
+            }.get(ext, "image/jpeg")
+            return FileResponse(filepath, media_type=media_type)
+    
+    # Return default avatar or 404
+    raise HTTPException(status_code=404, detail="Avatar not found")
+
+
+@router.delete("/avatar")
+async def delete_avatar(request: Request):
+    """
+    Delete user's avatar and reset to default.
+    """
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user_id = current_user["user_id"]
+    
+    # Delete avatar files
+    for ext in [".jpg", ".png", ".webp", ".gif"]:
+        filepath = UPLOAD_DIR / f"{user_id}{ext}"
+        try:
+            if filepath.exists():
+                filepath.unlink()
+        except:
+            pass
+    
+    # Update user record
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$unset": {"avatar_url": "", "avatar_updated_at": ""}}
+    )
+    
+    logger.info(f"Avatar deleted for user: {user_id[:8]}...")
+    
+    return {
+        "success": True,
+        "message": "Avatar deleted successfully"
+    }
