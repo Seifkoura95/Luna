@@ -964,7 +964,7 @@ const styles = StyleSheet.create({
   aiPickBadgeText: {
     fontSize: 10,
     fontWeight: '600',
-    color: colors.accent,
+    color: '#FFFFFF',
   },
   tonightPickEventTitle: {
     fontSize: 14,
