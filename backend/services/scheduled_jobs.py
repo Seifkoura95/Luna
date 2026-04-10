@@ -79,6 +79,15 @@ class ScheduledJobsManager:
             replace_existing=True
         )
         
+        # Birthday reminders - Daily at 10 AM
+        self.scheduler.add_job(
+            self.send_birthday_reminders,
+            CronTrigger(hour=10, minute=0),
+            id="birthday_reminders",
+            name="Birthday Reminders",
+            replace_existing=True
+        )
+        
         self.scheduler.start()
         self.is_running = True
         logger.info("Scheduled jobs manager started")
@@ -606,3 +615,133 @@ async def _send_wallet_pass_expiry_reminders_impl():
 
 # Monkey-patch the method onto the class
 ScheduledJobsManager.send_wallet_pass_expiry_reminders = lambda self: _send_wallet_pass_expiry_reminders_impl()
+
+
+async def _send_birthday_reminders_impl():
+    """
+    Send push notifications for users whose birthday is in 3 days.
+    Encourages users to visit and claim their Birthday Club rewards.
+    Runs daily at 10 AM.
+    """
+    logger.info("Starting birthday reminder check...")
+    
+    try:
+        now = datetime.now(timezone.utc)
+        today = now.date()
+        
+        # Calculate the target date (3 days from now)
+        target_date = today + timedelta(days=3)
+        target_month = target_date.month
+        target_day = target_date.day
+        
+        # Find all users with a date_of_birth field
+        all_users = await db.users.find({
+            "date_of_birth": {"$exists": True, "$ne": None},
+            "push_tokens": {"$exists": True, "$ne": []}
+        }).to_list(1000)
+        
+        reminders_sent = 0
+        birthday_users = []
+        
+        for user in all_users:
+            user_id = user.get("user_id")
+            dob = user.get("date_of_birth")
+            
+            # Parse the date of birth
+            if isinstance(dob, str):
+                try:
+                    # Try various date formats
+                    for fmt in ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"]:
+                        try:
+                            dob_date = datetime.strptime(dob, fmt).date()
+                            break
+                        except ValueError:
+                            continue
+                    else:
+                        continue  # Skip if no format matched
+                except:
+                    continue
+            elif isinstance(dob, datetime):
+                dob_date = dob.date()
+            else:
+                continue
+            
+            # Check if birthday matches target date (month and day)
+            if dob_date.month == target_month and dob_date.day == target_day:
+                birthday_users.append(user)
+                
+                # Check if we already sent a reminder this year
+                reminder_key = f"birthday_reminder_{now.year}_{user_id}"
+                existing_reminder = await db.notification_logs.find_one({
+                    "key": reminder_key
+                })
+                
+                if existing_reminder:
+                    continue  # Already reminded
+                
+                # Send push notification
+                user_name = user.get("name", "").split()[0] or "there"
+                
+                for token in user.get("push_tokens", []):
+                    try:
+                        await send_push_notification_to_token(
+                            token=token,
+                            title="🎂 Your Birthday is Coming!",
+                            body=f"Hey {user_name}! Your birthday is in 3 days. Visit the Birthday Club to claim your FREE rewards!",
+                            data={
+                                "type": "birthday_reminder",
+                                "screen": "birthday-club",
+                                "days_until": 3
+                            }
+                        )
+                        reminders_sent += 1
+                    except Exception as e:
+                        logger.error(f"Birthday reminder push failed for {user_id}: {e}")
+                
+                # Log that we sent the reminder
+                await db.notification_logs.insert_one({
+                    "key": reminder_key,
+                    "user_id": user_id,
+                    "type": "birthday_reminder",
+                    "sent_at": now,
+                    "year": now.year
+                })
+                
+                # Also create in-app notification
+                await db.notifications.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "type": "birthday_reminder",
+                    "title": "🎂 Birthday Coming Up!",
+                    "message": "Your birthday is in 3 days! Visit the Birthday Club to see your FREE rewards waiting for you.",
+                    "data": {"screen": "birthday-club"},
+                    "read": False,
+                    "created_at": now
+                })
+        
+        logger.info(f"Birthday reminder check complete: Found {len(birthday_users)} users with birthdays in 3 days, sent {reminders_sent} reminders")
+        
+        # Store job run record
+        await db.scheduled_job_runs.insert_one({
+            "job_name": "birthday_reminders",
+            "completed_at": now,
+            "status": "completed",
+            "results": {
+                "users_with_birthday": len(birthday_users),
+                "reminders_sent": reminders_sent,
+                "target_date": target_date.isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Birthday reminder job failed: {e}")
+        await db.scheduled_job_runs.insert_one({
+            "job_name": "birthday_reminders",
+            "completed_at": datetime.now(timezone.utc),
+            "status": "failed",
+            "error": str(e)
+        })
+
+
+# Monkey-patch the birthday reminder method onto the class
+ScheduledJobsManager.send_birthday_reminders = lambda self: _send_birthday_reminders_impl()

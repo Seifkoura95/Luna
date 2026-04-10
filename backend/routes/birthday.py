@@ -352,3 +352,102 @@ async def get_birthday_wallet_passes(authorization: str = Header(None)):
     ).sort("created_at", -1).to_list(50)
     
     return {"passes": passes}
+
+
+
+@router.post("/admin/trigger-reminders")
+async def trigger_birthday_reminders(authorization: Optional[str] = Header(None)):
+    """
+    Admin endpoint to manually trigger birthday reminder job.
+    Useful for testing the scheduled job.
+    """
+    user = get_current_user(authorization)
+    user_record = await db.users.find_one({"user_id": user.get("user_id")})
+    
+    # Only allow admin/staff to trigger
+    if not user_record or user_record.get("role") not in ["admin", "staff"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    from services.scheduled_jobs import _send_birthday_reminders_impl
+    
+    try:
+        await _send_birthday_reminders_impl()
+        
+        # Get the latest job run result
+        latest_run = await db.scheduled_job_runs.find_one(
+            {"job_name": "birthday_reminders"},
+            sort=[("completed_at", -1)]
+        )
+        
+        if latest_run:
+            latest_run.pop("_id", None)
+            return {
+                "success": True,
+                "message": "Birthday reminder job executed successfully",
+                "results": latest_run.get("results", {})
+            }
+        
+        return {
+            "success": True,
+            "message": "Birthday reminder job executed"
+        }
+        
+    except Exception as e:
+        logger.error(f"Manual birthday reminder trigger failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/upcoming")
+async def get_upcoming_birthdays(authorization: Optional[str] = Header(None), days: int = 7):
+    """
+    Get users with upcoming birthdays (for admin dashboard).
+    Returns users whose birthdays fall within the next N days.
+    """
+    user = get_current_user(authorization)
+    user_record = await db.users.find_one({"user_id": user.get("user_id")})
+    
+    # Only allow admin/staff
+    if not user_record or user_record.get("role") not in ["admin", "staff"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    today = datetime.now(timezone.utc).date()
+    upcoming = []
+    
+    # Get all users with DOB
+    all_users = await db.users.find({
+        "date_of_birth": {"$exists": True, "$ne": None}
+    }, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "date_of_birth": 1}).to_list(1000)
+    
+    for u in all_users:
+        dob = u.get("date_of_birth")
+        if isinstance(dob, str):
+            try:
+                dob_date = datetime.strptime(dob, "%Y-%m-%d").date()
+            except:
+                continue
+        elif isinstance(dob, datetime):
+            dob_date = dob.date()
+        else:
+            continue
+        
+        # Check each of the next N days
+        for delta in range(days + 1):
+            check_date = today + timedelta(days=delta)
+            if dob_date.month == check_date.month and dob_date.day == check_date.day:
+                upcoming.append({
+                    "user_id": u.get("user_id"),
+                    "name": u.get("name"),
+                    "email": u.get("email"),
+                    "birthday": dob_date.strftime("%B %d"),
+                    "days_until": delta
+                })
+                break
+    
+    # Sort by days until birthday
+    upcoming.sort(key=lambda x: x["days_until"])
+    
+    return {
+        "upcoming_birthdays": upcoming,
+        "total": len(upcoming),
+        "days_checked": days
+    }

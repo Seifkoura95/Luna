@@ -1697,3 +1697,23 @@ All pages now have consistent scroll behavior without excessive bottom padding.
 - Admin Seed: Working (seeds events, rewards, auctions)
 - Users Stats: Working (visits, auctions won, streak)
 
+### Birthday Push Notifications ✅ COMPLETE (December 2025)
+**Implementation:**
+- Added scheduled job `birthday_reminders` that runs daily at 10 AM
+- Sends push notifications to users whose birthday is in 3 days
+- Creates in-app notifications alongside push notifications
+- Prevents duplicate reminders within the same year via `notification_logs` collection
+
+**New API Endpoints:**
+- `POST /api/birthday/admin/trigger-reminders` - Manual trigger for testing (admin only)
+- `GET /api/birthday/upcoming?days=7` - Get users with upcoming birthdays (admin only)
+
+**Notification Content:**
+- Title: "🎂 Your Birthday is Coming!"
+- Body: "Hey {name}! Your birthday is in 3 days. Visit the Birthday Club to claim your FREE rewards!"
+- Deep links to Birthday Club screen
+
+**Files Modified:**
+- `/app/backend/services/scheduled_jobs.py` - Added `send_birthday_reminders` job and implementation
+- `/app/backend/routes/birthday.py` - Added admin trigger and upcoming birthdays endpoints
+
