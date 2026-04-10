@@ -3,8 +3,8 @@
 
 export const colors = {
   // Primary Backgrounds - Layered depth system
-  bg: '#0C0C12',
-  background: '#0C0C12',
+  bg: '#101018',
+  background: '#101018',
   surface: '#181824',
   surfaceElevated: '#202030',
   surfaceFloat: '#282840',
@@ -28,14 +28,14 @@ export const colors = {
   glass: '#1E1E30',
   glassMid: '#252540',
   glassHigh: '#2C2C4A',
-  glassAccent: 'rgba(37, 99, 235, 0.15)',
-  glassGold: 'rgba(212, 168, 50, 0.12)',
-  glassLight: 'rgba(255, 255, 255, 0.10)',
-  glassBorder: 'rgba(255, 255, 255, 0.20)',
-  glassBorderStrong: 'rgba(255, 255, 255, 0.28)',
-  glassBorderSubtle: 'rgba(255, 255, 255, 0.14)',
-  glassHighlight: 'rgba(255, 255, 255, 0.32)',
-  glassShine: 'rgba(255, 255, 255, 0.40)',
+  glassAccent: 'rgba(37, 99, 235, 0.18)',
+  glassGold: 'rgba(212, 168, 50, 0.14)',
+  glassLight: 'rgba(255, 255, 255, 0.12)',
+  glassBorder: 'rgba(255, 255, 255, 0.28)',
+  glassBorderStrong: 'rgba(255, 255, 255, 0.38)',
+  glassBorderSubtle: 'rgba(255, 255, 255, 0.18)',
+  glassHighlight: 'rgba(255, 255, 255, 0.38)',
+  glassShine: 'rgba(255, 255, 255, 0.45)',
   
   // Text - High contrast hierarchy
   text: '#F5F5FA',
@@ -47,13 +47,13 @@ export const colors = {
   textInverse: '#050507',
   
   // Border System - Hierarchical - HIGH VISIBILITY
-  border: 'rgba(255, 255, 255, 0.18)',
-  borderHover: 'rgba(255, 255, 255, 0.25)',
-  borderStrong: 'rgba(255, 255, 255, 0.32)',
-  borderLight: 'rgba(255, 255, 255, 0.12)',
-  borderAccent: 'rgba(37, 99, 235, 0.60)',
-  borderGold: 'rgba(212, 168, 50, 0.60)',
-  borderCard: 'rgba(255, 255, 255, 0.20)',
+  border: 'rgba(255, 255, 255, 0.22)',
+  borderHover: 'rgba(255, 255, 255, 0.30)',
+  borderStrong: 'rgba(255, 255, 255, 0.38)',
+  borderLight: 'rgba(255, 255, 255, 0.15)',
+  borderAccent: 'rgba(37, 99, 235, 0.65)',
+  borderGold: 'rgba(212, 168, 50, 0.65)',
+  borderCard: 'rgba(255, 255, 255, 0.28)',
   
   // Brand Accent - Electric Blue
   accent: '#2563EB',
