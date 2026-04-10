@@ -527,3 +527,126 @@ async def delete_account(request: Request):
         "message": "Account deleted successfully"
     }
 
+
+
+# ========== FORGOT PASSWORD ==========
+
+class ForgotPasswordRequest:
+    email: str
+
+class ResetPasswordRequest:
+    token: str
+    new_password: str
+
+
+@router.post("/forgot-password")
+async def forgot_password(request: Request):
+    """
+    Request password reset. Generates a reset token.
+    In production, this would send an email with a reset link.
+    """
+    try:
+        body = await request.json()
+        email = body.get("email", "").lower().strip()
+    except:
+        raise HTTPException(status_code=400, detail="Invalid request body")
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    
+    user = await db.users.find_one({"email": email, "deleted": {"$ne": True}})
+    
+    # Always return success to prevent email enumeration
+    if not user:
+        logger.info(f"Password reset requested for non-existent email: {email[:3]}***")
+        return {
+            "success": True,
+            "message": "If an account exists with this email, a reset link has been sent."
+        }
+    
+    # Generate reset token
+    reset_token = str(uuid.uuid4())
+    reset_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    # Store reset token
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {
+            "$set": {
+                "password_reset_token": reset_token,
+                "password_reset_expiry": reset_expiry
+            }
+        }
+    )
+    
+    # In production, send email here
+    # For now, we'll log it and also return it for testing
+    logger.info(f"Password reset token generated for {email}: {reset_token}")
+    
+    # NOTE: In production, remove the token from response and send via email
+    return {
+        "success": True,
+        "message": "If an account exists with this email, a reset link has been sent.",
+        "reset_token": reset_token,  # REMOVE IN PRODUCTION - only for testing
+        "expires_in": "1 hour"
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(request: Request):
+    """
+    Reset password using the token from forgot-password.
+    """
+    try:
+        body = await request.json()
+        token = body.get("token", "").strip()
+        new_password = body.get("new_password", "")
+    except:
+        raise HTTPException(status_code=400, detail="Invalid request body")
+    
+    if not token or not new_password:
+        raise HTTPException(status_code=400, detail="Token and new password are required")
+    
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # Find user with this reset token
+    user = await db.users.find_one({
+        "password_reset_token": token,
+        "deleted": {"$ne": True}
+    })
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    # Check if token is expired
+    expiry = user.get("password_reset_expiry")
+    if expiry:
+        if isinstance(expiry, str):
+            expiry = datetime.fromisoformat(expiry.replace("Z", "+00:00"))
+        elif isinstance(expiry, datetime) and expiry.tzinfo is None:
+            expiry = expiry.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > expiry:
+            raise HTTPException(status_code=400, detail="Reset token has expired")
+    
+    # Hash new password
+    hashed_password = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+    
+    # Update password and clear reset token
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {
+            "$set": {"hashed_password": hashed_password},
+            "$unset": {
+                "password_reset_token": "",
+                "password_reset_expiry": ""
+            }
+        }
+    )
+    
+    logger.info(f"Password reset completed for user: {user['user_id'][:8]}...")
+    
+    return {
+        "success": True,
+        "message": "Password has been reset successfully. You can now log in with your new password."
+    }

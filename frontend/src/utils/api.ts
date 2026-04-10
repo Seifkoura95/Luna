@@ -147,6 +147,19 @@ export const api = {
       '/api/auth/account',
       { method: 'DELETE' }
     ),
+
+  // Password Reset
+  forgotPassword: (email: string) =>
+    apiFetch<{ success: boolean; message: string; reset_token?: string }>(
+      '/api/auth/forgot-password',
+      { method: 'POST', body: JSON.stringify({ email }), auth: false }
+    ),
+
+  resetPassword: (token: string, newPassword: string) =>
+    apiFetch<{ success: boolean; message: string }>(
+      '/api/auth/reset-password',
+      { method: 'POST', body: JSON.stringify({ token, new_password: newPassword }), auth: false }
+    ),
   
   // QR & Check-in
   getQRData: (venueId: string) => apiFetch<{ qr_data: string; expires_at: number }>(`/api/checkin/qr?venue_id=${venueId}`),

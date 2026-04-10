@@ -23,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { AppBackground } from '../src/components/AppBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Modal } from 'react-native';
 
 
 const { width, height } = Dimensions.get('window');
@@ -42,6 +43,77 @@ export default function LoginScreen() {
   const [cherryHubEmail, setCherryHubEmail] = useState('');
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
+  
+  // Forgot Password State
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [resetToken, setResetToken] = useState('');
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
+    
+    setForgotLoading(true);
+    try {
+      const result = await api.forgotPassword(forgotEmail);
+      if (result.success) {
+        // In production, the token would be sent via email
+        // For testing, we show it directly
+        if (result.reset_token) {
+          setResetToken(result.reset_token);
+          setShowResetForm(true);
+          Alert.alert('Reset Link Sent', 'Enter your new password below to reset.');
+        } else {
+          Alert.alert('Success', result.message);
+          setShowForgotPassword(false);
+        }
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to send reset link');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!newPassword || !confirmNewPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    if (newPassword.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+    
+    setResetLoading(true);
+    try {
+      const result = await api.resetPassword(resetToken, newPassword);
+      if (result.success) {
+        Alert.alert('Success', 'Your password has been reset. You can now log in.');
+        setShowForgotPassword(false);
+        setShowResetForm(false);
+        setForgotEmail('');
+        setResetToken('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to reset password');
+    } finally {
+      setResetLoading(false);
+    }
+  };
   
 
   const handleAuth = async () => {
@@ -317,6 +389,17 @@ export default function LoginScreen() {
                   </LinearGradient>
                 </TouchableOpacity>
 
+                {/* Forgot Password Link - Login Mode Only */}
+                {isLogin && (
+                  <TouchableOpacity
+                    style={styles.forgotPasswordLink}
+                    onPress={() => setShowForgotPassword(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
+                  </TouchableOpacity>
+                )}
+
                 {/* CherryHub Login Section - Login Mode Only */}
                 {isLogin && (
                   <View style={styles.cherryHubSection}>
@@ -405,6 +488,143 @@ export default function LoginScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
+
+      {/* Forgot Password Modal */}
+      <Modal
+        visible={showForgotPassword}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowForgotPassword(false);
+          setShowResetForm(false);
+          setForgotEmail('');
+          setResetToken('');
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={[colors.backgroundCard, colors.background]}
+              style={styles.modalGradient}
+            >
+              <TouchableOpacity
+                style={styles.modalClose}
+                onPress={() => {
+                  setShowForgotPassword(false);
+                  setShowResetForm(false);
+                }}
+              >
+                <Ionicons name="close" size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <View style={styles.modalHeader}>
+                <View style={styles.modalIconContainer}>
+                  <Ionicons name={showResetForm ? "key" : "mail"} size={32} color={colors.accent} />
+                </View>
+                <Text style={styles.modalTitle}>
+                  {showResetForm ? 'Reset Password' : 'Forgot Password'}
+                </Text>
+              </View>
+
+              {!showResetForm ? (
+                <>
+                  <Text style={styles.modalMessage}>
+                    Enter your email address and we'll send you a link to reset your password.
+                  </Text>
+
+                  <View style={styles.modalInputContainer}>
+                    <Ionicons name="mail-outline" size={20} color={colors.textMuted} style={styles.modalInputIcon} />
+                    <TextInput
+                      style={styles.modalInput}
+                      placeholder="Enter your email"
+                      placeholderTextColor={colors.textMuted}
+                      value={forgotEmail}
+                      onChangeText={setForgotEmail}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, forgotLoading && styles.modalButtonDisabled]}
+                    onPress={handleForgotPassword}
+                    disabled={forgotLoading}
+                  >
+                    <LinearGradient
+                      colors={forgotLoading ? ['#333', '#222'] : [colors.accent, colors.accentDark]}
+                      style={styles.modalButtonGradient}
+                    >
+                      <Text style={styles.modalButtonText}>
+                        {forgotLoading ? 'Sending...' : 'Send Reset Link'}
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.modalMessage}>
+                    Enter your new password below.
+                  </Text>
+
+                  <View style={styles.modalInputContainer}>
+                    <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.modalInputIcon} />
+                    <TextInput
+                      style={styles.modalInput}
+                      placeholder="New password"
+                      placeholderTextColor={colors.textMuted}
+                      value={newPassword}
+                      onChangeText={setNewPassword}
+                      secureTextEntry
+                    />
+                  </View>
+
+                  <View style={styles.modalInputContainer}>
+                    <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.modalInputIcon} />
+                    <TextInput
+                      style={styles.modalInput}
+                      placeholder="Confirm new password"
+                      placeholderTextColor={colors.textMuted}
+                      value={confirmNewPassword}
+                      onChangeText={setConfirmNewPassword}
+                      secureTextEntry
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, resetLoading && styles.modalButtonDisabled]}
+                    onPress={handleResetPassword}
+                    disabled={resetLoading}
+                  >
+                    <LinearGradient
+                      colors={resetLoading ? ['#333', '#222'] : [colors.accent, colors.accentDark]}
+                      style={styles.modalButtonGradient}
+                    >
+                      <Text style={styles.modalButtonText}>
+                        {resetLoading ? 'Resetting...' : 'Reset Password'}
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              <TouchableOpacity
+                style={styles.modalBackLink}
+                onPress={() => {
+                  if (showResetForm) {
+                    setShowResetForm(false);
+                  } else {
+                    setShowForgotPassword(false);
+                  }
+                }}
+              >
+                <Text style={styles.modalBackText}>
+                  {showResetForm ? 'Back' : 'Back to Login'}
+                </Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -659,5 +879,111 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.5,
+  },
+  // Forgot Password Styles
+  forgotPasswordLink: {
+    alignItems: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    color: colors.accent,
+    fontWeight: '500',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+  },
+  modalGradient: {
+    padding: spacing.lg,
+  },
+  modalClose: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 8,
+    zIndex: 1,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  modalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.accent + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: spacing.lg,
+  },
+  modalInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  modalInputIcon: {
+    marginRight: spacing.sm,
+  },
+  modalInput: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  modalButton: {
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+  },
+  modalButtonDisabled: {
+    opacity: 0.6,
+  },
+  modalButtonGradient: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  modalBackLink: {
+    alignItems: 'center',
+    marginTop: spacing.lg,
+  },
+  modalBackText: {
+    fontSize: 14,
+    color: colors.textMuted,
   },
 });
