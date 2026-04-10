@@ -192,10 +192,11 @@ export default function AIConcierge() {
 
       {/* Input */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        style={styles.keyboardAvoid}
       >
-        <View style={[styles.inputContainer, { paddingBottom: insets.bottom + spacing.sm }]}>
+        <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
@@ -243,6 +244,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
+  },
+  keyboardAvoid: {
+    // Ensures keyboard avoiding view doesn't add extra space
   },
   header: {
     flexDirection: 'row',
@@ -390,7 +394,8 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: colors.border,
     backgroundColor: colors.bg,
