@@ -461,10 +461,8 @@ export default function VenueDetailScreen() {
                   fast_lane: 'flash',
                   auctions: 'trophy',
                   photos: 'camera',
-                  vip_tables: 'star',
                   bottle_service: 'wine',
                   rooftop_terrace: 'sunny',
-                  table_booking: 'calendar',
                   private_dining: 'lock-closed',
                   group_dining: 'people-circle',
                   cocktail_bar: 'beer',
@@ -475,15 +473,15 @@ export default function VenueDetailScreen() {
                   fast_lane: 'Fast Lane',
                   auctions: 'Auctions',
                   photos: 'Event Photos',
-                  vip_tables: 'VIP Tables',
                   bottle_service: 'Bottle Service',
                   rooftop_terrace: 'Rooftop Terrace',
-                  table_booking: 'Table Booking',
                   private_dining: 'Private Dining',
                   group_dining: 'Group Dining',
                   cocktail_bar: 'Cocktail Bar',
                   cafe: 'Cafe',
                 };
+                // Skip VIP table related features
+                if (feature === 'vip_tables' || feature === 'table_booking') return null;
                 return (
                   <View key={index} style={styles.featureItem}>
                     <View style={[styles.featureIcon, { backgroundColor: venue.accent_color + '20' }]}>

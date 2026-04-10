@@ -121,9 +121,6 @@ export default function NotificationsScreen() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'table_booking':
-      case 'table_confirmed':
-        return 'restaurant';
       case 'event':
         return 'calendar';
       case 'auction':
@@ -141,9 +138,6 @@ export default function NotificationsScreen() {
 
   const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'table_booking':
-      case 'table_confirmed':
-        return colors.gold;
       case 'event':
         return colors.accent;
       case 'auction':

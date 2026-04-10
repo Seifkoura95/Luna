@@ -35,8 +35,8 @@ export default function HelpSupportPage() {
       answer: 'Points cannot be transferred between accounts to maintain the integrity of our rewards system.',
     },
     {
-      question: 'How do I book a VIP table?',
-      answer: 'Go to VIP Tables from your profile, select a venue and date, choose your table, and complete the booking.',
+      question: 'How do I get VIP access?',
+      answer: 'VIP access and perks are earned through your tier level. Earn Luna Points by visiting venues and completing missions to unlock exclusive benefits.',
     },
   ];
 

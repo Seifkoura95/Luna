@@ -31,7 +31,7 @@ export default function AIConcierge() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hey! I'm Luna AI, your personal VIP concierge. Ask me anything about our venues, events, VIP tables, or how to make the most of your Luna Points!",
+      text: "Hey! I'm Luna AI, your personal VIP concierge. Ask me anything about our venues, events, or how to make the most of your Luna Points!",
       isUser: false,
       timestamp: new Date(),
     }
@@ -43,9 +43,9 @@ export default function AIConcierge() {
 
   const quickQuestions = [
     "What's on tonight?",
-    "Book VIP table",
     "Dress code?",
-    "Luna Points info"
+    "Luna Points info",
+    "Upcoming events"
   ];
 
   const sendMessage = async (text: string) => {

@@ -27,7 +27,6 @@ export default function NotificationSettingsPage() {
     safety: true,
     marketing: false,
     crewActivity: true,
-    tableBookings: true,
   });
 
   const notificationGroups = [
@@ -44,7 +43,6 @@ export default function NotificationSettingsPage() {
         { key: 'events', title: 'Events & Tickets', desc: 'Event reminders and ticket updates' },
         { key: 'auctions', title: 'Auctions', desc: 'Outbid alerts and auction endings' },
         { key: 'rewards', title: 'Rewards & Points', desc: 'Points earned and new rewards' },
-        { key: 'tableBookings', title: 'Table Bookings', desc: 'Booking confirmations and reminders' },
       ],
     },
     {

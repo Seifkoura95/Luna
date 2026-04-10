@@ -55,9 +55,9 @@ const QUICK_CATEGORIES = [
     title: 'VIP Access',
     gradient: ['#FFD700', '#FFA500'],
     questions: [
-      "Book me a VIP table",
-      "Bottle service prices?",
+      "How do I get VIP access?",
       "Skip the queue tonight",
+      "Best venue for tonight?",
     ]
   },
   {

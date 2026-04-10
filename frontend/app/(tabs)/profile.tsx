@@ -408,14 +408,6 @@ export default function ProfileScreen() {
       onPress: handleGetQR,
     },
     {
-      id: 'vip_tables',
-      icon: 'diamond',
-      title: 'VIP Tables',
-      subtitle: 'Book your booth',
-      color: colors.gold,
-      onPress: () => router.push('/table-booking?venue_id=eclipse&venue_name=Eclipse'),
-    },
-    {
       id: 'crew',
       icon: 'people',
       title: 'Crew Plan',
@@ -714,32 +706,11 @@ export default function ProfileScreen() {
                 <Ionicons name="chevron-forward" size={20} color={colors.textPrimary} />
               </LinearGradient>
             </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.primaryCta}
-              onPress={() => router.push('/table-booking?venue_id=eclipse&venue_name=Eclipse')}
-              activeOpacity={0.85}
-              data-testid="vip-tables-cta"
-            >
-              <LinearGradient
-                colors={[colors.gold, colors.goldDark]}
-                style={styles.primaryCtaGradient}
-              >
-                <View style={styles.primaryCtaIcon}>
-                  <Ionicons name="diamond" size={24} color={colors.bg} />
-                </View>
-                <View style={styles.primaryCtaText}>
-                  <Text style={[styles.primaryCtaTitle, { color: colors.bg }]}>VIP Tables</Text>
-                  <Text style={[styles.primaryCtaSubtitle, { color: 'rgba(0,0,0,0.6)' }]}>Book your booth</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.bg} />
-              </LinearGradient>
-            </TouchableOpacity>
           </View>
 
           {/* 3-Column Grid for secondary actions */}
           <View style={styles.actionsGrid3Col}>
-            {quickActions.filter(item => !['membership', 'vip_tables'].includes(item.id)).map((item) => (
+            {quickActions.filter(item => !['membership'].includes(item.id)).map((item) => (
               <TouchableOpacity
                 key={item.id}
                 style={styles.actionCard3Col}

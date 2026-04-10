@@ -153,13 +153,13 @@ const ACTIVE_MISSIONS = [
   {
     id: 'm6',
     title: 'VIP Experience',
-    description: 'Book a VIP table',
+    description: 'Visit 5 venues this month',
     points: 150,
     icon: 'diamond',
     color: colors.gold,
-    type: 'booking',
+    type: 'visit',
     progress: 0,
-    target: 1,
+    target: 5,
   },
   {
     id: 'm7',
