@@ -150,9 +150,9 @@ export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
 
   return (
     <View style={styles.container}>
-      {/* Base dark background - Luna UI Kit color */}
+      {/* Base dark background - Luna UI Kit color with subtle brightness */}
       <LinearGradient
-        colors={['#08080A', '#050508', '#08080A']}
+        colors={['#0C0C12', '#080810', '#0C0C12']}
         style={StyleSheet.absoluteFillObject}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -208,7 +208,7 @@ export default AppBackground;
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#08080A',
+    backgroundColor: '#0C0C12',
     overflow: 'hidden',
   },
   topLeftGlow: {

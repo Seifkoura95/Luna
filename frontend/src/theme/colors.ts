@@ -3,8 +3,8 @@
 
 export const colors = {
   // Primary Backgrounds - Layered depth system
-  bg: '#0A0A10',
-  background: '#0A0A10',
+  bg: '#0C0C12',
+  background: '#0C0C12',
   surface: '#181824',
   surfaceElevated: '#202030',
   surfaceFloat: '#282840',
