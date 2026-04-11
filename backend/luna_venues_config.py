@@ -13,6 +13,8 @@ VENUE_LOGOS = {
     "night_market": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/9rmm0g7d_Night%20market.webp",
     "ember_and_ash": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/c1fkz73x_Ember%20and%20ash.webp",
     "after_dark": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/2f51mmzf_After%20dark.webp",
+    "pump": None,  # Logo to be added
+    "mamacita": None,  # Logo to be added
 }
 
 LUNA_VENUES = {
@@ -25,11 +27,11 @@ LUNA_VENUES = {
         "address": "247 Brunswick St, Fortitude Valley QLD 4006",
         "coordinates": {"lat": -27.4572, "lng": 153.0347},
         "accent_color": "#E31837",
-        "tagline": "Discover New Nightlife",
+        "tagline": "The Heart of Brisbane Entertainment",
         "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/pr03f9wj_Eclipse.webp",
-        "description": "Brisbane's transformative super club with international and domestic headliners across a range of genres. A new phase for the Brisbane entertainment scene unlike anything the city has experienced before.",
-        "long_description": "Eclipse is Brisbane's premier destination for world-class nightlife. Featuring state-of-the-art sound systems, immersive lighting installations, and hosting international and domestic headliners across hip hop, RnB, house, and electronic genres. Experience the transformation of Brisbane's entertainment scene in the heart of Fortitude Valley.",
-        "features": ["booth_booking", "fast_lane", "auctions", "photos", "vip_tables"],
+        "description": "Eclipse is the heart of the entertainment scene in Brisbane and unlike anything the city has experienced before. Hosting international and domestic headliners across a range of genres, stunning visuals and immersive sounds.",
+        "long_description": "Eclipse is the heart of the entertainment scene in Brisbane and unlike anything the city has experienced before. Hosting international and domestic headliners across a range of genres, stunning visuals and immersive sounds create an unparalleled nightlife experience in the heart of Fortitude Valley.",
+        "features": ["booth_booking", "fast_lane", "auctions", "photos"],
         "points_rate": 1.0,
         "image_url": f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK-1%20(3).jpg",
         "hero_image": f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK%20(42%20of%2075).jpg",
@@ -50,7 +52,7 @@ LUNA_VENUES = {
             "instagram": "@eclipsebrisbane",
             "facebook": "eclipsebrisbane"
         },
-        "music_genres": ["Hip Hop", "RnB", "House", "Electronic"],
+        "music_genres": ["EDM", "House", "Electronic", "Various"],
         "dress_code": "Smart casual to upscale. No sportswear, thongs, or offensive clothing.",
         "age_restriction": "18+"
     },
@@ -65,8 +67,8 @@ LUNA_VENUES = {
         "accent_color": "#8B00FF",
         "tagline": "R&B, Hip Hop & Afrobeats",
         "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/2f51mmzf_After%20dark.webp",
-        "description": "Brisbane's biggest multi-room super club. Specialising in hip hop, RnB, Afrobeats and Global Sounds with premium sound and lighting.",
-        "long_description": "After Dark transforms the Eclipse space into Brisbane's ultimate destination for urban music. Every Saturday night, experience the best in hip hop, RnB, Afrobeats, and global sounds across multiple rooms. Premium bottle service, VIP booths, and an incredible atmosphere await. The best crowd, best sound, and best vibes in Brisbane.",
+        "description": "Get lost in the sound at After Dark, where the music is curated to keep the energy peaking until the early hours. We specialise in a seamless fusion of smooth R&B, infectious Afrobeats, and hard-hitting Hip-Hop.",
+        "long_description": "Get lost in the sound at After Dark, where the music is curated to keep the energy peaking until the early hours. We specialise in a seamless fusion of smooth R&B, infectious Afrobeats, and hard-hitting Hip-Hop. The best crowd, best sound, and best vibes in Brisbane.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos", "bottle_service"],
         "points_rate": 1.0,
         "image_url": f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(45%20of%20111).jpg",
@@ -88,7 +90,7 @@ LUNA_VENUES = {
             "instagram": "@afterdarkbrisbane",
             "facebook": "afterdarkbrisbane"
         },
-        "music_genres": ["Hip Hop", "RnB", "Afrobeats", "Global Sounds"],
+        "music_genres": ["Hip Hop", "R&B", "Afrobeats"],
         "dress_code": "Smart casual. No sportswear or offensive clothing.",
         "age_restriction": "18+"
     },
@@ -101,10 +103,10 @@ LUNA_VENUES = {
         "address": "648 Ann St, Fortitude Valley QLD 4006",
         "coordinates": {"lat": -27.4575, "lng": 153.0350},
         "accent_color": "#FFB800",
-        "tagline": "Rooftop Bar & Nightlife",
+        "tagline": "Brisbane's Ultimate Nightlife Destination",
         "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/fb4gjnlf_Sucasa2.webp",
-        "description": "Vibrant rooftop bar and nightclub offering tapas, cocktails, and DJ vibes above the main nightclub in Fortitude Valley.",
-        "long_description": "Su Casa Brisbane is your ultimate rooftop escape in the heart of Fortitude Valley. Enjoy stunning city views, signature cocktails, and shareable tapas as the sun sets. As night falls, the vibe transforms with resident DJs spinning the best house, disco, and party anthems. Available for private events and VIP experiences.",
+        "description": "Su Casa Nightclub & Rooftop is Brisbane's ultimate nightlife destination, featuring a stylish rooftop bar with stunning city views, handcrafted cocktails, and top DJs.",
+        "long_description": "Su Casa Nightclub & Rooftop is Brisbane's ultimate nightlife destination, featuring a stylish rooftop bar in Brisbane with stunning city views, handcrafted cocktails, and top DJs. Available for private events and VIP experiences.",
         "features": ["booth_booking", "fast_lane", "auctions", "rooftop_terrace"],
         "points_rate": 1.0,
         "image_url": f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-29.jpg",
@@ -140,10 +142,10 @@ LUNA_VENUES = {
         "address": "19 Orchid Ave, Surfers Paradise QLD 4217",
         "coordinates": {"lat": -28.0023, "lng": 153.4295},
         "accent_color": "#FF6B35",
-        "tagline": "Gold Coast's Premier Late-Night Destination",
+        "tagline": "Gold Coast Hip Hop & R&B Destination",
         "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/w4lbm1ea_Sucasa1.webp",
-        "description": "Late-night club in the heart of Surfers Paradise focusing on Hip Hop and R&B. The Gold Coast's ultimate party destination.",
-        "long_description": "Su Casa Gold Coast brings the renowned Su Casa experience to Surfers Paradise. Open Thursday through Sunday, experience the best in Hip Hop, R&B, and party anthems. Premium bottle service, VIP booths, and the Gold Coast's most electric atmosphere await you in the heart of the action on Orchid Avenue.",
+        "description": "We curate a sonic journey that honours the roots of the genre while spinning the freshest tracks in the game. It is the ultimate destination in the Gold Coast for those who live for rhythm, the culture, and lovers of hip hop/R&B.",
+        "long_description": "We curate a sonic journey that honours the roots of the genre while spinning the freshest tracks in the game. Su Casa Gold Coast is the ultimate destination in the Gold Coast for those who live for rhythm, the culture, and lovers of hip hop/R&B. Premium bottle service and VIP booths await.",
         "features": ["booth_booking", "fast_lane", "auctions", "bottle_service"],
         "points_rate": 1.0,
         "image_url": f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-128%20(1).jpg",
@@ -165,24 +167,24 @@ LUNA_VENUES = {
         "social": {
             "instagram": "@sucasagoldcoast"
         },
-        "music_genres": ["Hip Hop", "R&B", "Party"],
+        "music_genres": ["Hip Hop", "R&B"],
         "dress_code": "Smart casual. No thongs or beachwear.",
         "age_restriction": "18+"
     },
     "juju": {
         "id": "juju",
-        "name": "Juju Mermaid Beach",
+        "name": "JuJu Mermaid Beach",
         "type": "restaurant",
         "region": "gold_coast",
         "location": "Mermaid Beach, Gold Coast",
         "address": "2235 Gold Coast Hwy, Mermaid Beach QLD 4218",
         "coordinates": {"lat": -28.0450, "lng": 153.4380},
         "accent_color": "#00D4AA",
-        "tagline": "Modern Australian Rooftop Dining",
+        "tagline": "Modern Dining in Mermaid Beach",
         "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/wzf6k0km_Juju.webp",
-        "description": "Restaurant & rooftop bar with panoramic coastal views, modern Australian cuisine, and cocktails on the Gold Coast.",
-        "long_description": "Juju Mermaid Beach offers an elevated dining experience with stunning panoramic coastal views. The open-air rooftop terrace features a retractable roof, signature cocktails, and modern Australian bar fare. Downstairs, enjoy refined modern Australian cuisine in an intimate setting. Perfect for sunset sessions, boozy Sunday brunch, or special occasions.",
-        "features": ["table_booking", "rooftop_terrace", "private_dining"],
+        "description": "JuJu introduces a modern dining venue in the iconic Mermaid Beach area that offers seasonally inspired menus featuring the highest quality ingredients and culinary skills. The venue artfully blends incredible food and cocktails with impeccable service and an infectiously fun atmosphere.",
+        "long_description": "JuJu introduces a modern dining venue in the iconic Mermaid Beach area that offers seasonally inspired menus featuring the highest quality ingredients and culinary skills. The venue artfully blends incredible food and cocktails with impeccable service and an infectiously fun atmosphere. Perfect for sunset sessions, boozy Sunday brunch, or special occasions.",
+        "features": ["rooftop_terrace", "private_dining"],
         "points_rate": 0.5,
         "image_url": "https://images.unsplash.com/photo-1661765830110-45a6a22991c7?w=800",
         "hero_image": "https://images.unsplash.com/photo-1682414593590-767a4016be89?w=1200",
@@ -217,11 +219,11 @@ LUNA_VENUES = {
         "address": "1/247 Brunswick St, Fortitude Valley QLD 4006",
         "coordinates": {"lat": -27.4580, "lng": 153.0345},
         "accent_color": "#FF4757",
-        "tagline": "Pan-Asian Street Food & Cocktails",
+        "tagline": "Asian Street Food Experience",
         "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/9rmm0g7d_Night%20market.webp",
-        "description": "Pan-Asian themed bar and restaurant inspired by Asia's street markets, serving shareable small plates in a neon-lit atmosphere.",
-        "long_description": "Night Market brings the vibrant energy of Asia's street markets to Fortitude Valley. Experience shareable small plates like wagyu tartare and miso caramel popcorn chicken, alongside innovative cocktails in a neon-lit, lively atmosphere. Perfect for groups, date nights, and those seeking authentic Asian-fusion flavors with a modern twist.",
-        "features": ["table_booking", "group_dining", "cocktail_bar"],
+        "description": "Step into the Night Market and be transported to the bustling laneways of Asia, where neon lights, aromas of wok fried dishes, and the buzz of late-night energy surround you. Our lively market-inspired space captures the chaos and charm of Asia's iconic food scenes.",
+        "long_description": "Step into the Night Market and be transported to the bustling laneways of Asia, where neon lights, aromas of wok fried dishes, and the buzz of late-night energy surround you. Our lively market-inspired space captures the chaos and charm of Asia's iconic food scenes. Perfect for groups, date nights, and those seeking authentic Asian-fusion flavors with a modern twist.",
+        "features": ["group_dining", "cocktail_bar"],
         "points_rate": 0.5,
         "image_url": "https://images.unsplash.com/photo-1768511813816-b87857a9301a?w=800",
         "hero_image": "https://images.unsplash.com/photo-1763051653996-db1eb2adba59?w=1200",
@@ -256,11 +258,11 @@ LUNA_VENUES = {
         "address": "Brisbane CBD QLD 4000",
         "coordinates": {"lat": -27.4698, "lng": 153.0251},
         "accent_color": "#FFA502",
-        "tagline": "Good Food, Great Drinks, Better Company",
+        "tagline": "Fire-Inspired Fine Dining",
         "logo_url": "https://customer-assets.emergentagent.com/job_celestial-app-5/artifacts/c1fkz73x_Ember%20and%20ash.webp",
-        "description": "Restaurant, cafe & bar coming soon to Brisbane CBD. Good food, great drinks, and better company.",
-        "long_description": "Ember & Ash is Brisbane's upcoming destination for refined casual dining. Combining the warmth of a neighborhood cafe with the sophistication of a cocktail bar, we're creating a space where good food meets great drinks and even better company. Opening soon in Brisbane CBD.",
-        "features": ["table_booking", "cocktail_bar", "cafe"],
+        "description": "Ember & Ash is the restaurant Brisbane chooses for an elevated, fire-inspired, fine dining experience. Our kitchen specialises in the precision of the flame, offering a premium steak range, smouldering meals and an evolving late night rooftop energy.",
+        "long_description": "Ember & Ash is the restaurant Brisbane chooses for an elevated, fire-inspired, fine dining experience. Our kitchen specialises in the precision of the flame, offering a premium steak range, smouldering meals and an evolving late night rooftop energy. Combining the warmth of refined casual dining with sophisticated cocktails.",
+        "features": ["cocktail_bar", "rooftop_terrace"],
         "points_rate": 0.5,
         "image_url": "https://images.unsplash.com/photo-1689239719024-8f0866438b46?w=800",
         "hero_image": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200",
@@ -270,7 +272,11 @@ LUNA_VENUES = {
             "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800"
         ],
         "operating_hours": {
-            "status": "Coming Soon"
+            "wednesday": "6:00 PM - 12:00 AM",
+            "thursday": "6:00 PM - 12:00 AM",
+            "friday": "6:00 PM - 12:00 AM",
+            "saturday": "6:00 PM - 12:00 AM",
+            "sunday": "6:00 PM - 10:00 PM"
         },
         "contact": {
             "website": "https://emberandashbrisbane.com.au"
@@ -278,7 +284,79 @@ LUNA_VENUES = {
         "social": {
             "instagram": "@emberandashbrisbane"
         },
-        "cuisine": "Modern Australian",
-        "price_range": "$$"
+        "cuisine": "Modern Australian, Steakhouse",
+        "price_range": "$$$"
+    },
+    "pump": {
+        "id": "pump",
+        "name": "Pump",
+        "type": "nightclub",
+        "region": "gold_coast",
+        "location": "Surfers Paradise, Gold Coast",
+        "address": "Surfers Paradise QLD 4217",
+        "coordinates": {"lat": -28.0033, "lng": 153.4300},
+        "accent_color": "#FF1493",
+        "tagline": "Mainstage EDM Experience",
+        "logo_url": None,
+        "description": "At Pump, we don't just play tracks, we deliver a mainstage experience in the heart of Surfers Paradise, Gold Coast. Specialising in EDM and club beats accompanied by a heavy bass hitting sound system, immersive LED and premium bottle service booths.",
+        "long_description": "At Pump, we don't just play tracks, we deliver a mainstage experience in the heart of Surfers Paradise, Gold Coast. Specialising in EDM and club beats accompanied by a heavy bass hitting sound system, immersive LED and premium bottle service booths. The ultimate Gold Coast destination for electronic dance music lovers.",
+        "features": ["booth_booking", "fast_lane", "bottle_service"],
+        "points_rate": 1.0,
+        "image_url": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
+        "hero_image": "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=1200",
+        "gallery": [
+            "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
+            "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=800",
+            "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800"
+        ],
+        "operating_hours": {
+            "friday": "9:00 PM - 3:00 AM",
+            "saturday": "9:00 PM - 3:00 AM"
+        },
+        "contact": {
+            "website": "https://pumpgoldcoast.com.au"
+        },
+        "social": {
+            "instagram": "@pumpgoldcoast"
+        },
+        "music_genres": ["EDM", "Club Beats", "Electronic"],
+        "dress_code": "Smart casual. No thongs or beachwear.",
+        "age_restriction": "18+"
+    },
+    "mamacita": {
+        "id": "mamacita",
+        "name": "Mamacita",
+        "type": "nightclub",
+        "region": "gold_coast",
+        "location": "Surfers Paradise, Gold Coast",
+        "address": "Surfers Paradise QLD 4217",
+        "coordinates": {"lat": -28.0028, "lng": 153.4298},
+        "accent_color": "#FF4500",
+        "tagline": "Latin & Urban Heat",
+        "logo_url": None,
+        "description": "Feel the heat of the world's most infectious rhythms. At Mamacita, we champion the global explosion of Latin and Urban sounds, delivering a night of relentless momentum transitioning from sultry, low-tempo grinds to peak-hour club anthems.",
+        "long_description": "Feel the heat of the world's most infectious rhythms. At Mamacita, we champion the global explosion of Latin and Urban sounds, delivering a night of relentless momentum transitioning from sultry, low-tempo grinds to peak-hour club anthems. The Gold Coast's premier Latin nightclub experience.",
+        "features": ["booth_booking", "fast_lane", "bottle_service"],
+        "points_rate": 1.0,
+        "image_url": "https://images.unsplash.com/photo-1545128485-c400e7702796?w=800",
+        "hero_image": "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?w=1200",
+        "gallery": [
+            "https://images.unsplash.com/photo-1545128485-c400e7702796?w=800",
+            "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?w=800",
+            "https://images.unsplash.com/photo-1478147427282-58a87a120781?w=800"
+        ],
+        "operating_hours": {
+            "friday": "9:00 PM - 3:00 AM",
+            "saturday": "9:00 PM - 3:00 AM"
+        },
+        "contact": {
+            "website": "https://mamacitaclub.com.au"
+        },
+        "social": {
+            "instagram": "@mamacitaclub"
+        },
+        "music_genres": ["Latin", "Urban", "Reggaeton"],
+        "dress_code": "Smart casual. No thongs or beachwear.",
+        "age_restriction": "18+"
     }
 }
