@@ -1,5 +1,10 @@
 # Luna Group VIP App - Product Requirements Document
 
+## Latest Updates (April 11, 2026)
+- **Fixed**: Gallery/Booking UI overlap issue on Venue Detail page (increased bottom spacer from 20px to 100px)
+- **Fixed**: Event Detail page content overlap with bottom action bar (increased paddingBottom from 30 to 100)
+
+
 ## Overview
 Premium hospitality VIP operating system for Luna Group venues (Eclipse, After Dark, Su Casa Brisbane/Gold Coast) - a native iOS/Android app built with Expo React Native.
 

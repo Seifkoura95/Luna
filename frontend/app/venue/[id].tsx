@@ -590,8 +590,8 @@ export default function VenueDetailScreen() {
             </View>
           )}
 
-          {/* Bottom Spacer */}
-          <View style={{ height: 20 }} />
+          {/* Bottom Spacer - accounts for fixed booking button */}
+          <View style={{ height: 100 }} />
         </View>
       </Animated.ScrollView>
 
