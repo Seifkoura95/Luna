@@ -104,6 +104,24 @@ export default function LunaAIScreen() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [showQuickCards, setShowQuickCards] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  // Track keyboard visibility
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true)
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   // Pulse animation for the AI indicator
   useEffect(() => {
@@ -394,7 +412,7 @@ export default function LunaAIScreen() {
       <KeyboardAvoidingView 
         style={styles.chatContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
       >
         {/* Messages */}
         <FlatList
@@ -462,7 +480,7 @@ export default function LunaAIScreen() {
         )}
 
         {/* Premium Input Area */}
-        <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8 }]}>
+        <View style={[styles.inputContainer, { paddingBottom: keyboardVisible ? 4 : insets.bottom + 8 }]}>
           <BlurView intensity={60} style={styles.inputBlur}>
             <View style={styles.inputWrapper}>
               <TextInput
@@ -774,7 +792,7 @@ const styles = StyleSheet.create({
   // Input Area
   inputContainer: {
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.xs,
   },
   inputBlur: {
     borderRadius: radius.xl,
