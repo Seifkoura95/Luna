@@ -37,7 +37,11 @@ async def get_missions(request: Request, venue_id: Optional[str] = None):
         progress = progress_map.get(mission["id"], {})
         mission["completed"] = progress.get("completed", False)
         mission["progress"] = progress.get("progress", 0)
+        mission["current_progress"] = progress.get("progress", 0)
         mission["claimed"] = progress.get("claimed", False)
+        # Map fields for frontend compatibility
+        mission["title"] = mission.get("name", mission.get("title", "Mission"))
+        mission["target"] = mission.get("requirement_value", mission.get("target", 1))
     
     return clean_mongo_docs(missions)
 
