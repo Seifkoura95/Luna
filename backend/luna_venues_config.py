@@ -33,10 +33,10 @@ LUNA_VENUES = {
         "long_description": "Eclipse is the heart of the entertainment scene in Brisbane and unlike anything the city has experienced before. Hosting international and domestic headliners across a range of genres, stunning visuals and immersive sounds create an unparalleled nightlife experience in the heart of Fortitude Valley.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos"],
         "points_rate": 1.0,
-        "image_url": f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK-1%20(3).jpg",
-        "hero_image": f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK%20(42%20of%2075).jpg",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/2yvbfaio_Elipse%20Image.jpg",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/2yvbfaio_Elipse%20Image.jpg",
         "gallery": [
-            f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK-1%20(3).jpg",
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/2yvbfaio_Elipse%20Image.jpg",
             f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK%20(42%20of%2075).jpg",
             f"{API_BASE_URL}/api/photos/image/eclipse/@CUTBYJACK-51.jpg"
         ],
@@ -71,10 +71,10 @@ LUNA_VENUES = {
         "long_description": "Get lost in the sound at After Dark, where the music is curated to keep the energy peaking until the early hours. We specialise in a seamless fusion of smooth R&B, infectious Afrobeats, and hard-hitting Hip-Hop. The best crowd, best sound, and best vibes in Brisbane.",
         "features": ["booth_booking", "fast_lane", "auctions", "photos", "bottle_service"],
         "points_rate": 1.0,
-        "image_url": f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(45%20of%20111).jpg",
-        "hero_image": f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(55%20of%20111).jpg",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/s6rilv8u_After%20Dark%20Image.jpg",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/s6rilv8u_After%20Dark%20Image.jpg",
         "gallery": [
-            f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(45%20of%20111).jpg",
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/s6rilv8u_After%20Dark%20Image.jpg",
             f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(55%20of%20111).jpg",
             f"{API_BASE_URL}/api/photos/image/afterdark/ER%20(72%20of%20111).jpg"
         ],
@@ -148,10 +148,10 @@ LUNA_VENUES = {
         "long_description": "We curate a sonic journey that honours the roots of the genre while spinning the freshest tracks in the game. Su Casa Gold Coast is the ultimate destination in the Gold Coast for those who live for rhythm, the culture, and lovers of hip hop/R&B. Premium bottle service and VIP booths await.",
         "features": ["booth_booking", "fast_lane", "auctions", "bottle_service"],
         "points_rate": 1.0,
-        "image_url": f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-128%20(1).jpg",
-        "hero_image": f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-193.jpg",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/ymy4l2g5_Su%20Casa%20GC%20Image.jpg",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/ymy4l2g5_Su%20Casa%20GC%20Image.jpg",
         "gallery": [
-            f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-128%20(1).jpg",
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/ymy4l2g5_Su%20Casa%20GC%20Image.jpg",
             f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SuCasa%20(HighRes)-193.jpg",
             f"{API_BASE_URL}/api/photos/image/sucasa-goldcoast/SC%20Bottle%20Service-55.jpg"
         ],
@@ -302,12 +302,10 @@ LUNA_VENUES = {
         "long_description": "At Pump, we don't just play tracks, we deliver a mainstage experience in the heart of Surfers Paradise, Gold Coast. Specialising in EDM and club beats accompanied by a heavy bass hitting sound system, immersive LED and premium bottle service booths. The ultimate Gold Coast destination for electronic dance music lovers.",
         "features": ["booth_booking", "fast_lane", "bottle_service"],
         "points_rate": 1.0,
-        "image_url": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
-        "hero_image": "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=1200",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/bzc5f147_Pump%20Night%20Club.png",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/bzc5f147_Pump%20Night%20Club.png",
         "gallery": [
-            "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800",
-            "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=800",
-            "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800"
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/bzc5f147_Pump%20Night%20Club.png"
         ],
         "operating_hours": {
             "friday": "9:00 PM - 3:00 AM",
@@ -338,12 +336,10 @@ LUNA_VENUES = {
         "long_description": "Feel the heat of the world's most infectious rhythms. At Mamacita, we champion the global explosion of Latin and Urban sounds, delivering a night of relentless momentum transitioning from sultry, low-tempo grinds to peak-hour club anthems. The Gold Coast's premier Latin nightclub experience.",
         "features": ["booth_booking", "fast_lane", "bottle_service"],
         "points_rate": 1.0,
-        "image_url": "https://images.unsplash.com/photo-1545128485-c400e7702796?w=800",
-        "hero_image": "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?w=1200",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/c2t6l9dq_Mamacita%20Night%20Club.png",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/c2t6l9dq_Mamacita%20Night%20Club.png",
         "gallery": [
-            "https://images.unsplash.com/photo-1545128485-c400e7702796?w=800",
-            "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?w=800",
-            "https://images.unsplash.com/photo-1478147427282-58a87a120781?w=800"
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/c2t6l9dq_Mamacita%20Night%20Club.png"
         ],
         "operating_hours": {
             "friday": "9:00 PM - 3:00 AM",
