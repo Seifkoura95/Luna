@@ -109,10 +109,10 @@ LUNA_VENUES = {
         "long_description": "Su Casa Nightclub & Rooftop is Brisbane's ultimate nightlife destination, featuring a stylish rooftop bar in Brisbane with stunning city views, handcrafted cocktails, and top DJs. Available for private events and VIP experiences.",
         "features": ["booth_booking", "fast_lane", "auctions", "rooftop_terrace"],
         "points_rate": 1.0,
-        "image_url": f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-29.jpg",
-        "hero_image": f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/CDSC09838-Enhanced-NR.jpg",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/ds5pfxad_SuCasa-2.jpg",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/ds5pfxad_SuCasa-2.jpg",
         "gallery": [
-            f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-29.jpg",
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/ds5pfxad_SuCasa-2.jpg",
             f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/CDSC09838-Enhanced-NR.jpg",
             f"{API_BASE_URL}/api/photos/image/sucasa-brisbane/@CUTBYJACK-36.jpg"
         ],
@@ -186,12 +186,10 @@ LUNA_VENUES = {
         "long_description": "JuJu introduces a modern dining venue in the iconic Mermaid Beach area that offers seasonally inspired menus featuring the highest quality ingredients and culinary skills. The venue artfully blends incredible food and cocktails with impeccable service and an infectiously fun atmosphere. Perfect for sunset sessions, boozy Sunday brunch, or special occasions.",
         "features": ["rooftop_terrace", "private_dining"],
         "points_rate": 0.5,
-        "image_url": "https://images.unsplash.com/photo-1661765830110-45a6a22991c7?w=800",
-        "hero_image": "https://images.unsplash.com/photo-1682414593590-767a4016be89?w=1200",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/u5zo7m20_JuJu%201.jpg",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/u5zo7m20_JuJu%201.jpg",
         "gallery": [
-            "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800",
-            "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
-            "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800"
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/u5zo7m20_JuJu%201.jpg"
         ],
         "operating_hours": {
             "wednesday": "12:00 PM - 12:00 AM",
@@ -225,12 +223,10 @@ LUNA_VENUES = {
         "long_description": "Step into the Night Market and be transported to the bustling laneways of Asia, where neon lights, aromas of wok fried dishes, and the buzz of late-night energy surround you. Our lively market-inspired space captures the chaos and charm of Asia's iconic food scenes. Perfect for groups, date nights, and those seeking authentic Asian-fusion flavors with a modern twist.",
         "features": ["group_dining", "cocktail_bar"],
         "points_rate": 0.5,
-        "image_url": "https://images.unsplash.com/photo-1768511813816-b87857a9301a?w=800",
-        "hero_image": "https://images.unsplash.com/photo-1763051653996-db1eb2adba59?w=1200",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/uejce01b_Night%20Market%20Hero%20Shot%202.jpg",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/uejce01b_Night%20Market%20Hero%20Shot%202.jpg",
         "gallery": [
-            "https://images.unsplash.com/photo-1504544750208-dc0358e63f7f?w=800",
-            "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=800",
-            "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800"
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/uejce01b_Night%20Market%20Hero%20Shot%202.jpg"
         ],
         "operating_hours": {
             "wednesday": "6:00 PM - 10:30 PM",
@@ -264,12 +260,10 @@ LUNA_VENUES = {
         "long_description": "Ember & Ash is the restaurant Brisbane chooses for an elevated, fire-inspired, fine dining experience. Our kitchen specialises in the precision of the flame, offering a premium steak range, smouldering meals and an evolving late night rooftop energy. Combining the warmth of refined casual dining with sophisticated cocktails.",
         "features": ["cocktail_bar", "rooftop_terrace"],
         "points_rate": 0.5,
-        "image_url": "https://images.unsplash.com/photo-1689239719024-8f0866438b46?w=800",
-        "hero_image": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/bk1zr731_E%26A%201.jpg",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/bk1zr731_E%26A%201.jpg",
         "gallery": [
-            "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
-            "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800",
-            "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800"
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/bk1zr731_E%26A%201.jpg"
         ],
         "operating_hours": {
             "wednesday": "6:00 PM - 12:00 AM",
@@ -297,7 +291,7 @@ LUNA_VENUES = {
         "coordinates": {"lat": -28.0033, "lng": 153.4300},
         "accent_color": "#FF1493",
         "tagline": "Mainstage EDM Experience",
-        "logo_url": None,
+        "logo_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/04hm1xo6_Pump%20logo%20with%20no%20background%20.png",
         "description": "At Pump, we don't just play tracks, we deliver a mainstage experience in the heart of Surfers Paradise, Gold Coast. Specialising in EDM and club beats accompanied by a heavy bass hitting sound system, immersive LED and premium bottle service booths.",
         "long_description": "At Pump, we don't just play tracks, we deliver a mainstage experience in the heart of Surfers Paradise, Gold Coast. Specialising in EDM and club beats accompanied by a heavy bass hitting sound system, immersive LED and premium bottle service booths. The ultimate Gold Coast destination for electronic dance music lovers.",
         "features": ["booth_booking", "fast_lane", "bottle_service"],
@@ -331,7 +325,7 @@ LUNA_VENUES = {
         "coordinates": {"lat": -28.0028, "lng": 153.4298},
         "accent_color": "#FF4500",
         "tagline": "Latin & Urban Heat",
-        "logo_url": None,
+        "logo_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/rfwu9zz9_Mamacita%20logo%20with%20no%20background%20.PNG",
         "description": "Feel the heat of the world's most infectious rhythms. At Mamacita, we champion the global explosion of Latin and Urban sounds, delivering a night of relentless momentum transitioning from sultry, low-tempo grinds to peak-hour club anthems.",
         "long_description": "Feel the heat of the world's most infectious rhythms. At Mamacita, we champion the global explosion of Latin and Urban sounds, delivering a night of relentless momentum transitioning from sultry, low-tempo grinds to peak-hour club anthems. The Gold Coast's premier Latin nightclub experience.",
         "features": ["booth_booking", "fast_lane", "bottle_service"],
