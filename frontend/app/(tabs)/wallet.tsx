@@ -659,7 +659,7 @@ export default function WalletScreen() {
               </View>
               <TouchableOpacity 
                 style={styles.redeemNowBtn}
-                onPress={() => router.push('/rewards')}
+                onPress={() => router.push('/rewards-shop')}
               >
                 <LinearGradient
                   colors={[colors.gold, '#B8960D']}
@@ -689,7 +689,7 @@ export default function WalletScreen() {
                   <TouchableOpacity
                     key={reward.id || reward.name}
                     style={[styles.rewardCard, !canAfford && styles.rewardCardDisabled]}
-                    onPress={() => router.push('/rewards')}
+                    onPress={() => router.push('/rewards-shop')}
                     activeOpacity={0.8}
                   >
                     <LinearGradient
