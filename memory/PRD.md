@@ -1,6 +1,16 @@
 # Luna Group VIP App - Product Requirements Document
 
-## Latest Updates (April 12, 2026)
+## Latest Updates (April 12, 2026 - Session 2)
+- **COMPLETED**: Rewards Shop Overhaul
+  - Removed individual QR-code rewards from the Rewards Shop
+  - Added "10 points = $1" conversion guide with 3-step redemption instructions
+  - Added 6 in-venue redemption categories (Food, Drinks, Entry, Bottle Service, Merchandise, VIP Upgrades) in a 3-column grid
+  - Added Luna Gift Cards ($25, $50, $100, $150) with 10% bonus value in a 2x2 grid
+  - Added custom gift card amount input (minimum $10)
+  - Fixed grid layouts using explicit row-based Views (React Native Web flexWrap bug workaround)
+  - Gift card purchase flow shows "Coming Soon" (TODO: integrate with Stripe or points deduction API)
+
+## Latest Updates (April 12, 2026 - Session 1)
 - **Updated**: Subscription Tiers - Implemented new Bronze/Silver/Gold membership structure with detailed perks
   - **Bronze** (FREE): 2x points on pre-purchases, free entry before 10pm, 5% restaurant discount on weeknights
   - **Silver** ($39.99/mo): Express entry, 1.5x points, 10% restaurant discount, complimentary drinks
