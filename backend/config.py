@@ -40,7 +40,7 @@ SUBSCRIPTION_TIERS = {
         "billing_period": "monthly",
         "color": "#CD7F32",
         "icon": "🥉",
-        "points_multiplier": 2.0,
+        "points_multiplier": 1.0,
         "benefits": {
             "free_entry_before_time": "10pm",
             "free_entries_per_month": 0,
@@ -63,7 +63,7 @@ SUBSCRIPTION_TIERS = {
             "Free entry before 10pm (excludes ticketed events)",
             "Birthday surprise (shown at door)",
             "Early access to event announcements",
-            "2x points on pre-purchased items",
+            "Points earned on every spend",
             "5% off food on weeknights (Sun-Thu)",
             "Complimentary birthday dessert",
             "Points earned on every spend",
@@ -74,7 +74,7 @@ SUBSCRIPTION_TIERS = {
             "Free entry before 10pm (excludes ticketed events)",
             "Birthday surprise (shown at door)",
             "Early access to event announcements before public release",
-            "2x multiplier on points for all pre-purchased items",
+            "1x points on all purchases",
         ],
         "restaurant_perks": [
             "5% off food on weeknights (Sunday – Thursday)",
