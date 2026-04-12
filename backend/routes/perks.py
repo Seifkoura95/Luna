@@ -670,7 +670,90 @@ async def get_perks_status(request: Request):
     }
 
 
-# ====== 6. ADMIN ENDPOINTS ======
+# ====== 6. MEMBER SEARCH (STAFF) ======
+
+@router.get("/member/search")
+async def search_member(request: Request, q: str = ""):
+    """Search for a member by name, email, or phone"""
+    await require_staff(request)
+    
+    if not q or len(q) < 2:
+        raise HTTPException(status_code=400, detail="Search query must be at least 2 characters")
+    
+    query = {
+        "$or": [
+            {"email": {"$regex": q, "$options": "i"}},
+            {"name": {"$regex": q, "$options": "i"}},
+            {"phone": {"$regex": q, "$options": "i"}},
+            {"user_id": q},
+        ]
+    }
+    
+    users = await db.users.find(query, {
+        "_id": 0, "password": 0, "points_history": 0
+    }).limit(10).to_list(10)
+    
+    results = []
+    for u in users:
+        tier_id = u.get("tier", "bronze").lower()
+        tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS.get("bronze", {}))
+        results.append({
+            "user_id": u.get("user_id"),
+            "name": u.get("name", u.get("email", "Unknown")),
+            "email": u.get("email"),
+            "phone": u.get("phone", ""),
+            "tier": tier.get("name", "Bronze"),
+            "tier_color": tier.get("color", "#CD7F32"),
+            "points_balance": u.get("points_balance", 0),
+            "wallet_balance": u.get("wallet_balance", 0.0),
+            "avatar": u.get("avatar"),
+        })
+    
+    return {"members": results, "total": len(results)}
+
+
+@router.get("/member/{user_id}/profile")
+async def get_member_profile(request: Request, user_id: str):
+    """Get full member profile for staff view"""
+    await require_staff(request)
+    
+    user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Member not found")
+    
+    tier_id = user.get("tier", "bronze").lower()
+    tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS.get("bronze", {}))
+    benefits = tier.get("benefits", {})
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Get today's activity
+    entries_today = await db.entry_logs.count_documents({"user_id": user_id, "entry_date": today})
+    drink_redeemed = await db.drink_redemptions.find_one({"user_id": user_id, "redemption_date": today})
+    guest_limit = benefits.get("guest_entry", 0)
+    guest_used = await db.guest_entries.count_documents({"member_user_id": user_id, "entry_date": today}) if guest_limit > 0 else 0
+    
+    return {
+        "user_id": user.get("user_id"),
+        "name": user.get("name", user.get("email", "Unknown")),
+        "email": user.get("email"),
+        "phone": user.get("phone", ""),
+        "tier": tier.get("name", "Bronze"),
+        "tier_id": tier_id,
+        "tier_color": tier.get("color", "#CD7F32"),
+        "points_balance": user.get("points_balance", 0),
+        "wallet_balance": user.get("wallet_balance", 0.0),
+        "benefits": benefits,
+        "today": {
+            "entries": entries_today,
+            "drink_redeemed": drink_redeemed is not None,
+            "guest_used": guest_used,
+            "guest_remaining": max(0, guest_limit - guest_used),
+            "guest_limit": guest_limit,
+        }
+    }
+
+
+# ====== 7. ADMIN ENDPOINTS ======
 
 @router.get("/admin/logs")
 async def get_all_perk_logs(

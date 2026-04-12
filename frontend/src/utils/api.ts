@@ -1203,6 +1203,23 @@ export const api = {
   getPaymentHistory: () =>
     apiFetch<{ transactions: any[] }>('/api/payments/history'),
 
+  // Gift Card Purchase via Stripe
+  createGiftCardCheckout: (amount: number, originUrl: string) =>
+    apiFetch<{ checkout_url: string; session_id: string; gift_card_amount: number; wallet_credit: number; bonus: number }>('/api/payments/gift-card/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ amount, origin_url: originUrl })
+    }),
+
+  getWalletBalance: () =>
+    apiFetch<{ wallet_balance: number }>('/api/payments/wallet/balance'),
+
+  // Staff Portal - Member Search
+  searchMember: (query: string) =>
+    apiFetch<{ members: any[]; total: number }>(`/api/perks/member/search?q=${encodeURIComponent(query)}`),
+
+  getMemberProfile: (userId: string) =>
+    apiFetch<any>(`/api/perks/member/${userId}/profile`),
+
   // ====== STORIES API ======
   createStory: (photoUrl: string, venueId: string, venueName: string, caption?: string, eventName?: string) =>
     apiFetch<{ story: any }>('/api/stories/create', {

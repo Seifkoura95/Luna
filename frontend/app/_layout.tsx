@@ -86,6 +86,7 @@ export default function RootLayout() {
         <Stack.Screen name="location-settings" />
         <Stack.Screen name="safety-settings" />
         <Stack.Screen name="stories" />
+        <Stack.Screen name="staff-portal" />
       </Stack>
     </>
   );

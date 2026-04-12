@@ -47,6 +47,12 @@ PACKAGES = {
     # Subscription
     "luna_plus_monthly": {"name": "Luna+ Monthly", "amount": 9.99, "type": "subscription"},
     "luna_plus_yearly": {"name": "Luna+ Yearly", "amount": 79.99, "type": "subscription"},
+    
+    # Gift Cards (10% bonus value added to wallet)
+    "gift_card_25": {"name": "$25 Luna Gift Card", "amount": 25.00, "type": "gift_card", "wallet_credit": 27.50},
+    "gift_card_50": {"name": "$50 Luna Gift Card", "amount": 50.00, "type": "gift_card", "wallet_credit": 55.00},
+    "gift_card_100": {"name": "$100 Luna Gift Card", "amount": 100.00, "type": "gift_card", "wallet_credit": 110.00},
+    "gift_card_150": {"name": "$150 Luna Gift Card", "amount": 150.00, "type": "gift_card", "wallet_credit": 165.00},
 }
 
 
@@ -57,6 +63,11 @@ class CreateCheckoutRequest(BaseModel):
     event_id: Optional[str] = None
     booking_date: Optional[str] = None
     guests: Optional[int] = None
+
+
+class GiftCardCheckoutRequest(BaseModel):
+    amount: int  # Dollar amount (minimum 10)
+    origin_url: str
 
 
 class PaymentStatusResponse(BaseModel):
@@ -164,6 +175,97 @@ async def create_checkout_session(
     except Exception as e:
         logger.error(f"Checkout error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/gift-card/checkout")
+async def create_gift_card_checkout(
+    request: Request,
+    body: GiftCardCheckoutRequest
+):
+    """Create a Stripe checkout for a gift card with 10% bonus value"""
+    authorization = request.headers.get("authorization")
+    user = get_current_user(authorization)
+    
+    if body.amount < 10:
+        raise HTTPException(status_code=400, detail="Minimum gift card amount is $10")
+    if body.amount > 500:
+        raise HTTPException(status_code=400, detail="Maximum gift card amount is $500")
+    
+    # Check if it's a predefined package
+    package_id = f"gift_card_{body.amount}"
+    if package_id in PACKAGES:
+        package = PACKAGES[package_id]
+        wallet_credit = package["wallet_credit"]
+    else:
+        # Custom amount: 10% bonus
+        wallet_credit = round(body.amount * 1.10, 2)
+    
+    success_url = f"{body.origin_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{body.origin_url}/payment-cancelled"
+    
+    metadata = {
+        "user_id": user["user_id"],
+        "package_id": package_id,
+        "package_type": "gift_card",
+        "gift_card_amount": str(body.amount),
+        "wallet_credit": str(wallet_credit),
+    }
+    
+    try:
+        stripe_checkout = get_stripe_checkout(request)
+        
+        checkout_request = CheckoutSessionRequest(
+            amount=float(body.amount),
+            currency="aud",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata=metadata
+        )
+        
+        session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        transaction = {
+            "session_id": session.session_id,
+            "user_id": user["user_id"],
+            "package_id": package_id,
+            "package_name": f"${body.amount} Luna Gift Card",
+            "package_type": "gift_card",
+            "amount": float(body.amount),
+            "wallet_credit": wallet_credit,
+            "currency": "aud",
+            "status": "initiated",
+            "payment_status": "pending",
+            "metadata": metadata,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+        }
+        
+        await db.payment_transactions.insert_one(transaction)
+        
+        return {
+            "checkout_url": session.url,
+            "session_id": session.session_id,
+            "gift_card_amount": body.amount,
+            "wallet_credit": wallet_credit,
+            "bonus": round(wallet_credit - body.amount, 2)
+        }
+        
+    except Exception as e:
+        logger.error(f"Gift card checkout error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/wallet/balance")
+async def get_wallet_balance(request: Request):
+    """Get user's wallet balance"""
+    authorization = request.headers.get("authorization")
+    user = get_current_user(authorization)
+    
+    user_data = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "wallet_balance": 1})
+    
+    return {
+        "wallet_balance": user_data.get("wallet_balance", 0.0) if user_data else 0.0
+    }
 
 
 @router.get("/status/{session_id}")
@@ -303,6 +405,31 @@ async def process_successful_payment(transaction: dict):
                 }
             )
             logger.info(f"Activated Luna+ subscription for user {user_id}")
+            
+        elif package_type == "gift_card":
+            # Add wallet balance (gift card value + 10% bonus)
+            wallet_credit = transaction.get("wallet_credit")
+            if not wallet_credit:
+                # Fallback: calculate from metadata
+                gift_amount = float(metadata.get("gift_card_amount", transaction["amount"]))
+                wallet_credit = round(gift_amount * 1.10, 2)
+            
+            await db.users.update_one(
+                {"user_id": user_id},
+                {"$inc": {"wallet_balance": wallet_credit}}
+            )
+            
+            # Log the gift card purchase
+            await db.gift_card_purchases.insert_one({
+                "user_id": user_id,
+                "card_amount": transaction["amount"],
+                "bonus_amount": round(wallet_credit - transaction["amount"], 2),
+                "wallet_credit": wallet_credit,
+                "payment_session_id": transaction["session_id"],
+                "created_at": datetime.now(timezone.utc)
+            })
+            
+            logger.info(f"Gift card purchased: ${transaction['amount']} -> ${wallet_credit} wallet credit for user {user_id}")
             
     except Exception as e:
         logger.error(f"Error processing payment for {user_id}: {e}")

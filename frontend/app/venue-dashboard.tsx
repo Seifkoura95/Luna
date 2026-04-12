@@ -191,6 +191,23 @@ export default function VenueDashboard() {
         </LinearGradient>
       </TouchableOpacity>
 
+      {/* Staff Portal Button */}
+      <TouchableOpacity
+        style={styles.scanButton}
+        onPress={() => router.push('/staff-portal')}
+        data-testid="venue-staff-portal-btn"
+      >
+        <LinearGradient
+          colors={['#8B5CF6', '#6D28D9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.scanButtonGradient}
+        >
+          <Ionicons name="shield-checkmark" size={24} color="#fff" />
+          <Text style={styles.scanButtonText}>STAFF PORTAL - VALIDATE PERKS</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+
       {/* Recent Redemptions */}
       <View style={styles.recentSection}>
         <Text style={styles.sectionTitle}>RECENT REDEMPTIONS</Text>

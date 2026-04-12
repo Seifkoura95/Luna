@@ -8,6 +8,8 @@ import {
   RefreshControl,
   Alert,
   TextInput,
+  Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,8 +46,10 @@ export default function RewardsShopPage() {
   
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState(false);
   const [customAmount, setCustomAmount] = useState('');
   const [selectedGiftCard, setSelectedGiftCard] = useState<number | null>(null);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   const currentPoints = user?.points_balance || 0;
   const dollarValue = currentPoints / 10;
@@ -61,8 +65,12 @@ export default function RewardsShopPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const userData = await api.getMe();
+      const [userData, walletData] = await Promise.all([
+        api.getMe(),
+        api.getWalletBalance().catch(() => ({ wallet_balance: 0 })),
+      ]);
       useAuthStore.getState().setUser(userData);
+      setWalletBalance(walletData.wallet_balance || 0);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -97,25 +105,29 @@ export default function RewardsShopPage() {
       return;
     }
     
-    const pointsCost = amount * 10;
     const bonusValue = amount * 0.10;
     const totalValue = amount + bonusValue;
     
-    if (pointsCost > currentPoints) {
-      Alert.alert('Insufficient Points', `You need ${pointsCost.toLocaleString()} points for this gift card. You have ${currentPoints.toLocaleString()} points.`);
-      return;
-    }
-    
     Alert.alert(
-      'Confirm Gift Card Purchase',
-      `Purchase $${amount} gift card for ${pointsCost.toLocaleString()} points?\n\nYou'll receive $${totalValue.toFixed(2)} value (+10% bonus)`,
+      'Purchase Gift Card',
+      `Pay $${amount} AUD to receive $${totalValue.toFixed(2)} wallet credit (+10% bonus)`,
       [
         { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Purchase', 
-          onPress: () => {
-            // TODO: Implement gift card purchase API
-            Alert.alert('Coming Soon', 'Gift card purchases will be available soon!');
+          text: 'Pay with Card', 
+          onPress: async () => {
+            setPurchasing(true);
+            try {
+              const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+              const result = await api.createGiftCardCheckout(amount, backendUrl);
+              if (result.checkout_url) {
+                await Linking.openURL(result.checkout_url);
+              }
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to create checkout');
+            } finally {
+              setPurchasing(false);
+            }
           }
         }
       ]
@@ -163,6 +175,12 @@ export default function RewardsShopPage() {
               <Text style={styles.pointsValue}>{currentPoints.toLocaleString()}</Text>
               <Text style={styles.pointsWorth}>Worth ${dollarValue.toFixed(2)}</Text>
             </View>
+            {walletBalance > 0 && (
+              <View style={styles.walletBadge}>
+                <Ionicons name="wallet" size={14} color={colors.accent} />
+                <Text style={styles.walletBadgeText}>${walletBalance.toFixed(2)}</Text>
+              </View>
+            )}
           </LinearGradient>
         </View>
 
@@ -363,10 +381,11 @@ export default function RewardsShopPage() {
           <TouchableOpacity
             style={[
               styles.purchaseButton,
-              !(selectedGiftCard || customAmountNum >= 10) && styles.purchaseButtonDisabled
+              (!(selectedGiftCard || customAmountNum >= 10) || purchasing) && styles.purchaseButtonDisabled
             ]}
             onPress={handlePurchaseGiftCard}
-            disabled={!(selectedGiftCard || customAmountNum >= 10)}
+            disabled={!(selectedGiftCard || customAmountNum >= 10) || purchasing}
+            data-testid="purchase-gift-card-btn"
           >
             <LinearGradient
               colors={selectedGiftCard || customAmountNum >= 10 
@@ -374,16 +393,22 @@ export default function RewardsShopPage() {
                 : ['#333', '#222']}
               style={styles.purchaseGradient}
             >
-              <Ionicons name="gift" size={20} color={selectedGiftCard || customAmountNum >= 10 ? '#000' : colors.textMuted} />
+              {purchasing ? (
+                <ActivityIndicator size="small" color="#000" />
+              ) : (
+                <Ionicons name="card" size={20} color={selectedGiftCard || customAmountNum >= 10 ? '#000' : colors.textMuted} />
+              )}
               <Text style={[
                 styles.purchaseText,
                 !(selectedGiftCard || customAmountNum >= 10) && styles.purchaseTextDisabled
               ]}>
-                {selectedGiftCard 
-                  ? `Purchase $${selectedGiftCard} Gift Card`
-                  : customAmountNum >= 10
-                    ? `Purchase $${customAmountNum} Gift Card`
-                    : 'Select a Gift Card'}
+                {purchasing
+                  ? 'Processing...'
+                  : selectedGiftCard 
+                    ? `Pay $${selectedGiftCard} AUD`
+                    : customAmountNum >= 10
+                      ? `Pay $${customAmountNum} AUD`
+                      : 'Select a Gift Card'}
               </Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -460,6 +485,20 @@ const styles = StyleSheet.create({
     color: colors.gold,
     opacity: 0.8,
     marginTop: 2,
+  },
+  walletBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.accent + '20',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+  },
+  walletBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.accent,
   },
   // Conversion Card
   conversionCard: {
