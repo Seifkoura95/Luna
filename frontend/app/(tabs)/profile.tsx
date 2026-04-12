@@ -491,6 +491,16 @@ export default function ProfileScreen() {
     { id: 'about', icon: 'information-circle', title: 'About Luna Group', route: '/about' },
   ];
 
+  // Show loading state if user is not yet loaded
+  if (!user) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
