@@ -793,11 +793,14 @@ export default function WalletScreen() {
         )}
 
         {/* =============== MILESTONES SECTION =============== */}
-        <View style={styles.milestonesSection}>
-          <View style={styles.redeemTitleRow}>
-            <Ionicons name="flag" size={18} color={colors.accent} />
-            <Text style={styles.redeemTitle}>MILESTONES</Text>
+        <View style={styles.redeemSection}>
+          <View style={styles.redeemHeader}>
+            <View style={styles.redeemTitleRow}>
+              <Ionicons name="flag" size={18} color={colors.accent} />
+              <Text style={styles.redeemTitle}>MILESTONES</Text>
+            </View>
           </View>
+
           {[
             { points: 250, title: 'Rising Star', icon: 'star-outline' as const, color: colors.success, rewards: '5 Free Drinks' },
             { points: 500, title: 'VIP Status', icon: 'flash' as const, color: colors.accent, rewards: '10 Drinks + 5 Entries' },
@@ -809,20 +812,27 @@ export default function WalletScreen() {
             const reached = pts >= m.points;
             const progress = Math.min(1, pts / m.points);
             return (
-              <View key={m.points} style={styles.milestoneRow}>
-                <View style={[styles.milestoneIcon, { backgroundColor: reached ? m.color + '20' : colors.glass }]}>
-                  <Ionicons name={reached ? 'checkmark-circle' : m.icon} size={20} color={reached ? m.color : colors.textMuted} />
-                </View>
-                <View style={styles.milestoneInfo}>
-                  <View style={styles.milestoneTop}>
-                    <Text style={[styles.milestoneTitle, reached && { color: m.color }]}>{m.title}</Text>
-                    <Text style={styles.milestonePts}>{m.points.toLocaleString()} pts</Text>
+              <View key={m.points} style={styles.milestoneCard}>
+                <LinearGradient
+                  colors={reached ? [m.color + '12', colors.glass] : [colors.glass, colors.glass]}
+                  style={styles.milestoneGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <View style={[styles.milestoneIcon, { backgroundColor: reached ? m.color + '20' : colors.glassMid }]}>
+                    <Ionicons name={reached ? 'checkmark-circle' : m.icon} size={20} color={reached ? m.color : colors.textMuted} />
                   </View>
-                  <View style={styles.milestoneBarBg}>
-                    <View style={[styles.milestoneBarFill, { width: `${progress * 100}%`, backgroundColor: m.color }]} />
+                  <View style={styles.milestoneInfo}>
+                    <View style={styles.milestoneTop}>
+                      <Text style={[styles.milestoneTitle, reached && { color: m.color }]}>{m.title}</Text>
+                      <Text style={[styles.milestonePts, reached && { color: m.color }]}>{m.points.toLocaleString()} pts</Text>
+                    </View>
+                    <View style={styles.milestoneBarBg}>
+                      <View style={[styles.milestoneBarFill, { width: `${progress * 100}%`, backgroundColor: m.color }]} />
+                    </View>
+                    <Text style={styles.milestoneReward}>{m.rewards}</Text>
                   </View>
-                  <Text style={styles.milestoneReward}>{m.rewards}</Text>
-                </View>
+                </LinearGradient>
               </View>
             );
           })}
@@ -1953,6 +1963,19 @@ const styles = StyleSheet.create({
   milestonesSection: {
     paddingHorizontal: spacing.md,
     marginTop: spacing.lg,
+  },
+  milestoneCard: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.glassBorderSubtle,
+  },
+  milestoneGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    gap: spacing.md,
   },
   milestoneRow: {
     flexDirection: 'row',
