@@ -46,6 +46,8 @@ export default function SubscriptionsScreen() {
   const [currentTier, setCurrentTier] = useState<SubscriptionTier | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'compare'>('cards');
+  const [compareCategory, setCompareCategory] = useState<'nightclub' | 'restaurant' | 'general'>('nightclub');
 
   useEffect(() => {
     fetchData();
@@ -113,8 +115,8 @@ export default function SubscriptionsScreen() {
 
   const renderTierCard = (tier: SubscriptionTier, index: number) => {
     const isCurrentTier = currentTier?.id === tier.id;
-    const isPopular = tier.id === 'eclipse';
-    const isPremium = tier.id === 'supernova';
+    const isPopular = tier.id === 'silver';
+    const isPremium = tier.id === 'gold';
 
     return (
       <View key={tier.id} style={styles.tierCardWrapper}>
@@ -210,6 +212,171 @@ export default function SubscriptionsScreen() {
     );
   };
 
+  // Compare view - feature comparison matrix
+  const renderCompareView = () => {
+    const getPerksForCategory = (tier: SubscriptionTier) => {
+      switch (compareCategory) {
+        case 'nightclub':
+          return tier.nightclub_perks || [];
+        case 'restaurant':
+          return tier.restaurant_perks || [];
+        case 'general':
+          return tier.general_perks || [];
+        default:
+          return tier.perks_list || [];
+      }
+    };
+
+    // Key features to compare
+    const keyFeatures = [
+      { key: 'price', label: 'Monthly Price' },
+      { key: 'points_multiplier', label: 'Points Multiplier' },
+      { key: 'free_entry', label: 'Free Entry' },
+      { key: 'skip_line', label: 'Skip the Line' },
+      { key: 'complimentary_drink', label: 'Free Drink' },
+      { key: 'guest_entry', label: 'Guest Entry' },
+      { key: 'restaurant_discount', label: 'Restaurant Discount' },
+      { key: 'priority_booking', label: 'Priority Booking' },
+      { key: 'vip_events', label: 'VIP Events Access' },
+      { key: 'concierge', label: 'Concierge Access' },
+    ];
+
+    const getFeatureValue = (tier: SubscriptionTier, key: string): string | boolean => {
+      const benefits = tier.benefits || {};
+      switch (key) {
+        case 'price':
+          return tier.price === 0 ? 'FREE' : `$${tier.price}/mo`;
+        case 'points_multiplier':
+          return `${tier.points_multiplier}x`;
+        case 'free_entry':
+          if (benefits.free_entry_before_time === 'all_night') return '✓ All Night';
+          return benefits.free_entry_before_time ? `Before ${benefits.free_entry_before_time}` : '✗';
+        case 'skip_line':
+          return benefits.skip_the_line ? '✓' : '✗';
+        case 'complimentary_drink':
+          if (benefits.complimentary_drink) {
+            return benefits.complimentary_drink_excludes ? `✓ (excl. ${benefits.complimentary_drink_excludes})` : '✓';
+          }
+          return '✗';
+        case 'guest_entry':
+          return benefits.guest_entry > 0 ? `+${benefits.guest_entry} Guest` : '✗';
+        case 'restaurant_discount':
+          return benefits.restaurant_discount ? `${benefits.restaurant_discount}%` : '✗';
+        case 'priority_booking':
+          return benefits.priority_booking ? '✓' : '✗';
+        case 'vip_events':
+          return benefits.private_events_access ? '✓' : '✗';
+        case 'concierge':
+          if (benefits.whatsapp_concierge) return '✓ WhatsApp';
+          return benefits.concierge_access ? '✓' : '✗';
+        default:
+          return '—';
+      }
+    };
+
+    return (
+      <View style={styles.compareContainer}>
+        {/* Category Tabs */}
+        <View style={styles.categoryTabs}>
+          {(['nightclub', 'restaurant', 'general'] as const).map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[
+                styles.categoryTab,
+                compareCategory === cat && styles.categoryTabActive
+              ]}
+              onPress={() => setCompareCategory(cat)}
+            >
+              <Ionicons 
+                name={cat === 'nightclub' ? 'musical-notes' : cat === 'restaurant' ? 'restaurant' : 'star'} 
+                size={16} 
+                color={compareCategory === cat ? '#000' : colors.textMuted} 
+              />
+              <Text style={[
+                styles.categoryTabText,
+                compareCategory === cat && styles.categoryTabTextActive
+              ]}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Comparison Table */}
+        <View style={styles.compareTable}>
+          {/* Header Row */}
+          <View style={styles.compareHeaderRow}>
+            <View style={styles.compareFeatureCell}>
+              <Text style={styles.compareHeaderText}>Feature</Text>
+            </View>
+            {tiers.map((tier) => (
+              <View key={tier.id} style={[styles.compareTierCell, { borderBottomColor: tier.color }]}>
+                <Text style={[styles.compareTierName, { color: tier.color }]}>{tier.name}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Feature Rows */}
+          {keyFeatures.map((feature, idx) => (
+            <View key={feature.key} style={[styles.compareRow, idx % 2 === 0 && styles.compareRowAlt]}>
+              <View style={styles.compareFeatureCell}>
+                <Text style={styles.compareFeatureText}>{feature.label}</Text>
+              </View>
+              {tiers.map((tier) => {
+                const value = getFeatureValue(tier, feature.key);
+                const isCheck = value === '✓' || (typeof value === 'string' && value.startsWith('✓'));
+                const isCross = value === '✗';
+                return (
+                  <View key={tier.id} style={styles.compareTierCell}>
+                    <Text style={[
+                      styles.compareValueText,
+                      isCheck && { color: '#22C55E' },
+                      isCross && { color: colors.textMuted }
+                    ]}>
+                      {value}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          ))}
+        </View>
+
+        {/* Category-specific Perks */}
+        <View style={styles.categoryPerksSection}>
+          <Text style={styles.categoryPerksTitle}>
+            {compareCategory === 'nightclub' ? '🌙 Nightclub Perks' : 
+             compareCategory === 'restaurant' ? '🍽️ Restaurant Perks' : '⭐ General Perks'}
+          </Text>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {tiers.map((tier) => {
+              const perks = getPerksForCategory(tier);
+              return (
+                <View key={tier.id} style={[styles.categoryPerkCard, { borderColor: tier.color }]}>
+                  <Text style={[styles.categoryPerkTierName, { color: tier.color }]}>{tier.name}</Text>
+                  {perks.length > 0 ? (
+                    perks.slice(0, 4).map((perk, i) => (
+                      <View key={i} style={styles.categoryPerkItem}>
+                        <Ionicons name="checkmark" size={14} color={tier.color} />
+                        <Text style={styles.categoryPerkText} numberOfLines={2}>{perk}</Text>
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={styles.noPerkText}>No specific perks</Text>
+                  )}
+                  {perks.length > 4 && (
+                    <Text style={[styles.morePerkText, { color: tier.color }]}>+{perks.length - 4} more</Text>
+                  )}
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </View>
+    );
+  };
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -256,10 +423,34 @@ export default function SubscriptionsScreen() {
           </View>
         )}
 
-        {/* Tier Cards */}
-        <View style={styles.tiersContainer}>
-          {tiers.map(renderTierCard)}
+        {/* View Toggle - always show */}
+        <View style={styles.viewToggleContainer}>
+          <View style={styles.viewToggle}>
+            <TouchableOpacity
+              style={[styles.viewToggleBtn, viewMode === 'cards' && styles.viewToggleBtnActive]}
+              onPress={() => setViewMode('cards')}
+            >
+              <Ionicons name="grid" size={18} color={viewMode === 'cards' ? '#000' : colors.textMuted} />
+              <Text style={[styles.viewToggleText, viewMode === 'cards' && styles.viewToggleTextActive]}>Plans</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.viewToggleBtn, viewMode === 'compare' && styles.viewToggleBtnActive]}
+              onPress={() => setViewMode('compare')}
+            >
+              <Ionicons name="git-compare" size={18} color={viewMode === 'compare' ? '#000' : colors.textMuted} />
+              <Text style={[styles.viewToggleText, viewMode === 'compare' && styles.viewToggleTextActive]}>Compare</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* Content based on view mode */}
+        {viewMode === 'cards' ? (
+          <View style={styles.tiersContainer}>
+            {tiers.map(renderTierCard)}
+          </View>
+        ) : (
+          renderCompareView()
+        )}
 
         {/* Info Text */}
         <View style={styles.infoSection}>
@@ -475,5 +666,171 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     lineHeight: 18,
+  },
+  // View Toggle styles
+  viewToggleContainer: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    backgroundColor: '#1A1A1A',
+    borderRadius: radius.full,
+    padding: 4,
+  },
+  viewToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.full,
+    gap: 6,
+  },
+  viewToggleBtnActive: {
+    backgroundColor: colors.accent,
+  },
+  viewToggleText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  viewToggleTextActive: {
+    color: '#000',
+  },
+  // Compare View styles
+  compareContainer: {
+    marginBottom: spacing.xl,
+  },
+  categoryTabs: {
+    flexDirection: 'row',
+    backgroundColor: '#1A1A1A',
+    borderRadius: radius.md,
+    padding: 4,
+    marginBottom: spacing.lg,
+  },
+  categoryTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    gap: 6,
+  },
+  categoryTabActive: {
+    backgroundColor: colors.accent,
+  },
+  categoryTabText: {
+    fontSize: 12,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  categoryTabTextActive: {
+    color: '#000',
+  },
+  compareTable: {
+    backgroundColor: '#111',
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  compareHeaderRow: {
+    flexDirection: 'row',
+    backgroundColor: '#1A1A1A',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  compareRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  compareRowAlt: {
+    backgroundColor: '#0A0A0A',
+  },
+  compareFeatureCell: {
+    flex: 1.2,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    justifyContent: 'center',
+  },
+  compareTierCell: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  compareHeaderText: {
+    fontSize: 11,
+    color: colors.textMuted,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  compareTierName: {
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  compareFeatureText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  compareValueText: {
+    fontSize: 11,
+    color: colors.textPrimary,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  categoryPerksSection: {
+    marginTop: spacing.lg,
+  },
+  categoryPerksTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  categoryPerkCard: {
+    width: 200,
+    backgroundColor: '#111',
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginRight: spacing.md,
+    borderWidth: 1,
+  },
+  categoryPerkTierName: {
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  categoryPerkItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    marginBottom: 6,
+  },
+  categoryPerkText: {
+    flex: 1,
+    fontSize: 11,
+    color: colors.textSecondary,
+    lineHeight: 15,
+  },
+  noPerkText: {
+    fontSize: 11,
+    color: colors.textMuted,
+    fontStyle: 'italic',
+  },
+  morePerkText: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 4,
   },
 });
