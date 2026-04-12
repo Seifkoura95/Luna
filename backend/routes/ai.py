@@ -76,11 +76,17 @@ async def get_user_from_request(request: Request):
 async def ai_chat(request: Request, body: ChatRequest):
     """
     AI Concierge Chat - Chat with Luna AI for venue questions and recommendations.
+    Chat history is stored per-user with strict isolation.
     """
     current_user = await get_user_from_request(request)
+    user_id = current_user.get("user_id")
     
-    # Generate session ID if not provided
-    session_id = body.session_id or f"chat-{current_user.get('user_id')}-{datetime.now().timestamp()}"
+    # Generate session ID if not provided - ALWAYS prefixed with user_id for security
+    session_id = body.session_id or f"chat-{user_id}-{datetime.now().timestamp()}"
+    
+    # Validate session belongs to this user
+    if not session_id.startswith(f"chat-{user_id}"):
+        raise HTTPException(status_code=403, detail="Invalid session - access denied")
     
     # Build user context
     user_context = {
@@ -93,6 +99,7 @@ async def ai_chat(request: Request, body: ChatRequest):
     response = await luna_ai.get_chat_response(
         user_message=body.message,
         session_id=session_id,
+        user_id=user_id,  # Pass user_id for isolation
         user_context=user_context
     )
     
@@ -273,4 +280,159 @@ async def ai_health_check():
             "churn_analysis": has_key,
             "memory_recap": has_key
         }
+    }
+
+
+# ====== CHAT HISTORY & SESSION MANAGEMENT ======
+
+@router.get("/chat/history")
+async def get_my_chat_history(request: Request, session_id: Optional[str] = None, limit: int = 50):
+    """
+    Get chat history for the current user.
+    Only returns messages belonging to the authenticated user.
+    """
+    current_user = await get_user_from_request(request)
+    user_id = current_user.get("user_id")
+    
+    query = {"user_id": user_id}  # ALWAYS filter by user_id
+    if session_id:
+        # Validate session belongs to this user
+        if not session_id.startswith(f"chat-{user_id}"):
+            raise HTTPException(status_code=403, detail="Access denied - invalid session")
+        query["session_id"] = session_id
+    
+    messages = await db.chat_history.find(
+        query,
+        {"_id": 0, "role": 1, "content": 1, "timestamp": 1, "session_id": 1}
+    ).sort("timestamp", -1).to_list(limit)
+    
+    return {
+        "messages": messages,
+        "total": len(messages),
+        "user_id": user_id
+    }
+
+
+@router.get("/chat/sessions")
+async def get_my_chat_sessions(request: Request):
+    """
+    Get list of chat sessions for the current user.
+    Each session is isolated to this user only.
+    """
+    current_user = await get_user_from_request(request)
+    user_id = current_user.get("user_id")
+    
+    # Get distinct sessions for this user only
+    pipeline = [
+        {"$match": {"user_id": user_id}},
+        {"$group": {
+            "_id": "$session_id",
+            "message_count": {"$sum": 1},
+            "first_message": {"$min": "$timestamp"},
+            "last_message": {"$max": "$timestamp"}
+        }},
+        {"$sort": {"last_message": -1}},
+        {"$limit": 20}
+    ]
+    
+    sessions = await db.chat_history.aggregate(pipeline).to_list(20)
+    
+    return {
+        "sessions": [
+            {
+                "session_id": s["_id"],
+                "message_count": s["message_count"],
+                "first_message": s["first_message"],
+                "last_message": s["last_message"]
+            }
+            for s in sessions
+        ],
+        "user_id": user_id
+    }
+
+
+@router.delete("/chat/history")
+async def clear_my_chat_history(request: Request, session_id: Optional[str] = None):
+    """
+    Clear chat history for the current user.
+    Can clear all history or a specific session.
+    """
+    current_user = await get_user_from_request(request)
+    user_id = current_user.get("user_id")
+    
+    query = {"user_id": user_id}  # ALWAYS filter by user_id
+    if session_id:
+        if not session_id.startswith(f"chat-{user_id}"):
+            raise HTTPException(status_code=403, detail="Access denied - invalid session")
+        query["session_id"] = session_id
+    
+    result = await db.chat_history.delete_many(query)
+    
+    return {
+        "success": True,
+        "deleted_count": result.deleted_count,
+        "scope": "session" if session_id else "all"
+    }
+
+
+# ====== ADMIN ENDPOINTS ======
+
+@router.get("/admin/chat-logs")
+async def get_all_chat_logs(request: Request, user_id: Optional[str] = None, limit: int = 100):
+    """
+    Admin endpoint to view chat logs.
+    Requires admin/staff role.
+    """
+    current_user = await get_user_from_request(request)
+    if current_user.get("role") not in ["admin", "staff"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    query = {}
+    if user_id:
+        query["user_id"] = user_id
+    
+    messages = await db.chat_history.find(
+        query,
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(limit)
+    
+    # Get unique user count
+    user_count = len(set(m.get("user_id") for m in messages))
+    
+    return {
+        "messages": messages,
+        "total": len(messages),
+        "unique_users": user_count
+    }
+
+
+@router.get("/admin/chat-stats")
+async def get_chat_stats(request: Request):
+    """
+    Admin endpoint to get chat usage statistics.
+    """
+    current_user = await get_user_from_request(request)
+    if current_user.get("role") not in ["admin", "staff"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    total_messages = await db.chat_history.count_documents({})
+    
+    # Get unique users
+    pipeline = [
+        {"$group": {"_id": "$user_id"}},
+        {"$count": "unique_users"}
+    ]
+    user_count = await db.chat_history.aggregate(pipeline).to_list(1)
+    
+    # Get unique sessions
+    session_pipeline = [
+        {"$group": {"_id": "$session_id"}},
+        {"$count": "unique_sessions"}
+    ]
+    session_count = await db.chat_history.aggregate(session_pipeline).to_list(1)
+    
+    return {
+        "total_messages": total_messages,
+        "unique_users": user_count[0]["unique_users"] if user_count else 0,
+        "unique_sessions": session_count[0]["unique_sessions"] if session_count else 0
     }

@@ -1,6 +1,7 @@
 """
 Luna AI Service - Powered by Claude/Anthropic via Emergent LLM Key
 Provides AI-driven engagement features for the Luna Group VIP app.
+Chat history is stored per-user in MongoDB for complete isolation.
 """
 import os
 import logging
@@ -11,6 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+from database import db
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +44,45 @@ IMPORTANT FORMATTING RULES:
 - Example: Say "Eclipse" not "**Eclipse**", say "Gold tier" not "**Gold** tier"
 """
 
+
+async def store_chat_message(user_id: str, session_id: str, role: str, content: str):
+    """Store a chat message in the user's isolated history"""
+    await db.chat_history.insert_one({
+        "user_id": user_id,
+        "session_id": session_id,
+        "role": role,  # "user" or "assistant"
+        "content": content,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+
+
+async def get_user_chat_history(user_id: str, session_id: str, limit: int = 20) -> List[Dict]:
+    """Get chat history for a specific user's session - strictly isolated by user_id"""
+    messages = await db.chat_history.find(
+        {
+            "user_id": user_id,  # CRITICAL: Always filter by user_id
+            "session_id": session_id
+        },
+        {"_id": 0, "role": 1, "content": 1, "timestamp": 1}
+    ).sort("timestamp", 1).to_list(limit)
+    return messages
+
+
+async def validate_session_ownership(user_id: str, session_id: str) -> bool:
+    """Verify that a session belongs to the requesting user"""
+    # Sessions are prefixed with user_id, validate this
+    if not session_id.startswith(f"chat-{user_id}"):
+        return False
+    
+    # Also check if there are any messages from other users in this session (shouldn't happen)
+    other_user_msg = await db.chat_history.find_one({
+        "session_id": session_id,
+        "user_id": {"$ne": user_id}
+    })
+    
+    return other_user_msg is None
+
+
 class LunaAIService:
     """AI service for Luna Group engagement features."""
     
@@ -53,15 +94,25 @@ class LunaAIService:
         self, 
         user_message: str, 
         session_id: str,
+        user_id: str,  # REQUIRED: User ID for isolation
         user_context: Optional[Dict[str, Any]] = None
     ) -> str:
         """
         AI Concierge Chat - Get a response from Luna AI.
+        Chat history is stored per-user in MongoDB for complete isolation.
         """
         if not EMERGENT_LLM_KEY:
             return "I'm having trouble connecting right now. Please try again later or speak with our staff."
         
+        # Validate session ownership
+        if not await validate_session_ownership(user_id, session_id):
+            logger.warning(f"Session ownership validation failed: user={user_id}, session={session_id}")
+            return "Session error. Please start a new conversation."
+        
         try:
+            # Store user message in history
+            await store_chat_message(user_id, session_id, "user", user_message)
+            
             # Build context with user info if available
             system_message = LUNA_CONTEXT
             if user_context:
@@ -75,14 +126,20 @@ class LunaAIService:
                 if user_context.get("favorite_venue"):
                     system_message += f"- Favorite Venue: {user_context['favorite_venue']}\n"
             
+            # Get previous messages for context (only from this user's session)
+            history = await get_user_chat_history(user_id, session_id, limit=10)
+            
             chat = LlmChat(
                 api_key=EMERGENT_LLM_KEY,
-                session_id=session_id,
+                session_id=f"{user_id}_{session_id}",  # Prefix with user_id for extra isolation
                 system_message=system_message
             ).with_model("anthropic", "claude-sonnet-4-5-20250929")
             
             message = UserMessage(text=user_message)
             response = await chat.send_message(message)
+            
+            # Store assistant response in history
+            await store_chat_message(user_id, session_id, "assistant", response)
             
             return response
             
