@@ -461,7 +461,7 @@ export default function RewardsShopPage() {
         {/* Send Gift Card Section */}
         <View style={styles.sectionCard} data-testid="send-gift-section">
           <View style={styles.sectionHeader}>
-            <Ionicons name="send" size={22} color="#E91E63" />
+            <Ionicons name="send" size={20} color={colors.hot} />
             <Text style={styles.sectionTitle}>Send Gift Card to a Friend</Text>
           </View>
           
@@ -475,7 +475,7 @@ export default function RewardsShopPage() {
               onPress={() => { handleHaptic(); setShowSendGift(true); }}
               data-testid="send-gift-toggle-btn"
             >
-              <Ionicons name="gift" size={18} color="#E91E63" />
+              <Ionicons name="gift" size={16} color={colors.hot} />
               <Text style={styles.sendGiftToggleText}>Send as Gift</Text>
             </TouchableOpacity>
           ) : (
@@ -510,7 +510,7 @@ export default function RewardsShopPage() {
                 disabled={!(selectedGiftCard || customAmountNum >= 10) || sendingGift}
                 data-testid="send-gift-pay-btn"
               >
-                <LinearGradient colors={['#E91E63', '#C2185B']} style={styles.purchaseGradient}>
+                <LinearGradient colors={[colors.hot, colors.error]} style={styles.purchaseGradient}>
                   {sendingGift ? (
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
@@ -558,10 +558,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.textPrimary,
-    letterSpacing: 2,
+    letterSpacing: 1.5,
   },
   // Points Card
   pointsCard: {
@@ -600,10 +600,10 @@ const styles = StyleSheet.create({
   walletBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.accent + '20',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    gap: spacing.xs,
+    backgroundColor: colors.accentDim,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderRadius: radius.full,
   },
   walletBadgeText: {
@@ -613,7 +613,7 @@ const styles = StyleSheet.create({
   },
   // Conversion Card
   conversionCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.glass,
     borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.lg,
@@ -640,12 +640,12 @@ const styles = StyleSheet.create({
   },
   // Section Card
   sectionCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.glass,
     borderRadius: radius.xl,
-    padding: spacing.lg,
+    padding: spacing.md,
     marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.glassBorderSubtle,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -715,10 +715,10 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   redemptionDesc: {
-    fontSize: 9,
+    fontSize: 11,
     color: colors.textMuted,
     textAlign: 'center',
-    lineHeight: 12,
+    lineHeight: 14,
   },
   // Bonus Banner
   bonusBanner: {
@@ -749,7 +749,7 @@ const styles = StyleSheet.create({
   },
   giftCard: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.glass,
     borderRadius: radius.lg,
     padding: spacing.md,
     alignItems: 'center',
@@ -880,16 +880,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    backgroundColor: '#E91E63' + '15',
+    backgroundColor: colors.hotDim,
     borderRadius: radius.lg,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: '#E91E63' + '30',
+    borderColor: colors.hotGlow,
   },
   sendGiftToggleText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#E91E63',
+    color: colors.hot,
   },
   sendGiftForm: {
     gap: spacing.sm,

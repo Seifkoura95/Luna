@@ -163,12 +163,12 @@ export default function VenueDashboard() {
           <Text style={styles.statValue}>{stats?.week_redemptions || 0}</Text>
           <Text style={styles.statLabel}>This Week</Text>
         </View>
-        <View style={[styles.statCard, { backgroundColor: '#8B5CF6' + '20' }]}>
+        <View style={[styles.statCard, { backgroundColor: colors.accentDim }]}>
           <Ionicons name="hourglass" size={24} color="#8B5CF6" />
           <Text style={styles.statValue}>{stats?.pending_redemptions || 0}</Text>
           <Text style={styles.statLabel}>Pending</Text>
         </View>
-        <View style={[styles.statCard, { backgroundColor: '#00D4AA' + '20' }]}>
+        <View style={[styles.statCard, { backgroundColor: colors.greenDim }]}>
           <Ionicons name="people" size={24} color="#00D4AA" />
           <Text style={styles.statValue}>{stats?.unique_visitors || 0}</Text>
           <Text style={styles.statLabel}>Visitors</Text>
@@ -198,7 +198,7 @@ export default function VenueDashboard() {
         data-testid="venue-staff-portal-btn"
       >
         <LinearGradient
-          colors={['#8B5CF6', '#6D28D9']}
+          colors={colors.gradientPurple}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.scanButtonGradient}
