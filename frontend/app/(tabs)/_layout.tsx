@@ -5,18 +5,15 @@ import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { AppBackground } from '../../src/components/AppBackground';
 import { api } from '../../src/utils/api';
-import {
-  LunaIcon,
-} from '../../src/components/LunaIcons';
-import type { IconName } from '../../src/components/LunaIcons';
+import { Ionicons } from '@expo/vector-icons';
 
-// Wrapper components for tab bar icons
-const HomeIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="home" size={size} color={color} />;
-const LocationIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="explore" size={size} color={color} />;
-const CardIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="wallet" size={size} color={color} />;
-const StarIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="star" size={size} color={color} />;
-const GuestIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="profile" size={size} color={color} />;
-const LunaAIIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="crown" size={size} color={color} />;
+// Tab bar icons using Ionicons (reliable on web + native)
+const HomeIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <Ionicons name="home" size={size} color={color} />;
+const LocationIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <Ionicons name="compass" size={size} color={color} />;
+const CardIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <Ionicons name="wallet" size={size} color={color} />;
+const StarIcon = ({ size = 14, color = '#fff' }: { size?: number; color?: string }) => <Ionicons name="star" size={size} color={color} />;
+const GuestIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <Ionicons name="person" size={size} color={color} />;
+const LunaAIIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <Ionicons name="sparkles" size={size} color={color} />;
 
 // Custom tab bar icon using Luna Icons with optional badge
 const TabBarIcon = ({ 
