@@ -512,33 +512,6 @@ export default function HomeScreen() {
           </ScrollView>
         </Animated.View>
 
-        {/* Friends */}
-        <Animated.View entering={FadeInDown.delay(500).duration(400)} style={[styles.section, { marginBottom: 40 }]}>
-          <TouchableOpacity 
-            style={styles.friendsCard}
-            onPress={() => { handleHaptic(); router.push('/social'); }}
-            activeOpacity={0.85}
-          >
-            <View style={styles.friendsAvatars}>
-              {[1, 2, 3, 4].map((i) => (
-                <Image
-                  key={i}
-                  source={{ uri: `https://randomuser.me/api/portraits/${i % 2 === 0 ? 'women' : 'men'}/${i + 10}.jpg` }}
-                  style={[styles.friendAvatar, { marginLeft: i === 1 ? 0 : -10 }]}
-                />
-              ))}
-              <View style={styles.friendsMore}>
-                <Text style={styles.friendsMoreText}>+8</Text>
-              </View>
-            </View>
-            <View style={styles.friendsInfo}>
-              <Text style={styles.friendsText}>Friends are heading out tonight</Text>
-              <Text style={styles.friendsSubtext}>See what they&apos;re up to</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-          </TouchableOpacity>
-        </Animated.View>
-
         <View style={{ height: 20 }} />
       </ScrollView>
     </View>
@@ -846,57 +819,6 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
 
-  // Friends
-  friendsCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: 14,
-    padding: 16,
-    gap: 14,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-  },
-  friendsAvatars: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  friendAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: '#000',
-  },
-  friendsMore: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -10,
-    borderWidth: 2,
-    borderColor: '#000',
-  },
-  friendsMoreText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  friendsInfo: {
-    flex: 1,
-  },
-  friendsText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  friendsSubtext: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.5)',
-    marginTop: 2,
-  },
   // Tonight's Pick styles
   tonightPickHeader: {
     flexDirection: 'row',
