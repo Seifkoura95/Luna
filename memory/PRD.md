@@ -31,6 +31,16 @@
   - New users get a share link to sign up and claim the gift card
   - POST /api/payments/gift-card/claim/{gift_code} for claiming
   - Frontend: "Send as Gift" section in Rewards Shop with email + message inputs
+- **COMPLETED**: QR Code Scanning in Staff Portal
+  - BarCodeScanner integration for native (camera-based member lookup)
+  - Scans member QR code -> auto-loads profile with perk actions
+  - Web fallback shows "QR scanning available on mobile only" message
+- **COMPLETED**: Full UI Design System Audit (April 12, 2026)
+  - Fixed hardcoded hex colors -> colors.* tokens across rewards-shop, staff-portal, venue-dashboard, PageHeader
+  - Fixed non-8pt spacing -> spacing.* scale (removed 3px, 6px, 10px, 14px values)
+  - Fixed font size violations (9px -> 11px minimum per typography scale)
+  - Replaced rgba card backgrounds with colors.glass/glassMid tokens
+  - Replaced inline border colors with colors.glassBorderSubtle tokens
 
 ## Latest Updates (April 12, 2026 - Session 1)
 - **Updated**: Subscription Tiers - Implemented new Bronze/Silver/Gold membership structure with detailed perks
