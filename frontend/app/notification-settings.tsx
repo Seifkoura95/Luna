@@ -8,7 +8,7 @@ import {
   Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { AppBackground } from '../src/components/AppBackground';
@@ -78,7 +78,7 @@ export default function NotificationSettingsPage() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Icon name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>NOTIFICATIONS</Text>
           <View style={{ width: 32 }} />
@@ -115,7 +115,7 @@ export default function NotificationSettingsPage() {
 
         {/* Info */}
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color={colors.textMuted} />
+          <Icon name="information-circle" size={20} color={colors.textMuted} />
           <Text style={styles.infoText}>
             Safety alerts cannot be disabled for your protection. You will always receive emergency notifications from crew members.
           </Text>

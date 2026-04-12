@@ -13,7 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api } from '../src/utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { AppBackground } from '../src/components/AppBackground';
@@ -142,7 +142,7 @@ export default function SubscriptionsScreen() {
           {/* Header */}
           <View style={styles.tierHeader}>
             <View style={[styles.tierIcon, { backgroundColor: tier.color + '30' }]}>
-              <Ionicons 
+              <Icon 
                 name={tier.id === 'bronze' ? 'shield' : tier.id === 'silver' ? 'shield-half' : 'shield-checkmark'} 
                 size={24} 
                 color={tier.color} 
@@ -169,7 +169,7 @@ export default function SubscriptionsScreen() {
 
           {/* Points Multiplier Badge */}
           <View style={[styles.multiplierBadge, { backgroundColor: tier.color + '20' }]}>
-            <Ionicons name="trending-up" size={16} color={tier.color} />
+            <Icon name="trending-up" size={16} color={tier.color} />
             <Text style={[styles.multiplierText, { color: tier.color }]}>
               {tier.points_multiplier}x Points
             </Text>
@@ -179,7 +179,7 @@ export default function SubscriptionsScreen() {
           <View style={styles.perksList}>
             {tier.perks_list.map((perk, i) => (
               <View key={i} style={styles.perkItem}>
-                <Ionicons name="checkmark-circle" size={18} color={tier.color} />
+                <Icon name="checkmark-circle" size={18} color={tier.color} />
                 <Text style={styles.perkText}>{perk}</Text>
               </View>
             ))}
@@ -286,7 +286,7 @@ export default function SubscriptionsScreen() {
               ]}
               onPress={() => setCompareCategory(cat)}
             >
-              <Ionicons 
+              <Icon 
                 name={cat === 'nightclub' ? 'musical-notes' : cat === 'restaurant' ? 'restaurant' : 'star'} 
                 size={16} 
                 color={compareCategory === cat ? '#000' : colors.textMuted} 
@@ -357,7 +357,7 @@ export default function SubscriptionsScreen() {
                   {perks.length > 0 ? (
                     perks.slice(0, 4).map((perk, i) => (
                       <View key={i} style={styles.categoryPerkItem}>
-                        <Ionicons name="checkmark" size={14} color={tier.color} />
+                        <Icon name="checkmark" size={14} color={tier.color} />
                         <Text style={styles.categoryPerkText} numberOfLines={2}>{perk}</Text>
                       </View>
                     ))
@@ -401,7 +401,7 @@ export default function SubscriptionsScreen() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+            <Icon name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           
           <Text style={styles.headerTitle}>MEMBERSHIP</Text>
@@ -428,14 +428,14 @@ export default function SubscriptionsScreen() {
               style={[styles.viewToggleBtn, viewMode === 'cards' && styles.viewToggleBtnActive]}
               onPress={() => setViewMode('cards')}
             >
-              <Ionicons name="grid" size={18} color={viewMode === 'cards' ? '#000' : colors.textMuted} />
+              <Icon name="grid" size={18} color={viewMode === 'cards' ? '#000' : colors.textMuted} />
               <Text style={[styles.viewToggleText, viewMode === 'cards' && styles.viewToggleTextActive]}>Plans</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.viewToggleBtn, viewMode === 'compare' && styles.viewToggleBtnActive]}
               onPress={() => setViewMode('compare')}
             >
-              <Ionicons name="git-compare" size={18} color={viewMode === 'compare' ? '#000' : colors.textMuted} />
+              <Icon name="git-compare" size={18} color={viewMode === 'compare' ? '#000' : colors.textMuted} />
               <Text style={[styles.viewToggleText, viewMode === 'compare' && styles.viewToggleTextActive]}>Compare</Text>
             </TouchableOpacity>
           </View>
@@ -452,7 +452,7 @@ export default function SubscriptionsScreen() {
 
         {/* Info Text */}
         <View style={styles.infoSection}>
-          <Ionicons name="information-circle" size={20} color={colors.textMuted} />
+          <Icon name="information-circle" size={20} color={colors.textMuted} />
           <Text style={styles.infoText}>
             All subscriptions are billed monthly. Cancel anytime from your profile settings.
             Demo mode - no real payments processed.

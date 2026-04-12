@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import { format } from 'date-fns';
 
 interface PhotoCardProps {
@@ -75,7 +75,7 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
           photo.tag_status === 'approved' && styles.statusApproved,
           photo.tag_status === 'pending' && styles.statusPending,
         ]}>
-          <Ionicons 
+          <Icon 
             name={
               photo.tag_status === 'purchased' ? 'checkmark-circle' :
               photo.tag_status === 'approved' ? 'cart' :
@@ -95,7 +95,7 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
       {/* AI Enhanced Badge */}
       {photo.ai_enhanced && (
         <View style={styles.aiBadge}>
-          <Ionicons name="sparkles" size={12} color={colors.premiumGold} />
+          <Icon name="sparkles" size={12} color={colors.premiumGold} />
           <Text style={styles.aiText}>AI</Text>
         </View>
       )}
@@ -106,7 +106,7 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
           styles.checkbox,
           selected && styles.checkboxSelected
         ]}>
-          {selected && <Ionicons name="checkmark" size={16} color={colors.textPrimary} />}
+          {selected && <Icon name="checkmark" size={16} color={colors.textPrimary} />}
         </View>
       )}
       
@@ -117,13 +117,13 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
             style={[styles.approvalBtn, styles.approveBtn]}
             onPress={() => onApprove(tagId, true)}
           >
-            <Ionicons name="checkmark" size={20} color={colors.textPrimary} />
+            <Icon name="checkmark" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.approvalBtn, styles.declineBtn]}
             onPress={() => onApprove(tagId, false)}
           >
-            <Ionicons name="close" size={20} color={colors.textPrimary} />
+            <Icon name="close" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
       )}

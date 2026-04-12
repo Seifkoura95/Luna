@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -23,7 +23,7 @@ export default function PaymentCancelled() {
       <View style={[styles.content, { paddingTop: insets.top + 60 }]}>
         <Animated.View entering={FadeInDown} style={styles.statusContainer}>
           <View style={styles.cancelledIcon}>
-            <Ionicons name="close-circle-outline" size={64} color={colors.textMuted} />
+            <Icon name="close-circle-outline" size={64} color={colors.textMuted} />
           </View>
           <Text style={styles.cancelledTitle}>Payment Cancelled</Text>
           <Text style={styles.statusSubtitle}>

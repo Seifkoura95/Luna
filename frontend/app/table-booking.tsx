@@ -15,7 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api } from '../src/utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBackground } from '../src/components/AppBackground';
@@ -252,7 +252,7 @@ export default function TableBookingScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Icon name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, ]}>VIP Tables</Text>
@@ -378,7 +378,7 @@ export default function TableBookingScreen() {
             </View>
           ) : tables.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="restaurant-outline" size={48} color={colors.textMuted} />
+              <Icon name="restaurant-outline" size={48} color={colors.textMuted} />
               <Text style={[styles.emptyText, ]}>
                 No tables available at {selectedVenue.name}
               </Text>
@@ -412,11 +412,11 @@ export default function TableBookingScreen() {
                       
                       <View style={styles.tableStats}>
                         <View style={styles.tableStat}>
-                          <Ionicons name="people" size={14} color={colors.textSecondary} />
+                          <Icon name="people" size={14} color={colors.textSecondary} />
                           <Text style={[styles.tableStatText, ]}>Up to {table.capacity}</Text>
                         </View>
                         <View style={styles.tableStat}>
-                          <Ionicons name="card" size={14} color={colors.textSecondary} />
+                          <Icon name="card" size={14} color={colors.textSecondary} />
                           <Text style={[styles.tableStatText, ]}>Min ${table.min_spend}</Text>
                         </View>
                       </View>
@@ -437,7 +437,7 @@ export default function TableBookingScreen() {
                       </Text>
                       {isSelected && (
                         <View style={[styles.checkCircle, { backgroundColor: selectedVenue.color }]}>
-                          <Ionicons name="checkmark" size={16} color="#FFF" />
+                          <Icon name="checkmark" size={16} color="#FFF" />
                         </View>
                       )}
                       {!isAvailable && (
@@ -460,14 +460,14 @@ export default function TableBookingScreen() {
                 style={styles.partySizeBtn}
                 onPress={() => setPartySize(Math.max(1, partySize - 1))}
               >
-                <Ionicons name="remove" size={24} color={colors.textPrimary} />
+                <Icon name="remove" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
               <Text style={[styles.partySizeText, ]}>{partySize}</Text>
               <TouchableOpacity
                 style={styles.partySizeBtn}
                 onPress={() => setPartySize(Math.min(selectedTable.capacity, partySize + 1))}
               >
-                <Ionicons name="add" size={24} color={colors.textPrimary} />
+                <Icon name="add" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
             <Text style={[styles.capacityNote, ]}>Max {selectedTable.capacity} guests</Text>
@@ -504,7 +504,7 @@ export default function TableBookingScreen() {
                 <ActivityIndicator color="#FFF" />
               ) : (
                 <>
-                  <Ionicons name="checkmark-circle" size={24} color="#FFF" />
+                  <Icon name="checkmark-circle" size={24} color="#FFF" />
                   <Text style={[styles.bookButtonText, ]}>
                     RESERVE • ${selectedTable.deposit_amount} DEPOSIT
                   </Text>
@@ -522,7 +522,7 @@ export default function TableBookingScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={[styles.modalHeader, { backgroundColor: selectedVenue.color }]}>
-              <Ionicons name="checkmark-circle" size={48} color="#FFF" />
+              <Icon name="checkmark-circle" size={48} color="#FFF" />
               <Text style={[styles.modalTitle, ]}>Booking Created!</Text>
             </View>
             

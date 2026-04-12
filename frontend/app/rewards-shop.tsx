@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius } from '../src/theme/colors';
@@ -202,7 +202,7 @@ export default function RewardsShopPage() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+            <Icon name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>REDEEM POINTS</Text>
         </View>
@@ -213,7 +213,7 @@ export default function RewardsShopPage() {
             colors={[colors.gold + '40', colors.gold + '20']}
             style={styles.pointsGradient}
           >
-            <Ionicons name="star" size={32} color={colors.gold} />
+            <Icon name="star" size={32} color={colors.gold} />
             <View style={styles.pointsInfo}>
               <Text style={styles.pointsLabel}>YOUR POINTS</Text>
               <Text style={styles.pointsValue}>{currentPoints.toLocaleString()}</Text>
@@ -221,7 +221,7 @@ export default function RewardsShopPage() {
             </View>
             {walletBalance > 0 && (
               <View style={styles.walletBadge}>
-                <Ionicons name="wallet" size={14} color={colors.accent} />
+                <Icon name="wallet" size={14} color={colors.accent} />
                 <Text style={styles.walletBadgeText}>${walletBalance.toFixed(2)}</Text>
               </View>
             )}
@@ -232,10 +232,10 @@ export default function RewardsShopPage() {
         <View style={styles.conversionCard}>
           <View style={styles.conversionRow}>
             <View style={styles.conversionBadge}>
-              <Ionicons name="star" size={16} color={colors.gold} />
+              <Icon name="star" size={16} color={colors.gold} />
               <Text style={styles.conversionText}>10 points</Text>
             </View>
-            <Ionicons name="arrow-forward" size={16} color={colors.textMuted} />
+            <Icon name="arrow-forward" size={16} color={colors.textMuted} />
             <View style={styles.conversionBadge}>
               <Text style={styles.conversionText}>$1 value</Text>
             </View>
@@ -245,7 +245,7 @@ export default function RewardsShopPage() {
         {/* How to Redeem */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="information-circle" size={22} color={colors.accent} />
+            <Icon name="information-circle" size={22} color={colors.accent} />
             <Text style={styles.sectionTitle}>How to Redeem In-Venue</Text>
           </View>
           
@@ -268,7 +268,7 @@ export default function RewardsShopPage() {
         {/* What You Can Redeem */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="cart" size={22} color={colors.accent} />
+            <Icon name="cart" size={22} color={colors.accent} />
             <Text style={styles.sectionTitle}>What You Can Redeem</Text>
           </View>
           
@@ -277,7 +277,7 @@ export default function RewardsShopPage() {
               {VENUE_REDEMPTIONS.slice(0, 3).map((item) => (
                 <View key={item.id} style={styles.redemptionItem}>
                   <View style={styles.redemptionIcon}>
-                    <Ionicons name={item.icon as any} size={24} color={colors.accent} />
+                    <Icon name={item.icon as any} size={24} color={colors.accent} />
                   </View>
                   <Text style={styles.redemptionTitle}>{item.title}</Text>
                   <Text style={styles.redemptionDesc}>{item.description}</Text>
@@ -288,7 +288,7 @@ export default function RewardsShopPage() {
               {VENUE_REDEMPTIONS.slice(3, 6).map((item) => (
                 <View key={item.id} style={styles.redemptionItem}>
                   <View style={styles.redemptionIcon}>
-                    <Ionicons name={item.icon as any} size={24} color={colors.accent} />
+                    <Icon name={item.icon as any} size={24} color={colors.accent} />
                   </View>
                   <Text style={styles.redemptionTitle}>{item.title}</Text>
                   <Text style={styles.redemptionDesc}>{item.description}</Text>
@@ -301,7 +301,7 @@ export default function RewardsShopPage() {
         {/* Gift Cards */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="gift" size={22} color={colors.gold} />
+            <Icon name="gift" size={22} color={colors.gold} />
             <Text style={styles.sectionTitle}>Luna Gift Cards</Text>
           </View>
           
@@ -310,7 +310,7 @@ export default function RewardsShopPage() {
               colors={[colors.gold + '30', colors.gold + '10']}
               style={styles.bonusGradient}
             >
-              <Ionicons name="sparkles" size={18} color={colors.gold} />
+              <Icon name="sparkles" size={18} color={colors.gold} />
               <Text style={styles.bonusText}>Get 10% EXTRA value on all gift cards!</Text>
             </LinearGradient>
           </View>
@@ -346,7 +346,7 @@ export default function RewardsShopPage() {
                     </Text>
                     {isSelected && (
                       <View style={styles.selectedCheck}>
-                        <Ionicons name="checkmark-circle" size={24} color={colors.gold} />
+                        <Icon name="checkmark-circle" size={24} color={colors.gold} />
                       </View>
                     )}
                   </TouchableOpacity>
@@ -383,7 +383,7 @@ export default function RewardsShopPage() {
                     </Text>
                     {isSelected && (
                       <View style={styles.selectedCheck}>
-                        <Ionicons name="checkmark-circle" size={24} color={colors.gold} />
+                        <Icon name="checkmark-circle" size={24} color={colors.gold} />
                       </View>
                     )}
                   </TouchableOpacity>
@@ -440,7 +440,7 @@ export default function RewardsShopPage() {
               {purchasing ? (
                 <ActivityIndicator size="small" color="#000" />
               ) : (
-                <Ionicons name="card" size={20} color={selectedGiftCard || customAmountNum >= 10 ? '#000' : colors.textMuted} />
+                <Icon name="card" size={20} color={selectedGiftCard || customAmountNum >= 10 ? '#000' : colors.textMuted} />
               )}
               <Text style={[
                 styles.purchaseText,
@@ -461,7 +461,7 @@ export default function RewardsShopPage() {
         {/* Send Gift Card Section */}
         <View style={styles.sectionCard} data-testid="send-gift-section">
           <View style={styles.sectionHeader}>
-            <Ionicons name="send" size={20} color={colors.hot} />
+            <Icon name="send" size={20} color={colors.hot} />
             <Text style={styles.sectionTitle}>Send Gift Card to a Friend</Text>
           </View>
           
@@ -475,13 +475,13 @@ export default function RewardsShopPage() {
               onPress={() => { handleHaptic(); setShowSendGift(true); }}
               data-testid="send-gift-toggle-btn"
             >
-              <Ionicons name="gift" size={16} color={colors.hot} />
+              <Icon name="gift" size={16} color={colors.hot} />
               <Text style={styles.sendGiftToggleText}>Send as Gift</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.sendGiftForm}>
               <View style={styles.sendGiftInputRow}>
-                <Ionicons name="mail" size={16} color={colors.textMuted} />
+                <Icon name="mail" size={16} color={colors.textMuted} />
                 <TextInput
                   style={styles.sendGiftInput}
                   placeholder="Friend's email address"
@@ -494,7 +494,7 @@ export default function RewardsShopPage() {
                 />
               </View>
               <View style={styles.sendGiftInputRow}>
-                <Ionicons name="chatbubble" size={16} color={colors.textMuted} />
+                <Icon name="chatbubble" size={16} color={colors.textMuted} />
                 <TextInput
                   style={styles.sendGiftInput}
                   placeholder="Add a personal message (optional)"
@@ -514,7 +514,7 @@ export default function RewardsShopPage() {
                   {sendingGift ? (
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <Ionicons name="send" size={18} color="#fff" />
+                    <Icon name="send" size={18} color="#fff" />
                   )}
                   <Text style={[styles.purchaseText, { color: '#fff' }]}>
                     {sendingGift ? 'Processing...' : `Send $${selectedGiftCard || customAmountNum || '?'} Gift Card`}

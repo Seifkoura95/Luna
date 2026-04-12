@@ -15,7 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
 import { api } from '../utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -205,7 +205,7 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
         activeOpacity={0.7}
       >
         <View style={[styles.alertTypeIcon, { backgroundColor: alertType.color + '30' }]}>
-          <Ionicons name={alertType.icon as any} size={28} color={alertType.color} />
+          <Icon name={alertType.icon as any} size={28} color={alertType.color} />
         </View>
         <View style={styles.alertTypeText}>
           <Text style={[styles.alertTypeLabel, isSelected && { color: alertType.color }]}>
@@ -229,7 +229,7 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
           <LinearGradient colors={['#000', '#0A0A0A']} style={styles.gradient}>
             <View style={styles.successContainer}>
               <View style={styles.successIcon}>
-                <Ionicons name="checkmark-circle" size={80} color="#00FF00" />
+                <Icon name="checkmark-circle" size={80} color="#00FF00" />
               </View>
               <Text style={styles.successTitle}>Alert Sent!</Text>
               <Text style={styles.successSubtitle}>Help is on the way</Text>
@@ -253,7 +253,7 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
               )}
 
               <View style={styles.locationSent}>
-                <Ionicons name="location" size={20} color={colors.accent} />
+                <Icon name="location" size={20} color={colors.accent} />
                 <Text style={styles.locationSentText}>
                   Your live location has been shared
                 </Text>
@@ -280,10 +280,10 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={28} color={colors.textPrimary} />
+              <Icon name="close" size={28} color={colors.textPrimary} />
             </TouchableOpacity>
             <View style={styles.headerCenter}>
-              <Ionicons name="shield-checkmark" size={32} color={colors.accent} />
+              <Icon name="shield-checkmark" size={32} color={colors.accent} />
               <Text style={styles.headerTitle}>SAFETY ALERT</Text>
             </View>
             <View style={{ width: 44 }} />
@@ -292,7 +292,7 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
           <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
             {/* Location Status */}
             <View style={[styles.locationStatus, locationError && styles.locationError]}>
-              <Ionicons 
+              <Icon 
                 name={locationError ? 'location-outline' : 'location'} 
                 size={20} 
                 color={locationError ? colors.textMuted : '#00FF00'} 
@@ -332,7 +332,7 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
                       ]}
                       onPress={() => setSelectedCrew(selectedCrew === crew.id ? null : crew.id)}
                     >
-                      <Ionicons 
+                      <Icon 
                         name={selectedCrew === crew.id ? 'checkbox' : 'square-outline'} 
                         size={20} 
                         color={selectedCrew === crew.id ? colors.accent : colors.textMuted} 
@@ -357,7 +357,7 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
                     ]}
                     onPress={() => setSelectedVenue(selectedVenue === venue.id ? null : venue.id)}
                   >
-                    <Ionicons 
+                    <Icon 
                       name={selectedVenue === venue.id ? 'checkbox' : 'square-outline'} 
                       size={20} 
                       color={selectedVenue === venue.id ? colors.accent : colors.textMuted} 
@@ -397,7 +397,7 @@ export const SafetyAlert: React.FC<SafetyAlertProps> = ({
                 <ActivityIndicator color="#FFF" />
               ) : (
                 <>
-                  <Ionicons name="send" size={22} color="#FFF" />
+                  <Icon name="send" size={22} color="#FFF" />
                   <Text style={styles.sendButtonText}>SEND ALERT</Text>
                 </>
               )}

@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { useAuthStore } from '../src/store/authStore';
 import { api } from '../src/utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBackground } from '../src/components/AppBackground';
@@ -323,7 +323,7 @@ export default function EditProfileScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+          <Icon name="chevron-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
         <TouchableOpacity 
@@ -376,7 +376,7 @@ export default function EditProfileScreen() {
                 </LinearGradient>
               )}
               <View style={styles.avatarEditBadge}>
-                <Ionicons name="camera" size={14} color="#FFFFFF" />
+                <Icon name="camera" size={14} color="#FFFFFF" />
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={handlePickAvatar} disabled={uploadingAvatar}>
@@ -484,7 +484,7 @@ export default function EditProfileScreen() {
                   <Text style={styles.dateButtonText}>
                     {formatDisplayDate(dateOfBirth)}
                   </Text>
-                  <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
+                  <Icon name="calendar-outline" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
               )}
             </View>
@@ -587,7 +587,7 @@ export default function EditProfileScreen() {
             
             <View style={styles.toggleRow}>
               <View style={styles.toggleInfo}>
-                <Ionicons name="notifications" size={20} color={colors.textSecondary} />
+                <Icon name="notifications" size={20} color={colors.textSecondary} />
                 <Text style={styles.toggleLabel}>Push Notifications</Text>
               </View>
               <TouchableOpacity 
@@ -600,7 +600,7 @@ export default function EditProfileScreen() {
             
             <View style={styles.toggleRow}>
               <View style={styles.toggleInfo}>
-                <Ionicons name="mail" size={20} color={colors.textSecondary} />
+                <Icon name="mail" size={20} color={colors.textSecondary} />
                 <Text style={styles.toggleLabel}>Email Updates</Text>
               </View>
               <TouchableOpacity 
@@ -613,7 +613,7 @@ export default function EditProfileScreen() {
             
             <View style={styles.toggleRow}>
               <View style={styles.toggleInfo}>
-                <Ionicons name="calendar" size={20} color={colors.textSecondary} />
+                <Icon name="calendar" size={20} color={colors.textSecondary} />
                 <Text style={styles.toggleLabel}>Event Reminders</Text>
               </View>
               <TouchableOpacity 
@@ -626,7 +626,7 @@ export default function EditProfileScreen() {
             
             <View style={styles.toggleRow}>
               <View style={styles.toggleInfo}>
-                <Ionicons name="pricetag" size={20} color={colors.textSecondary} />
+                <Icon name="pricetag" size={20} color={colors.textSecondary} />
                 <Text style={styles.toggleLabel}>Auction Alerts</Text>
               </View>
               <TouchableOpacity 
@@ -639,7 +639,7 @@ export default function EditProfileScreen() {
             
             <View style={styles.toggleRow}>
               <View style={styles.toggleInfo}>
-                <Ionicons name="gift" size={20} color={colors.textSecondary} />
+                <Icon name="gift" size={20} color={colors.textSecondary} />
                 <Text style={styles.toggleLabel}>Rewards & Points</Text>
               </View>
               <TouchableOpacity 
@@ -660,10 +660,10 @@ export default function EditProfileScreen() {
               onPress={() => setShowPasswordSection(!showPasswordSection)}
             >
               <View style={styles.securityInfo}>
-                <Ionicons name="lock-closed" size={20} color={colors.textSecondary} />
+                <Icon name="lock-closed" size={20} color={colors.textSecondary} />
                 <Text style={styles.securityLabel}>Change Password</Text>
               </View>
-              <Ionicons 
+              <Icon 
                 name={showPasswordSection ? "chevron-up" : "chevron-forward"} 
                 size={20} 
                 color={colors.textMuted} 
@@ -719,7 +719,7 @@ export default function EditProfileScreen() {
               style={styles.deleteButton}
               onPress={handleDeleteAccount}
             >
-              <Ionicons name="trash-outline" size={20} color={colors.error} />
+              <Icon name="trash-outline" size={20} color={colors.error} />
               <Text style={styles.deleteButtonText}>Delete Account</Text>
             </TouchableOpacity>
             

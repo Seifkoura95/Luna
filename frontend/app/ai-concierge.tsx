@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -104,7 +104,7 @@ export default function AIConcierge() {
             colors={[colors.accent, colors.accentDark]}
             style={styles.avatarGradient}
           >
-            <Ionicons name="sparkles" size={14} color={colors.textPrimary} />
+            <Icon name="sparkles" size={14} color={colors.textPrimary} />
           </LinearGradient>
         </View>
       )}
@@ -133,14 +133,14 @@ export default function AIConcierge() {
           onPress={() => router.back()}
           data-testid="ai-concierge-back"
         >
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Icon name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerTitle}>
           <LinearGradient
             colors={[colors.accent, colors.accentDark]}
             style={styles.headerIcon}
           >
-            <Ionicons name="sparkles" size={16} color={colors.textPrimary} />
+            <Icon name="sparkles" size={16} color={colors.textPrimary} />
           </LinearGradient>
           <View>
             <Text style={styles.headerText}>Luna AI</Text>
@@ -226,7 +226,7 @@ export default function AIConcierge() {
                 }
                 style={styles.sendButtonGradient}
               >
-                <Ionicons 
+                <Icon 
                   name="send" 
                   size={18} 
                   color={inputText.trim() && !isLoading ? colors.textPrimary : colors.textMuted} 

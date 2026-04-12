@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius } from '../../src/theme/colors';
@@ -190,7 +190,7 @@ export default function VenueDetailScreen() {
       <Animated.View style={[styles.animatedHeader, { opacity: headerOpacity, paddingTop: insets.top }]}>
         <BlurView intensity={80} tint="dark" style={styles.blurHeader}>
           <TouchableOpacity style={styles.headerBackButton} onPress={handleBack}>
-            <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+            <Icon name="chevron-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.animatedHeaderTitle} numberOfLines={1}>{venue.name}</Text>
           <View style={styles.headerSpacer} />
@@ -223,7 +223,7 @@ export default function VenueDetailScreen() {
             onPress={handleBack}
           >
             <BlurView intensity={60} tint="dark" style={styles.blurButton}>
-              <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+              <Icon name="chevron-back" size={24} color={colors.textPrimary} />
             </BlurView>
           </TouchableOpacity>
 
@@ -244,7 +244,7 @@ export default function VenueDetailScreen() {
                 </Text>
               </View>
               <Text style={styles.locationText}>
-                <Ionicons name="location" size={14} color={colors.textSecondary} /> {venue.location}
+                <Icon name="location" size={14} color={colors.textSecondary} /> {venue.location}
               </Text>
             </View>
           </View>
@@ -259,7 +259,7 @@ export default function VenueDetailScreen() {
                 colors={[venue.accent_color + '30', venue.accent_color + '10']}
                 style={styles.quickActionGradient}
               >
-                <Ionicons name="navigate" size={22} color={venue.accent_color} />
+                <Icon name="navigate" size={22} color={venue.accent_color} />
               </LinearGradient>
               <Text style={styles.quickActionLabel}>Directions</Text>
             </TouchableOpacity>
@@ -270,7 +270,7 @@ export default function VenueDetailScreen() {
                   colors={[colors.accent + '30', colors.accent + '10']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="globe" size={22} color={colors.accent} />
+                  <Icon name="globe" size={22} color={colors.accent} />
                 </LinearGradient>
                 <Text style={styles.quickActionLabel}>Website</Text>
               </TouchableOpacity>
@@ -282,7 +282,7 @@ export default function VenueDetailScreen() {
                   colors={['#E1306C30', '#E1306C10']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="logo-instagram" size={22} color="#E1306C" />
+                  <Icon name="logo-instagram" size={22} color="#E1306C" />
                 </LinearGradient>
                 <Text style={styles.quickActionLabel}>Instagram</Text>
               </TouchableOpacity>
@@ -294,7 +294,7 @@ export default function VenueDetailScreen() {
                   colors={[colors.success + '30', colors.success + '10']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="call" size={22} color={colors.success} />
+                  <Icon name="call" size={22} color={colors.success} />
                 </LinearGradient>
                 <Text style={styles.quickActionLabel}>Call</Text>
               </TouchableOpacity>
@@ -306,7 +306,7 @@ export default function VenueDetailScreen() {
                   colors={[colors.gold + '30', colors.gold + '10']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="mail" size={22} color={colors.gold} />
+                  <Icon name="mail" size={22} color={colors.gold} />
                 </LinearGradient>
                 <Text style={styles.quickActionLabel}>Email</Text>
               </TouchableOpacity>
@@ -340,14 +340,14 @@ export default function VenueDetailScreen() {
               >
                 <View style={styles.transportBtnContent}>
                   <View style={[styles.transportIcon, { backgroundColor: '#000' }]}>
-                    <Ionicons name="car" size={18} color="#fff" />
+                    <Icon name="car" size={18} color="#fff" />
                   </View>
                   <View style={styles.transportTextContainer}>
                     <Text style={styles.transportTitle}>Uber</Text>
                     <Text style={styles.transportSubtext}>Ride to venue</Text>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                <Icon name="chevron-forward" size={20} color={colors.textMuted} />
               </TouchableOpacity>
 
               <TouchableOpacity 
@@ -368,14 +368,14 @@ export default function VenueDetailScreen() {
               >
                 <View style={styles.transportBtnContent}>
                   <View style={[styles.transportIcon, { backgroundColor: '#FF6633' }]}>
-                    <Ionicons name="car" size={18} color="#fff" />
+                    <Icon name="car" size={18} color="#fff" />
                   </View>
                   <View style={styles.transportTextContainer}>
                     <Text style={styles.transportTitle}>Didi</Text>
                     <Text style={styles.transportSubtext}>Ride to venue</Text>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                <Icon name="chevron-forward" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
           </View>
@@ -398,7 +398,7 @@ export default function VenueDetailScreen() {
           {venue.operating_hours?.status === 'Coming Soon' && (
             <View style={styles.section}>
               <View style={styles.comingSoonBadge}>
-                <Ionicons name="time" size={20} color={colors.gold} />
+                <Icon name="time" size={20} color={colors.gold} />
                 <Text style={styles.comingSoonText}>Coming Soon</Text>
               </View>
             </View>
@@ -411,14 +411,14 @@ export default function VenueDetailScreen() {
               <View style={styles.tagsContainer}>
                 {venue.music_genres.map((genre: string, index: number) => (
                   <View key={index} style={[styles.tag, { borderColor: venue.accent_color + '60' }]}>
-                    <Ionicons name="musical-notes" size={14} color={venue.accent_color} />
+                    <Icon name="musical-notes" size={14} color={venue.accent_color} />
                     <Text style={[styles.tagText, { color: venue.accent_color }]}>{genre}</Text>
                   </View>
                 ))}
               </View>
               {venue.dress_code && (
                 <View style={styles.dressCodeContainer}>
-                  <Ionicons name="shirt" size={16} color={colors.textSecondary} />
+                  <Icon name="shirt" size={16} color={colors.textSecondary} />
                   <Text style={styles.dressCodeText}>{venue.dress_code}</Text>
                 </View>
               )}
@@ -431,7 +431,7 @@ export default function VenueDetailScreen() {
               <Text style={styles.sectionTitle}>Cuisine</Text>
               <View style={styles.cuisineRow}>
                 <View style={[styles.cuisineBadge, { backgroundColor: venue.accent_color + '20' }]}>
-                  <Ionicons name="restaurant" size={16} color={venue.accent_color} />
+                  <Icon name="restaurant" size={16} color={venue.accent_color} />
                   <Text style={[styles.cuisineText, { color: venue.accent_color }]}>{venue.cuisine}</Text>
                 </View>
                 {venue.price_range && (
@@ -442,7 +442,7 @@ export default function VenueDetailScreen() {
                 <View style={styles.dietaryContainer}>
                   {venue.dietary_options.map((option: string, index: number) => (
                     <View key={index} style={styles.dietaryBadge}>
-                      <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                      <Icon name="checkmark-circle" size={14} color={colors.success} />
                       <Text style={styles.dietaryText}>{option}</Text>
                     </View>
                   ))}
@@ -485,7 +485,7 @@ export default function VenueDetailScreen() {
                 return (
                   <View key={index} style={styles.featureItem}>
                     <View style={[styles.featureIcon, { backgroundColor: venue.accent_color + '20' }]}>
-                      <Ionicons
+                      <Icon
                         name={(featureIcons[feature] || 'checkmark') as any}
                         size={20}
                         color={venue.accent_color}
@@ -518,7 +518,7 @@ export default function VenueDetailScreen() {
                     <Text style={styles.auctionTitle}>{auction.title}</Text>
                     <Text style={styles.auctionBid}>Current Bid: ${auction.current_bid}</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                  <Icon name="chevron-forward" size={20} color={colors.textMuted} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -556,7 +556,7 @@ export default function VenueDetailScreen() {
                     )}
                   </View>
                   <View style={[styles.eventTicketBtn, { backgroundColor: venue?.accent_color }]}>
-                    <Ionicons name="ticket" size={16} color="#FFF" />
+                    <Icon name="ticket" size={16} color="#FFF" />
                   </View>
                 </TouchableOpacity>
               ))}
@@ -568,13 +568,13 @@ export default function VenueDetailScreen() {
             <Text style={styles.sectionTitle}>Location</Text>
             <TouchableOpacity style={styles.addressCard} onPress={handleGetDirections}>
               <View style={styles.addressContent}>
-                <Ionicons name="location" size={24} color={venue.accent_color} />
+                <Icon name="location" size={24} color={venue.accent_color} />
                 <View style={styles.addressText}>
                   <Text style={styles.addressLine}>{venue.address}</Text>
                   <Text style={styles.addressAction}>Tap to get directions</Text>
                 </View>
               </View>
-              <Ionicons name="navigate" size={20} color={colors.textMuted} />
+              <Icon name="navigate" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -607,7 +607,7 @@ export default function VenueDetailScreen() {
             <Text style={styles.ctaButtonText}>
               {getBookingButtonText(venue.id, venue.type)}
             </Text>
-            <Ionicons name="arrow-forward" size={20} color={colors.textPrimary} />
+            <Icon name="arrow-forward" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
         </LinearGradient>
       </View>

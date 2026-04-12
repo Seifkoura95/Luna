@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { AppBackground } from '../../src/components/AppBackground';
@@ -180,7 +180,7 @@ export default function LeaderboardPage() {
 
         {/* Title */}
         <View style={styles.titleContainer}>
-          <Ionicons name="trophy" size={28} color={colors.gold} />
+          <Icon name="trophy" size={28} color={colors.gold} />
           <Text style={styles.pageTitle}>LEADERBOARD</Text>
         </View>
 
@@ -215,7 +215,7 @@ export default function LeaderboardPage() {
               style={[styles.categoryTab, category === tab.key && styles.categoryTabActive]}
               onPress={() => setCategory(tab.key as Category)}
             >
-              <Ionicons 
+              <Icon 
                 name={tab.icon as any} 
                 size={16} 
                 color={category === tab.key ? colors.accent : colors.textMuted} 
@@ -237,9 +237,9 @@ export default function LeaderboardPage() {
                 {/* 2nd Place */}
                 <View style={[styles.podiumItem, styles.podiumSecond]}>
                   <View style={[styles.podiumAvatar, { borderColor: '#C0C0C0' }]}>
-                    <Ionicons name="person" size={24} color="#C0C0C0" />
+                    <Icon name="person" size={24} color="#C0C0C0" />
                   </View>
-                  <Ionicons name="medal" size={20} color="#C0C0C0" />
+                  <Icon name="medal" size={20} color="#C0C0C0" />
                   <Text style={styles.podiumName} numberOfLines={1}>{leaders[1]?.display_name}</Text>
                   <Text style={styles.podiumScore}>{getScoreValue(leaders[1])}</Text>
                   <View style={[styles.podiumBar, { height: 60, backgroundColor: '#C0C0C030' }]} />
@@ -248,9 +248,9 @@ export default function LeaderboardPage() {
                 {/* 1st Place */}
                 <View style={[styles.podiumItem, styles.podiumFirst]}>
                   <View style={[styles.podiumAvatar, styles.podiumAvatarFirst, { borderColor: '#FFD700' }]}>
-                    <Ionicons name="person" size={28} color="#FFD700" />
+                    <Icon name="person" size={28} color="#FFD700" />
                   </View>
-                  <Ionicons name="trophy" size={24} color="#FFD700" />
+                  <Icon name="trophy" size={24} color="#FFD700" />
                   <Text style={[styles.podiumName, styles.podiumNameFirst]} numberOfLines={1}>{leaders[0]?.display_name}</Text>
                   <Text style={[styles.podiumScore, styles.podiumScoreFirst]}>{getScoreValue(leaders[0])}</Text>
                   <View style={[styles.podiumBar, { height: 80, backgroundColor: '#FFD70030' }]} />
@@ -259,9 +259,9 @@ export default function LeaderboardPage() {
                 {/* 3rd Place */}
                 <View style={[styles.podiumItem, styles.podiumThird]}>
                   <View style={[styles.podiumAvatar, { borderColor: '#CD7F32' }]}>
-                    <Ionicons name="person" size={24} color="#CD7F32" />
+                    <Icon name="person" size={24} color="#CD7F32" />
                   </View>
-                  <Ionicons name="medal-outline" size={20} color="#CD7F32" />
+                  <Icon name="medal-outline" size={20} color="#CD7F32" />
                   <Text style={styles.podiumName} numberOfLines={1}>{leaders[2]?.display_name}</Text>
                   <Text style={styles.podiumScore}>{getScoreValue(leaders[2])}</Text>
                   <View style={[styles.podiumBar, { height: 45, backgroundColor: '#CD7F3230' }]} />
@@ -282,7 +282,7 @@ export default function LeaderboardPage() {
                   >
                     <Text style={[styles.rankNumber, { color: badge.color }]}>{badge.label}</Text>
                     <View style={styles.rankAvatar}>
-                      <Ionicons name="person" size={18} color={colors.textMuted} />
+                      <Icon name="person" size={18} color={colors.textMuted} />
                     </View>
                     <View style={styles.rankInfo}>
                       <Text style={styles.rankName}>{leader.display_name}</Text>
@@ -324,7 +324,7 @@ export default function LeaderboardPage() {
                 
                 {gapToFirst > 0 && (
                   <View style={styles.gapSection}>
-                    <Ionicons name="trending-up" size={20} color={colors.gold} />
+                    <Icon name="trending-up" size={20} color={colors.gold} />
                     <Text style={styles.gapText}>
                       <Text style={styles.gapValue}>{gapToFirst.toLocaleString()}</Text>
                       {' '}{getCategoryLabel()} to reach #1
@@ -360,13 +360,13 @@ export default function LeaderboardPage() {
               {quickWins.length > 0 && (
                 <View style={styles.quickWinsContainer}>
                   <View style={styles.quickWinsHeader}>
-                    <Ionicons name="flash" size={18} color="#00D4AA" />
+                    <Icon name="flash" size={18} color="#00D4AA" />
                     <Text style={styles.quickWinsTitle}>Quick Wins</Text>
                   </View>
                   
                   {quickWins.map((strategy) => (
                     <View key={strategy.id} style={styles.quickWinItem}>
-                      <Ionicons name={getIconName(strategy.icon)} size={20} color="#00D4AA" />
+                      <Icon name={getIconName(strategy.icon)} size={20} color="#00D4AA" />
                       <View style={styles.quickWinInfo}>
                         <Text style={styles.quickWinTitle}>{strategy.title}</Text>
                         <Text style={styles.quickWinPoints}>+{strategy.potential_points} pts</Text>
@@ -384,14 +384,14 @@ export default function LeaderboardPage() {
                 >
                   {strategy.highlighted && (
                     <View style={styles.highlightBadge}>
-                      <Ionicons name="star" size={12} color="#000" />
+                      <Icon name="star" size={12} color="#000" />
                       <Text style={styles.highlightText}>Recommended</Text>
                     </View>
                   )}
                   
                   <View style={styles.strategyHeader}>
                     <View style={[styles.strategyIcon, { backgroundColor: getDifficultyColor(strategy.difficulty) + '20' }]}>
-                      <Ionicons name={getIconName(strategy.icon)} size={22} color={getDifficultyColor(strategy.difficulty)} />
+                      <Icon name={getIconName(strategy.icon)} size={22} color={getDifficultyColor(strategy.difficulty)} />
                     </View>
                     <View style={styles.strategyInfo}>
                       <Text style={styles.strategyTitle}>{strategy.title}</Text>
@@ -414,7 +414,7 @@ export default function LeaderboardPage() {
                   <Text style={styles.strategyDescription}>{strategy.description}</Text>
                   
                   <View style={styles.tipContainer}>
-                    <Ionicons name="bulb" size={14} color={colors.gold} />
+                    <Icon name="bulb" size={14} color={colors.gold} />
                     <Text style={styles.tipText}>{strategy.tip}</Text>
                   </View>
                 </View>

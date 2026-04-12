@@ -19,7 +19,7 @@ import { colors, spacing, radius } from '../src/theme/colors';
 import { useAuthStore } from '../src/store/authStore';
 import { api } from '../src/utils/api';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { AppBackground } from '../src/components/AppBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -261,7 +261,7 @@ export default function LoginScreen() {
                         focusedField === 'name' && styles.inputContainerFocused,
                       ]}
                     >
-                      <Ionicons
+                      <Icon
                         name="person-outline"
                         size={20}
                         color={focusedField === 'name' ? colors.accent : colors.textMuted}
@@ -289,7 +289,7 @@ export default function LoginScreen() {
                       focusedField === 'email' && styles.inputContainerFocused,
                     ]}
                   >
-                    <Ionicons
+                    <Icon
                       name="mail-outline"
                       size={20}
                       color={focusedField === 'email' ? colors.accent : colors.textMuted}
@@ -317,7 +317,7 @@ export default function LoginScreen() {
                       focusedField === 'password' && styles.inputContainerFocused,
                     ]}
                   >
-                    <Ionicons
+                    <Icon
                       name="lock-closed-outline"
                       size={20}
                       color={focusedField === 'password' ? colors.accent : colors.textMuted}
@@ -346,7 +346,7 @@ export default function LoginScreen() {
                         focusedField === 'referral' && styles.inputContainerFocused,
                       ]}
                     >
-                      <Ionicons
+                      <Icon
                         name="gift-outline"
                         size={20}
                         color={focusedField === 'referral' ? '#00D4AA' : colors.textMuted}
@@ -384,7 +384,7 @@ export default function LoginScreen() {
                       {loading ? 'PROCESSING' : isLogin ? 'ENTER LUNA' : 'JOIN LUNA'}
                     </Text>
                     {!loading && (
-                      <Ionicons name="arrow-forward" size={20} color={colors.textPrimary} />
+                      <Icon name="arrow-forward" size={20} color={colors.textPrimary} />
                     )}
                   </LinearGradient>
                 </TouchableOpacity>
@@ -419,7 +419,7 @@ export default function LoginScreen() {
                         activeOpacity={0.8}
                       >
                         <View style={styles.cherryHubButtonContent}>
-                          <Ionicons name="card-outline" size={22} color="#FF6B6B" />
+                          <Icon name="card-outline" size={22} color="#FF6B6B" />
                           <Text style={styles.cherryHubButtonText}>Sign in with CherryHub</Text>
                         </View>
                       </TouchableOpacity>
@@ -432,7 +432,7 @@ export default function LoginScreen() {
                             focusedField === 'cherryhub' && styles.inputContainerFocused,
                           ]}
                         >
-                          <Ionicons
+                          <Icon
                             name="mail-outline"
                             size={20}
                             color={focusedField === 'cherryhub' ? '#FF6B6B' : colors.textMuted}
@@ -514,12 +514,12 @@ export default function LoginScreen() {
                   setShowResetForm(false);
                 }}
               >
-                <Ionicons name="close" size={24} color={colors.textMuted} />
+                <Icon name="close" size={24} color={colors.textMuted} />
               </TouchableOpacity>
 
               <View style={styles.modalHeader}>
                 <View style={styles.modalIconContainer}>
-                  <Ionicons name={showResetForm ? "key" : "mail"} size={32} color={colors.accent} />
+                  <Icon name={showResetForm ? "key" : "mail"} size={32} color={colors.accent} />
                 </View>
                 <Text style={styles.modalTitle}>
                   {showResetForm ? 'Reset Password' : 'Forgot Password'}
@@ -533,7 +533,7 @@ export default function LoginScreen() {
                   </Text>
 
                   <View style={styles.modalInputContainer}>
-                    <Ionicons name="mail-outline" size={20} color={colors.textMuted} style={styles.modalInputIcon} />
+                    <Icon name="mail-outline" size={20} color={colors.textMuted} style={styles.modalInputIcon} />
                     <TextInput
                       style={styles.modalInput}
                       placeholder="Enter your email"
@@ -567,7 +567,7 @@ export default function LoginScreen() {
                   </Text>
 
                   <View style={styles.modalInputContainer}>
-                    <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.modalInputIcon} />
+                    <Icon name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.modalInputIcon} />
                     <TextInput
                       style={styles.modalInput}
                       placeholder="New password"
@@ -579,7 +579,7 @@ export default function LoginScreen() {
                   </View>
 
                   <View style={styles.modalInputContainer}>
-                    <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.modalInputIcon} />
+                    <Icon name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.modalInputIcon} />
                     <TextInput
                       style={styles.modalInput}
                       placeholder="Confirm new password"

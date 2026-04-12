@@ -20,7 +20,7 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -260,7 +260,7 @@ export default function HomeScreen() {
               </View>
             ) : (
               <View style={styles.closedStatus}>
-                <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.5)" />
+                <Icon name="time-outline" size={14} color="rgba(255,255,255,0.5)" />
                 <Text style={styles.closedText}>{getClosedMessage()}</Text>
               </View>
             )}
@@ -303,7 +303,7 @@ export default function HomeScreen() {
                   colors={[colors.accent, colors.accentDark]}
                   style={styles.tonightPickIcon}
                 >
-                  <Ionicons name="sparkles" size={14} color="#fff" />
+                  <Icon name="sparkles" size={14} color="#fff" />
                 </LinearGradient>
                 <View>
                   <Text style={styles.tonightPickLabel}>FOR YOU</Text>
@@ -336,7 +336,7 @@ export default function HomeScreen() {
                   >
                     {event.ai_recommended && (
                       <View style={styles.aiPickBadge}>
-                        <Ionicons name="sparkles" size={10} color={colors.accent} />
+                        <Icon name="sparkles" size={10} color={colors.accent} />
                         <Text style={styles.aiPickBadgeText}>AI Pick</Text>
                       </View>
                     )}

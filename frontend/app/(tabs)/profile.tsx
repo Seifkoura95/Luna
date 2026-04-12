@@ -18,7 +18,7 @@ import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { useDataStore } from '../../src/store/dataStore';
 import { api } from '../../src/utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { router, useFocusEffect } from 'expo-router';
 import { AppBackground } from '../../src/components/AppBackground';
@@ -604,7 +604,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.compactPointsRight}>
                 <View style={styles.compactTierBadge}>
-                  <Ionicons 
+                  <Icon 
                     name={TIER_CONFIG[pointsData?.tier_id || user?.tier || 'bronze']?.icon as any} 
                     size={14} 
                     color={TIER_CONFIG[pointsData?.tier_id || user?.tier || 'bronze']?.color} 
@@ -618,7 +618,7 @@ export default function ProfileScreen() {
                   onPress={() => router.push('/wallet')}
                 >
                   <Text style={styles.compactRedeemText}>Redeem</Text>
-                  <Ionicons name="chevron-forward" size={14} color={colors.gold} />
+                  <Icon name="chevron-forward" size={14} color={colors.gold} />
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -638,7 +638,7 @@ export default function ProfileScreen() {
                 style={styles.cherryHubDisconnectBtn}
                 onPress={handleCherryHubLogout}
               >
-                <Ionicons name="unlink" size={16} color={colors.textMuted} />
+                <Icon name="unlink" size={16} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
           ) : (
@@ -658,9 +658,9 @@ export default function ProfileScreen() {
                   <ActivityIndicator size="small" color={colors.accent} />
                 ) : (
                   <>
-                    <Ionicons name="link" size={18} color={colors.accent} />
+                    <Icon name="link" size={18} color={colors.accent} />
                     <Text style={styles.linkCherryHubText}>Link CherryHub Account</Text>
-                    <Ionicons name="chevron-forward" size={16} color={colors.accent} />
+                    <Icon name="chevron-forward" size={16} color={colors.accent} />
                   </>
                 )}
               </LinearGradient>
@@ -679,11 +679,11 @@ export default function ProfileScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Ionicons name="diamond" size={16} color={colors.gold} />
+              <Icon name="diamond" size={16} color={colors.gold} />
               <Text style={styles.upgradeBtnText}>
                 {subscriptionData?.is_subscribed ? 'Manage Subscription' : 'Upgrade Membership'}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.gold} />
+              <Icon name="chevron-forward" size={16} color={colors.gold} />
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -709,13 +709,13 @@ export default function ProfileScreen() {
                 style={styles.primaryCtaGradient}
               >
                 <View style={styles.primaryCtaIcon}>
-                  <Ionicons name="card" size={24} color={colors.textPrimary} />
+                  <Icon name="card" size={24} color={colors.textPrimary} />
                 </View>
                 <View style={styles.primaryCtaText}>
                   <Text style={styles.primaryCtaTitle}>Membership Card</Text>
                   <Text style={styles.primaryCtaSubtitle}>Digital ID</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textPrimary} />
+                <Icon name="chevron-forward" size={20} color={colors.textPrimary} />
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -731,7 +731,7 @@ export default function ProfileScreen() {
                 data-testid={`quick-action-${item.id}`}
               >
                 <View style={[styles.actionIcon3Col, { backgroundColor: item.color + '20' }]}>
-                  <Ionicons name={item.icon as any} size={20} color={item.color} />
+                  <Icon name={item.icon as any} size={20} color={item.color} />
                 </View>
                 <Text style={styles.actionTitle3Col} numberOfLines={1}>{item.title}</Text>
               </TouchableOpacity>
@@ -746,7 +746,7 @@ export default function ProfileScreen() {
             {reservations.bookings.slice(0, 2).map((booking: any) => (
               <View key={booking.booking_id} style={styles.reservationCard}>
                 <View style={styles.reservationIcon}>
-                  <Ionicons name="calendar" size={20} color={colors.accent} />
+                  <Icon name="calendar" size={20} color={colors.accent} />
                 </View>
                 <View style={styles.reservationContent}>
                   <Text style={styles.reservationVenue}>{booking.venue_name}</Text>
@@ -784,10 +784,10 @@ export default function ProfileScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.settingsLeft}>
-                  <Ionicons name={item.icon as any} size={20} color={colors.textSecondary} />
+                  <Icon name={item.icon as any} size={20} color={colors.textSecondary} />
                   <Text style={styles.settingsText}>{item.title}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                <Icon name="chevron-forward" size={18} color={colors.textMuted} />
               </TouchableOpacity>
             ))}
           </View>
@@ -800,7 +800,7 @@ export default function ProfileScreen() {
             onPress={handleLogout}
             activeOpacity={0.7}
           >
-            <Ionicons name="log-out-outline" size={20} color={colors.error} />
+            <Icon name="log-out-outline" size={20} color={colors.error} />
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
@@ -833,7 +833,7 @@ export default function ProfileScreen() {
                   style={styles.closeButton}
                   onPress={() => setShowQRPass(false)}
                 >
-                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                  <Icon name="close" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
               </View>
 
@@ -847,7 +847,7 @@ export default function ProfileScreen() {
                         style={styles.passGradient}
                       >
                         <View style={styles.passHeader}>
-                          <Ionicons name="checkmark-circle" size={24} color={colors.gold} />
+                          <Icon name="checkmark-circle" size={24} color={colors.gold} />
                           <Text style={styles.passTitle}>LUNA GROUP MEMBER</Text>
                         </View>
                         <Text style={styles.passMemberKey}>#{cherryHubStatus.member_key}</Text>
@@ -872,7 +872,7 @@ export default function ProfileScreen() {
                           <Text style={styles.walletPassText}>Loading...</Text>
                         ) : (
                           <>
-                            <Ionicons name="wallet" size={20} color={colors.background} />
+                            <Icon name="wallet" size={20} color={colors.background} />
                             <Text style={styles.walletPassText}>
                               {Platform.OS === 'ios' ? 'Add to Apple Wallet' : 'Add to Google Wallet'}
                             </Text>
@@ -884,7 +884,7 @@ export default function ProfileScreen() {
                 ) : (
                   <>
                     <View style={styles.notConnectedContainer}>
-                      <Ionicons name="card-outline" size={80} color={colors.textMuted} />
+                      <Icon name="card-outline" size={80} color={colors.textMuted} />
                       <Text style={styles.notConnectedTitle}>No Pass Connected</Text>
                       <Text style={styles.notConnectedSubtitle}>
                         Activate your Cherry Hub membership to get your digital pass
@@ -925,7 +925,7 @@ export default function ProfileScreen() {
                   style={styles.closeButton}
                   onPress={() => setShowCrewPlan(false)}
                 >
-                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                  <Icon name="close" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
               </View>
 
@@ -937,7 +937,7 @@ export default function ProfileScreen() {
                   colors={[colors.accent, colors.accentDark]}
                   style={styles.createCrewGradient}
                 >
-                  <Ionicons name="add" size={20} color={colors.textPrimary} />
+                  <Icon name="add" size={20} color={colors.textPrimary} />
                   <Text style={styles.createCrewText}>Create New Crew</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -961,7 +961,7 @@ export default function ProfileScreen() {
                           style={styles.inviteButton}
                           onPress={() => openInviteModal(crew)}
                         >
-                          <Ionicons name="person-add" size={16} color={colors.success} />
+                          <Icon name="person-add" size={16} color={colors.success} />
                           <Text style={styles.inviteButtonText}>Invite</Text>
                         </TouchableOpacity>
                         <TouchableOpacity 
@@ -972,7 +972,7 @@ export default function ProfileScreen() {
                             setShowCrewMap(true);
                           }}
                         >
-                          <Ionicons name="location" size={16} color={colors.accent} />
+                          <Icon name="location" size={16} color={colors.accent} />
                           <Text style={styles.trackButtonText}>Track</Text>
                         </TouchableOpacity>
                       </View>
@@ -980,7 +980,7 @@ export default function ProfileScreen() {
                   ))
                 ) : (
                   <View style={styles.noCrewsContainer}>
-                    <Ionicons name="people-outline" size={48} color={colors.textMuted} />
+                    <Icon name="people-outline" size={48} color={colors.textMuted} />
                     <Text style={styles.noCrews}>No crews yet</Text>
                     <Text style={styles.noCrewsSubtitle}>Create one to start planning with friends!</Text>
                   </View>
@@ -1075,13 +1075,13 @@ export default function ProfileScreen() {
                     setSelectedCrewForInvite(null);
                   }}
                 >
-                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                  <Icon name="close" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
               </View>
 
               {selectedCrewForInvite && (
                 <View style={styles.inviteCrewBadge}>
-                  <Ionicons name="people" size={16} color={colors.accent} />
+                  <Icon name="people" size={16} color={colors.accent} />
                   <Text style={styles.inviteCrewName}>{selectedCrewForInvite.name}</Text>
                 </View>
               )}
@@ -1127,7 +1127,7 @@ export default function ProfileScreen() {
                 </View>
 
                 <View style={styles.inviteInfoBox}>
-                  <Ionicons name="information-circle" size={20} color={colors.accent} />
+                  <Icon name="information-circle" size={20} color={colors.accent} />
                   <Text style={styles.inviteInfoText}>
                     An email invitation will be sent with a link to join your crew
                   </Text>
@@ -1161,7 +1161,7 @@ export default function ProfileScreen() {
                       <Text style={styles.confirmButtonText}>Sending...</Text>
                     ) : (
                       <>
-                        <Ionicons name="send" size={16} color={colors.textPrimary} style={{ marginRight: 6 }} />
+                        <Icon name="send" size={16} color={colors.textPrimary} style={{ marginRight: 6 }} />
                         <Text style={styles.confirmButtonText}>Send Invite</Text>
                       </>
                     )}
@@ -1200,7 +1200,7 @@ export default function ProfileScreen() {
                     setSelectedCrewForDetails(null);
                   }}
                 >
-                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                  <Icon name="close" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
               </View>
 
@@ -1223,7 +1223,7 @@ export default function ProfileScreen() {
                     {selectedCrewForDetails.members?.map((member: any, index: number) => (
                       <View key={member.user_id || index} style={styles.memberCard}>
                         <View style={styles.memberAvatar}>
-                          <Ionicons 
+                          <Icon 
                             name={member.role === 'owner' ? 'star' : 'person'} 
                             size={20} 
                             color={member.role === 'owner' ? colors.gold : colors.accent} 
@@ -1238,12 +1238,12 @@ export default function ProfileScreen() {
                         </View>
                         {member.status === 'confirmed' && (
                           <View style={[styles.statusBadge, { backgroundColor: colors.success + '20' }]}>
-                            <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                            <Icon name="checkmark-circle" size={14} color={colors.success} />
                           </View>
                         )}
                         {member.status === 'pending' && (
                           <View style={[styles.statusBadge, { backgroundColor: colors.gold + '20' }]}>
-                            <Ionicons name="time" size={14} color={colors.gold} />
+                            <Icon name="time" size={14} color={colors.gold} />
                           </View>
                         )}
                       </View>
@@ -1263,7 +1263,7 @@ export default function ProfileScreen() {
                         colors={[colors.success, '#1e7e34']}
                         style={styles.crewDetailActionGradient}
                       >
-                        <Ionicons name="person-add" size={18} color={colors.textPrimary} />
+                        <Icon name="person-add" size={18} color={colors.textPrimary} />
                         <Text style={styles.crewDetailActionText}>Invite Member</Text>
                       </LinearGradient>
                     </TouchableOpacity>
@@ -1280,7 +1280,7 @@ export default function ProfileScreen() {
                         colors={[colors.accent, colors.accentDark]}
                         style={styles.crewDetailActionGradient}
                       >
-                        <Ionicons name="location" size={18} color={colors.textPrimary} />
+                        <Icon name="location" size={18} color={colors.textPrimary} />
                         <Text style={styles.crewDetailActionText}>Track Crew</Text>
                       </LinearGradient>
                     </TouchableOpacity>

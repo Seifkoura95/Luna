@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, tierColors } from '../theme/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 
 interface PointsDisplayProps {
   points: number;
@@ -15,7 +15,7 @@ export const PointsDisplay: React.FC<PointsDisplayProps> = ({ points, tier, comp
   if (compact) {
     return (
       <View style={styles.compactContainer}>
-        <Ionicons name="star" size={16} color={colors.premiumGold} />
+        <Icon name="star" size={16} color={colors.premiumGold} />
         <Text style={styles.compactPoints}>{points.toLocaleString()}</Text>
       </View>
     );
@@ -31,7 +31,7 @@ export const PointsDisplay: React.FC<PointsDisplayProps> = ({ points, tier, comp
         </View>
       </View>
       <View style={styles.pointsRow}>
-        <Ionicons name="star" size={28} color={colors.premiumGold} />
+        <Icon name="star" size={28} color={colors.premiumGold} />
         <Text style={styles.pointsValue}>{points.toLocaleString()}</Text>
         <Text style={styles.pointsLabel}>pts</Text>
       </View>

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -140,7 +140,7 @@ export default function LostAndFoundPage() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+            <Icon name="chevron-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>Lost & Found</Text>
@@ -162,7 +162,7 @@ export default function LostAndFoundPage() {
             end={{ x: 1, y: 0 }}
             style={styles.reportButtonGradient}
           >
-            <Ionicons name="add-circle" size={24} color="#fff" />
+            <Icon name="add-circle" size={24} color="#fff" />
             <Text style={styles.reportButtonText}>REPORT LOST ITEM</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -172,7 +172,7 @@ export default function LostAndFoundPage() {
           <Text style={styles.sectionTitle}>MY REPORTS</Text>
           {myReports.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="cube-outline" size={64} color={colors.textMuted} />
+              <Icon name="cube-outline" size={64} color={colors.textMuted} />
               <Text style={styles.emptyText}>No lost items reported</Text>
               <Text style={styles.emptySubtext}>Report a lost item and we'll help you find it</Text>
             </View>
@@ -181,7 +181,7 @@ export default function LostAndFoundPage() {
               <View key={report.id} style={styles.reportCard}>
                 <View style={styles.reportHeader}>
                   <View style={styles.categoryBadge}>
-                    <Ionicons 
+                    <Icon 
                       name={ITEM_CATEGORIES.find(c => c.id === report.item_category)?.icon as any || 'help-circle'} 
                       size={20} 
                       color={colors.accent} 
@@ -197,11 +197,11 @@ export default function LostAndFoundPage() {
                 
                 <View style={styles.reportMeta}>
                   <View style={styles.metaItem}>
-                    <Ionicons name="location" size={14} color={colors.textMuted} />
+                    <Icon name="location" size={14} color={colors.textMuted} />
                     <Text style={styles.metaText}>{report.venue_id}</Text>
                   </View>
                   <View style={styles.metaItem}>
-                    <Ionicons name="calendar" size={14} color={colors.textMuted} />
+                    <Icon name="calendar" size={14} color={colors.textMuted} />
                     <Text style={styles.metaText}>{report.lost_date}</Text>
                   </View>
                 </View>
@@ -231,7 +231,7 @@ export default function LostAndFoundPage() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Report Lost Item</Text>
               <TouchableOpacity onPress={() => setShowReportModal(false)} style={styles.closeButton}>
-                <Ionicons name="close" size={28} color={colors.textPrimary} />
+                <Icon name="close" size={28} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -270,7 +270,7 @@ export default function LostAndFoundPage() {
                         handleHaptic();
                       }}
                     >
-                      <Ionicons 
+                      <Icon 
                         name={cat.icon as any} 
                         size={24} 
                         color={selectedCategory === cat.id ? colors.accent : colors.textMuted} 
@@ -342,7 +342,7 @@ export default function LostAndFoundPage() {
                     <Image source={{ uri: photoUri }} style={styles.photoPreview} />
                   ) : (
                     <View style={styles.photoPlaceholder}>
-                      <Ionicons name="camera" size={32} color={colors.textMuted} />
+                      <Icon name="camera" size={32} color={colors.textMuted} />
                       <Text style={styles.photoText}>Add Photo</Text>
                     </View>
                   )}
@@ -365,7 +365,7 @@ export default function LostAndFoundPage() {
                     <Text style={styles.submitButtonText}>Submitting...</Text>
                   ) : (
                     <>
-                      <Ionicons name="checkmark" size={24} color="#fff" />
+                      <Icon name="checkmark" size={24} color="#fff" />
                       <Text style={styles.submitButtonText}>SUBMIT REPORT</Text>
                     </>
                   )}

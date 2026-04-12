@@ -8,7 +8,7 @@ import {
   Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { AppBackground } from '../src/components/AppBackground';
@@ -58,7 +58,7 @@ export default function HelpSupportPage() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Icon name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>HELP & SUPPORT</Text>
           <View style={{ width: 32 }} />
@@ -70,13 +70,13 @@ export default function HelpSupportPage() {
           {contactOptions.map((option) => (
             <TouchableOpacity key={option.title} style={styles.contactCard} onPress={option.action}>
               <View style={styles.contactIcon}>
-                <Ionicons name={option.icon as any} size={24} color={colors.accent} />
+                <Icon name={option.icon as any} size={24} color={colors.accent} />
               </View>
               <View style={styles.contactInfo}>
                 <Text style={styles.contactTitle}>{option.title}</Text>
                 <Text style={styles.contactDesc}>{option.desc}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+              <Icon name="chevron-forward" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           ))}
         </View>
@@ -97,11 +97,11 @@ export default function HelpSupportPage() {
           <Text style={styles.sectionTitle}>QUICK LINKS</Text>
           <View style={styles.linksGrid}>
             <TouchableOpacity style={styles.linkCard} onPress={() => router.push('/terms')}>
-              <Ionicons name="document-text" size={24} color={colors.gold} />
+              <Icon name="document-text" size={24} color={colors.gold} />
               <Text style={styles.linkText}>Terms of Service</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.linkCard} onPress={() => router.push('/privacy-policy')}>
-              <Ionicons name="shield-checkmark" size={24} color={colors.gold} />
+              <Icon name="shield-checkmark" size={24} color={colors.gold} />
               <Text style={styles.linkText}>Privacy Policy</Text>
             </TouchableOpacity>
           </View>

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -154,7 +154,7 @@ export default function Stories() {
               <Text style={styles.storyVenue}>{story.venue_name}</Text>
               {story.shares > 0 && (
                 <View style={styles.shareCount}>
-                  <Ionicons name="share-social" size={12} color={colors.textMuted} />
+                  <Icon name="share-social" size={12} color={colors.textMuted} />
                   <Text style={styles.shareCountText}>{story.shares}</Text>
                 </View>
               )}
@@ -168,7 +168,7 @@ export default function Stories() {
           onPress={() => openShareModal(story)}
           data-testid={`share-btn-${story.id}`}
         >
-          <Ionicons name="share-outline" size={18} color="#fff" />
+          <Icon name="share-outline" size={18} color="#fff" />
         </TouchableOpacity>
       </TouchableOpacity>
     </Animated.View>
@@ -194,7 +194,7 @@ export default function Stories() {
           onPress={() => router.back()}
           data-testid="stories-back"
         >
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Icon name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Stories</Text>
         <View style={styles.headerSpacer} />
@@ -216,7 +216,7 @@ export default function Stories() {
             end={{ x: 1, y: 0 }}
             style={styles.pointsBannerGradient}
           >
-            <Ionicons name="gift" size={20} color={colors.accent} />
+            <Icon name="gift" size={20} color={colors.accent} />
             <Text style={styles.pointsBannerText}>
               Earn <Text style={styles.pointsHighlight}>25 Luna Points</Text> for every story you share!
             </Text>
@@ -258,7 +258,7 @@ export default function Stories() {
           
           {feedStories.length === 0 && !loading && (
             <View style={styles.emptyState}>
-              <Ionicons name="camera-outline" size={48} color={colors.textMuted} />
+              <Icon name="camera-outline" size={48} color={colors.textMuted} />
               <Text style={styles.emptyStateText}>No stories yet</Text>
               <Text style={styles.emptyStateSub}>Be the first to share a moment!</Text>
             </View>
@@ -292,7 +292,7 @@ export default function Stories() {
                   data-testid={`share-platform-${platform.id}`}
                 >
                   <View style={[styles.platformIcon, { backgroundColor: platform.color + '20' }]}>
-                    <Ionicons name={platform.icon as any} size={24} color={platform.color} />
+                    <Icon name={platform.icon as any} size={24} color={platform.color} />
                   </View>
                   <Text style={styles.platformName}>{platform.name}</Text>
                 </TouchableOpacity>
@@ -300,7 +300,7 @@ export default function Stories() {
             </View>
             
             <View style={styles.pointsReward}>
-              <Ionicons name="star" size={16} color={colors.gold} />
+              <Icon name="star" size={16} color={colors.gold} />
               <Text style={styles.pointsRewardText}>+25 Luna Points for sharing</Text>
             </View>
           </Animated.View>

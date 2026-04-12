@@ -12,7 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
 import { api } from '../utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -110,7 +110,7 @@ export const CrewMapWeb: React.FC<CrewMapProps> = ({ crewId, crewName, onClose }
         {/* Header */}
         <View style={styles.webHeader}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Ionicons name="close" size={28} color={colors.textPrimary} />
+            <Icon name="close" size={28} color={colors.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
             <Text style={styles.headerTitle}>{crewName}</Text>
@@ -119,13 +119,13 @@ export const CrewMapWeb: React.FC<CrewMapProps> = ({ crewId, crewName, onClose }
             </Text>
           </View>
           <TouchableOpacity style={styles.refreshButton} onPress={fetchCrewLocations}>
-            <Ionicons name="refresh" size={24} color={colors.textPrimary} />
+            <Icon name="refresh" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
 
         {/* Web Notice */}
         <View style={styles.webNotice}>
-          <Ionicons name="phone-portrait-outline" size={24} color={colors.accent} />
+          <Icon name="phone-portrait-outline" size={24} color={colors.accent} />
           <Text style={styles.webNoticeText}>
             Map view is available on the mobile app. Here's your crew's location status:
           </Text>

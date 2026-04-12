@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import * as FileSystem from 'expo-file-system';
 import { colors, spacing, radius } from '../theme/colors';
 import { api } from '../utils/api';
@@ -176,7 +176,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
           style={styles.cardGradient}
         >
           <View style={styles.iconContainer}>
-            <Ionicons name="card-outline" size={32} color={colors.accent} />
+            <Icon name="card-outline" size={32} color={colors.accent} />
           </View>
           <View style={styles.cardContent}>
             <Text style={[styles.cardTitle, fontsLoaded && { fontFamily: fonts.bold }]}>
@@ -186,7 +186,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
               Get your digital membership card
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={24} color={colors.textMuted} />
+          <Icon name="chevron-forward" size={24} color={colors.textMuted} />
         </LinearGradient>
       </TouchableOpacity>
     );
@@ -201,7 +201,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
         {/* Membership Card Info */}
         <View style={styles.membershipInfo}>
           <View style={styles.memberBadge}>
-            <Ionicons name="checkmark-circle" size={20} color={colors.gold} />
+            <Icon name="checkmark-circle" size={20} color={colors.gold} />
             <Text style={[styles.memberStatus, fontsLoaded && { fontFamily: fonts.semiBold }]}>
               MEMBER
             </Text>
@@ -222,7 +222,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
             <ActivityIndicator size="small" color={colors.textPrimary} />
           ) : (
             <>
-              <Ionicons
+              <Icon
                 name={Platform.OS === 'ios' ? 'wallet-outline' : 'wallet'}
                 size={20}
                 color={colors.textPrimary}

@@ -13,7 +13,7 @@ import {
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../src/theme/colors';
 import { api } from '../src/utils/api';
@@ -205,7 +205,7 @@ export default function EventsListPage() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Icon name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Image source={{ uri: LUNA_LOGO }} style={styles.logo} contentFit="contain" />
           <View style={styles.placeholder} />
@@ -216,7 +216,7 @@ export default function EventsListPage() {
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color={colors.textMuted} />
+          <Icon name="search" size={20} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search events..."
@@ -226,7 +226,7 @@ export default function EventsListPage() {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => handleSearch('')}>
-              <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+              <Icon name="close-circle" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -293,7 +293,7 @@ export default function EventsListPage() {
                   </View>
                   <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
                   <View style={styles.eventMeta}>
-                    <Ionicons name="location-outline" size={14} color={colors.accent} />
+                    <Icon name="location-outline" size={14} color={colors.accent} />
                     <Text style={styles.eventVenue} numberOfLines={1}>
                       {event.luna_venue || event.venue_name}
                     </Text>
@@ -306,7 +306,7 @@ export default function EventsListPage() {
                     <Text style={styles.bookButtonText}>
                       {event.is_free ? 'RSVP' : 'BOOK TICKETS'}
                     </Text>
-                    <Ionicons name="open-outline" size={14} color="#fff" />
+                    <Icon name="open-outline" size={14} color="#fff" />
                   </TouchableOpacity>
                 </View>
               </TouchableOpacity>
@@ -316,7 +316,7 @@ export default function EventsListPage() {
 
         {filteredEvents.length === 0 && !loading && (
           <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={48} color={colors.textMuted} />
+            <Icon name="calendar-outline" size={48} color={colors.textMuted} />
             <Text style={styles.emptyText}>No events found</Text>
             <Text style={styles.emptySubtext}>Try adjusting your filters</Text>
           </View>

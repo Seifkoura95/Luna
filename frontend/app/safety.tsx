@@ -10,7 +10,7 @@ import {
   Vibration,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -118,11 +118,11 @@ export default function SafetyPage() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Icon name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>SAFETY</Text>
           <TouchableOpacity onPress={() => router.push('/safety-settings')} style={styles.settingsButton}>
-            <Ionicons name="settings-outline" size={24} color={colors.textMuted} />
+            <Icon name="settings-outline" size={24} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
 
@@ -137,7 +137,7 @@ export default function SafetyPage() {
             colors={alertSent ? ['#00D4AA', '#00A080'] : ['#E31837', '#B01030']}
             style={styles.emergencyGradient}
           >
-            <Ionicons 
+            <Icon 
               name={alertSent ? 'checkmark-circle' : 'warning'} 
               size={48} 
               color="#fff" 
@@ -153,7 +153,7 @@ export default function SafetyPage() {
 
         {/* Call 000 Button */}
         <TouchableOpacity style={styles.call000Button} onPress={callEmergency}>
-          <Ionicons name="call" size={24} color="#fff" />
+          <Icon name="call" size={24} color="#fff" />
           <Text style={styles.call000Text}>CALL 000</Text>
         </TouchableOpacity>
 
@@ -164,7 +164,7 @@ export default function SafetyPage() {
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <View style={[styles.infoIcon, { backgroundColor: colors.accent + '20' }]}>
-                <Ionicons name="location" size={20} color={colors.accent} />
+                <Icon name="location" size={20} color={colors.accent} />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Location Shared</Text>
@@ -174,7 +174,7 @@ export default function SafetyPage() {
 
             <View style={styles.infoRow}>
               <View style={[styles.infoIcon, { backgroundColor: '#8B5CF6' + '20' }]}>
-                <Ionicons name="people" size={20} color="#8B5CF6" />
+                <Icon name="people" size={20} color="#8B5CF6" />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Crew Notified</Text>
@@ -184,7 +184,7 @@ export default function SafetyPage() {
 
             <View style={styles.infoRow}>
               <View style={[styles.infoIcon, { backgroundColor: colors.gold + '20' }]}>
-                <Ionicons name="call" size={20} color={colors.gold} />
+                <Icon name="call" size={20} color={colors.gold} />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Contacts Alerted</Text>
@@ -194,7 +194,7 @@ export default function SafetyPage() {
 
             <View style={styles.infoRow}>
               <View style={[styles.infoIcon, { backgroundColor: '#00D4AA' + '20' }]}>
-                <Ionicons name="business" size={20} color="#00D4AA" />
+                <Icon name="business" size={20} color="#00D4AA" />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Venue Staff</Text>
@@ -215,7 +215,7 @@ export default function SafetyPage() {
 
           {emergencyContacts.length === 0 ? (
             <View style={styles.noContacts}>
-              <Ionicons name="person-add-outline" size={32} color={colors.textMuted} />
+              <Icon name="person-add-outline" size={32} color={colors.textMuted} />
               <Text style={styles.noContactsText}>No emergency contacts set up</Text>
               <TouchableOpacity 
                 style={styles.addContactButton}
@@ -228,7 +228,7 @@ export default function SafetyPage() {
             emergencyContacts.map((contact) => (
               <View key={contact.id} style={styles.contactCard}>
                 <View style={styles.contactIcon}>
-                  <Ionicons name="person" size={20} color={colors.accent} />
+                  <Icon name="person" size={20} color={colors.accent} />
                 </View>
                 <View style={styles.contactInfo}>
                   <Text style={styles.contactName}>{contact.name}</Text>
@@ -242,7 +242,7 @@ export default function SafetyPage() {
 
         {/* Discreet Alert Tip */}
         <View style={styles.tipSection}>
-          <Ionicons name="bulb" size={20} color={colors.gold} />
+          <Icon name="bulb" size={20} color={colors.gold} />
           <Text style={styles.tipText}>
             Tip: You can also send a silent alert by shaking your phone 3 times quickly (enable in Safety Settings)
           </Text>

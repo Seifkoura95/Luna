@@ -13,7 +13,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { colors, radius } from '../../src/theme/colors';
 import { api } from '../../src/utils/api';
@@ -170,11 +170,11 @@ export default function EventDetailPage() {
         <AppBackground intensity={30} tint="dark" overlayOpacity={0.4} />
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Icon name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={colors.textMuted} />
+          <Icon name="alert-circle-outline" size={48} color={colors.textMuted} />
           <Text style={styles.errorText}>{error || 'Event not found'}</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.errorButton}>
             <Text style={styles.errorButtonText}>Go Back</Text>
@@ -191,10 +191,10 @@ export default function EventDetailPage() {
       {/* Header with back button */}
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <TouchableOpacity onPress={() => { handleHaptic(); router.back(); }} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Icon name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => { handleHaptic(); }} style={styles.shareButton}>
-          <Ionicons name="share-outline" size={24} color="#fff" />
+          <Icon name="share-outline" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -226,12 +226,12 @@ export default function EventDetailPage() {
           <Text style={styles.eventTitle}>{event.title}</Text>
           
           <View style={styles.metaRow}>
-            <Ionicons name="calendar-outline" size={18} color={colors.accent} />
+            <Icon name="calendar-outline" size={18} color={colors.accent} />
             <Text style={styles.metaText}>{formatDate(event.date)}</Text>
           </View>
           
           <View style={styles.metaRow}>
-            <Ionicons name="time-outline" size={18} color={colors.accent} />
+            <Icon name="time-outline" size={18} color={colors.accent} />
             <Text style={styles.metaText}>
               {formatTime(event.time)}
               {event.end_time && ` - ${formatTime(event.end_time)}`}
@@ -239,7 +239,7 @@ export default function EventDetailPage() {
           </View>
           
           <View style={styles.metaRow}>
-            <Ionicons name="location-outline" size={18} color={colors.accent} />
+            <Icon name="location-outline" size={18} color={colors.accent} />
             <View style={styles.locationInfo}>
               <Text style={styles.metaText}>{event.venue_name}</Text>
               <Text style={styles.addressText}>{event.address}</Text>
@@ -248,7 +248,7 @@ export default function EventDetailPage() {
 
           {event.restrictions && (
             <View style={styles.metaRow}>
-              <Ionicons name="information-circle-outline" size={18} color={colors.accent} />
+              <Icon name="information-circle-outline" size={18} color={colors.accent} />
               <Text style={styles.metaText}>{event.restrictions}</Text>
             </View>
           )}
@@ -283,7 +283,7 @@ export default function EventDetailPage() {
                 onPress={() => handleRsvp('going')}
                 disabled={loadingRsvp}
               >
-                <Ionicons 
+                <Icon 
                   name="checkmark-circle" 
                   size={24} 
                   color={rsvpStatus === 'going' ? colors.success : colors.textMuted} 
@@ -301,7 +301,7 @@ export default function EventDetailPage() {
                 onPress={() => handleRsvp('interested')}
                 disabled={loadingRsvp}
               >
-                <Ionicons 
+                <Icon 
                   name="star" 
                   size={24} 
                   color={rsvpStatus === 'interested' ? colors.accent : colors.textMuted} 
@@ -318,7 +318,7 @@ export default function EventDetailPage() {
             {/* Friends Going */}
             {((attendees?.friends_going?.length || 0) > 0 || (attendees?.friends_interested?.length || 0) > 0) && (
               <View style={styles.friendsSection}>
-                <Ionicons name="people" size={16} color={colors.textMuted} />
+                <Icon name="people" size={16} color={colors.textMuted} />
                 <Text style={styles.friendsText}>
                   {(attendees?.friends_going?.length || 0) > 0 && `${attendees.friends_going.map(f => f.name).join(', ')} ${attendees.friends_going.length === 1 ? 'is' : 'are'} going`}
                   {(attendees?.friends_going?.length || 0) > 0 && (attendees?.friends_interested?.length || 0) > 0 && ' • '}
@@ -340,7 +340,7 @@ export default function EventDetailPage() {
           <Text style={styles.ticketButtonText}>
             {event.is_free ? 'RSVP NOW' : 'GET TICKETS'}
           </Text>
-          <Ionicons name="arrow-forward" size={20} color="#fff" />
+          <Icon name="arrow-forward" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
     </View>

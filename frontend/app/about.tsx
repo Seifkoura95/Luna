@@ -8,7 +8,7 @@ import {
   Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { AppBackground } from '../src/components/AppBackground';
@@ -45,7 +45,7 @@ export default function AboutPage() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Icon name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>ABOUT</Text>
           <View style={{ width: 32 }} />
@@ -90,7 +90,7 @@ export default function AboutPage() {
                 style={[styles.socialButton, { backgroundColor: link.color + '20' }]}
                 onPress={() => Linking.openURL(link.url)}
               >
-                <Ionicons name={link.icon as any} size={28} color={link.color} />
+                <Icon name={link.icon as any} size={28} color={link.color} />
               </TouchableOpacity>
             ))}
           </View>

@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   FadeIn,
@@ -143,7 +143,7 @@ export default function PhotoGalleryScreen() {
             />
           ) : (
             <View style={[styles.galleryCover, styles.placeholderCover]}>
-              <Ionicons name="images" size={40} color={colors.textMuted} />
+              <Icon name="images" size={40} color={colors.textMuted} />
             </View>
           )}
           <LinearGradient
@@ -155,7 +155,7 @@ export default function PhotoGalleryScreen() {
                 {gallery.venue_name}
               </Text>
               <View style={styles.photoCount}>
-                <Ionicons name="images" size={14} color={colors.textSecondary} />
+                <Icon name="images" size={14} color={colors.textSecondary} />
                 <Text style={styles.photoCountText}>{gallery.photo_count} photos</Text>
               </View>
             </View>
@@ -196,7 +196,7 @@ export default function PhotoGalleryScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+          <Icon name="chevron-back" size={24} color={colors.textPrimary} />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
       </View>
@@ -242,7 +242,7 @@ export default function PhotoGalleryScreen() {
 
         {galleries.length === 0 && (
           <View style={styles.emptyState}>
-            <Ionicons name="images-outline" size={64} color={colors.textMuted} />
+            <Icon name="images-outline" size={64} color={colors.textMuted} />
             <Text style={styles.emptyText}>No photo galleries available yet</Text>
           </View>
         )}
@@ -264,7 +264,7 @@ export default function PhotoGalleryScreen() {
           {/* Modal Header */}
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setSelectedGallery(null)} style={styles.backButton}>
-              <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+              <Icon name="chevron-back" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
             <View style={styles.modalHeaderText}>
               <Text style={[styles.modalTitle, ]}>
@@ -318,7 +318,7 @@ export default function PhotoGalleryScreen() {
             style={[styles.photoDetailClose, { top: insets.top + 20 }]}
             onPress={() => setSelectedPhoto(null)}
           >
-            <Ionicons name="close" size={28} color={colors.textPrimary} />
+            <Icon name="close" size={28} color={colors.textPrimary} />
           </TouchableOpacity>
           
           <Image
@@ -330,11 +330,11 @@ export default function PhotoGalleryScreen() {
           {/* Photo Actions */}
           <View style={[styles.photoActions, { paddingBottom: insets.bottom + 20 }]}>
             <TouchableOpacity style={styles.photoAction} onPress={() => selectedPhoto && handleLike(selectedPhoto)}>
-              <Ionicons name="heart-outline" size={28} color={colors.textPrimary} />
+              <Icon name="heart-outline" size={28} color={colors.textPrimary} />
               <Text style={styles.photoActionText}>Like</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.photoAction} onPress={() => selectedPhoto && handleShare(selectedPhoto)}>
-              <Ionicons name="share-outline" size={28} color={colors.textPrimary} />
+              <Icon name="share-outline" size={28} color={colors.textPrimary} />
               <Text style={styles.photoActionText}>Share</Text>
             </TouchableOpacity>
             <TouchableOpacity 
@@ -346,7 +346,7 @@ export default function PhotoGalleryScreen() {
                 Alert.alert('Download', 'Photo download feature coming soon!');
               }}
             >
-              <Ionicons name="download-outline" size={28} color={colors.textPrimary} />
+              <Icon name="download-outline" size={28} color={colors.textPrimary} />
               <Text style={styles.photoActionText}>Save</Text>
             </TouchableOpacity>
           </View>

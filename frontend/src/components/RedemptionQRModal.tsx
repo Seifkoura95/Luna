@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import QRCode from 'react-native-qrcode-svg';
 import { colors } from '../theme/colors';
 import { spacing, radius } from '../theme/spacing';
@@ -58,7 +58,7 @@ export const RedemptionQRModal: React.FC<RedemptionQRModalProps> = ({
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Your Reward</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.textMuted} />
+              <Icon name="close" size={24} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -97,14 +97,14 @@ export const RedemptionQRModal: React.FC<RedemptionQRModalProps> = ({
           {/* Status Indicators */}
           {isRedeemed && (
             <View style={styles.statusContainer}>
-              <Ionicons name="checkmark-circle" size={64} color="#00D4AA" />
+              <Icon name="checkmark-circle" size={64} color="#00D4AA" />
               <Text style={styles.statusText}>Already Redeemed</Text>
             </View>
           )}
 
           {isExpired && (
             <View style={styles.statusContainer}>
-              <Ionicons name="time" size={64} color={colors.accent} />
+              <Icon name="time" size={64} color={colors.accent} />
               <Text style={styles.statusText}>Expired</Text>
             </View>
           )}

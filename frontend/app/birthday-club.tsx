@@ -14,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { useAuthStore } from '../src/store/authStore';
 import { api } from '../src/utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { AppBackground } from '../src/components/AppBackground';
 import { PageHeader } from '../src/components/PageHeader';
@@ -140,7 +140,7 @@ export default function BirthdayClubScreen() {
           style={styles.rewardGradient}
         >
           <View style={[styles.rewardIconContainer, { backgroundColor: rewardColor + '20' }]}>
-            <Ionicons name={iconName as any} size={28} color={rewardColor} />
+            <Icon name={iconName as any} size={28} color={rewardColor} />
           </View>
           
           <View style={styles.rewardContent}>
@@ -180,7 +180,7 @@ export default function BirthdayClubScreen() {
             </TouchableOpacity>
           ) : (
             <View style={[styles.claimedBadge, { borderColor: rewardColor }]}>
-              <Ionicons name="checkmark" size={16} color={rewardColor} />
+              <Icon name="checkmark" size={16} color={rewardColor} />
               <Text style={[styles.claimedText, { color: rewardColor }]}>CLAIMED</Text>
             </View>
           )}
@@ -233,7 +233,7 @@ export default function BirthdayClubScreen() {
                 <ActivityIndicator size="small" color={rewardColor} />
               ) : (
                 <>
-                  <Ionicons name="qr-code-outline" size={18} color={rewardColor} />
+                  <Icon name="qr-code-outline" size={18} color={rewardColor} />
                   <Text style={[styles.redeemButtonText, { color: rewardColor }]}>
                     REDEEM AT VENUE
                   </Text>
@@ -287,7 +287,7 @@ export default function BirthdayClubScreen() {
             onPress={() => router.back()}
             data-testid="back-button"
           >
-            <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+            <Icon name="chevron-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Birthday Club</Text>
           <View style={{ width: 40 }} />
@@ -306,7 +306,7 @@ export default function BirthdayClubScreen() {
             ) : is_birthday_week ? (
               <Text style={styles.heroEmoji}>🎁</Text>
             ) : (
-              <Ionicons name="gift" size={48} color={colors.accent} />
+              <Icon name="gift" size={48} color={colors.accent} />
             )}
             
             <Text style={styles.heroTitle}>
@@ -327,7 +327,7 @@ export default function BirthdayClubScreen() {
                 onPress={() => router.push('/profile')}
                 data-testid="set-birthday-btn"
               >
-                <Ionicons name="calendar" size={18} color="#000" />
+                <Icon name="calendar" size={18} color="#000" />
                 <Text style={styles.setBirthdayText}>SET MY BIRTHDAY</Text>
               </TouchableOpacity>
             )}
@@ -338,7 +338,7 @@ export default function BirthdayClubScreen() {
         {(is_birthday_week || is_birthday_today) && available_rewards.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Ionicons name="sparkles" size={18} color={colors.gold} />
+              <Icon name="sparkles" size={18} color={colors.gold} />
               <Text style={styles.sectionTitle}>AVAILABLE REWARDS</Text>
             </View>
             <Text style={styles.sectionSubtitle}>
@@ -352,7 +352,7 @@ export default function BirthdayClubScreen() {
         {!is_birthday_week && !is_birthday_today && has_birthday_set && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Ionicons name="gift-outline" size={18} color={colors.textMuted} />
+              <Icon name="gift-outline" size={18} color={colors.textMuted} />
               <Text style={styles.sectionTitle}>YOUR BIRTHDAY REWARDS</Text>
             </View>
             <Text style={styles.sectionSubtitle}>
@@ -368,13 +368,13 @@ export default function BirthdayClubScreen() {
               ].map((item, index) => (
                 <View key={index} style={styles.previewItem}>
                   <View style={[styles.previewIcon, { backgroundColor: item.color + '15' }]}>
-                    <Ionicons name={item.icon as any} size={20} color={item.color} />
+                    <Icon name={item.icon as any} size={20} color={item.color} />
                   </View>
                   <View style={styles.previewContent}>
                     <Text style={styles.previewName}>{item.name}</Text>
                     <Text style={styles.previewDesc}>{item.description}</Text>
                   </View>
-                  <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
+                  <Icon name="lock-closed" size={16} color={colors.textMuted} />
                 </View>
               ))}
             </View>
@@ -385,7 +385,7 @@ export default function BirthdayClubScreen() {
         {claimed_rewards.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Ionicons name="time-outline" size={18} color={colors.textMuted} />
+              <Icon name="time-outline" size={18} color={colors.textMuted} />
               <Text style={styles.sectionTitle}>CLAIMED REWARDS</Text>
             </View>
             {claimed_rewards.map((claim: ClaimedReward) => renderClaimedRewardCard(claim))}
@@ -395,7 +395,7 @@ export default function BirthdayClubScreen() {
         {/* How It Works Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="information-circle-outline" size={18} color={colors.textMuted} />
+            <Icon name="information-circle-outline" size={18} color={colors.textMuted} />
             <Text style={styles.sectionTitle}>HOW IT WORKS</Text>
           </View>
           

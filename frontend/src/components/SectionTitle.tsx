@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import { colors, spacing } from '../theme/colors';
 
 interface SectionTitleProps {
@@ -22,14 +22,14 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
     <View style={styles.container}>
       <View style={styles.titleRow}>
         {icon && (
-          <Ionicons name={icon as any} size={14} color={iconColor} style={styles.icon} />
+          <Icon name={icon as any} size={14} color={iconColor} style={styles.icon} />
         )}
         <Text style={styles.title}>{title}</Text>
       </View>
       {onSeeAll && (
         <TouchableOpacity onPress={onSeeAll} style={styles.seeAllBtn}>
           <Text style={styles.seeAllText}>{seeAllText}</Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.accent} />
+          <Icon name="chevron-forward" size={14} color={colors.accent} />
         </TouchableOpacity>
       )}
     </View>

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import { LunaIcon } from './LunaIcons';
 
 interface MissionCardProps {
@@ -50,13 +50,13 @@ export const MissionCard: React.FC<MissionCardProps> = ({ mission }) => {
         <View style={styles.header}>
           <View style={[styles.iconContainer, { backgroundColor: config.glowColor }]}>
             {mission.completed ? (
-              <Ionicons name="checkmark" size={26} color={colors.success} />
+              <Icon name="checkmark" size={26} color={colors.success} />
             ) : (
-              <Ionicons name={config.ionIcon as any} size={26} color={config.color} />
+              <Icon name={config.ionIcon as any} size={26} color={config.color} />
             )}
           </View>
           <View style={styles.rewardBadge}>
-            <Ionicons name="star" size={12} color={colors.gold} />
+            <Icon name="star" size={12} color={colors.gold} />
             <Text style={styles.rewardText}>+{mission.points_reward}</Text>
           </View>
         </View>
@@ -85,7 +85,7 @@ export const MissionCard: React.FC<MissionCardProps> = ({ mission }) => {
         {/* Completed Badge */}
         {mission.completed && (
           <View style={styles.completedBadge}>
-            <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+            <Icon name="checkmark-circle" size={14} color={colors.success} />
             <Text style={styles.completedText}>COMPLETED</Text>
           </View>
         )}

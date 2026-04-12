@@ -13,7 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { api } from '../../src/utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { AppBackground } from '../../src/components/AppBackground';
@@ -122,7 +122,7 @@ export default function VenuesScreen() {
           ]}
           onPress={() => handleCategoryChange(VENUE_CATEGORIES.ALL)}
         >
-          <Ionicons 
+          <Icon 
             name="grid" 
             size={16} 
             color={selectedCategory === VENUE_CATEGORIES.ALL ? colors.accent : colors.textMuted} 
@@ -142,7 +142,7 @@ export default function VenuesScreen() {
           ]}
           onPress={() => handleCategoryChange(VENUE_CATEGORIES.NIGHTLIFE)}
         >
-          <Ionicons 
+          <Icon 
             name="musical-notes" 
             size={16} 
             color={selectedCategory === VENUE_CATEGORIES.NIGHTLIFE ? colors.accent : colors.textMuted} 
@@ -162,7 +162,7 @@ export default function VenuesScreen() {
           ]}
           onPress={() => handleCategoryChange(VENUE_CATEGORIES.RESTAURANT)}
         >
-          <Ionicons 
+          <Icon 
             name="restaurant" 
             size={16} 
             color={selectedCategory === VENUE_CATEGORIES.RESTAURANT ? colors.accent : colors.textMuted} 
@@ -194,7 +194,7 @@ export default function VenuesScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={styles.regionBadge}>
-                <Ionicons name="location" size={14} color={colors.accent} />
+                <Icon name="location" size={14} color={colors.accent} />
                 <Text style={styles.regionText}>BRISBANE</Text>
               </View>
               <Text style={styles.venueCount}>{brisbaneVenues.length} venues</Text>
@@ -219,7 +219,7 @@ export default function VenuesScreen() {
                       </Text>
                       <View style={styles.venueMetaRow}>
                         <View style={[styles.venueTypeBadge, { borderColor: venue.accent_color }]}>
-                          <Ionicons 
+                          <Icon 
                             name={venue.type === 'nightclub' ? 'musical-notes' : 'restaurant'} 
                             size={10} 
                             color={venue.accent_color} 
@@ -241,7 +241,7 @@ export default function VenuesScreen() {
                         onPress={() => handleGetDirections(venue)}
                       >
                         <View style={[styles.actionIcon, { backgroundColor: venue.accent_color + '20' }]}>
-                          <Ionicons name="navigate" size={18} color={venue.accent_color} />
+                          <Icon name="navigate" size={18} color={venue.accent_color} />
                         </View>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -253,7 +253,7 @@ export default function VenuesScreen() {
                           style={styles.actionButtonGradient}
                         >
                           <Text style={styles.actionButtonText}>View</Text>
-                          <Ionicons name="arrow-forward" size={16} color={colors.textPrimary} />
+                          <Icon name="arrow-forward" size={16} color={colors.textPrimary} />
                         </LinearGradient>
                       </TouchableOpacity>
                     </View>
@@ -269,7 +269,7 @@ export default function VenuesScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={styles.regionBadge}>
-                <Ionicons name="location" size={14} color={colors.gold} />
+                <Icon name="location" size={14} color={colors.gold} />
                 <Text style={[styles.regionText, { color: colors.gold }]}>GOLD COAST</Text>
               </View>
               <Text style={styles.venueCount}>{goldCoastVenues.length} venues</Text>
@@ -294,7 +294,7 @@ export default function VenuesScreen() {
                       </Text>
                       <View style={styles.venueMetaRow}>
                         <View style={[styles.venueTypeBadge, { borderColor: venue.accent_color }]}>
-                          <Ionicons 
+                          <Icon 
                             name={venue.type === 'nightclub' ? 'musical-notes' : 'restaurant'} 
                             size={10} 
                             color={venue.accent_color} 
@@ -316,7 +316,7 @@ export default function VenuesScreen() {
                         onPress={() => handleGetDirections(venue)}
                       >
                         <View style={[styles.actionIcon, { backgroundColor: venue.accent_color + '20' }]}>
-                          <Ionicons name="navigate" size={18} color={venue.accent_color} />
+                          <Icon name="navigate" size={18} color={venue.accent_color} />
                         </View>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -328,7 +328,7 @@ export default function VenuesScreen() {
                           style={styles.actionButtonGradient}
                         >
                           <Text style={styles.actionButtonText}>View</Text>
-                          <Ionicons name="arrow-forward" size={16} color={colors.textPrimary} />
+                          <Icon name="arrow-forward" size={16} color={colors.textPrimary} />
                         </LinearGradient>
                       </TouchableOpacity>
                     </View>
@@ -342,7 +342,7 @@ export default function VenuesScreen() {
         {/* Empty state */}
         {filteredVenues.length === 0 && (
           <View style={styles.emptyState}>
-            <Ionicons name="location-outline" size={48} color={colors.textMuted} />
+            <Icon name="location-outline" size={48} color={colors.textMuted} />
             <Text style={styles.emptyText}>No venues found</Text>
             <Text style={styles.emptySubtext}>
               {selectedCategory === VENUE_CATEGORIES.RESTAURANT 

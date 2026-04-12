@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius } from '../src/theme/colors';
@@ -144,7 +144,7 @@ export default function StaffPortal() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} data-testid="staff-portal-back-btn">
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+            <Icon name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>STAFF PORTAL</Text>
         </View>
@@ -153,7 +153,7 @@ export default function StaffPortal() {
         <View style={styles.searchCard} data-testid="staff-search-card">
           <View style={styles.searchRow}>
             <View style={styles.searchInput}>
-              <Ionicons name="search" size={18} color={colors.textMuted} />
+              <Icon name="search" size={18} color={colors.textMuted} />
               <TextInput
                 style={styles.searchText}
                 placeholder="Search by name, email or phone..."
@@ -166,7 +166,7 @@ export default function StaffPortal() {
               />
             </View>
             <TouchableOpacity style={styles.searchBtn} onPress={handleSearch} disabled={searching} data-testid="staff-search-btn">
-              {searching ? <ActivityIndicator size="small" color="#000" /> : <Ionicons name="arrow-forward" size={20} color="#000" />}
+              {searching ? <ActivityIndicator size="small" color="#000" /> : <Icon name="arrow-forward" size={20} color="#000" />}
             </TouchableOpacity>
           </View>
           <TouchableOpacity 
@@ -174,7 +174,7 @@ export default function StaffPortal() {
             onPress={() => setShowScanner(!showScanner)}
             data-testid="staff-scan-qr-btn"
           >
-            <Ionicons name="qr-code" size={18} color={colors.accent} />
+            <Icon name="qr-code" size={18} color={colors.accent} />
             <Text style={styles.scanQrText}>{showScanner ? 'Hide Scanner' : 'Scan Member QR Code'}</Text>
           </TouchableOpacity>
         </View>
@@ -184,12 +184,12 @@ export default function StaffPortal() {
           <View style={styles.scannerCard} data-testid="staff-qr-scanner">
             {Platform.OS === 'web' ? (
               <View style={styles.scannerMsg}>
-                <Ionicons name="phone-portrait" size={32} color={colors.textMuted} />
+                <Icon name="phone-portrait" size={32} color={colors.textMuted} />
                 <Text style={styles.scannerMsgText}>QR scanning available on mobile only</Text>
               </View>
             ) : hasPermission === false ? (
               <View style={styles.scannerMsg}>
-                <Ionicons name="camera-outline" size={32} color={colors.textMuted} />
+                <Icon name="camera-outline" size={32} color={colors.textMuted} />
                 <Text style={styles.scannerMsgText}>Camera permission required</Text>
               </View>
             ) : isNative ? (
@@ -229,7 +229,7 @@ export default function StaffPortal() {
             <View style={styles.memberCard} data-testid="member-profile-card">
               <View style={styles.memberHeader}>
                 <View style={[styles.memberAvatar, { borderColor: m.tier_color }]}>
-                  <Ionicons name="person" size={28} color={m.tier_color} />
+                  <Icon name="person" size={28} color={m.tier_color} />
                 </View>
                 <View style={styles.memberInfo}>
                   <Text style={styles.memberName}>{m.name}</Text>
@@ -240,17 +240,17 @@ export default function StaffPortal() {
               </View>
               <View style={styles.memberStats}>
                 <View style={styles.stat}>
-                  <Ionicons name="star" size={16} color={colors.gold} />
+                  <Icon name="star" size={16} color={colors.gold} />
                   <Text style={styles.statValue}>{m.points_balance.toLocaleString()}</Text>
                   <Text style={styles.statLabel}>Points</Text>
                 </View>
                 <View style={styles.stat}>
-                  <Ionicons name="wallet" size={16} color={colors.accent} />
+                  <Icon name="wallet" size={16} color={colors.accent} />
                   <Text style={styles.statValue}>${m.wallet_balance.toFixed(2)}</Text>
                   <Text style={styles.statLabel}>Wallet</Text>
                 </View>
                 <View style={styles.stat}>
-                  <Ionicons name="enter" size={16} color={colors.textMuted} />
+                  <Icon name="enter" size={16} color={colors.textMuted} />
                   <Text style={styles.statValue}>{m.today.entries}</Text>
                   <Text style={styles.statLabel}>Entries</Text>
                 </View>
@@ -268,7 +268,7 @@ export default function StaffPortal() {
               </View>
               {m.today.drink_redeemed && (
                 <View style={styles.alertRow}>
-                  <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
+                  <Icon name="checkmark-circle" size={16} color="#22C55E" />
                   <Text style={styles.alertText}>Comp drink already redeemed today</Text>
                 </View>
               )}
@@ -296,7 +296,7 @@ export default function StaffPortal() {
 function ActionButton({ icon, label, color, loading, onPress, disabled, testId }: any) {
   return (
     <TouchableOpacity style={[styles.actionBtn, disabled && styles.actionBtnDisabled]} onPress={onPress} disabled={disabled || loading} data-testid={testId}>
-      {loading ? <ActivityIndicator size="small" color={color} /> : <Ionicons name={icon} size={22} color={disabled ? colors.textMuted : color} />}
+      {loading ? <ActivityIndicator size="small" color={color} /> : <Icon name={icon} size={22} color={disabled ? colors.textMuted : color} />}
       <Text style={[styles.actionLabel, disabled && { color: colors.textMuted }]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -305,7 +305,7 @@ function ActionButton({ icon, label, color, loading, onPress, disabled, testId }
 function BenefitRow({ icon, label, value }: any) {
   return (
     <View style={styles.benefitRow}>
-      <Ionicons name={icon} size={16} color={colors.accent} />
+      <Icon name={icon} size={16} color={colors.accent} />
       <Text style={styles.benefitLabel}>{label}</Text>
       <Text style={styles.benefitValue}>{value}</Text>
     </View>

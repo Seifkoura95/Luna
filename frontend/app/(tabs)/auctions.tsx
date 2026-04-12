@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { AppBackground } from '../../src/components/AppBackground';
 import { PageHeader } from '../../src/components/PageHeader';
@@ -288,7 +288,7 @@ export default function AuctionsScreen() {
           ]}
           onPress={() => toggleWatchlist(auction.id)}
         >
-          <Ionicons 
+          <Icon 
             name={isWatched ? "eye" : "eye-outline"} 
             size={20} 
             color={isWatched ? "#D4AF37" : "#FFFFFF"} 
@@ -321,7 +321,7 @@ export default function AuctionsScreen() {
           {/* Timer */}
           {auction.status === 'active' && (
             <View style={styles.timerBadge}>
-              <Ionicons name="time" size={14} color={colors.accent} />
+              <Icon name="time" size={14} color={colors.accent} />
               <Text style={styles.timerText}>{timeLeft[auction.id] || 'Loading...'}</Text>
             </View>
           )}
@@ -343,7 +343,7 @@ export default function AuctionsScreen() {
               
               {isWinning(auction) && (
                 <View style={styles.winningBadge}>
-                  <Ionicons name="trophy" size={14} color={colors.gold} />
+                  <Icon name="trophy" size={14} color={colors.gold} />
                   <Text style={styles.winningText}>WINNING</Text>
                 </View>
               )}
@@ -400,7 +400,7 @@ export default function AuctionsScreen() {
           
           {!isLoading && auctions.filter(a => a.status === 'active').length === 0 && (
             <View style={styles.emptyState}>
-              <Ionicons name="flash-off" size={48} color={colors.textMuted} />
+              <Icon name="flash-off" size={48} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>No active auctions</Text>
               <Text style={styles.emptySubtitle}>Check back soon!</Text>
             </View>
@@ -447,13 +447,13 @@ export default function AuctionsScreen() {
                     onPress={() => setSelectedAuction(null)}
                   >
                     <View style={styles.premiumCloseBtnInner}>
-                      <Ionicons name="close" size={20} color={colors.textPrimary} />
+                      <Icon name="close" size={20} color={colors.textPrimary} />
                     </View>
                   </TouchableOpacity>
 
                   {/* Timer Badge on Image */}
                   <View style={styles.timerBadgeOnImage}>
-                    <Ionicons name="time" size={14} color={colors.accent} />
+                    <Icon name="time" size={14} color={colors.accent} />
                     <Text style={styles.timerBadgeText}>
                       {selectedAuction.status === 'active' 
                         ? timeLeft[selectedAuction.id] || 'Loading...'
@@ -485,7 +485,7 @@ export default function AuctionsScreen() {
                   >
                     {selectedAuction.features?.map((feature, index) => (
                       <View key={index} style={styles.premiumFeatureChip}>
-                        <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                        <Icon name="checkmark-circle" size={16} color={colors.success} />
                         <Text style={styles.premiumFeatureText}>{feature}</Text>
                       </View>
                     ))}
@@ -519,7 +519,7 @@ export default function AuctionsScreen() {
                   {/* Leading Bidder */}
                   {selectedAuction.winner_name && (
                     <View style={[styles.leadingBidderCard, isWinning(selectedAuction) && styles.leadingBidderCardWinning]}>
-                      <Ionicons 
+                      <Icon 
                         name={isWinning(selectedAuction) ? 'trophy' : 'person-circle'} 
                         size={24} 
                         color={isWinning(selectedAuction) ? colors.gold : colors.textMuted} 
@@ -576,7 +576,7 @@ export default function AuctionsScreen() {
                           style={styles.premiumNotifyGradient}
                         >
                           <View style={[styles.premiumNotifyIcon, notifyOutbid && styles.premiumNotifyIconActive]}>
-                            <Ionicons 
+                            <Icon 
                               name={notifyOutbid ? 'notifications' : 'notifications-outline'} 
                               size={22} 
                               color={notifyOutbid ? colors.accent : colors.textMuted} 
@@ -601,7 +601,7 @@ export default function AuctionsScreen() {
                         style={styles.premiumAutoBidRow}
                         onPress={() => setShowMaxBid(!showMaxBid)}
                       >
-                        <Ionicons 
+                        <Icon 
                           name={showMaxBid ? 'checkbox' : 'square-outline'} 
                           size={22} 
                           color={showMaxBid ? colors.accent : colors.textMuted} 
@@ -647,7 +647,7 @@ export default function AuctionsScreen() {
                             <Text style={styles.premiumBidButtonText}>Placing Bid...</Text>
                           ) : (
                             <>
-                              <Ionicons name="flash" size={22} color="#FFF" />
+                              <Icon name="flash" size={22} color="#FFF" />
                               <Text style={styles.premiumBidButtonText}>
                                 {bidAmount ? `Place Bid · $${bidAmount}` : 'Enter Amount'}
                               </Text>
@@ -658,7 +658,7 @@ export default function AuctionsScreen() {
 
                       {/* Security Badge */}
                       <View style={styles.securityBadge}>
-                        <Ionicons name="shield-checkmark" size={14} color={colors.success} />
+                        <Icon name="shield-checkmark" size={14} color={colors.success} />
                         <Text style={styles.securityText}>Secure · Deposit refundable if you don't win</Text>
                       </View>
                     </>
@@ -671,7 +671,7 @@ export default function AuctionsScreen() {
                         colors={[colors.gold + '30', colors.gold + '10', 'transparent']}
                         style={styles.premiumWonGradient}
                       >
-                        <Ionicons name="trophy" size={56} color={colors.gold} />
+                        <Icon name="trophy" size={56} color={colors.gold} />
                         <Text style={styles.premiumWonTitle}>Congratulations!</Text>
                         <Text style={styles.premiumWonSubtitle}>
                           You won with a bid of ${selectedAuction.current_bid}

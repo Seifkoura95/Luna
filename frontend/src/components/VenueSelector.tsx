@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import { api } from '../utils/api';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
@@ -79,7 +79,7 @@ export const VenueSelector: React.FC<VenueSelectorProps> = ({
         activeOpacity={0.8}
       >
         <Text style={styles.compactText}>{selectedVenue.name}</Text>
-        <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
+        <Icon name="chevron-down" size={16} color={colors.textSecondary} />
       </TouchableOpacity>
     );
   }
@@ -101,7 +101,7 @@ export const VenueSelector: React.FC<VenueSelectorProps> = ({
               <Text style={styles.venueLocation}>{selectedVenue.location}</Text>
             </View>
             <View style={styles.selectorIcon}>
-              <Ionicons name="location" size={20} color={selectedVenue.accent_color} />
+              <Icon name="location" size={20} color={selectedVenue.accent_color} />
             </View>
           </View>
         </LinearGradient>
@@ -125,7 +125,7 @@ export const VenueSelector: React.FC<VenueSelectorProps> = ({
                   style={styles.closeButton}
                   onPress={() => setModalVisible(false)}
                 >
-                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                  <Icon name="close" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
               </View>
 
@@ -158,7 +158,7 @@ export const VenueSelector: React.FC<VenueSelectorProps> = ({
                         </View>
                         {selectedVenue?.id === venue.id && (
                           <View style={styles.selectedBadge}>
-                            <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+                            <Icon name="checkmark-circle" size={24} color={colors.success} />
                           </View>
                         )}
                       </LinearGradient>
@@ -190,7 +190,7 @@ export const VenueSelector: React.FC<VenueSelectorProps> = ({
                         </View>
                         {selectedVenue?.id === venue.id && (
                           <View style={styles.selectedBadge}>
-                            <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+                            <Icon name="checkmark-circle" size={24} color={colors.success} />
                           </View>
                         )}
                       </LinearGradient>

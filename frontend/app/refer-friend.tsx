@@ -14,7 +14,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api } from '../src/utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBackground } from '../src/components/AppBackground';
@@ -109,7 +109,7 @@ export default function ReferFriendScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Icon name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, ]}>Refer & Earn</Text>
@@ -122,7 +122,7 @@ export default function ReferFriendScreen() {
         <View style={styles.heroSection}>
           <View style={styles.giftIconContainer}>
             <LinearGradient colors={['#00D4AA', '#00A080']} style={styles.giftIconGradient}>
-              <Ionicons name="gift" size={48} color="#FFF" />
+              <Icon name="gift" size={48} color="#FFF" />
             </LinearGradient>
           </View>
           
@@ -149,7 +149,7 @@ export default function ReferFriendScreen() {
               style={[styles.copyButton, copied && styles.copyButtonSuccess]}
               onPress={handleCopyCode}
             >
-              <Ionicons 
+              <Icon 
                 name={copied ? "checkmark" : "copy-outline"} 
                 size={20} 
                 color={copied ? "#FFF" : colors.accent} 
@@ -169,7 +169,7 @@ export default function ReferFriendScreen() {
             end={{ x: 1, y: 1 }}
             style={styles.shareButtonGradient}
           >
-            <Ionicons name="share-social" size={24} color="#FFF" />
+            <Icon name="share-social" size={24} color="#FFF" />
             <Text style={[styles.shareButtonText, ]}>
               SHARE WITH FRIENDS
             </Text>

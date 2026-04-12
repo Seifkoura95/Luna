@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius } from '../../src/theme/colors';
@@ -288,7 +288,7 @@ export default function LunaAIScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <Ionicons name="sparkles" size={16} color="#fff" />
+              <Icon name="sparkles" size={16} color="#fff" />
             </LinearGradient>
             <View style={styles.aiOnlineIndicator} />
           </View>
@@ -330,10 +330,10 @@ export default function LunaAIScreen() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Ionicons name={category.icon as any} size={22} color="#fff" />
+            <Icon name={category.icon as any} size={22} color="#fff" />
           </LinearGradient>
           <Text style={styles.categoryTitle}>{category.title}</Text>
-          <Ionicons 
+          <Icon 
             name={isSelected ? "chevron-up" : "chevron-down"} 
             size={16} 
             color={colors.textMuted} 
@@ -350,7 +350,7 @@ export default function LunaAIScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={styles.questionPillText}>{question}</Text>
-                <Ionicons name="arrow-forward-circle" size={18} color={category.gradient[0]} />
+                <Icon name="arrow-forward-circle" size={18} color={category.gradient[0]} />
               </TouchableOpacity>
             ))}
           </View>
@@ -375,7 +375,7 @@ export default function LunaAIScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Ionicons name="sparkles" size={20} color="#fff" />
+                  <Icon name="sparkles" size={20} color="#fff" />
                 </LinearGradient>
               </Animated.View>
               <View style={styles.headerTextWrapper}>
@@ -402,7 +402,7 @@ export default function LunaAIScreen() {
                   } catch (e) {}
                 }}
               >
-                <Ionicons name="add-circle-outline" size={24} color={colors.textSecondary} />
+                <Icon name="add-circle-outline" size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -433,7 +433,7 @@ export default function LunaAIScreen() {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <Ionicons name="sparkles" size={16} color="#fff" />
+                    <Icon name="sparkles" size={16} color="#fff" />
                   </LinearGradient>
                 </View>
                 <View style={styles.typingBubble}>
@@ -470,7 +470,7 @@ export default function LunaAIScreen() {
                     onPress={() => handleSendMessage(suggestion)}
                     activeOpacity={0.8}
                   >
-                    <Ionicons name="flash" size={12} color={colors.accent} />
+                    <Icon name="flash" size={12} color={colors.accent} />
                     <Text style={styles.inlineSuggestionText}>{suggestion}</Text>
                   </TouchableOpacity>
                 ))}
@@ -508,7 +508,7 @@ export default function LunaAIScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Ionicons 
+                  <Icon 
                     name="arrow-up" 
                     size={20} 
                     color={inputText.trim() && !isLoading ? '#fff' : colors.textMuted} 

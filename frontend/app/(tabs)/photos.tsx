@@ -16,7 +16,7 @@ import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { PhotoCard } from '../../src/components/PhotoCard';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
@@ -258,7 +258,7 @@ export default function PhotosScreen() {
                 colors={[colors.accentGlow, 'transparent']}
                 style={styles.emptyGlow}
               />
-              <Ionicons 
+              <Icon 
                 name={
                   activeTab === 'purchased' ? 'images-outline' : 
                   activeTab === 'pending' ? 'hourglass-outline' : 
@@ -293,7 +293,7 @@ export default function PhotosScreen() {
           >
             <View style={styles.purchaseInfo}>
               <View style={styles.selectedBadge}>
-                <Ionicons name="images" size={16} color={colors.accent} />
+                <Icon name="images" size={16} color={colors.accent} />
                 <Text style={styles.selectedCount}>{selectedPhotos.size} selected</Text>
               </View>
               <TouchableOpacity
@@ -305,9 +305,9 @@ export default function PhotosScreen() {
                 activeOpacity={0.7}
               >
                 <View style={[styles.checkbox, aiEnhance && styles.checkboxActive]}>
-                  {aiEnhance && <Ionicons name="checkmark" size={14} color={colors.background} />}
+                  {aiEnhance && <Icon name="checkmark" size={14} color={colors.background} />}
                 </View>
-                <Ionicons name="sparkles" size={16} color={colors.gold} style={{ marginRight: spacing.xs }} />
+                <Icon name="sparkles" size={16} color={colors.gold} style={{ marginRight: spacing.xs }} />
                 <Text style={styles.aiText}>AI Enhance (+$2 each)</Text>
               </TouchableOpacity>
             </View>
@@ -328,7 +328,7 @@ export default function PhotosScreen() {
                 }
                 style={styles.purchaseBtnGradient}
               >
-                <Ionicons name="cart" size={18} color={colors.textPrimary} />
+                <Icon name="cart" size={18} color={colors.textPrimary} />
                 <Text style={styles.purchaseBtnText}>
                   {purchasing ? 'Processing...' : `Purchase ${selectedPhotos.size > 0 ? `(${selectedPhotos.size})` : ''}`}
                 </Text>
@@ -348,7 +348,7 @@ export default function PhotosScreen() {
             style={styles.bundleHint}
           >
             <View style={styles.bundleIconContainer}>
-              <Ionicons name="gift" size={20} color={colors.gold} />
+              <Icon name="gift" size={20} color={colors.gold} />
             </View>
             <Text style={styles.bundleHintText}>
               Select {5 - selectedPhotos.size} more for bundle pricing
@@ -374,7 +374,7 @@ export default function PhotosScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.closeButtonContainer}>
-              <Ionicons name="close" size={24} color={colors.textPrimary} />
+              <Icon name="close" size={24} color={colors.textPrimary} />
             </View>
           </TouchableOpacity>
           {selectedPhoto && (
@@ -394,7 +394,7 @@ export default function PhotosScreen() {
                   )}
                   {selectedPhoto.ai_enhanced && (
                     <View style={styles.photoAiBadge}>
-                      <Ionicons name="sparkles" size={14} color={colors.gold} />
+                      <Icon name="sparkles" size={14} color={colors.gold} />
                       <Text style={styles.photoAiText}>AI Enhanced</Text>
                     </View>
                   )}

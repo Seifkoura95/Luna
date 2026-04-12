@@ -20,7 +20,7 @@ import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { useDataStore } from '../../src/store/dataStore';
 import { api, apiFetch } from '../../src/utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import { AppBackground } from '../../src/components/AppBackground';
 import { PageHeader } from '../../src/components/PageHeader';
@@ -443,16 +443,16 @@ export default function WalletScreen() {
 
         <View style={styles.ticketDetails}>
           <View style={styles.ticketDetailItem}>
-            <Ionicons name="calendar" size={16} color={colors.textSecondary} />
+            <Icon name="calendar" size={16} color={colors.textSecondary} />
             <Text style={styles.ticketDetailText}>{formatEventDate(ticket.event_date)}</Text>
           </View>
           <View style={styles.ticketDetailItem}>
-            <Ionicons name="ticket" size={16} color={colors.textSecondary} />
+            <Icon name="ticket" size={16} color={colors.textSecondary} />
             <Text style={styles.ticketDetailText}>{ticket.ticket_type?.toUpperCase() || 'GENERAL'}</Text>
           </View>
           {ticket.guests?.length > 0 && (
             <View style={styles.ticketDetailItem}>
-              <Ionicons name="people" size={16} color={colors.accent} />
+              <Icon name="people" size={16} color={colors.accent} />
               <Text style={[styles.ticketDetailText, { color: colors.accent }]}>
                 +{ticket.guests.length} guests
               </Text>
@@ -462,7 +462,7 @@ export default function WalletScreen() {
 
         {/* Tap to view QR hint */}
         <View style={styles.tapHint}>
-          <Ionicons name="hand-left-outline" size={14} color={colors.textMuted} />
+          <Icon name="hand-left-outline" size={14} color={colors.textMuted} />
           <Text style={styles.tapHintText}>Tap to view QR code</Text>
         </View>
       </LinearGradient>
@@ -521,12 +521,12 @@ export default function WalletScreen() {
         <View style={styles.leaderboardSection}>
           <View style={styles.leaderboardHeader}>
             <View style={styles.leaderboardTitleRow}>
-              <Ionicons name="trophy" size={18} color={colors.gold} />
+              <Icon name="trophy" size={18} color={colors.gold} />
               <Text style={styles.leaderboardTitle}>LEADERBOARD</Text>
             </View>
             <TouchableOpacity onPress={() => router.push('/leaderboard')} style={styles.fullRankingsBtn}>
               <Text style={styles.fullRankingsText}>See All</Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.accent} />
+              <Icon name="chevron-forward" size={14} color={colors.accent} />
             </TouchableOpacity>
           </View>
           
@@ -608,7 +608,7 @@ export default function WalletScreen() {
               {/* Gap to #1 indicator */}
               {leaderboardData.gap_to_first > 0 ? (
                 <View style={styles.gapIndicator}>
-                  <Ionicons name="trending-up" size={14} color={colors.gold} />
+                  <Icon name="trending-up" size={14} color={colors.gold} />
                   <Text style={styles.gapText}>
                     <Text style={styles.gapValue}>{leaderboardData.gap_to_first.toLocaleString()}</Text> pts to reach #1
                   </Text>
@@ -621,7 +621,7 @@ export default function WalletScreen() {
             </View>
           ) : (
             <View style={styles.emptyLeaderboard}>
-              <Ionicons name="trophy-outline" size={32} color={colors.textMuted} />
+              <Icon name="trophy-outline" size={32} color={colors.textMuted} />
               <Text style={styles.emptyLeaderboardText}>Loading leaderboard...</Text>
             </View>
           )}
@@ -631,7 +631,7 @@ export default function WalletScreen() {
         <View style={styles.redeemSection}>
           <View style={styles.redeemHeader}>
             <View style={styles.redeemTitleRow}>
-              <Ionicons name="gift" size={18} color={colors.gold} />
+              <Icon name="gift" size={18} color={colors.gold} />
               <Text style={styles.redeemTitle}>REDEEM REWARDS</Text>
             </View>
             <TouchableOpacity 
@@ -639,7 +639,7 @@ export default function WalletScreen() {
               style={styles.viewAllRewardsBtn}
             >
               <Text style={styles.viewAllRewardsText}>View All</Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.accent} />
+              <Icon name="chevron-forward" size={14} color={colors.accent} />
             </TouchableOpacity>
           </View>
 
@@ -665,7 +665,7 @@ export default function WalletScreen() {
                   colors={[colors.gold, '#B8960D']}
                   style={styles.redeemNowGradient}
                 >
-                  <Ionicons name="gift-outline" size={16} color={colors.bg} />
+                  <Icon name="gift-outline" size={16} color={colors.bg} />
                   <Text style={styles.redeemNowText}>Redeem Now</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -677,9 +677,9 @@ export default function WalletScreen() {
             <ActivityIndicator size="small" color={colors.accent} style={{ marginVertical: 20 }} />
           ) : (
             <TouchableOpacity style={styles.viewAllRewardsFullBtn} onPress={() => router.push('/rewards-shop')}>
-              <Ionicons name="storefront" size={20} color={colors.gold} />
+              <Icon name="storefront" size={20} color={colors.gold} />
               <Text style={styles.viewAllRewardsFullText}>Browse Rewards Shop</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              <Icon name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -687,7 +687,7 @@ export default function WalletScreen() {
         {/* Tab Selector - My Tickets */}
         <View style={styles.ticketsSection}>
           <View style={styles.ticketsSectionHeader}>
-            <Ionicons name="ticket" size={18} color={colors.gold} />
+            <Icon name="ticket" size={18} color={colors.gold} />
             <Text style={styles.redeemTitle}>MY TICKETS</Text>
           </View>
           <View style={styles.tabContainer}>
@@ -720,7 +720,7 @@ export default function WalletScreen() {
               currentTickets.map(renderTicketCard)
             ) : (
               <View style={styles.emptyState}>
-                <Ionicons 
+                <Icon 
                   name={activeTab === 'active' ? 'moon' : activeTab === 'upcoming' ? 'calendar-outline' : 'time-outline'} 
                   size={48} 
                   color={colors.textMuted} 
@@ -744,7 +744,7 @@ export default function WalletScreen() {
         <View style={styles.missionsSection}>
           <View style={styles.missionHeader}>
             <View style={styles.missionTitleRow}>
-              <Ionicons name="flag" size={18} color={colors.accent} />
+              <Icon name="flag" size={18} color={colors.accent} />
               <Text style={styles.redeemTitle}>MISSIONS</Text>
             </View>
             <TouchableOpacity onPress={() => router.push('/rewards-shop')}>
@@ -759,7 +759,7 @@ export default function WalletScreen() {
           ].map((mission) => (
             <View key={mission.id} style={styles.missionCard}>
               <View style={[styles.missionIcon, { backgroundColor: mission.color + '20' }]}>
-                <Ionicons name={mission.icon as any} size={20} color={mission.color} />
+                <Icon name={mission.icon as any} size={20} color={mission.color} />
               </View>
               <View style={styles.missionContent}>
                 <Text style={styles.missionTitle}>{mission.title}</Text>
@@ -796,7 +796,7 @@ export default function WalletScreen() {
         <View style={styles.redeemSection}>
           <View style={styles.redeemHeader}>
             <View style={styles.redeemTitleRow}>
-              <Ionicons name="flag" size={18} color={colors.accent} />
+              <Icon name="flag" size={18} color={colors.accent} />
               <Text style={styles.redeemTitle}>MILESTONES</Text>
             </View>
           </View>
@@ -820,7 +820,7 @@ export default function WalletScreen() {
                   end={{ x: 1, y: 1 }}
                 >
                   <View style={[styles.milestoneIcon, { backgroundColor: reached ? m.color + '20' : colors.glassMid }]}>
-                    <Ionicons name={reached ? 'checkmark-circle' : m.icon} size={20} color={reached ? m.color : colors.textMuted} />
+                    <Icon name={reached ? 'checkmark-circle' : m.icon} size={20} color={reached ? m.color : colors.textMuted} />
                   </View>
                   <View style={styles.milestoneInfo}>
                     <View style={styles.milestoneTop}>
@@ -861,7 +861,7 @@ export default function WalletScreen() {
                   style={styles.closeButton}
                   onPress={() => setSelectedTicket(null)}
                 >
-                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                  <Icon name="close" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
               </View>
 
@@ -872,7 +872,7 @@ export default function WalletScreen() {
                     <Text style={styles.modalEventTitle}>{selectedTicket.event_title}</Text>
                     <Text style={styles.modalEventVenue}>{selectedTicket.venue_name}</Text>
                     <View style={styles.modalDetailRow}>
-                      <Ionicons name="calendar" size={18} color={colors.accent} />
+                      <Icon name="calendar" size={18} color={colors.accent} />
                       <Text style={styles.modalDetailText}>{formatEventDate(selectedTicket.event_date)}</Text>
                     </View>
                   </View>
@@ -881,7 +881,7 @@ export default function WalletScreen() {
                   <View style={styles.modalQRSection}>
                     <View style={styles.modalQRCode}>
                       {Platform.OS === 'web' ? (
-                        <Ionicons name="qr-code" size={120} color={colors.textPrimary} />
+                        <Icon name="qr-code" size={120} color={colors.textPrimary} />
                       ) : (
                         <QRCode
                           value={selectedTicket.qr_code || 'LUNA-TICKET'}
@@ -903,7 +903,7 @@ export default function WalletScreen() {
                         style={styles.addGuestButton}
                         onPress={() => setShowAddGuest(true)}
                       >
-                        <Ionicons name="add" size={18} color={colors.accent} />
+                        <Icon name="add" size={18} color={colors.accent} />
                         <Text style={styles.addGuestText}>Add Guest</Text>
                       </TouchableOpacity>
                     </View>
@@ -912,13 +912,13 @@ export default function WalletScreen() {
                       selectedTicket.guests.map((guest: any) => (
                         <View key={guest.id} style={styles.guestItem}>
                           <View style={styles.guestInfo}>
-                            <Ionicons name="person" size={18} color={colors.textSecondary} />
+                            <Icon name="person" size={18} color={colors.textSecondary} />
                             <Text style={styles.guestName}>{guest.name}</Text>
                           </View>
                           <TouchableOpacity
                             onPress={() => handleRemoveGuest(selectedTicket.id, guest.id, guest.name)}
                           >
-                            <Ionicons name="close-circle" size={22} color={colors.error} />
+                            <Icon name="close-circle" size={22} color={colors.error} />
                           </TouchableOpacity>
                         </View>
                       ))

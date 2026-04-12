@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { colors } from '../theme/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import { format } from 'date-fns';
 
 interface EventCardProps {
@@ -36,13 +36,13 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
         <Text style={styles.description}>{event.description}</Text>
         <View style={styles.footer}>
           <View style={styles.venueTag}>
-            <Ionicons name="location" size={12} color={colors.accent} />
+            <Icon name="location" size={12} color={colors.accent} />
             <Text style={styles.venueName}>{event.venue_room.toUpperCase()}</Text>
           </View>
           {event.ticket_url && (
             <TouchableOpacity style={styles.ticketButton} onPress={handleTickets}>
               <Text style={styles.ticketText}>Tickets</Text>
-              <Ionicons name="arrow-forward" size={14} color={colors.textPrimary} />
+              <Icon name="arrow-forward" size={14} color={colors.textPrimary} />
             </TouchableOpacity>
           )}
         </View>

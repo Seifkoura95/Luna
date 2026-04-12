@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { BarCodeScanner } from 'expo-barcode-scanner';
@@ -154,22 +154,22 @@ export default function VenueDashboard() {
       {/* Stats Cards */}
       <View style={styles.statsGrid}>
         <View style={[styles.statCard, { backgroundColor: colors.accent + '20' }]}>
-          <Ionicons name="today" size={24} color={colors.accent} />
+          <Icon name="today" size={24} color={colors.accent} />
           <Text style={styles.statValue}>{stats?.today_redemptions || 0}</Text>
           <Text style={styles.statLabel}>Today</Text>
         </View>
         <View style={[styles.statCard, { backgroundColor: colors.gold + '20' }]}>
-          <Ionicons name="calendar" size={24} color={colors.gold} />
+          <Icon name="calendar" size={24} color={colors.gold} />
           <Text style={styles.statValue}>{stats?.week_redemptions || 0}</Text>
           <Text style={styles.statLabel}>This Week</Text>
         </View>
         <View style={[styles.statCard, { backgroundColor: colors.accentDim }]}>
-          <Ionicons name="hourglass" size={24} color="#8B5CF6" />
+          <Icon name="hourglass" size={24} color="#8B5CF6" />
           <Text style={styles.statValue}>{stats?.pending_redemptions || 0}</Text>
           <Text style={styles.statLabel}>Pending</Text>
         </View>
         <View style={[styles.statCard, { backgroundColor: colors.greenDim }]}>
-          <Ionicons name="people" size={24} color="#00D4AA" />
+          <Icon name="people" size={24} color="#00D4AA" />
           <Text style={styles.statValue}>{stats?.unique_visitors || 0}</Text>
           <Text style={styles.statLabel}>Visitors</Text>
         </View>
@@ -186,7 +186,7 @@ export default function VenueDashboard() {
           end={{ x: 1, y: 0 }}
           style={styles.scanButtonGradient}
         >
-          <Ionicons name="qr-code" size={24} color="#fff" />
+          <Icon name="qr-code" size={24} color="#fff" />
           <Text style={styles.scanButtonText}>SCAN QR CODE</Text>
         </LinearGradient>
       </TouchableOpacity>
@@ -203,7 +203,7 @@ export default function VenueDashboard() {
           end={{ x: 1, y: 0 }}
           style={styles.scanButtonGradient}
         >
-          <Ionicons name="shield-checkmark" size={24} color="#fff" />
+          <Icon name="shield-checkmark" size={24} color="#fff" />
           <Text style={styles.scanButtonText}>STAFF PORTAL - VALIDATE PERKS</Text>
         </LinearGradient>
       </TouchableOpacity>
@@ -213,14 +213,14 @@ export default function VenueDashboard() {
         <Text style={styles.sectionTitle}>RECENT REDEMPTIONS</Text>
         {recentRedemptions.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={48} color={colors.textMuted} />
+            <Icon name="receipt-outline" size={48} color={colors.textMuted} />
             <Text style={styles.emptyText}>No redemptions yet</Text>
           </View>
         ) : (
           recentRedemptions.slice(0, 10).map((redemption) => (
             <View key={redemption.id} style={styles.redemptionCard}>
               <View style={styles.redemptionIcon}>
-                <Ionicons 
+                <Icon 
                   name={redemption.status === 'redeemed' ? 'checkmark-circle' : 'time'} 
                   size={20} 
                   color={redemption.status === 'redeemed' ? '#00D4AA' : colors.gold} 
@@ -247,7 +247,7 @@ export default function VenueDashboard() {
         <Text style={styles.scannerText}>Requesting camera permission...</Text>
       ) : hasPermission === false ? (
         <View style={styles.noPermission}>
-          <Ionicons name="camera-outline" size={48} color={colors.textMuted} />
+          <Icon name="camera-outline" size={48} color={colors.textMuted} />
           <Text style={styles.noPermissionText}>Camera permission required</Text>
         </View>
       ) : (
@@ -278,7 +278,7 @@ export default function VenueDashboard() {
             autoCapitalize="characters"
           />
           <TouchableOpacity style={styles.manualSubmit} onPress={handleManualCode}>
-            <Ionicons name="checkmark" size={24} color="#fff" />
+            <Icon name="checkmark" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -304,7 +304,7 @@ export default function VenueDashboard() {
             <Text style={styles.headerSubtitle}>{user?.name || 'Staff'}</Text>
           </View>
           <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <Ionicons name="log-out-outline" size={24} color={colors.textMuted} />
+            <Icon name="log-out-outline" size={24} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
 
@@ -314,21 +314,21 @@ export default function VenueDashboard() {
             style={[styles.tab, activeTab === 'dashboard' && styles.tabActive]}
             onPress={() => setActiveTab('dashboard')}
           >
-            <Ionicons name="stats-chart" size={20} color={activeTab === 'dashboard' ? colors.accent : colors.textMuted} />
+            <Icon name="stats-chart" size={20} color={activeTab === 'dashboard' ? colors.accent : colors.textMuted} />
             <Text style={[styles.tabText, activeTab === 'dashboard' && styles.tabTextActive]}>Dashboard</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'scan' && styles.tabActive]}
             onPress={() => setActiveTab('scan')}
           >
-            <Ionicons name="qr-code" size={20} color={activeTab === 'scan' ? colors.accent : colors.textMuted} />
+            <Icon name="qr-code" size={20} color={activeTab === 'scan' ? colors.accent : colors.textMuted} />
             <Text style={[styles.tabText, activeTab === 'scan' && styles.tabTextActive]}>Scan</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'history' && styles.tabActive]}
             onPress={() => setActiveTab('history')}
           >
-            <Ionicons name="time" size={20} color={activeTab === 'history' ? colors.accent : colors.textMuted} />
+            <Icon name="time" size={20} color={activeTab === 'history' ? colors.accent : colors.textMuted} />
             <Text style={[styles.tabText, activeTab === 'history' && styles.tabTextActive]}>History</Text>
           </TouchableOpacity>
         </View>

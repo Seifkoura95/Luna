@@ -13,7 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api } from '../src/utils/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBackground } from '../src/components/AppBackground';
@@ -180,7 +180,7 @@ export default function NotificationsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Icon name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, ]}>NOTIFICATIONS</Text>
@@ -194,7 +194,7 @@ export default function NotificationsScreen() {
           style={styles.settingsButton}
           onPress={() => setShowPreferences(!showPreferences)}
         >
-          <Ionicons name="settings-outline" size={24} color={colors.textPrimary} />
+          <Icon name="settings-outline" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -206,7 +206,7 @@ export default function NotificationsScreen() {
           <View style={styles.preferencesCard}>
             <View style={styles.preferenceRow}>
               <View style={styles.preferenceInfo}>
-                <Ionicons name="location" size={20} color={colors.accent} />
+                <Icon name="location" size={20} color={colors.accent} />
                 <Text style={styles.preferenceLabel}>Events Nearby</Text>
               </View>
               <Switch
@@ -219,7 +219,7 @@ export default function NotificationsScreen() {
 
             <View style={styles.preferenceRow}>
               <View style={styles.preferenceInfo}>
-                <Ionicons name="heart" size={20} color={colors.error} />
+                <Icon name="heart" size={20} color={colors.error} />
                 <Text style={styles.preferenceLabel}>Favorite Venues</Text>
               </View>
               <Switch
@@ -232,7 +232,7 @@ export default function NotificationsScreen() {
 
             <View style={styles.preferenceRow}>
               <View style={styles.preferenceInfo}>
-                <Ionicons name="flash" size={20} color={colors.gold} />
+                <Icon name="flash" size={20} color={colors.gold} />
                 <Text style={styles.preferenceLabel}>Auction Alerts</Text>
               </View>
               <Switch
@@ -245,7 +245,7 @@ export default function NotificationsScreen() {
 
             <View style={styles.preferenceRow}>
               <View style={styles.preferenceInfo}>
-                <Ionicons name="people" size={20} color={colors.success} />
+                <Icon name="people" size={20} color={colors.success} />
                 <Text style={styles.preferenceLabel}>Friends Attending</Text>
               </View>
               <Switch
@@ -258,7 +258,7 @@ export default function NotificationsScreen() {
 
             <View style={styles.preferenceRow}>
               <View style={styles.preferenceInfo}>
-                <Ionicons name="gift" size={20} color="#FF69B4" />
+                <Icon name="gift" size={20} color="#FF69B4" />
                 <Text style={styles.preferenceLabel}>New Rewards</Text>
               </View>
               <Switch
@@ -271,7 +271,7 @@ export default function NotificationsScreen() {
 
             <View style={styles.preferenceRow}>
               <View style={styles.preferenceInfo}>
-                <Ionicons name="mail" size={20} color={colors.textSecondary} />
+                <Icon name="mail" size={20} color={colors.textSecondary} />
                 <Text style={styles.preferenceLabel}>Weekly Digest</Text>
               </View>
               <Switch
@@ -284,7 +284,7 @@ export default function NotificationsScreen() {
           </View>
 
           <TouchableOpacity style={styles.testButton} onPress={handleSendTest}>
-            <Ionicons name="notifications" size={18} color={colors.textPrimary} />
+            <Icon name="notifications" size={18} color={colors.textPrimary} />
             <Text style={styles.testButtonText}>Send Test Notification</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -309,7 +309,7 @@ export default function NotificationsScreen() {
                       style={styles.suggestionGradient}
                     >
                       <View style={styles.suggestionIcon}>
-                        <Ionicons 
+                        <Icon 
                           name={suggestion.type === 'event' ? 'calendar' : 'location'} 
                           size={24} 
                           color={colors.accent} 
@@ -343,7 +343,7 @@ export default function NotificationsScreen() {
 
             {notifications.length === 0 ? (
               <View style={styles.emptyState}>
-                <Ionicons name="notifications-off-outline" size={48} color={colors.textMuted} />
+                <Icon name="notifications-off-outline" size={48} color={colors.textMuted} />
                 <Text style={styles.emptyText}>No notifications yet</Text>
                 <Text style={styles.emptySubtext}>We'll let you know when something happens</Text>
               </View>
@@ -361,7 +361,7 @@ export default function NotificationsScreen() {
                     styles.notificationIcon,
                     { backgroundColor: getNotificationColor(notification.type) + '20' }
                   ]}>
-                    <Ionicons 
+                    <Icon 
                       name={getNotificationIcon(notification.type) as any}
                       size={20} 
                       color={getNotificationColor(notification.type)} 

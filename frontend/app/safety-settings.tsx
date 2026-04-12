@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius } from '../src/theme/colors';
@@ -108,7 +108,7 @@ export default function SafetySettingsPage() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Icon name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>SAFETY SETTINGS</Text>
           <View style={{ width: 32 }} />
@@ -121,7 +121,7 @@ export default function SafetySettingsPage() {
           <View style={styles.settingCard}>
             <View style={styles.settingRow}>
               <View style={styles.settingInfo}>
-                <Ionicons name="phone-portrait" size={20} color={colors.accent} />
+                <Icon name="phone-portrait" size={20} color={colors.accent} />
                 <View style={styles.settingText}>
                   <Text style={styles.settingTitle}>Shake to Alert</Text>
                   <Text style={styles.settingDesc}>Shake phone 3 times to send alert</Text>
@@ -137,7 +137,7 @@ export default function SafetySettingsPage() {
 
             <View style={styles.settingRow}>
               <View style={styles.settingInfo}>
-                <Ionicons name="volume-mute" size={20} color={colors.gold} />
+                <Icon name="volume-mute" size={20} color={colors.gold} />
                 <View style={styles.settingText}>
                   <Text style={styles.settingTitle}>Silent Mode</Text>
                   <Text style={styles.settingDesc}>No sound or vibration when alerting</Text>
@@ -160,7 +160,7 @@ export default function SafetySettingsPage() {
           <View style={styles.settingCard}>
             <View style={styles.settingRow}>
               <View style={styles.settingInfo}>
-                <Ionicons name="people" size={20} color="#8B5CF6" />
+                <Icon name="people" size={20} color="#8B5CF6" />
                 <View style={styles.settingText}>
                   <Text style={styles.settingTitle}>Share Location with Crew</Text>
                   <Text style={styles.settingDesc}>Crew members see your GPS location</Text>
@@ -176,7 +176,7 @@ export default function SafetySettingsPage() {
 
             <View style={styles.settingRow}>
               <View style={styles.settingInfo}>
-                <Ionicons name="business" size={20} color="#00D4AA" />
+                <Icon name="business" size={20} color="#00D4AA" />
                 <View style={styles.settingText}>
                   <Text style={styles.settingTitle}>Notify Venue Staff</Text>
                   <Text style={styles.settingDesc}>Alert staff at Luna Group venues</Text>
@@ -197,7 +197,7 @@ export default function SafetySettingsPage() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>EMERGENCY CONTACTS</Text>
             <TouchableOpacity onPress={() => setShowAddContact(true)}>
-              <Ionicons name="add-circle" size={24} color={colors.accent} />
+              <Icon name="add-circle" size={24} color={colors.accent} />
             </TouchableOpacity>
           </View>
 
@@ -205,7 +205,7 @@ export default function SafetySettingsPage() {
             <View style={styles.emptyContacts}>
               <Text style={styles.emptyText}>No emergency contacts added</Text>
               <TouchableOpacity style={styles.addButton} onPress={() => setShowAddContact(true)}>
-                <Ionicons name="person-add" size={20} color="#fff" />
+                <Icon name="person-add" size={20} color="#fff" />
                 <Text style={styles.addButtonText}>Add Contact</Text>
               </TouchableOpacity>
             </View>
@@ -213,7 +213,7 @@ export default function SafetySettingsPage() {
             emergencyContacts.map((contact) => (
               <View key={contact.id} style={styles.contactCard}>
                 <View style={styles.contactIcon}>
-                  <Ionicons name="person" size={20} color={colors.accent} />
+                  <Icon name="person" size={20} color={colors.accent} />
                 </View>
                 <View style={styles.contactInfo}>
                   <Text style={styles.contactName}>{contact.name}</Text>
@@ -224,7 +224,7 @@ export default function SafetySettingsPage() {
                   style={styles.removeButton}
                   onPress={() => removeContact(contact.id, contact.name)}
                 >
-                  <Ionicons name="trash-outline" size={20} color={colors.accent} />
+                  <Icon name="trash-outline" size={20} color={colors.accent} />
                 </TouchableOpacity>
               </View>
             ))
@@ -301,7 +301,7 @@ export default function SafetySettingsPage() {
 
         {/* Info */}
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color={colors.textMuted} />
+          <Icon name="information-circle" size={20} color={colors.textMuted} />
           <Text style={styles.infoText}>
             Emergency contacts will receive an SMS with your location when you trigger an alert. Make sure phone numbers are correct.
           </Text>

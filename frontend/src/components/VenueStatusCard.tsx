@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 
 interface VenueStatusCardProps {
   venueName: string;
@@ -60,13 +60,13 @@ export const VenueStatusCard: React.FC<VenueStatusCardProps> = ({
           <View style={styles.details}>
             {capacity && (
               <View style={styles.detailItem}>
-                <Ionicons name="people" size={14} color={colors.textSecondary} />
+                <Icon name="people" size={14} color={colors.textSecondary} />
                 <Text style={styles.detailText}>{capacity}% capacity</Text>
               </View>
             )}
             {estimatedWait && (
               <View style={styles.detailItem}>
-                <Ionicons name="time" size={14} color={colors.textSecondary} />
+                <Icon name="time" size={14} color={colors.textSecondary} />
                 <Text style={styles.detailText}>{estimatedWait} wait</Text>
               </View>
             )}

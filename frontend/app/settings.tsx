@@ -9,7 +9,7 @@ import {
   Modal,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -116,7 +116,7 @@ export default function SettingsScreen() {
       data-testid={`settings-${item.id}`}
     >
       <View style={[styles.settingIcon, item.danger && styles.settingIconDanger]}>
-        <Ionicons
+        <Icon
           name={item.icon}
           size={20}
           color={item.danger ? colors.error : colors.accent}
@@ -128,7 +128,7 @@ export default function SettingsScreen() {
         </Text>
         <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
       </View>
-      <Ionicons
+      <Icon
         name="chevron-forward"
         size={18}
         color={item.danger ? colors.error : colors.textMuted}
@@ -146,7 +146,7 @@ export default function SettingsScreen() {
           onPress={() => router.back()}
           data-testid="settings-back-btn"
         >
-          <Ionicons name="chevron-back" size={24} color="#fff" />
+          <Icon name="chevron-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
         <View style={{ width: 40 }} />
@@ -216,7 +216,7 @@ export default function SettingsScreen() {
             >
               <View style={styles.modalHeader}>
                 <View style={styles.modalIconContainer}>
-                  <Ionicons name="warning" size={32} color={colors.error} />
+                  <Icon name="warning" size={32} color={colors.error} />
                 </View>
                 <Text style={styles.modalTitle}>
                   {deleteStep === 1 ? 'Delete Account?' : 'Are you absolutely sure?'}
@@ -232,25 +232,25 @@ export default function SettingsScreen() {
               {deleteStep === 1 && (
                 <View style={styles.deleteList}>
                   <View style={styles.deleteListItem}>
-                    <Ionicons name="star" size={16} color={colors.gold} />
+                    <Icon name="star" size={16} color={colors.gold} />
                     <Text style={styles.deleteListText}>
                       {user?.points_balance || 0} Luna Points
                     </Text>
                   </View>
                   <View style={styles.deleteListItem}>
-                    <Ionicons name="ticket" size={16} color={colors.accent} />
+                    <Icon name="ticket" size={16} color={colors.accent} />
                     <Text style={styles.deleteListText}>All tickets & reservations</Text>
                   </View>
                   <View style={styles.deleteListItem}>
-                    <Ionicons name="trophy" size={16} color={colors.gold} />
+                    <Icon name="trophy" size={16} color={colors.gold} />
                     <Text style={styles.deleteListText}>Auction bids & wins</Text>
                   </View>
                   <View style={styles.deleteListItem}>
-                    <Ionicons name="people" size={16} color={colors.accent} />
+                    <Icon name="people" size={16} color={colors.accent} />
                     <Text style={styles.deleteListText}>Crew memberships</Text>
                   </View>
                   <View style={styles.deleteListItem}>
-                    <Ionicons name="time" size={16} color={colors.textMuted} />
+                    <Icon name="time" size={16} color={colors.textMuted} />
                     <Text style={styles.deleteListText}>All activity history</Text>
                   </View>
                 </View>
@@ -279,7 +279,7 @@ export default function SettingsScreen() {
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
                     <>
-                      <Ionicons name="trash" size={16} color="#fff" />
+                      <Icon name="trash" size={16} color="#fff" />
                       <Text style={styles.deleteButtonText}>
                         {deleteStep === 1 ? 'Continue' : 'Delete Forever'}
                       </Text>

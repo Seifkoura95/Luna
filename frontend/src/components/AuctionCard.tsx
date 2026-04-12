@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors } from '../theme/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import { format, differenceInSeconds } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
@@ -95,14 +95,14 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({ auction, onPress, isUs
     >
       <View style={styles.header}>
         <View style={[styles.iconContainer, isUrgent && styles.iconUrgent]}>
-          <Ionicons name={icon} size={24} color={isUrgent ? colors.warning : colors.accent} />
+          <Icon name={icon} size={24} color={isUrgent ? colors.warning : colors.accent} />
         </View>
         <View style={[
           styles.timerBadge, 
           isUrgent && styles.timerUrgent,
           auction.status === 'upcoming' && styles.timerUpcoming
         ]}>
-          <Ionicons 
+          <Icon 
             name={auction.status === 'active' ? 'time' : 'hourglass'} 
             size={14} 
             color={isUrgent ? colors.warning : auction.status === 'upcoming' ? colors.textSecondary : colors.textPrimary} 
@@ -130,7 +130,7 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({ auction, onPress, isUs
         
         {isUserWinning && (
           <View style={styles.winningBadge}>
-            <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+            <Icon name="checkmark-circle" size={16} color={colors.success} />
             <Text style={styles.winningText}>Winning!</Text>
           </View>
         )}
@@ -142,7 +142,7 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({ auction, onPress, isUs
         {auction.status === 'active' && (
           <View style={styles.bidButton}>
             <Text style={styles.bidButtonText}>Bid Now</Text>
-            <Ionicons name="arrow-forward" size={16} color={colors.textPrimary} />
+            <Icon name="arrow-forward" size={16} color={colors.textPrimary} />
           </View>
         )}
       </View>

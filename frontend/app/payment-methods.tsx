@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { AppBackground } from '../src/components/AppBackground';
@@ -77,7 +77,7 @@ export default function PaymentMethodsPage() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Icon name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>PAYMENT METHODS</Text>
           <View style={{ width: 32 }} />
@@ -95,11 +95,11 @@ export default function PaymentMethodsPage() {
             >
               <View style={styles.paymentIcon}>
                 {method.type === 'apple_pay' ? (
-                  <Ionicons name="logo-apple" size={24} color="#fff" />
+                  <Icon name="logo-apple" size={24} color="#fff" />
                 ) : method.type === 'google_pay' ? (
-                  <Ionicons name="logo-google" size={24} color="#fff" />
+                  <Icon name="logo-google" size={24} color="#fff" />
                 ) : (
-                  <Ionicons name={getCardIcon(method.brand) as any} size={24} color="#fff" />
+                  <Icon name={getCardIcon(method.brand) as any} size={24} color="#fff" />
                 )}
               </View>
               
@@ -123,7 +123,7 @@ export default function PaymentMethodsPage() {
                   </View>
                 )}
                 <TouchableOpacity onPress={() => removeMethod(method.id)}>
-                  <Ionicons name="trash-outline" size={20} color={colors.textMuted} />
+                  <Icon name="trash-outline" size={20} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -132,13 +132,13 @@ export default function PaymentMethodsPage() {
 
         {/* Add Payment Method */}
         <TouchableOpacity style={styles.addButton} onPress={addPaymentMethod}>
-          <Ionicons name="add-circle" size={24} color={colors.accent} />
+          <Icon name="add-circle" size={24} color={colors.accent} />
           <Text style={styles.addButtonText}>Add Payment Method</Text>
         </TouchableOpacity>
 
         {/* Info */}
         <View style={styles.infoBox}>
-          <Ionicons name="shield-checkmark" size={20} color={colors.gold} />
+          <Icon name="shield-checkmark" size={20} color={colors.gold} />
           <Text style={styles.infoText}>
             Your payment information is securely stored and encrypted. We use Stripe for all payment processing.
           </Text>

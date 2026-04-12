@@ -6,7 +6,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -73,7 +73,7 @@ export default function PaymentSuccess() {
                 colors={[colors.green, '#059669']}
                 style={styles.iconGradient}
               >
-                <Ionicons name="checkmark" size={48} color="#fff" />
+                <Icon name="checkmark" size={48} color="#fff" />
               </LinearGradient>
             </View>
             <Text style={styles.successTitle}>Payment Successful!</Text>
@@ -116,7 +116,7 @@ export default function PaymentSuccess() {
         {status === 'failed' && (
           <Animated.View entering={FadeInDown} style={styles.statusContainer}>
             <View style={styles.failedIcon}>
-              <Ionicons name="close-circle" size={64} color={colors.red} />
+              <Icon name="close-circle" size={64} color={colors.red} />
             </View>
             <Text style={styles.failedTitle}>Payment Failed</Text>
             <Text style={styles.statusSubtitle}>

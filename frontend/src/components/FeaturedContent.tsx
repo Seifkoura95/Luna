@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 
 interface FeaturedContentProps {
   type: 'artist' | 'promo' | 'event' | 'perk';
@@ -51,7 +51,7 @@ export const FeaturedContent: React.FC<FeaturedContentProps> = ({
         style={styles.overlay}
       >
         <View style={styles.iconContainer}>
-          <Ionicons name={getIcon()} size={20} color={colors.accent} />
+          <Icon name={getIcon()} size={20} color={colors.accent} />
         </View>
         
         <View style={styles.content}>
@@ -64,7 +64,7 @@ export const FeaturedContent: React.FC<FeaturedContentProps> = ({
           {cta && (
             <View style={styles.ctaContainer}>
               <Text style={styles.ctaText}>{cta}</Text>
-              <Ionicons name="arrow-forward" size={16} color={colors.accent} />
+              <Icon name="arrow-forward" size={16} color={colors.accent} />
             </View>
           )}
         </View>

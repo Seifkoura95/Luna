@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../Icon';
 import QRCode from 'react-native-qrcode-svg';
 import { colors, spacing, radius } from '../../theme/colors';
 
@@ -76,7 +76,7 @@ export function RedemptionQRModal({ visible, onClose, redemption }: RedemptionQR
                 <Text style={styles.modalSubtitle}>One-time use only</Text>
               </View>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color={colors.textPrimary} />
+                <Icon name="close" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -93,7 +93,7 @@ export function RedemptionQRModal({ visible, onClose, redemption }: RedemptionQR
                   />
                 ) : (
                   <View style={styles.usedOverlay}>
-                    <Ionicons name="checkmark-circle" size={80} color={colors.success} />
+                    <Icon name="checkmark-circle" size={80} color={colors.success} />
                     <Text style={styles.usedText}>Already Redeemed</Text>
                   </View>
                 )}
@@ -108,14 +108,14 @@ export function RedemptionQRModal({ visible, onClose, redemption }: RedemptionQR
               )}
               
               <View style={styles.expiryBadge}>
-                <Ionicons name="time-outline" size={16} color={colors.textMuted} />
+                <Icon name="time-outline" size={16} color={colors.textMuted} />
                 <Text style={styles.expiryText}>{timeLeft}</Text>
               </View>
             </View>
 
             {/* Instructions */}
             <View style={styles.instructionsBox}>
-              <Ionicons name="information-circle" size={20} color={colors.accent} />
+              <Icon name="information-circle" size={20} color={colors.accent} />
               <Text style={styles.instructionsText}>
                 Present this QR code to venue staff. Once scanned, this code cannot be used again.
               </Text>

@@ -6,7 +6,7 @@ import { colors, spacing, radius } from '../theme/colors';
 import { api } from '../utils/api';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 
 interface QRCodeProps {
   size?: number;
@@ -70,7 +70,7 @@ export const QRCode: React.FC<QRCodeProps> = ({ size = 200, venueId }) => {
     return (
       <View style={[styles.container, { width: size + 40, height: size + 100 }]}>
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={48} color={colors.error} />
+          <Icon name="alert-circle" size={48} color={colors.error} />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={fetchQRData}>
             <Text style={styles.retryText}>Retry</Text>
@@ -108,7 +108,7 @@ export const QRCode: React.FC<QRCodeProps> = ({ size = 200, venueId }) => {
       {/* Timer Section */}
       <View style={[styles.timerContainer, isUrgent && styles.timerContainerUrgent]}>
         <View style={styles.timerContent}>
-          <Ionicons 
+          <Icon 
             name="refresh-circle" 
             size={18} 
             color={isUrgent ? colors.warning : colors.textSecondary} 

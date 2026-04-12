@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
@@ -48,7 +48,7 @@ export const RewardCard: React.FC<RewardCardProps> = ({ reward, userPoints, onRe
         <View style={styles.iconSection}>
           <View style={[styles.iconGlow, { backgroundColor: config.color + '15' }]} />
           <View style={[styles.iconContainer, { borderColor: config.color + '40' }]}>
-            <Ionicons name={config.icon} size={28} color={config.color} />
+            <Icon name={config.icon} size={28} color={config.color} />
           </View>
         </View>
         
@@ -60,7 +60,7 @@ export const RewardCard: React.FC<RewardCardProps> = ({ reward, userPoints, onRe
           {/* Footer */}
           <View style={styles.footer}>
             <View style={styles.pointsCost}>
-              <Ionicons name="star" size={14} color={colors.gold} />
+              <Icon name="star" size={14} color={colors.gold} />
               <Text style={styles.pointsText}>{reward.points_cost.toLocaleString()}</Text>
             </View>
             
@@ -78,7 +78,7 @@ export const RewardCard: React.FC<RewardCardProps> = ({ reward, userPoints, onRe
                   {canAfford ? 'Redeem' : 'Need more'}
                 </Text>
                 {canAfford && (
-                  <Ionicons name="arrow-forward" size={14} color={colors.textPrimary} style={styles.redeemIcon} />
+                  <Icon name="arrow-forward" size={14} color={colors.textPrimary} style={styles.redeemIcon} />
                 )}
               </LinearGradient>
             </TouchableOpacity>

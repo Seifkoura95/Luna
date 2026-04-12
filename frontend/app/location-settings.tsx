@@ -11,7 +11,7 @@ import {
   Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing, radius } from '../src/theme/colors';
@@ -152,7 +152,7 @@ export default function LocationSettingsPage() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Icon name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>LOCATION SETTINGS</Text>
           <View style={{ width: 32 }} />
@@ -163,7 +163,7 @@ export default function LocationSettingsPage() {
           <View style={styles.mainToggleCard}>
             <View style={styles.toggleHeader}>
               <View style={styles.iconContainer}>
-                <Ionicons name="location" size={28} color={colors.accent} />
+                <Icon name="location" size={28} color={colors.accent} />
               </View>
               <View style={styles.toggleInfo}>
                 <Text style={styles.toggleTitle}>Venue Proximity Alerts</Text>
@@ -188,7 +188,7 @@ export default function LocationSettingsPage() {
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <View style={styles.infoBullet}>
-                <Ionicons name="walk" size={18} color={colors.accent} />
+                <Icon name="walk" size={18} color={colors.accent} />
               </View>
               <Text style={styles.infoText}>
                 When you're within 200 meters of a Luna Group venue, you'll receive a notification
@@ -196,7 +196,7 @@ export default function LocationSettingsPage() {
             </View>
             <View style={styles.infoRow}>
               <View style={styles.infoBullet}>
-                <Ionicons name="time" size={18} color={colors.gold} />
+                <Icon name="time" size={18} color={colors.gold} />
               </View>
               <Text style={styles.infoText}>
                 Notifications are limited to once per venue per day to avoid spam
@@ -204,7 +204,7 @@ export default function LocationSettingsPage() {
             </View>
             <View style={styles.infoRow}>
               <View style={styles.infoBullet}>
-                <Ionicons name="battery-half" size={18} color="#00D4AA" />
+                <Icon name="battery-half" size={18} color="#00D4AA" />
               </View>
               <Text style={styles.infoText}>
                 Uses efficient background location tracking with minimal battery impact
@@ -220,7 +220,7 @@ export default function LocationSettingsPage() {
             <View style={styles.permissionCard}>
               <View style={styles.permissionRow}>
                 <View style={styles.permissionInfo}>
-                  <Ionicons 
+                  <Icon 
                     name={permissions.foreground ? "checkmark-circle" : "close-circle"} 
                     size={20} 
                     color={permissions.foreground ? "#00D4AA" : colors.accent} 
@@ -237,7 +237,7 @@ export default function LocationSettingsPage() {
               
               <View style={styles.permissionRow}>
                 <View style={styles.permissionInfo}>
-                  <Ionicons 
+                  <Icon 
                     name={permissions.background ? "checkmark-circle" : "close-circle"} 
                     size={20} 
                     color={permissions.background ? "#00D4AA" : colors.gold} 
@@ -254,7 +254,7 @@ export default function LocationSettingsPage() {
               
               <View style={styles.permissionRow}>
                 <View style={styles.permissionInfo}>
-                  <Ionicons 
+                  <Icon 
                     name={isTrackingActive ? "radio" : "radio-outline"} 
                     size={20} 
                     color={isTrackingActive ? "#00D4AA" : colors.textMuted} 
@@ -271,7 +271,7 @@ export default function LocationSettingsPage() {
               
               {(!permissions.foreground || !permissions.background) && (
                 <TouchableOpacity style={styles.settingsButton} onPress={openDeviceSettings}>
-                  <Ionicons name="settings" size={18} color="#fff" />
+                  <Icon name="settings" size={18} color="#fff" />
                   <Text style={styles.settingsButtonText}>Open Device Settings</Text>
                 </TouchableOpacity>
               )}
@@ -285,7 +285,7 @@ export default function LocationSettingsPage() {
             <Text style={styles.sectionTitle}>CURRENT LOCATION</Text>
             <View style={styles.locationCard}>
               <View style={styles.locationInfo}>
-                <Ionicons name="navigate" size={20} color={colors.accent} />
+                <Icon name="navigate" size={20} color={colors.accent} />
                 <View>
                   <Text style={styles.locationCoord}>
                     Lat: {currentLocation.latitude.toFixed(6)}
@@ -296,7 +296,7 @@ export default function LocationSettingsPage() {
                 </View>
               </View>
               <TouchableOpacity style={styles.refreshButton} onPress={refreshLocation}>
-                <Ionicons name="refresh" size={18} color={colors.accent} />
+                <Icon name="refresh" size={18} color={colors.accent} />
               </TouchableOpacity>
             </View>
           </View>
@@ -314,7 +314,7 @@ export default function LocationSettingsPage() {
               { name: 'Juju Mermaid Beach', icon: 'fish' },
             ].map((venue, index) => (
               <View key={index} style={styles.venueItem}>
-                <Ionicons name={venue.icon as any} size={18} color={colors.accent} />
+                <Icon name={venue.icon as any} size={18} color={colors.accent} />
                 <Text style={styles.venueName}>{venue.name}</Text>
               </View>
             ))}
@@ -323,7 +323,7 @@ export default function LocationSettingsPage() {
 
         {/* Privacy Note */}
         <View style={styles.privacyNote}>
-          <Ionicons name="shield-checkmark" size={20} color={colors.textMuted} />
+          <Icon name="shield-checkmark" size={20} color={colors.textMuted} />
           <Text style={styles.privacyText}>
             Your location data is only used to detect proximity to Luna Group venues. 
             We never share your precise location with third parties.

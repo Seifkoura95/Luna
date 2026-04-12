@@ -12,7 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius } from '../theme/colors';
 import { api } from '../utils/api';
@@ -164,7 +164,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <Text style={styles.venueName}>{venue.name}</Text>
               </View>
               <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-                <Ionicons name="close" size={24} color={colors.textPrimary} />
+                <Icon name="close" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -218,7 +218,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     onPress={() => setPartySize(Math.max(1, partySize - 1))}
                     disabled={partySize <= 1}
                   >
-                    <Ionicons
+                    <Icon
                       name="remove"
                       size={24}
                       color={partySize <= 1 ? colors.textMuted : colors.textPrimary}
@@ -235,7 +235,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     onPress={() => setPartySize(Math.min(20, partySize + 1))}
                     disabled={partySize >= 20}
                   >
-                    <Ionicons
+                    <Icon
                       name="add"
                       size={24}
                       color={partySize >= 20 ? colors.textMuted : colors.textPrimary}
@@ -303,7 +303,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   }}
                 >
                   <View style={styles.vipOptionContent}>
-                    <Ionicons
+                    <Icon
                       name={vipBooth ? 'checkmark-circle' : 'star-outline'}
                       size={24}
                       color={vipBooth ? colors.gold : colors.textSecondary}
@@ -397,7 +397,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       <Text style={styles.bookButtonText}>
                         {type === 'reservation' ? 'Confirm Reservation' : 'Join Guestlist'}
                       </Text>
-                      <Ionicons name="arrow-forward" size={20} color={colors.textPrimary} />
+                      <Icon name="arrow-forward" size={20} color={colors.textPrimary} />
                     </>
                   )}
                 </LinearGradient>

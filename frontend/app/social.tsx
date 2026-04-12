@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   FadeInDown,
@@ -294,7 +294,7 @@ export default function SocialFeedScreen() {
         
         <View style={styles.activityContent}>
           <View style={styles.activityTextRow}>
-            <Ionicons 
+            <Icon 
               name={getActivityIcon(activity.icon) as any} 
               size={16} 
               color={activity.venue.color} 
@@ -323,7 +323,7 @@ export default function SocialFeedScreen() {
             style={styles.actionButton}
             onPress={() => handleLike(activity.id)}
           >
-            <Ionicons 
+            <Icon 
               name={activity.liked ? 'heart' : 'heart-outline'} 
               size={20} 
               color={activity.liked ? '#E31837' : colors.textSecondary} 
@@ -332,12 +332,12 @@ export default function SocialFeedScreen() {
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
+            <Icon name="chatbubble-outline" size={20} color={colors.textSecondary} />
             <Text style={styles.actionText}>Comment</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="share-outline" size={20} color={colors.textSecondary} />
+            <Icon name="share-outline" size={20} color={colors.textSecondary} />
             <Text style={styles.actionText}>Share</Text>
           </TouchableOpacity>
         </View>
@@ -358,7 +358,7 @@ export default function SocialFeedScreen() {
               style={styles.instagramAvatarGradient}
             >
               <View style={styles.instagramAvatarInner}>
-                <Ionicons name="logo-instagram" size={18} color="#fff" />
+                <Icon name="logo-instagram" size={18} color="#fff" />
               </View>
             </LinearGradient>
             <View>
@@ -371,7 +371,7 @@ export default function SocialFeedScreen() {
           </View>
           {post.source_type === 'official' && (
             <View style={styles.officialBadge}>
-              <Ionicons name="checkmark-circle" size={14} color={colors.accent} />
+              <Icon name="checkmark-circle" size={14} color={colors.accent} />
               <Text style={styles.officialText}>Official</Text>
             </View>
           )}
@@ -393,13 +393,13 @@ export default function SocialFeedScreen() {
           <View style={styles.instagramStats}>
             {post.like_count > 0 && (
               <View style={styles.statItem}>
-                <Ionicons name="heart" size={16} color={colors.accent} />
+                <Icon name="heart" size={16} color={colors.accent} />
                 <Text style={styles.statText}>{post.like_count}</Text>
               </View>
             )}
             {post.comments_count > 0 && (
               <View style={styles.statItem}>
-                <Ionicons name="chatbubble" size={14} color={colors.textSecondary} />
+                <Icon name="chatbubble" size={14} color={colors.textSecondary} />
                 <Text style={styles.statText}>{post.comments_count}</Text>
               </View>
             )}
@@ -414,7 +414,7 @@ export default function SocialFeedScreen() {
             }}
           >
             <Text style={styles.viewOnInstagramText}>View on Instagram</Text>
-            <Ionicons name="open-outline" size={14} color={colors.accent} />
+            <Icon name="open-outline" size={14} color={colors.accent} />
           </TouchableOpacity>
         </View>
       </GlassCard>
@@ -440,7 +440,7 @@ export default function SocialFeedScreen() {
       {/* Demo Mode Banner */}
       {instagramPosts.length > 0 && instagramPosts[0]?.demo && (
         <View style={styles.demoBanner}>
-          <Ionicons name="information-circle" size={16} color={colors.gold} />
+          <Icon name="information-circle" size={16} color={colors.gold} />
           <Text style={styles.demoBannerText}>
             Demo Mode - Connect Instagram API for live content
           </Text>
@@ -486,7 +486,7 @@ export default function SocialFeedScreen() {
       {/* Instagram Preview Section */}
       <View style={styles.instagramPreview}>
         <View style={styles.instagramHeader}>
-          <Ionicons name="logo-instagram" size={20} color="#E4405F" />
+          <Icon name="logo-instagram" size={20} color="#E4405F" />
           <Text style={styles.instagramTitle}>From Instagram</Text>
           <TouchableOpacity onPress={() => setSelectedTab('instagram')}>
             <Text style={styles.seeAllText}>See All</Text>
@@ -509,7 +509,7 @@ export default function SocialFeedScreen() {
                   {post.source_hashtag ? `#${post.source_hashtag}` : (post.hashtag || '@' + post.username)}
                 </Text>
                 <View style={styles.instagramLikes}>
-                  <Ionicons name="heart" size={12} color="#fff" />
+                  <Icon name="heart" size={12} color="#fff" />
                   <Text style={styles.instagramLikesText}>{post.like_count || post.likes || 0}</Text>
                 </View>
               </LinearGradient>
@@ -540,7 +540,7 @@ export default function SocialFeedScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+          <Icon name="chevron-back" size={24} color={colors.textPrimary} />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
       </View>
@@ -564,7 +564,7 @@ export default function SocialFeedScreen() {
             style={[styles.tab, selectedTab === 'friends' && styles.tabActive]}
             onPress={() => setSelectedTab('friends')}
           >
-            <Ionicons 
+            <Icon 
               name="people" 
               size={18} 
               color={selectedTab === 'friends' ? colors.accent : colors.textSecondary} 
@@ -581,7 +581,7 @@ export default function SocialFeedScreen() {
             style={[styles.tab, selectedTab === 'instagram' && styles.tabActive]}
             onPress={() => setSelectedTab('instagram')}
           >
-            <Ionicons 
+            <Icon 
               name="logo-instagram" 
               size={18} 
               color={selectedTab === 'instagram' ? '#E4405F' : colors.textSecondary} 
@@ -600,7 +600,7 @@ export default function SocialFeedScreen() {
               setShowAddFriend(true);
             }}
           >
-            <Ionicons name="person-add" size={20} color={colors.accent} />
+            <Icon name="person-add" size={20} color={colors.accent} />
           </TouchableOpacity>
         </View>
 
@@ -631,7 +631,7 @@ export default function SocialFeedScreen() {
                       handleRespondToRequest(request.id, true);
                     }}
                   >
-                    <Ionicons name="checkmark" size={18} color="#fff" />
+                    <Icon name="checkmark" size={18} color="#fff" />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.requestActionBtn, styles.declineBtn]}
@@ -642,7 +642,7 @@ export default function SocialFeedScreen() {
                       handleRespondToRequest(request.id, false);
                     }}
                   >
-                    <Ionicons name="close" size={18} color="#fff" />
+                    <Icon name="close" size={18} color="#fff" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -667,7 +667,7 @@ export default function SocialFeedScreen() {
 
         {activities.length === 0 && (
           <View style={styles.emptyState}>
-            <Ionicons name="people-outline" size={64} color={colors.textMuted} />
+            <Icon name="people-outline" size={64} color={colors.textMuted} />
             <Text style={styles.emptyText}>No activity yet</Text>
             <Text style={styles.emptySubtext}>Follow friends to see their activity</Text>
           </View>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import { api } from '../utils/api';
 
 interface QueueData {
@@ -82,7 +82,7 @@ export const QueueStatus: React.FC = () => {
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <View style={styles.statIconContainer}>
-              <Ionicons name="people" size={20} color={colors.accent} />
+              <Icon name="people" size={20} color={colors.accent} />
             </View>
             <Text style={styles.statValue}>{queueData.people_inside}</Text>
             <Text style={styles.statLabel}>Inside</Text>
@@ -92,7 +92,7 @@ export const QueueStatus: React.FC = () => {
           
           <View style={styles.statItem}>
             <View style={styles.statIconContainer}>
-              <Ionicons name="hourglass" size={20} color={colors.gold} />
+              <Icon name="hourglass" size={20} color={colors.gold} />
             </View>
             <Text style={styles.statValue}>{queueData.queue_length}</Text>
             <Text style={styles.statLabel}>In Queue</Text>
@@ -101,7 +101,7 @@ export const QueueStatus: React.FC = () => {
 
         {/* Best Time Banner */}
         <View style={[styles.bestTimeBanner, { backgroundColor: config.glow }]}>
-          <Ionicons name={config.icon} size={18} color={config.color} />
+          <Icon name={config.icon} size={18} color={config.color} />
           <View style={styles.bestTimeContent}>
             <Text style={[styles.bestTimeMessage, { color: config.color }]}>
               {config.message}
