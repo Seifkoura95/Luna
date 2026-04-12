@@ -39,7 +39,7 @@ SUBSCRIPTION_TIERS = {
         "price": 0,
         "billing_period": "monthly",
         "color": "#CD7F32",
-        "icon": "🥉",
+        "icon": "bronze",
         "points_multiplier": 1.0,
         "benefits": {
             "free_entry_before_time": "10pm",
@@ -92,7 +92,7 @@ SUBSCRIPTION_TIERS = {
         "price": 39.99,
         "billing_period": "monthly",
         "color": "#C0C0C0",
-        "icon": "🥈",
+        "icon": "silver",
         "points_multiplier": 1.5,
         "benefits": {
             "free_entry_before_time": "11pm",
@@ -155,7 +155,7 @@ SUBSCRIPTION_TIERS = {
         "price": 79.99,
         "billing_period": "monthly",
         "color": "#FFD700",
-        "icon": "🥇",
+        "icon": "gold",
         "points_multiplier": 2.0,
         "benefits": {
             "free_entry_before_time": "all_night",

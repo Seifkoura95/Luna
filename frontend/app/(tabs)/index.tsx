@@ -397,7 +397,7 @@ export default function HomeScreen() {
                         </View>
                         {isHot && (
                           <View style={styles.auctionHotBadge}>
-                            <Text style={styles.auctionHotEmoji}>🔥</Text>
+                            <Icon name="flame" size={12} color="#FF6B35" />
                             <Text style={styles.auctionHotText}>BIDDING WAR!</Text>
                           </View>
                         )}

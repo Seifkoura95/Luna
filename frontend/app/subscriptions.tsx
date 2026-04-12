@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api } from '../src/utils/api';
 import { Icon } from '../src/components/Icon';
+import { LunaIcon } from '../src/components/LunaIcons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { AppBackground } from '../src/components/AppBackground';
@@ -142,8 +143,8 @@ export default function SubscriptionsScreen() {
           {/* Header */}
           <View style={styles.tierHeader}>
             <View style={[styles.tierIcon, { backgroundColor: tier.color + '30' }]}>
-              <Icon 
-                name={tier.id === 'bronze' ? 'shield' : tier.id === 'silver' ? 'shield-half' : 'shield-checkmark'} 
+              <LunaIcon 
+                name={tier.id as any} 
                 size={24} 
                 color={tier.color} 
               />

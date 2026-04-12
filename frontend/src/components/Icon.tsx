@@ -14,6 +14,14 @@ import type { IconName } from './LunaIcons';
 
 // Map Ionicons names → LunaIcon names
 const LUNA_MAP: Record<string, IconName> = {
+  'flash': 'auction',
+  'flash-outline': 'auction',
+  'flame': 'streak',
+  'flame-outline': 'streak',
+  'location': 'explore',
+  'location-outline': 'explore',
+  'map': 'explore',
+  'map-outline': 'explore',
   // Navigation
   'home': 'home',
   'home-outline': 'home',

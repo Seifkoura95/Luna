@@ -13,7 +13,7 @@ const LocationIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: st
 const CardIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <LunaIcon name="wallet" size={size} color={color} />;
 const StarIcon = ({ size = 14, color = '#fff' }: { size?: number; color?: string }) => <LunaIcon name="star" size={size} color={color} />;
 const GuestIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <LunaIcon name="profile" size={size} color={color} />;
-const LunaAIIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <LunaIcon name="crown" size={size} color={color} />;
+const LunaAIIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <LunaIcon name="star" size={size} color={color} />;
 
 // Custom tab bar icon using Luna Icons with optional badge
 const TabBarIcon = ({ 

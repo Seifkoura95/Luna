@@ -312,7 +312,7 @@ export default function AuctionsScreen() {
             {/* Hot Badge */}
             {isHot && (
               <View style={styles.hotBadge}>
-                <Text style={styles.hotEmoji}>🔥</Text>
+                <Icon name="flame" size={14} color="#FF6B35" />
                 <Text style={styles.hotText}>BIDDING WAR!</Text>
               </View>
             )}

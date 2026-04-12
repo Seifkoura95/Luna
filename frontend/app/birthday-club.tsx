@@ -302,9 +302,9 @@ export default function BirthdayClubScreen() {
             style={styles.heroGradient}
           >
             {is_birthday_today ? (
-              <Text style={styles.heroEmoji}>🎂</Text>
+              <Icon name="gift" size={48} color={colors.gold} />
             ) : is_birthday_week ? (
-              <Text style={styles.heroEmoji}>🎁</Text>
+              <Icon name="gift" size={48} color={colors.accent} />
             ) : (
               <Icon name="gift" size={48} color={colors.accent} />
             )}

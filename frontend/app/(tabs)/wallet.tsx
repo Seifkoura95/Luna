@@ -538,7 +538,12 @@ export default function WalletScreen() {
               {leaderboardData.leaders.slice(0, 5).map((leader: any, index: number) => {
                 const isCurrentUser = leader.is_current_user;
                 const rankColors = ['#FFD700', '#C0C0C0', '#CD7F32', colors.textMuted, colors.textMuted];
-                const rankEmojis = ['👑', '🥈', '🥉', '', ''];
+                const rankIcons: Array<{name: string; color: string} | null> = [
+                  { name: 'crown', color: '#FFD700' },
+                  { name: 'silver', color: '#C0C0C0' },
+                  { name: 'bronze', color: '#CD7F32' },
+                  null, null
+                ];
                 
                 return (
                   <View 
@@ -550,8 +555,8 @@ export default function WalletScreen() {
                     ]}
                   >
                     <View style={styles.scoreboardRank}>
-                      {index < 3 ? (
-                        <Text style={styles.rankEmoji}>{rankEmojis[index]}</Text>
+                      {index < 3 && rankIcons[index] ? (
+                        <LunaIcon name={rankIcons[index]!.name as any} size={20} color={rankIcons[index]!.color} />
                       ) : (
                         <Text style={[styles.rankNumber, { color: rankColors[index] }]}>#{index + 1}</Text>
                       )}
@@ -615,7 +620,10 @@ export default function WalletScreen() {
                 </View>
               ) : (
                 <View style={styles.gapIndicator}>
-                  <Text style={styles.championText}>🏆 You're the champion!</Text>
+                  <View style={styles.championRow}>
+                    <LunaIcon name="leaderboard" size={16} color={colors.gold} />
+                    <Text style={styles.championText}> You're the champion!</Text>
+                  </View>
                 </View>
               )}
             </View>
@@ -1760,6 +1768,11 @@ const styles = StyleSheet.create({
   gapValue: {
     fontWeight: '700',
     color: colors.gold,
+  },
+  championRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   championText: {
     fontSize: 13,
