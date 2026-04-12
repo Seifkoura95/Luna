@@ -8,7 +8,19 @@
   - Added Luna Gift Cards ($25, $50, $100, $150) with 10% bonus value in a 2x2 grid
   - Added custom gift card amount input (minimum $10)
   - Fixed grid layouts using explicit row-based Views (React Native Web flexWrap bug workaround)
-  - Gift card purchase flow shows "Coming Soon" (TODO: integrate with Stripe or points deduction API)
+- **COMPLETED**: Gift Card Purchase via Stripe
+  - POST /api/payments/gift-card/checkout creates Stripe checkout session with 10% bonus
+  - Custom amounts supported ($10-$500)
+  - On payment completion, wallet_balance is credited (e.g., $50 purchase -> $55 wallet credit)
+  - GET /api/payments/wallet/balance returns user's wallet balance
+  - Frontend wired up: "Pay $X AUD" button opens Stripe checkout
+- **COMPLETED**: Staff Portal for Perks Validation
+  - New /staff-portal page with member search (by name/email/phone) and QR scan
+  - Member profile view showing tier, points, wallet balance, today's activity
+  - Quick actions: Log Entry, Comp Drink, Guest Entry, Discount
+  - Tier-based restrictions enforced (Bronze denied comp drinks/guest entry)
+  - GET /api/perks/member/search and GET /api/perks/member/{id}/profile endpoints
+  - "STAFF PORTAL - VALIDATE PERKS" button added to Venue Dashboard
 
 ## Latest Updates (April 12, 2026 - Session 1)
 - **Updated**: Subscription Tiers - Implemented new Bronze/Silver/Gold membership structure with detailed perks
