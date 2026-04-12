@@ -21,6 +21,16 @@
   - Tier-based restrictions enforced (Bronze denied comp drinks/guest entry)
   - GET /api/perks/member/search and GET /api/perks/member/{id}/profile endpoints
   - "STAFF PORTAL - VALIDATE PERKS" button added to Venue Dashboard
+- **COMPLETED**: QR Code Scanning in Staff Portal
+  - BarCodeScanner integration for native (camera-based member lookup)
+  - Scans member QR code → auto-loads profile with perk actions
+  - Web fallback shows "QR scanning available on mobile only" message
+- **COMPLETED**: Send Gift Card to a Friend
+  - POST /api/payments/gift-card/send creates Stripe checkout + gift code + share URL
+  - Existing Luna members get instant wallet credit after payment
+  - New users get a share link to sign up and claim the gift card
+  - POST /api/payments/gift-card/claim/{gift_code} for claiming
+  - Frontend: "Send as Gift" section in Rewards Shop with email + message inputs
 
 ## Latest Updates (April 12, 2026 - Session 1)
 - **Updated**: Subscription Tiers - Implemented new Bronze/Silver/Gold membership structure with detailed perks

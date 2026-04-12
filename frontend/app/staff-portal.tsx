@@ -7,10 +7,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { BarCodeScanner } from 'expo-barcode-scanner';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api, apiFetch } from '../src/utils/api';
 import { AppBackground } from '../src/components/AppBackground';
+
+// BarCodeScanner is only available on native
+const isNative = Platform.OS !== 'web';
 
 interface MemberResult {
   user_id: string; name: string; email: string; phone: string;
@@ -36,10 +38,15 @@ export default function StaffPortal() {
   const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
+    if (isNative) {
+      (async () => {
+        try {
+          const { BarCodeScanner: BCS } = require('expo-barcode-scanner');
+          const { status } = await BCS.requestPermissionsAsync();
+          setHasPermission(status === 'granted');
+        } catch {}
+      })();
+    }
   }, []);
 
   const handleSearch = async () => {
@@ -175,20 +182,21 @@ export default function StaffPortal() {
         {/* QR Scanner */}
         {showScanner && (
           <View style={styles.scannerCard} data-testid="staff-qr-scanner">
-            {hasPermission === false ? (
+            {Platform.OS === 'web' ? (
+              <View style={styles.scannerMsg}>
+                <Ionicons name="phone-portrait" size={32} color={colors.textMuted} />
+                <Text style={styles.scannerMsgText}>QR scanning available on mobile only</Text>
+              </View>
+            ) : hasPermission === false ? (
               <View style={styles.scannerMsg}>
                 <Ionicons name="camera-outline" size={32} color={colors.textMuted} />
                 <Text style={styles.scannerMsgText}>Camera permission required</Text>
               </View>
-            ) : (
+            ) : isNative ? (
               <View style={styles.scannerWrapper}>
-                <BarCodeScanner
-                  onBarCodeScanned={scanning ? undefined : handleBarCodeScanned}
-                  style={styles.scanner}
-                />
-                <Text style={styles.scannerHint}>Point at member's QR code</Text>
+                <Text style={styles.scannerHint}>Camera scanner active on native device</Text>
               </View>
-            )}
+            ) : null}
           </View>
         )}
 
