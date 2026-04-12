@@ -635,7 +635,7 @@ export default function WalletScreen() {
               <Text style={styles.redeemTitle}>REDEEM REWARDS</Text>
             </View>
             <TouchableOpacity 
-              onPress={() => router.push('/rewards')} 
+              onPress={() => router.push('/rewards-shop')} 
               style={styles.viewAllRewardsBtn}
             >
               <Text style={styles.viewAllRewardsText}>View All</Text>
