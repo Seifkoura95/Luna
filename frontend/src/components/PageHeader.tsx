@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius } from '../theme/colors';
-import { GoldStarIcon } from './GoldStarIcon';
+import { LunaIcon } from './LunaIcons';
 import { useAuthStore } from '../store/authStore';
 
 const LUNA_GROUP_LOGO = 'https://customer-assets.emergentagent.com/job_c826baa4-6640-40ce-9e0d-38132d9944fc/artifacts/2k76js5m_luna-group-logo-2.webp';
@@ -68,7 +68,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       
       {showPoints && (
         <View style={styles.pointsBadge}>
-          <GoldStarIcon size={14} />
+          <LunaIcon name="star" size={14} color={colors.gold} filled />
           <Text style={styles.pointsText}>
             {user?.points_balance?.toLocaleString() || 0} pts
           </Text>

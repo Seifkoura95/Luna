@@ -26,7 +26,7 @@ import { AppBackground } from '../../src/components/AppBackground';
 import { PageHeader } from '../../src/components/PageHeader';
 import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';
 import { FierySun } from '../../src/components/FierySun';
-import { GoldStarIcon } from '../../src/components/GoldStarIcon';
+import { LunaIcon } from '../../src/components/LunaIcons';
 import { MembershipCard } from '../../src/components/MembershipCard';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';

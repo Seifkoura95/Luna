@@ -27,7 +27,7 @@ import { CrewMap } from '../../src/components/CrewMap';
 import { PageHeader } from '../../src/components/PageHeader';
 import { MembershipCard } from '../../src/components/MembershipCard';
 import { SectionTitle } from '../../src/components/SectionTitle';
-import { GoldStarIcon } from '../../src/components/GoldStarIcon';
+import { LunaIcon } from '../../src/components/LunaIcons';
 import { ActivityIndicator } from 'react-native';
 
 
@@ -593,7 +593,7 @@ export default function ProfileScreen() {
             >
               <View style={styles.compactPointsLeft}>
                 <View style={styles.compactPointsIconWrap}>
-                  <GoldStarIcon size={20} />
+                  <LunaIcon name="star" size={20} color={colors.gold} filled />
                 </View>
                 <View>
                   <Text style={styles.compactPointsLabel}>LUNA POINTS</Text>

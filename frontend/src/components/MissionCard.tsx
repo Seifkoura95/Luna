@@ -3,16 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  MoonIcon,
-  GalaxyIcon,
-  ConstellationIcon,
-  RocketIcon,
-  OrbitIcon,
-  CometIcon,
-  EclipseIcon,
-  StarburstIcon,
-} from './LunarIcons';
+import { LunaIcon } from './LunaIcons';
 
 interface MissionCardProps {
   mission: {
@@ -27,58 +18,25 @@ interface MissionCardProps {
   };
 }
 
-// Map mission types to lunar-themed icons and colors
+// Map mission types to icons and colors
 const missionConfig: Record<string, { 
-  icon: React.FC<{ size?: number; color?: string }>; 
+  ionIcon: string;
   color: string;
   glowColor: string;
 }> = {
-  early_bird: { 
-    icon: StarburstIcon, 
-    color: colors.gold,
-    glowColor: colors.goldGlow,
-  },
-  cross_venue: { 
-    icon: GalaxyIcon, 
-    color: '#E31837',
-    glowColor: 'rgba(227, 24, 55, 0.3)',
-  },
-  venue_specific: { 
-    icon: EclipseIcon, 
-    color: '#8B00FF',
-    glowColor: 'rgba(139, 0, 255, 0.3)',
-  },
-  consistency: { 
-    icon: OrbitIcon, 
-    color: '#00D4AA',
-    glowColor: 'rgba(0, 212, 170, 0.3)',
-  },
-  social: { 
-    icon: ConstellationIcon, 
-    color: '#FFB800',
-    glowColor: 'rgba(255, 184, 0, 0.3)',
-  },
-  spending: { 
-    icon: CometIcon, 
-    color: colors.success,
-    glowColor: colors.successGlow,
-  },
-  check_in_streak: { 
-    icon: RocketIcon, 
-    color: '#FF6B35',
-    glowColor: 'rgba(255, 107, 53, 0.3)',
-  },
-  default: { 
-    icon: MoonIcon, 
-    color: colors.accent,
-    glowColor: colors.accentGlow,
-  },
+  early_bird: { ionIcon: 'sunny', color: colors.gold, glowColor: colors.goldGlow },
+  cross_venue: { ionIcon: 'globe', color: colors.hot, glowColor: colors.hotGlow },
+  venue_specific: { ionIcon: 'location', color: colors.accent, glowColor: colors.accentGlow },
+  consistency: { ionIcon: 'refresh', color: colors.success, glowColor: colors.successGlow },
+  social: { ionIcon: 'people', color: colors.warning, glowColor: colors.warningGlow },
+  spending: { ionIcon: 'card', color: colors.success, glowColor: colors.successGlow },
+  check_in_streak: { ionIcon: 'flame', color: colors.orange, glowColor: colors.warningGlow },
+  default: { ionIcon: 'flag', color: colors.accent, glowColor: colors.accentGlow },
 };
 
 export const MissionCard: React.FC<MissionCardProps> = ({ mission }) => {
   const progress = Math.min(mission.current_value / mission.requirement_value, 1);
   const config = missionConfig[mission.mission_type] || missionConfig.default;
-  const IconComponent = config.icon;
 
   return (
     <View style={[styles.container, mission.completed && styles.containerCompleted]}>
@@ -94,7 +52,7 @@ export const MissionCard: React.FC<MissionCardProps> = ({ mission }) => {
             {mission.completed ? (
               <Ionicons name="checkmark" size={26} color={colors.success} />
             ) : (
-              <IconComponent size={32} color={config.color} />
+              <Ionicons name={config.ionIcon as any} size={26} color={config.color} />
             )}
           </View>
           <View style={styles.rewardBadge}>
