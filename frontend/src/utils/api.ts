@@ -1220,6 +1220,19 @@ export const api = {
   getMemberProfile: (userId: string) =>
     apiFetch<any>(`/api/perks/member/${userId}/profile`),
 
+  // Send Gift Card
+  sendGiftCard: (amount: number, originUrl: string, recipientEmail: string, senderMessage?: string) =>
+    apiFetch<{ checkout_url: string; session_id: string; gift_code: string; share_url: string; recipient_email: string; is_existing_member: boolean; wallet_credit: number; bonus: number }>('/api/payments/gift-card/send', {
+      method: 'POST',
+      body: JSON.stringify({ amount, origin_url: originUrl, recipient_email: recipientEmail, sender_message: senderMessage })
+    }),
+
+  getGiftCardInfo: (giftCode: string) =>
+    apiFetch<any>(`/api/payments/gift-card/redeem/${giftCode}`, { auth: false }),
+
+  claimGiftCard: (giftCode: string) =>
+    apiFetch<{ success: boolean; wallet_credit: number; message: string }>(`/api/payments/gift-card/claim/${giftCode}`, { method: 'POST' }),
+
   // ====== STORIES API ======
   createStory: (photoUrl: string, venueId: string, venueName: string, caption?: string, eventName?: string) =>
     apiFetch<{ story: any }>('/api/stories/create', {

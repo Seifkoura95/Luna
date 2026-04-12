@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from bson import ObjectId
 import os
 import logging
+import uuid
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -68,6 +69,13 @@ class CreateCheckoutRequest(BaseModel):
 class GiftCardCheckoutRequest(BaseModel):
     amount: int  # Dollar amount (minimum 10)
     origin_url: str
+
+
+class SendGiftCardRequest(BaseModel):
+    amount: int  # Dollar amount (minimum 10)
+    origin_url: str
+    recipient_email: str
+    sender_message: Optional[str] = None
 
 
 class PaymentStatusResponse(BaseModel):
@@ -268,6 +276,169 @@ async def get_wallet_balance(request: Request):
     }
 
 
+@router.post("/gift-card/send")
+async def send_gift_card(request: Request, body: SendGiftCardRequest):
+    """Create a gift card to send to a friend via email/share link"""
+    authorization = request.headers.get("authorization")
+    sender = get_current_user(authorization)
+    
+    if body.amount < 10:
+        raise HTTPException(status_code=400, detail="Minimum gift card amount is $10")
+    if body.amount > 500:
+        raise HTTPException(status_code=400, detail="Maximum gift card amount is $500")
+    
+    wallet_credit = round(body.amount * 1.10, 2)
+    gift_code = f"LUNA-GIFT-{uuid.uuid4().hex[:8].upper()}"
+    
+    # Check if recipient is an existing member
+    recipient = await db.users.find_one({"email": body.recipient_email.lower().strip()})
+    
+    success_url = f"{body.origin_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{body.origin_url}/payment-cancelled"
+    
+    metadata = {
+        "user_id": sender["user_id"],
+        "package_type": "gift_card_send",
+        "gift_card_amount": str(body.amount),
+        "wallet_credit": str(wallet_credit),
+        "gift_code": gift_code,
+        "recipient_email": body.recipient_email.lower().strip(),
+        "recipient_user_id": recipient.get("user_id", "") if recipient else "",
+        "sender_message": body.sender_message or "",
+    }
+    
+    try:
+        stripe_checkout = get_stripe_checkout(request)
+        
+        checkout_request = CheckoutSessionRequest(
+            amount=float(body.amount),
+            currency="aud",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata=metadata
+        )
+        
+        session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        # Create the pending gift card
+        gift_card = {
+            "gift_code": gift_code,
+            "sender_user_id": sender["user_id"],
+            "sender_email": sender.get("email", ""),
+            "recipient_email": body.recipient_email.lower().strip(),
+            "recipient_user_id": recipient.get("user_id") if recipient else None,
+            "amount": float(body.amount),
+            "wallet_credit": wallet_credit,
+            "bonus": round(wallet_credit - body.amount, 2),
+            "sender_message": body.sender_message,
+            "status": "pending_payment",
+            "payment_session_id": session.session_id,
+            "is_existing_member": recipient is not None,
+            "created_at": datetime.now(timezone.utc),
+        }
+        await db.sent_gift_cards.insert_one(gift_card)
+        
+        # Also create payment transaction
+        transaction = {
+            "session_id": session.session_id,
+            "user_id": sender["user_id"],
+            "package_id": f"gift_card_send_{body.amount}",
+            "package_name": f"${body.amount} Gift Card for {body.recipient_email}",
+            "package_type": "gift_card_send",
+            "amount": float(body.amount),
+            "wallet_credit": wallet_credit,
+            "currency": "aud",
+            "status": "initiated",
+            "payment_status": "pending",
+            "metadata": metadata,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+        }
+        await db.payment_transactions.insert_one(transaction)
+        
+        # Build share link
+        share_url = f"{body.origin_url}/redeem-gift?code={gift_code}"
+        
+        return {
+            "checkout_url": session.url,
+            "session_id": session.session_id,
+            "gift_code": gift_code,
+            "share_url": share_url,
+            "recipient_email": body.recipient_email,
+            "is_existing_member": recipient is not None,
+            "gift_card_amount": body.amount,
+            "wallet_credit": wallet_credit,
+            "bonus": round(wallet_credit - body.amount, 2),
+        }
+        
+    except Exception as e:
+        logger.error(f"Send gift card error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/gift-card/redeem/{gift_code}")
+async def get_gift_card_info(gift_code: str):
+    """Get gift card info by code (public endpoint for share links)"""
+    gift_card = await db.sent_gift_cards.find_one(
+        {"gift_code": gift_code}, {"_id": 0}
+    )
+    if not gift_card:
+        raise HTTPException(status_code=404, detail="Gift card not found")
+    
+    # Convert datetime
+    if "created_at" in gift_card and hasattr(gift_card["created_at"], "isoformat"):
+        gift_card["created_at"] = gift_card["created_at"].isoformat()
+    
+    return {
+        "gift_code": gift_card["gift_code"],
+        "amount": gift_card["amount"],
+        "wallet_credit": gift_card["wallet_credit"],
+        "bonus": gift_card["bonus"],
+        "sender_message": gift_card.get("sender_message"),
+        "status": gift_card["status"],
+        "is_existing_member": gift_card.get("is_existing_member", False),
+    }
+
+
+@router.post("/gift-card/claim/{gift_code}")
+async def claim_gift_card(request: Request, gift_code: str):
+    """Claim a gift card (existing member credits wallet, new member creates pending)"""
+    authorization = request.headers.get("authorization")
+    claimer = get_current_user(authorization)
+    
+    gift_card = await db.sent_gift_cards.find_one({"gift_code": gift_code})
+    if not gift_card:
+        raise HTTPException(status_code=404, detail="Gift card not found")
+    if gift_card["status"] != "paid":
+        raise HTTPException(status_code=400, detail=f"Gift card is {gift_card['status']}")
+    
+    wallet_credit = gift_card["wallet_credit"]
+    
+    # Credit the claimer's wallet
+    await db.users.update_one(
+        {"user_id": claimer["user_id"]},
+        {"$inc": {"wallet_balance": wallet_credit}}
+    )
+    
+    # Mark as claimed
+    await db.sent_gift_cards.update_one(
+        {"gift_code": gift_code},
+        {"$set": {
+            "status": "claimed",
+            "claimed_by": claimer["user_id"],
+            "claimed_at": datetime.now(timezone.utc),
+        }}
+    )
+    
+    logger.info(f"Gift card {gift_code} claimed by {claimer['user_id']}: ${wallet_credit}")
+    
+    return {
+        "success": True,
+        "wallet_credit": wallet_credit,
+        "message": f"${wallet_credit:.2f} added to your wallet!"
+    }
+
+
 @router.get("/status/{session_id}")
 async def get_payment_status(request: Request, session_id: str):
     """Get payment status for a checkout session"""
@@ -430,6 +601,32 @@ async def process_successful_payment(transaction: dict):
             })
             
             logger.info(f"Gift card purchased: ${transaction['amount']} -> ${wallet_credit} wallet credit for user {user_id}")
+            
+        elif package_type == "gift_card_send":
+            # Gift card sent to someone - mark as paid
+            gift_code = metadata.get("gift_code")
+            recipient_user_id = metadata.get("recipient_user_id")
+            wallet_credit = float(metadata.get("wallet_credit", 0))
+            
+            update_data = {"status": "paid", "paid_at": datetime.now(timezone.utc)}
+            
+            # If recipient is an existing member, auto-credit their wallet
+            if recipient_user_id:
+                await db.users.update_one(
+                    {"user_id": recipient_user_id},
+                    {"$inc": {"wallet_balance": wallet_credit}}
+                )
+                update_data["status"] = "claimed"
+                update_data["claimed_by"] = recipient_user_id
+                update_data["claimed_at"] = datetime.now(timezone.utc)
+                logger.info(f"Gift card {gift_code} auto-credited ${wallet_credit} to existing member {recipient_user_id}")
+            else:
+                logger.info(f"Gift card {gift_code} paid, waiting for new member to claim ${wallet_credit}")
+            
+            await db.sent_gift_cards.update_one(
+                {"gift_code": gift_code},
+                {"$set": update_data}
+            )
             
     except Exception as e:
         logger.error(f"Error processing payment for {user_id}: {e}")

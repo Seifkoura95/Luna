@@ -50,6 +50,10 @@ export default function RewardsShopPage() {
   const [customAmount, setCustomAmount] = useState('');
   const [selectedGiftCard, setSelectedGiftCard] = useState<number | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [showSendGift, setShowSendGift] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [giftMessage, setGiftMessage] = useState('');
+  const [sendingGift, setSendingGift] = useState(false);
 
   const currentPoints = user?.points_balance || 0;
   const dollarValue = currentPoints / 10;
@@ -127,6 +131,46 @@ export default function RewardsShopPage() {
               Alert.alert('Error', error.message || 'Failed to create checkout');
             } finally {
               setPurchasing(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleSendGiftCard = async () => {
+    handleHaptic();
+    const amount = selectedGiftCard || parseInt(customAmount) || 0;
+    if (amount < 10) { Alert.alert('Minimum Amount', 'Gift cards must be at least $10'); return; }
+    if (!recipientEmail || !recipientEmail.includes('@')) { Alert.alert('Invalid Email', 'Please enter a valid email address'); return; }
+    
+    const bonusValue = amount * 0.10;
+    const totalValue = amount + bonusValue;
+    
+    Alert.alert(
+      'Send Gift Card',
+      `Send $${amount} gift card to ${recipientEmail}?\nThey'll receive $${totalValue.toFixed(2)} value (+10% bonus)\n\nYou pay $${amount} AUD`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Pay & Send',
+          onPress: async () => {
+            setSendingGift(true);
+            try {
+              const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+              const result = await api.sendGiftCard(amount, backendUrl, recipientEmail, giftMessage || undefined);
+              if (result.checkout_url) {
+                // Copy share link
+                Alert.alert(
+                  'Share Link',
+                  `Gift card code: ${result.gift_code}\n\nShare this link:\n${result.share_url}\n\n${result.is_existing_member ? 'Recipient is a Luna member - credit will be added automatically!' : 'Recipient will need to sign up to claim.'}`,
+                  [{ text: 'Continue to Payment', onPress: () => Linking.openURL(result.checkout_url) }]
+                );
+              }
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to send gift card');
+            } finally {
+              setSendingGift(false);
             }
           }
         }
@@ -412,6 +456,73 @@ export default function RewardsShopPage() {
               </Text>
             </LinearGradient>
           </TouchableOpacity>
+        </View>
+
+        {/* Send Gift Card Section */}
+        <View style={styles.sectionCard} data-testid="send-gift-section">
+          <View style={styles.sectionHeader}>
+            <Ionicons name="send" size={22} color="#E91E63" />
+            <Text style={styles.sectionTitle}>Send Gift Card to a Friend</Text>
+          </View>
+          
+          <Text style={styles.sendGiftDesc}>
+            Send a Luna Gift Card with +10% bonus value. Existing members get instant wallet credit. New friends get a signup link!
+          </Text>
+
+          {!showSendGift ? (
+            <TouchableOpacity 
+              style={styles.sendGiftToggle} 
+              onPress={() => { handleHaptic(); setShowSendGift(true); }}
+              data-testid="send-gift-toggle-btn"
+            >
+              <Ionicons name="gift" size={18} color="#E91E63" />
+              <Text style={styles.sendGiftToggleText}>Send as Gift</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.sendGiftForm}>
+              <View style={styles.sendGiftInputRow}>
+                <Ionicons name="mail" size={16} color={colors.textMuted} />
+                <TextInput
+                  style={styles.sendGiftInput}
+                  placeholder="Friend's email address"
+                  placeholderTextColor={colors.textMuted}
+                  value={recipientEmail}
+                  onChangeText={setRecipientEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  data-testid="recipient-email-input"
+                />
+              </View>
+              <View style={styles.sendGiftInputRow}>
+                <Ionicons name="chatbubble" size={16} color={colors.textMuted} />
+                <TextInput
+                  style={styles.sendGiftInput}
+                  placeholder="Add a personal message (optional)"
+                  placeholderTextColor={colors.textMuted}
+                  value={giftMessage}
+                  onChangeText={setGiftMessage}
+                  data-testid="gift-message-input"
+                />
+              </View>
+              <TouchableOpacity
+                style={[styles.sendGiftButton, (!(selectedGiftCard || customAmountNum >= 10) || sendingGift) && styles.purchaseButtonDisabled]}
+                onPress={handleSendGiftCard}
+                disabled={!(selectedGiftCard || customAmountNum >= 10) || sendingGift}
+                data-testid="send-gift-pay-btn"
+              >
+                <LinearGradient colors={['#E91E63', '#C2185B']} style={styles.purchaseGradient}>
+                  {sendingGift ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Ionicons name="send" size={18} color="#fff" />
+                  )}
+                  <Text style={[styles.purchaseText, { color: '#fff' }]}>
+                    {sendingGift ? 'Processing...' : `Send $${selectedGiftCard || customAmountNum || '?'} Gift Card`}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Bottom Spacer */}
@@ -756,5 +867,51 @@ const styles = StyleSheet.create({
   },
   purchaseTextDisabled: {
     color: colors.textMuted,
+  },
+  // Send Gift
+  sendGiftDesc: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: spacing.md,
+  },
+  sendGiftToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: '#E91E63' + '15',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: '#E91E63' + '30',
+  },
+  sendGiftToggleText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#E91E63',
+  },
+  sendGiftForm: {
+    gap: spacing.sm,
+  },
+  sendGiftInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  sendGiftInput: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.textPrimary,
+  },
+  sendGiftButton: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
   },
 });

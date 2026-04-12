@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { BarCodeScanner } from 'expo-barcode-scanner';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api, apiFetch } from '../src/utils/api';
 import { AppBackground } from '../src/components/AppBackground';
@@ -30,6 +31,16 @@ export default function StaffPortal() {
   const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [actionLoading, setActionLoading] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [scanning, setScanning] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await BarCodeScanner.requestPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
 
   const handleSearch = async () => {
     if (searchQuery.length < 2) return;
@@ -43,6 +54,35 @@ export default function StaffPortal() {
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Search failed');
     } finally { setSearching(false); }
+  };
+
+  const handleBarCodeScanned = async ({ data }: { type: string; data: string }) => {
+    if (scanning) return;
+    setScanning(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setShowScanner(false);
+    // QR code data is expected to be a user_id
+    const userId = data.trim();
+    try {
+      const profile = await api.getMemberProfile(userId);
+      setSelectedMember(profile);
+      setResults([]);
+    } catch {
+      // Fallback: try searching by the scanned data
+      try {
+        const searchData = await api.searchMember(userId);
+        if (searchData.members.length === 1) {
+          const profile = await api.getMemberProfile(searchData.members[0].user_id);
+          setSelectedMember(profile);
+        } else if (searchData.members.length > 1) {
+          setResults(searchData.members);
+        } else {
+          Alert.alert('Not Found', 'No member found for this QR code');
+        }
+      } catch {
+        Alert.alert('Error', 'Could not identify member from QR code');
+      }
+    } finally { setScanning(false); }
   };
 
   const selectMember = async (userId: string) => {
@@ -122,7 +162,35 @@ export default function StaffPortal() {
               {searching ? <ActivityIndicator size="small" color="#000" /> : <Ionicons name="arrow-forward" size={20} color="#000" />}
             </TouchableOpacity>
           </View>
+          <TouchableOpacity 
+            style={styles.scanQrBtn} 
+            onPress={() => setShowScanner(!showScanner)}
+            data-testid="staff-scan-qr-btn"
+          >
+            <Ionicons name="qr-code" size={18} color={colors.accent} />
+            <Text style={styles.scanQrText}>{showScanner ? 'Hide Scanner' : 'Scan Member QR Code'}</Text>
+          </TouchableOpacity>
         </View>
+
+        {/* QR Scanner */}
+        {showScanner && (
+          <View style={styles.scannerCard} data-testid="staff-qr-scanner">
+            {hasPermission === false ? (
+              <View style={styles.scannerMsg}>
+                <Ionicons name="camera-outline" size={32} color={colors.textMuted} />
+                <Text style={styles.scannerMsgText}>Camera permission required</Text>
+              </View>
+            ) : (
+              <View style={styles.scannerWrapper}>
+                <BarCodeScanner
+                  onBarCodeScanned={scanning ? undefined : handleBarCodeScanned}
+                  style={styles.scanner}
+                />
+                <Text style={styles.scannerHint}>Point at member's QR code</Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Search Results */}
         {results.length > 0 && (
@@ -249,6 +317,14 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   searchText: { flex: 1, fontSize: 14, color: colors.textPrimary },
   searchBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center' },
+  scanQrBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, marginTop: spacing.sm, paddingVertical: spacing.sm, backgroundColor: colors.accent + '10', borderRadius: radius.md },
+  scanQrText: { fontSize: 13, fontWeight: '600', color: colors.accent },
+  scannerCard: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: radius.xl, overflow: 'hidden', marginBottom: spacing.lg, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  scannerWrapper: { height: 250, position: 'relative' },
+  scanner: { flex: 1 },
+  scannerHint: { position: 'absolute', bottom: 12, left: 0, right: 0, textAlign: 'center', fontSize: 12, color: '#fff', backgroundColor: 'rgba(0,0,0,0.5)', paddingVertical: 4 },
+  scannerMsg: { alignItems: 'center', padding: spacing.xl, gap: spacing.sm },
+  scannerMsgText: { fontSize: 13, color: colors.textMuted },
   // Section
   sectionCard: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: radius.xl, padding: spacing.lg, marginBottom: spacing.lg, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.md, letterSpacing: 1 },

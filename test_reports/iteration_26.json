@@ -1,0 +1,119 @@
+{
+  "summary": "Completed testing of Luna Group VIP Send Gift Card API and QR Scanner features. All 19 backend tests passed (100%). Frontend UI has rendering issues on web - 'Send Gift Card to a Friend' section and 'Scan Member QR Code' button are NOT visible on web preview, though code exists in the components.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "staff-portal.tsx",
+        "issue": "'Scan Member QR Code' button (line 165-172) is NOT rendering on web. The TouchableOpacity with data-testid='staff-scan-qr-btn' is not visible in the DOM.",
+        "selector": "[data-testid='staff-scan-qr-btn']",
+        "priority": "HIGH",
+        "note": "Likely caused by expo-barcode-scanner import affecting web rendering. The BarCodeScanner.requestPermissionsAsync() in useEffect may be causing issues on web."
+      },
+      {
+        "component": "rewards-shop.tsx",
+        "issue": "'Send Gift Card to a Friend' section (line 461-526) is NOT rendering on web. The View with data-testid='send-gift-section' is not visible in the DOM.",
+        "selector": "[data-testid='send-gift-section']",
+        "priority": "HIGH",
+        "note": "The section should appear below the gift cards section but is not rendering on web preview."
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_send_gift_card_qr.py",
+    "/app/test_reports/pytest/pytest_send_gift_qr.xml"
+  ],
+  "action_items": [
+    "Fix Staff Portal 'Scan Member QR Code' button not rendering on web - consider wrapping BarCodeScanner import with Platform.OS check or lazy loading",
+    "Fix Rewards Shop 'Send Gift Card to a Friend' section not rendering on web - investigate why the View is not appearing in DOM",
+    "Consider adding Platform.OS === 'web' check to hide QR scanner button on web since camera won't work anyway"
+  ],
+  "critical_code_review_comments": [
+    "expo-barcode-scanner may not be fully compatible with web - the import and useEffect calling BarCodeScanner.requestPermissionsAsync() could be causing the component to fail silently",
+    "The 'Send Gift Card to a Friend' section code exists but is not rendering - possible React Native Web rendering issue with the View/TouchableOpacity components"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_send_gift_card_qr.py"
+  ],
+  "success_rate": {
+    "backend": "100% (19/19 tests passed)",
+    "frontend": "Partial - Main UI renders but new sections not visible on web"
+  },
+  "test_credentials": {
+    "email": "luna@test.com",
+    "password": "test123"
+  },
+  "seed_data_creation": "N/A - using existing test users",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend APIs for Send Gift Card feature are fully working. Frontend has rendering issues on web - the new UI sections (Send Gift Card, QR Scanner button) are not visible. The code exists in the components but is not rendering to DOM on web preview. This may work correctly on native mobile but needs investigation for web.",
+  "mocked_apis": {
+    "Stripe payments": "Test keys (sk_test_emergent) - checkout sessions created but payment won't complete",
+    "CherryHub CRM": "MOCKED - Blocked by auth scopes (403 error)"
+  },
+  "features_verified": {
+    "send_gift_card_api": {
+      "status": "PASS",
+      "details": "POST /api/payments/gift-card/send creates Stripe checkout, gift code (LUNA-GIFT-XXXXXXXX), share URL, detects existing members"
+    },
+    "gift_card_redeem_info_api": {
+      "status": "PASS",
+      "details": "GET /api/payments/gift-card/redeem/{gift_code} returns gift card info (public endpoint)"
+    },
+    "gift_card_claim_api": {
+      "status": "PASS",
+      "details": "POST /api/payments/gift-card/claim/{gift_code} requires auth, validates payment status before claiming"
+    },
+    "existing_member_detection": {
+      "status": "PASS",
+      "details": "Send gift card correctly returns is_existing_member: true for existing Luna members, false for new users"
+    },
+    "10_percent_bonus_calculation": {
+      "status": "PASS",
+      "details": "$25->$27.50, $50->$55, $100->$110, $75->$82.50 - all calculations correct"
+    },
+    "staff_portal_member_search_api": {
+      "status": "PASS",
+      "details": "GET /api/perks/member/search works correctly (verified via pytest)"
+    },
+    "staff_portal_member_profile_api": {
+      "status": "PASS",
+      "details": "GET /api/perks/member/{user_id}/profile returns tier benefits and today activity"
+    },
+    "rewards_shop_ui_gift_cards": {
+      "status": "PASS",
+      "details": "Gift cards section renders with $25, $50, $100, $150 options and 10% bonus display"
+    },
+    "rewards_shop_ui_send_gift": {
+      "status": "FAIL",
+      "details": "'Send Gift Card to a Friend' section NOT visible on web - code exists but not rendering"
+    },
+    "staff_portal_ui_qr_scanner": {
+      "status": "FAIL",
+      "details": "'Scan Member QR Code' button NOT visible on web - code exists but not rendering"
+    },
+    "staff_portal_ui_search": {
+      "status": "PASS",
+      "details": "Search bar renders correctly, requires authentication to search"
+    },
+    "previous_features": {
+      "status": "PASS",
+      "details": "Gift card checkout, wallet balance, packages endpoint all still working"
+    }
+  },
+  "api_verification": {
+    "/api/payments/gift-card/send": "PASS - Creates Stripe checkout, gift code, share URL",
+    "/api/payments/gift-card/redeem/{gift_code}": "PASS - Returns gift card info (public)",
+    "/api/payments/gift-card/claim/{gift_code}": "PASS - Requires auth, validates status",
+    "/api/payments/gift-card/checkout": "PASS - Still working",
+    "/api/payments/wallet/balance": "PASS - Still working",
+    "/api/payments/packages": "PASS - Still working",
+    "/api/perks/member/search": "PASS - Still working",
+    "/api/perks/member/{user_id}/profile": "PASS - Still working"
+  }
+}
