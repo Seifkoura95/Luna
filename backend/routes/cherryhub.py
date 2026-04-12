@@ -325,46 +325,65 @@ async def link_cherryhub_account(request: Request, body: CherryHubLinkRequest):
 
 @router.post("/points/award")
 async def award_points_realtime(request: Request, body: AwardPointsRequest):
-    """Award points to user (synced to CherryHub in real-time)"""
+    """Award points to user with tier multiplier applied, synced to CherryHub."""
     current_user = await get_authenticated_user(request)
     member_key = current_user.get("cherryhub_member_key")
     
-    # Always update local points
+    # Look up tier multiplier
+    subscription = await db.subscriptions.find_one({"user_id": current_user["user_id"], "status": "active"})
+    tier_id = subscription.get("tier_id", "bronze") if subscription else "bronze"
+    from config import SUBSCRIPTION_TIERS
+    tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS["bronze"])
+    multiplier = tier.get("points_multiplier", 1.0)
+    
+    base_points = body.points
+    total_points = int(base_points * multiplier)
+    bonus_points = total_points - base_points
+    
+    # Update local points with multiplied total
     await db.users.update_one(
         {"user_id": current_user["user_id"]},
-        {"$inc": {"points_balance": body.points}}
+        {"$inc": {"points_balance": total_points}}
     )
     
     result = {
         "success": True,
-        "points_awarded": body.points,
+        "base_points": base_points,
+        "bonus_points": bonus_points,
+        "points_awarded": total_points,
+        "multiplier": multiplier,
+        "tier_id": tier_id,
         "reason": body.reason,
         "local_updated": True,
-        "new_balance": current_user.get("points_balance", 0) + body.points
+        "new_balance": current_user.get("points_balance", 0) + total_points
     }
     
-    # If linked to CherryHub, sync there too
+    # Sync multiplied total to CherryHub
     if member_key:
         try:
             cherryhub_result = await cherryhub_service.add_points(
                 member_key, 
-                body.points, 
-                f"{body.reason} ({body.source})"
+                total_points, 
+                f"{body.reason} ({body.source}) x{multiplier} {tier_id}"
             )
             result["cherryhub_synced"] = True
             result["cherryhub_result"] = cherryhub_result
-            logger.info(f"Points awarded and synced to CherryHub: {body.points} for {member_key}")
+            logger.info(f"CherryHub sync: {total_points}pts ({base_points} base x{multiplier}) for {member_key}")
         except Exception as e:
             logger.error(f"Failed to sync points to CherryHub: {e}")
             result["cherryhub_synced"] = False
             result["cherryhub_error"] = str(e)
     
-    # Log the points transaction
+    # Log transaction
     await db.points_transactions.insert_one({
         "user_id": current_user["user_id"],
         "member_key": member_key,
         "type": "award",
-        "points": body.points,
+        "base_points": base_points,
+        "bonus_points": bonus_points,
+        "total_points": total_points,
+        "multiplier": multiplier,
+        "tier_id": tier_id,
         "reason": body.reason,
         "source": body.source,
         "cherryhub_synced": result.get("cherryhub_synced", False),

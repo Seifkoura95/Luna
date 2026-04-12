@@ -16,7 +16,12 @@ router = APIRouter(prefix="/points", tags=["Points"])
 
 
 async def award_points(user_id: str, amount_spent: float, source: str, source_id: str):
-    """Award points to a user based on spending"""
+    """Award points to a user based on spending, with tier multiplier applied.
+    Syncs the multiplied total to CherryHub if the user is linked."""
+    from cherryhub_service import cherryhub_service
+    import logging
+    logger = logging.getLogger(__name__)
+    
     subscription = await db.subscriptions.find_one({
         "user_id": user_id,
         "status": "active"
@@ -30,11 +35,26 @@ async def award_points(user_id: str, amount_spent: float, source: str, source_id
     bonus_points = int(base_points * (multiplier - 1))
     total_points = base_points + bonus_points
     
+    # Update local balance
     await db.users.update_one(
         {"user_id": user_id},
         {"$inc": {"points_balance": total_points}}
     )
     
+    # Sync multiplied total to CherryHub
+    cherryhub_synced = False
+    user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "cherryhub_member_key": 1})
+    member_key = user.get("cherryhub_member_key") if user else None
+    if member_key and total_points > 0:
+        try:
+            reason = f"{source} ${amount_spent:.2f} x{multiplier} ({tier_id})"
+            await cherryhub_service.add_points(member_key, total_points, reason)
+            cherryhub_synced = True
+            logger.info(f"CherryHub sync: {total_points}pts ({base_points} base x{multiplier}) for {member_key}")
+        except Exception as e:
+            logger.error(f"CherryHub points sync failed: {e}")
+    
+    # Log transaction
     await db.points_transactions.insert_one({
         "id": str(uuid.uuid4())[:8],
         "user_id": user_id,
@@ -43,9 +63,11 @@ async def award_points(user_id: str, amount_spent: float, source: str, source_id
         "bonus_points": bonus_points,
         "total_points": total_points,
         "multiplier": multiplier,
+        "tier_id": tier_id,
         "source": source,
         "source_id": source_id,
         "amount_spent": amount_spent,
+        "cherryhub_synced": cherryhub_synced,
         "created_at": datetime.now(timezone.utc)
     })
     
@@ -53,7 +75,9 @@ async def award_points(user_id: str, amount_spent: float, source: str, source_id
         "base_points": base_points,
         "bonus_points": bonus_points,
         "total_points": total_points,
-        "multiplier": multiplier
+        "multiplier": multiplier,
+        "tier_id": tier_id,
+        "cherryhub_synced": cherryhub_synced,
     }
 
 

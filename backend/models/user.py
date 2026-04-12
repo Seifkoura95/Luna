@@ -7,6 +7,7 @@ from typing import Optional
 
 
 class RecordSpendingRequest(BaseModel):
+    user_id: str
     venue_id: str
     amount: float
     category: str = "general"  # drinks, food, entry, booth, other
