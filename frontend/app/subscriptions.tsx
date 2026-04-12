@@ -28,10 +28,14 @@ interface SubscriptionTier {
   price: number;
   billing_period: string;
   color: string;
+  icon?: string;
   points_multiplier: number;
   benefits: Record<string, any>;
   description: string;
   perks_list: string[];
+  nightclub_perks?: string[];
+  restaurant_perks?: string[];
+  general_perks?: string[];
 }
 
 export default function SubscriptionsScreen() {
@@ -60,8 +64,8 @@ export default function SubscriptionsScreen() {
         setCurrentSubscription(subRes.subscription);
         setCurrentTier(subRes.tier);
       } catch (subError) {
-        // User not logged in, default to lunar
-        setCurrentTier(tiersRes.tiers?.find((t: any) => t.id === 'lunar') || null);
+        // User not logged in, default to bronze
+        setCurrentTier(tiersRes.tiers?.find((t: any) => t.id === 'bronze') || null);
       }
     } catch (error) {
       console.error('Failed to fetch subscription data:', error);
@@ -138,7 +142,7 @@ export default function SubscriptionsScreen() {
           <View style={styles.tierHeader}>
             <View style={[styles.tierIcon, { backgroundColor: tier.color + '30' }]}>
               <Ionicons 
-                name={tier.id === 'lunar' ? 'moon' : tier.id === 'eclipse' ? 'flash' : 'star'} 
+                name={tier.id === 'bronze' ? 'shield' : tier.id === 'silver' ? 'shield-half' : 'shield-checkmark'} 
                 size={24} 
                 color={tier.color} 
               />

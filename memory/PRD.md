@@ -1,5 +1,16 @@
 # Luna Group VIP App - Product Requirements Document
 
+## Latest Updates (April 12, 2026)
+- **Updated**: Subscription Tiers - Implemented new Bronze/Silver/Gold membership structure with detailed perks
+  - **Bronze** (FREE): 2x points on pre-purchases, free entry before 10pm, 5% restaurant discount on weeknights
+  - **Silver** ($39.99/mo): Express entry, 1.5x points, 10% restaurant discount, complimentary drinks
+  - **Gold** ($79.99/mo): Unlimited entry, 2x points, 15% restaurant discount, Sky Lounge access, guest entry
+- **Fixed**: Profile page tier config error (pointsNeeded undefined)
+- **Removed**: "Friends are heading out" section from home page
+- **Added**: Card glow effects to all card types on home page (Live Auctions, Trending, Venues)
+- **Added**: Admin CRUD endpoints for managing Missions, Rewards, and Auctions from Lovable dashboard
+- **Updated**: Venue photos for Night Market, JuJu, and Ember & Ash
+
 ## Latest Updates (April 11, 2026)
 - **Fixed**: Gallery/Booking UI overlap issue on Venue Detail page (increased bottom spacer from 20px to 100px)
 - **Fixed**: Event Detail page content overlap with bottom action bar (increased paddingBottom from 30 to 100)
