@@ -6,14 +6,17 @@ import { useAuthStore } from '../../src/store/authStore';
 import { AppBackground } from '../../src/components/AppBackground';
 import { api } from '../../src/utils/api';
 import {
-  HomeIcon,
-  LocationIcon,
-  CardIcon,
-  BoltIcon,
-  GuestIcon,
-  StarIcon,
-  LunaAIIcon,
+  LunaIcon,
 } from '../../src/components/LunaIcons';
+import type { IconName } from '../../src/components/LunaIcons';
+
+// Wrapper components for tab bar icons
+const HomeIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="home" size={size} color={color} />;
+const LocationIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="explore" size={size} color={color} />;
+const CardIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="wallet" size={size} color={color} />;
+const StarIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="star" size={size} color={color} />;
+const GuestIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="profile" size={size} color={color} />;
+const LunaAIIcon = ({ size, color }: { size?: number; color?: string }) => <LunaIcon name="crown" size={size} color={color} />;
 
 // Custom tab bar icon using Luna Icons with optional badge
 const TabBarIcon = ({ 
