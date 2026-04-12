@@ -1227,4 +1227,48 @@ export const api = {
 
   getStoryFeed: (limit?: number) =>
     apiFetch<{ stories: any[] }>(`/api/stories/feed?limit=${limit || 20}`),
+
+  // ====== PERKS API ======
+  getPerksStatus: () =>
+    apiFetch<{
+      tier: { id: string; name: string; color: string };
+      perks: {
+        free_entry: { available: boolean; before_time: string; unlimited: boolean };
+        skip_the_line: { available: boolean };
+        comp_drink: { available: boolean; redeemed_today: boolean; redeemed_at: string | null; excludes_saturday: boolean; is_saturday: boolean };
+        guest_entry: { available: boolean; limit: number; used_today: number; remaining_today: number };
+        restaurant_discount: { percent: number; weeknights_only: boolean; available_today: boolean };
+        sky_lounge: { available: boolean };
+        priority_booking: { available: boolean };
+        vip_events: { available: boolean };
+        concierge: { available: boolean; whatsapp: boolean };
+      };
+      today_activity: { entries: number; drinks_redeemed: number; guests_used: number };
+    }>('/api/perks/status'),
+
+  getDrinkVoucher: (venueId?: string) =>
+    apiFetch<{
+      eligible: boolean;
+      reason?: string;
+      drink_options?: string[];
+      qr_code?: string;
+      redeemed_at?: string;
+    }>(`/api/perks/drinks/voucher/${venueId || ''}`),
+
+  getDiscountEligibility: (venueId?: string) =>
+    apiFetch<{
+      eligible: boolean;
+      discount_percent: number;
+      tier?: string;
+      reason?: string;
+      qr_code?: string;
+    }>(`/api/perks/discounts/eligibility/${venueId || ''}`),
+
+  getGuestRemaining: () =>
+    apiFetch<{
+      allowed: boolean;
+      remaining: number;
+      limit: number;
+      used_today: number;
+    }>('/api/perks/entry/guest/remaining'),
 };
