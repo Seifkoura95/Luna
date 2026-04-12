@@ -64,7 +64,6 @@ export default function RootLayout() {
         <Stack.Screen name="payment-cancelled" />
         <Stack.Screen name="ai-concierge" />
         <Stack.Screen name="settings" />
-        <Stack.Screen name="rewards" />
         <Stack.Screen name="rewards-shop" />
         <Stack.Screen name="subscriptions" />
         <Stack.Screen name="table-booking" />

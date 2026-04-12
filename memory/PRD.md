@@ -41,6 +41,19 @@
   - Fixed font size violations (9px -> 11px minimum per typography scale)
   - Replaced rgba card backgrounds with colors.glass/glassMid tokens
   - Replaced inline border colors with colors.glassBorderSubtle tokens
+- **COMPLETED**: Deleted rewards.tsx (duplicate of rewards-shop), moved milestones to wallet page
+  - Removed old rewards page and route
+  - Added milestones section (Rising Star, VIP Status, Luna Elite, Supernova, Legend) with progress bars to wallet bottom
+  - Replaced individual reward card scroll with "Browse Rewards Shop" link
+  - Updated profile links to point to /rewards-shop
+- **COMPLETED**: Push Notifications Validation (April 12, 2026)
+  - Full Expo push notification system already implemented and working
+  - Frontend hook registers tokens on native devices, stores in MongoDB
+  - Backend sends via Expo Push API (exp.host/--/api/v2/push/send)
+  - Android channels configured (default, auctions, events)
+  - Notification tap navigation handles all screen types
+  - Added POST /api/notifications/test-push admin endpoint for testing
+  - Needs real device (Expo Go) to register valid push token
 
 ## Latest Updates (April 12, 2026 - Session 1)
 - **Updated**: Subscription Tiers - Implemented new Bronze/Silver/Gold membership structure with detailed perks

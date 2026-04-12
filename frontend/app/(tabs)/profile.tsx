@@ -439,7 +439,7 @@ export default function ProfileScreen() {
       title: 'Rewards',
       subtitle: 'Earn & redeem',
       color: '#8B00FF',
-      onPress: () => router.push('/rewards'),
+      onPress: () => router.push('/rewards-shop'),
     },
     {
       id: 'auctions',
@@ -527,7 +527,7 @@ export default function ProfileScreen() {
         <View style={styles.badgesSection}>
           <View style={styles.badgeHeader}>
             <Text style={styles.sectionTitle}>EARNED BADGES</Text>
-            <TouchableOpacity onPress={() => router.push('/rewards')}>
+            <TouchableOpacity onPress={() => router.push('/rewards-shop')}>
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>

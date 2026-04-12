@@ -301,3 +301,34 @@ async def remove_all_push_tokens(request: Request):
     
     return {"success": True, "message": "All push tokens removed"}
 
+
+
+class TestPushRequest(BaseModel):
+    user_id: Optional[str] = None
+    title: str = "Luna VIP"
+    body: str = "Test notification from Luna Group"
+
+
+@router.post("/test-push")
+async def test_push_notification(request: Request, body: TestPushRequest):
+    """Admin: Send a test push notification to a user (or self)"""
+    from routes.shared import send_push_notification
+    
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    
+    target_id = body.user_id or current_user["user_id"]
+    
+    target = await db.users.find_one({"user_id": target_id}, {"_id": 0, "push_token": 1, "email": 1})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not target.get("push_token"):
+        return {"success": False, "message": "User has no push token registered. Open the app on a physical device first."}
+    
+    result = await send_push_notification(
+        target_id, body.title, body.body,
+        {"type": "test", "action": "view_wallet"}
+    )
+    
+    return {"success": bool(result), "message": "Push sent" if result else "Push failed - token may be invalid", "target_email": target.get("email")}
+

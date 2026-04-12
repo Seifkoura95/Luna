@@ -675,66 +675,12 @@ export default function WalletScreen() {
           {/* Featured Rewards */}
           {rewardsLoading ? (
             <ActivityIndicator size="small" color={colors.accent} style={{ marginVertical: 20 }} />
-          ) : rewards.length > 0 ? (
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.rewardsScrollContainer}
-            >
-              {rewards.slice(0, 5).map((reward: any) => {
-                const userPoints = pointsData?.points_balance || user?.points_balance || 0;
-                const canAfford = userPoints >= (reward.points_cost || 0);
-                
-                return (
-                  <TouchableOpacity
-                    key={reward.id || reward.name}
-                    style={[styles.rewardCard, !canAfford && styles.rewardCardDisabled]}
-                    onPress={() => router.push('/rewards-shop')}
-                    activeOpacity={0.8}
-                  >
-                    <LinearGradient
-                      colors={canAfford ? [colors.glass, 'rgba(37, 99, 235, 0.1)'] : [colors.glass, 'rgba(100,100,100,0.1)']}
-                      style={styles.rewardCardGradient}
-                    >
-                      <View style={[styles.rewardIconWrap, { backgroundColor: canAfford ? colors.accent + '20' : colors.textMuted + '20' }]}>
-                        <Ionicons 
-                          name={
-                            reward.name?.toLowerCase().includes('cocktail') ? 'wine' :
-                            reward.name?.toLowerCase().includes('fast') ? 'flash' :
-                            reward.name?.toLowerCase().includes('booth') ? 'people' :
-                            reward.name?.toLowerCase().includes('bottle') ? 'beer' :
-                            reward.name?.toLowerCase().includes('credit') ? 'card' :
-                            reward.name?.toLowerCase().includes('dining') ? 'restaurant' :
-                            reward.name?.toLowerCase().includes('merch') ? 'shirt' :
-                            'gift'
-                          } 
-                          size={24} 
-                          color={canAfford ? colors.accent : colors.textMuted} 
-                        />
-                      </View>
-                      <Text style={[styles.rewardCardName, !canAfford && styles.rewardCardNameDisabled]} numberOfLines={2}>
-                        {reward.name}
-                      </Text>
-                      <View style={[styles.rewardCostBadge, { backgroundColor: canAfford ? colors.gold + '20' : colors.textMuted + '20' }]}>
-                        <Text style={[styles.rewardCostText, { color: canAfford ? colors.gold : colors.textMuted }]}>
-                          {reward.points_cost?.toLocaleString()} pts
-                        </Text>
-                      </View>
-                      {canAfford && (
-                        <View style={styles.canAffordBadge}>
-                          <Ionicons name="checkmark-circle" size={12} color={colors.success} />
-                        </View>
-                      )}
-                    </LinearGradient>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
           ) : (
-            <View style={styles.emptyRewards}>
-              <Ionicons name="gift-outline" size={32} color={colors.textMuted} />
-              <Text style={styles.emptyRewardsText}>No rewards available</Text>
-            </View>
+            <TouchableOpacity style={styles.viewAllRewardsFullBtn} onPress={() => router.push('/rewards-shop')}>
+              <Ionicons name="storefront" size={20} color={colors.gold} />
+              <Text style={styles.viewAllRewardsFullText}>Browse Rewards Shop</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
           )}
         </View>
 
@@ -801,7 +747,7 @@ export default function WalletScreen() {
               <Ionicons name="flag" size={18} color={colors.accent} />
               <Text style={styles.redeemTitle}>MISSIONS</Text>
             </View>
-            <TouchableOpacity onPress={() => router.push('/rewards')}>
+            <TouchableOpacity onPress={() => router.push('/rewards-shop')}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -846,7 +792,43 @@ export default function WalletScreen() {
           </View>
         )}
 
-        <View style={{ height: 20 }} />
+        {/* =============== MILESTONES SECTION =============== */}
+        <View style={styles.milestonesSection}>
+          <View style={styles.redeemTitleRow}>
+            <Ionicons name="flag" size={18} color={colors.accent} />
+            <Text style={styles.redeemTitle}>MILESTONES</Text>
+          </View>
+          {[
+            { points: 250, title: 'Rising Star', icon: 'star-outline' as const, color: colors.success, rewards: '5 Free Drinks' },
+            { points: 500, title: 'VIP Status', icon: 'flash' as const, color: colors.accent, rewards: '10 Drinks + 5 Entries' },
+            { points: 1000, title: 'Luna Elite', icon: 'diamond' as const, color: colors.gold, rewards: 'VIP Booth + 20 Drinks' },
+            { points: 2500, title: 'Supernova', icon: 'star' as const, color: colors.hot, rewards: 'Unlimited Entries + Fast Lane' },
+            { points: 5000, title: 'Legend', icon: 'ribbon' as const, color: colors.goldBright, rewards: 'Gold VIP Card + Concierge' },
+          ].map((m) => {
+            const pts = pointsData?.points_balance || user?.points_balance || 0;
+            const reached = pts >= m.points;
+            const progress = Math.min(1, pts / m.points);
+            return (
+              <View key={m.points} style={styles.milestoneRow}>
+                <View style={[styles.milestoneIcon, { backgroundColor: reached ? m.color + '20' : colors.glass }]}>
+                  <Ionicons name={reached ? 'checkmark-circle' : m.icon} size={20} color={reached ? m.color : colors.textMuted} />
+                </View>
+                <View style={styles.milestoneInfo}>
+                  <View style={styles.milestoneTop}>
+                    <Text style={[styles.milestoneTitle, reached && { color: m.color }]}>{m.title}</Text>
+                    <Text style={styles.milestonePts}>{m.points.toLocaleString()} pts</Text>
+                  </View>
+                  <View style={styles.milestoneBarBg}>
+                    <View style={[styles.milestoneBarFill, { width: `${progress * 100}%`, backgroundColor: m.color }]} />
+                  </View>
+                  <Text style={styles.milestoneReward}>{m.rewards}</Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        <View style={{ height: 32 }} />
       </ScrollView>
 
       {/* Ticket Detail Modal */}
@@ -1949,5 +1931,74 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
     marginTop: spacing.sm,
+  },
+  viewAllRewardsFullBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.glass,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.glassBorderSubtle,
+    marginTop: spacing.sm,
+  },
+  viewAllRewardsFullText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.gold,
+  },
+  milestonesSection: {
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.lg,
+  },
+  milestoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  milestoneIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  milestoneInfo: {
+    flex: 1,
+  },
+  milestoneTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  milestoneTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  milestonePts: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
+  milestoneBarBg: {
+    height: 4,
+    backgroundColor: colors.glass,
+    borderRadius: 2,
+    marginBottom: spacing.xs,
+    overflow: 'hidden',
+  },
+  milestoneBarFill: {
+    height: 4,
+    borderRadius: 2,
+  },
+  milestoneReward: {
+    fontSize: 11,
+    color: colors.textSecondary,
   },
 });
