@@ -167,8 +167,50 @@ export default function RewardsShopPage() {
             <View style={styles.pointsInfo}>
               <Text style={styles.pointsLabel}>YOUR POINTS</Text>
               <Text style={styles.pointsValue}>{currentPoints.toLocaleString()}</Text>
+              <Text style={styles.pointsWorth}>Worth ${(currentPoints / 10).toFixed(2)}</Text>
             </View>
           </LinearGradient>
+        </View>
+
+        {/* How Points Work */}
+        <View style={styles.howItWorksCard}>
+          <View style={styles.howItWorksHeader}>
+            <Ionicons name="information-circle" size={22} color={colors.accent} />
+            <Text style={styles.howItWorksTitle}>How to Redeem Points</Text>
+          </View>
+          
+          <View style={styles.conversionRow}>
+            <View style={styles.conversionBadge}>
+              <Ionicons name="star" size={16} color={colors.gold} />
+              <Text style={styles.conversionText}>10 points</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={16} color={colors.textMuted} />
+            <View style={styles.conversionBadge}>
+              <Text style={styles.conversionText}>$1 value</Text>
+            </View>
+          </View>
+
+          <View style={styles.howItWorksSteps}>
+            <View style={styles.howItWorksStep}>
+              <View style={styles.stepNumber}><Text style={styles.stepNumberText}>1</Text></View>
+              <Text style={styles.stepText}>Choose a reward or use points at any venue</Text>
+            </View>
+            <View style={styles.howItWorksStep}>
+              <View style={styles.stepNumber}><Text style={styles.stepNumberText}>2</Text></View>
+              <Text style={styles.stepText}>Show your QR code to staff</Text>
+            </View>
+            <View style={styles.howItWorksStep}>
+              <View style={styles.stepNumber}><Text style={styles.stepNumberText}>3</Text></View>
+              <Text style={styles.stepText}>Points deducted instantly</Text>
+            </View>
+          </View>
+
+          <View style={styles.usageHint}>
+            <Ionicons name="card" size={16} color={colors.textMuted} />
+            <Text style={styles.usageHintText}>
+              Use points for food, drinks, entry, bottle service and more at any Luna venue
+            </Text>
+          </View>
         </View>
 
         {/* My Active Redemptions */}
@@ -498,5 +540,97 @@ const styles = StyleSheet.create({
   },
   redeemButtonTextDisabled: {
     color: colors.textMuted,
+  },
+  // Points worth display
+  pointsWorth: {
+    fontSize: 12,
+    color: colors.gold,
+    marginTop: 4,
+    opacity: 0.8,
+  },
+  // How it works card
+  howItWorksCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  howItWorksHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  howItWorksTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  conversionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: radius.md,
+  },
+  conversionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.gold + '20',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+  },
+  conversionText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.gold,
+  },
+  howItWorksSteps: {
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  howItWorksStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  stepNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepNumberText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#000',
+  },
+  stepText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  usageHint: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  usageHintText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.textMuted,
+    lineHeight: 18,
   },
 });
