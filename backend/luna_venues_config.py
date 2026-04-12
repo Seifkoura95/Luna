@@ -186,10 +186,10 @@ LUNA_VENUES = {
         "long_description": "JuJu introduces a modern dining venue in the iconic Mermaid Beach area that offers seasonally inspired menus featuring the highest quality ingredients and culinary skills. The venue artfully blends incredible food and cocktails with impeccable service and an infectiously fun atmosphere. Perfect for sunset sessions, boozy Sunday brunch, or special occasions.",
         "features": ["rooftop_terrace", "private_dining"],
         "points_rate": 0.5,
-        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/u5zo7m20_JuJu%201.jpg",
-        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/u5zo7m20_JuJu%201.jpg",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/u2tpomcs_JuJu%201.jpg",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/u2tpomcs_JuJu%201.jpg",
         "gallery": [
-            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/u5zo7m20_JuJu%201.jpg"
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/u2tpomcs_JuJu%201.jpg"
         ],
         "operating_hours": {
             "wednesday": "12:00 PM - 12:00 AM",
@@ -223,10 +223,10 @@ LUNA_VENUES = {
         "long_description": "Step into the Night Market and be transported to the bustling laneways of Asia, where neon lights, aromas of wok fried dishes, and the buzz of late-night energy surround you. Our lively market-inspired space captures the chaos and charm of Asia's iconic food scenes. Perfect for groups, date nights, and those seeking authentic Asian-fusion flavors with a modern twist.",
         "features": ["group_dining", "cocktail_bar"],
         "points_rate": 0.5,
-        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/uejce01b_Night%20Market%20Hero%20Shot%202.jpg",
-        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/uejce01b_Night%20Market%20Hero%20Shot%202.jpg",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/0kw3wdq0_Night%20Market%20Hero%20Shot%202.jpg",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/0kw3wdq0_Night%20Market%20Hero%20Shot%202.jpg",
         "gallery": [
-            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/uejce01b_Night%20Market%20Hero%20Shot%202.jpg"
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/0kw3wdq0_Night%20Market%20Hero%20Shot%202.jpg"
         ],
         "operating_hours": {
             "wednesday": "6:00 PM - 10:30 PM",
@@ -260,10 +260,10 @@ LUNA_VENUES = {
         "long_description": "Ember & Ash is the restaurant Brisbane chooses for an elevated, fire-inspired, fine dining experience. Our kitchen specialises in the precision of the flame, offering a premium steak range, smouldering meals and an evolving late night rooftop energy. Combining the warmth of refined casual dining with sophisticated cocktails.",
         "features": ["cocktail_bar", "rooftop_terrace"],
         "points_rate": 0.5,
-        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/bk1zr731_E%26A%201.jpg",
-        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/bk1zr731_E%26A%201.jpg",
+        "image_url": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/25ud68hm_E%26A%201.jpg",
+        "hero_image": "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/25ud68hm_E%26A%201.jpg",
         "gallery": [
-            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/bk1zr731_E%26A%201.jpg"
+            "https://customer-assets.emergentagent.com/job_35388534-b16b-425d-bea7-94dde1c7e7ca/artifacts/25ud68hm_E%26A%201.jpg"
         ],
         "operating_hours": {
             "wednesday": "6:00 PM - 12:00 AM",
