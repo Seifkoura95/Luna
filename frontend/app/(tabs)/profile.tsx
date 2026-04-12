@@ -393,10 +393,12 @@ export default function ProfileScreen() {
     }
   };
 
-  const tierConfig = TIER_CONFIG[user?.tier?.toLowerCase() || 'bronze'] || TIER_CONFIG.bronze;
+  // Safe tier config - always defaults to bronze if user or tier is missing
+  const userTier = user?.tier?.toLowerCase();
+  const tierConfig = (userTier && TIER_CONFIG[userTier]) ? TIER_CONFIG[userTier] : TIER_CONFIG.bronze;
   // Use CherryHub points if available, otherwise fall back to local points
   const currentPoints = pointsData?.points_balance || user?.points_balance || user?.points || 0;
-  const progressToNext = Math.min((currentPoints / tierConfig.pointsNeeded) * 100, 100);
+  const progressToNext = tierConfig ? Math.min((currentPoints / tierConfig.pointsNeeded) * 100, 100) : 0;
 
   const quickActions = [
     {
