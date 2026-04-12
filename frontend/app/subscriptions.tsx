@@ -17,7 +17,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { AppBackground } from '../src/components/AppBackground';
-import { RotatingMoon } from '../src/components/RotatingMoon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -405,7 +404,6 @@ export default function SubscriptionsScreen() {
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           
-          <RotatingMoon size={70} rotationDuration={25000} />
           <Text style={styles.headerTitle}>MEMBERSHIP</Text>
           <View style={styles.headerUnderline} />
           <Text style={styles.headerSubtitle}>Choose your Luna experience</Text>

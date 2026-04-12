@@ -422,7 +422,7 @@ async def get_venue_points_analytics(request: Request, period: str = "month"):
                 "user_id": uid,
                 "name": u.get("name", "Unknown"),
                 "points": points,
-                "tier": u.get("subscription_tier", "lunar"),
+                "tier": u.get("subscription_tier", "bronze"),
                 "avatar": u.get("avatar_url", f"https://ui-avatars.com/api/?name={u.get('name', 'U')}&background=E31837&color=fff")
             })
     

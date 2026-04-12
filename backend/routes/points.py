@@ -22,8 +22,8 @@ async def award_points(user_id: str, amount_spent: float, source: str, source_id
         "status": "active"
     })
     
-    tier_id = subscription.get("tier_id", "lunar") if subscription else "lunar"
-    tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS["lunar"])
+    tier_id = subscription.get("tier_id", "bronze") if subscription else "bronze"
+    tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS["bronze"])
     multiplier = tier.get("points_multiplier", 1.0)
     
     base_points = int(amount_spent * POINTS_PER_DOLLAR)
@@ -72,8 +72,8 @@ async def get_points_balance(request: Request):
         "status": "active"
     })
     
-    tier_id = subscription.get("tier_id", "lunar") if subscription else "lunar"
-    tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS["lunar"])
+    tier_id = subscription.get("tier_id", "bronze") if subscription else "bronze"
+    tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS["bronze"])
     
     return {
         "points_balance": user.get("points_balance", 0),

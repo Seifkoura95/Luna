@@ -395,7 +395,7 @@ async def seed_sample_leaderboard_users():
         "Zoey Collins", "David Edwards", "Penelope Stewart", "Carter Sanchez"
     ]
     
-    subscription_tiers = [None, None, None, "lunar", "lunar", "eclipse", "eclipse", "aurora"]
+    subscription_tiers = [None, None, None, "bronze", "bronze", "silver", "silver", "gold"]
     tiers = ["bronze", "bronze", "bronze", "silver", "silver", "gold", "platinum"]
     
     created_count = 0
