@@ -342,17 +342,15 @@ async def generate_apple_wallet_pass(request: Request):
         )
         
         cert_path = os.path.join(APPLE_PASS_CERTS_DIR, "certificate.pem")
-        key_path = os.path.join(APPLE_PASS_CERTS_DIR, "private.key")
+        key_path = os.path.join(APPLE_PASS_CERTS_DIR, "pass_private.key")
         wwdr_path = os.path.join(APPLE_PASS_CERTS_DIR, "wwdr.pem")
         password = os.environ.get("APPLE_PASS_CERT_PASSWORD", "")
         
-        # Add icon images
-        icon_path = os.path.join(APPLE_PASS_CERTS_DIR, "icon.png")
-        logo_path = os.path.join(APPLE_PASS_CERTS_DIR, "logo.png")
-        if os.path.exists(icon_path):
-            passfile.addFile("icon.png", open(icon_path, "rb"))
-        if os.path.exists(logo_path):
-            passfile.addFile("logo.png", open(logo_path, "rb"))
+        # Add icon and logo images (all required variants)
+        for fname in ["icon.png", "icon@2x.png", "icon@3x.png", "logo.png", "logo@2x.png"]:
+            fpath = os.path.join(APPLE_PASS_CERTS_DIR, fname)
+            if os.path.exists(fpath):
+                passfile.addFile(fname, open(fpath, "rb"))
         
         output = io.BytesIO()
         passfile.create(cert_path, key_path, wwdr_path, password, output)
