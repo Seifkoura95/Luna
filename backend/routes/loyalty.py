@@ -330,13 +330,33 @@ async def generate_apple_wallet_pass(request: Request, token: str = ""):
     try:
         from py_pkpass.models import Pass, Barcode, BarcodeFormat, StoreCard
         
+        points = user.get("points_balance", 0)
+        wallet_bal = user.get("wallet_balance", 0.0)
+        member_since = "2024"
+        if user.get("created_at"):
+            try:
+                member_since = str(user["created_at"].year) if hasattr(user["created_at"], "year") else "2024"
+            except:
+                pass
+        issue_num = str(abs(hash(current["user_id"])) % 99999).zfill(5)
+        
         card = StoreCard()
-        card.addHeaderField("points", str(user.get("points_balance", 0)), "POINTS")
+        # Header: Points balance (top right, prominent)
+        card.addHeaderField("points", f"{points:,}", "LUNA POINTS")
+        # Primary: Member name
         card.addPrimaryField("name", user.get("name", "Luna Member"), "MEMBER")
-        card.addSecondaryField("tier", tier.get("name", "Bronze"), "TIER")
+        # Secondary: Tier + Multiplier
+        card.addSecondaryField("tier", tier.get("name", "Bronze").upper(), "TIER")
         card.addSecondaryField("multiplier", f"{tier.get('points_multiplier', 1.0)}x", "MULTIPLIER")
+        # Auxiliary: Wallet Balance + Member Since
+        card.addAuxiliaryField("wallet", f"${wallet_bal:.2f}", "WALLET BALANCE")
+        card.addAuxiliaryField("since", member_since, "MEMBER SINCE")
+        # Back fields
         card.addBackField("email", user.get("email", ""), "Email")
         card.addBackField("member_id", current["user_id"], "Member ID")
+        card.addBackField("issue", f"#{issue_num}", "Issue Number")
+        card.addBackField("org", "Luna Group Hospitality", "Organization")
+        card.addBackField("website", "https://lunagroup.com.au", "Website")
         
         passfile = Pass(
             card,
@@ -345,13 +365,16 @@ async def generate_apple_wallet_pass(request: Request, token: str = ""):
             teamIdentifier=APPLE_TEAM_ID,
         )
         passfile.serialNumber = f"LUNA-{current['user_id']}"
-        passfile.description = "Luna Group VIP Member Card"
-        passfile.backgroundColor = "rgb(10, 10, 16)"
+        passfile.description = "Luna Group VIP Membership Card"
+        passfile.logoText = "LUNA"
+        # Dark background matching the design
+        passfile.backgroundColor = "rgb(12, 12, 24)"
         passfile.foregroundColor = "rgb(245, 245, 250)"
-        passfile.labelColor = "rgb(150, 150, 165)"
+        passfile.labelColor = "rgb(120, 120, 140)"
         passfile.barcode = Barcode(
             message=f"LUNA-MEMBER:{current['user_id']}",
             format=BarcodeFormat.QR,
+            altText="Ready to scan",
         )
         
         cert_path = os.path.join(APPLE_PASS_CERTS_DIR, "certificate.pem")
@@ -428,16 +451,21 @@ async def generate_google_wallet_link(request: Request):
         class_id = f"{issuer_id}.luna_vip_loyalty"
         object_id = f"{issuer_id}.luna-{current['user_id'].replace('-', '')}"
         
+        points = user.get("points_balance", 0)
+        wallet_bal = user.get("wallet_balance", 0.0)
+        member_since = "2024"
+        issue_num = str(abs(hash(current["user_id"])) % 99999).zfill(5)
+        
         loyalty_class = {
             "id": class_id,
             "issuerName": "Luna Group Hospitality",
             "reviewStatus": "UNDER_REVIEW",
-            "programName": "Luna VIP",
+            "programName": "LUNA",
             "programLogo": {
                 "sourceUri": {"uri": "https://birthday-rewards-1.preview.emergentagent.com/api/loyalty/member-card/qr.png"},
                 "contentDescription": {"defaultValue": {"language": "en-AU", "value": "Luna Group"}}
             },
-            "hexBackgroundColor": "#0A0A10",
+            "hexBackgroundColor": "#0C0C18",
         }
         
         loyalty_object = {
@@ -445,19 +473,22 @@ async def generate_google_wallet_link(request: Request):
             "classId": class_id,
             "state": "ACTIVE",
             "loyaltyPoints": {
-                "balance": {"int": user.get("points_balance", 0)},
-                "label": "Points",
+                "balance": {"int": points},
+                "label": "Luna Points",
             },
             "accountName": user.get("name", user.get("email", "Member")),
             "accountId": current["user_id"][:8],
             "barcode": {
                 "type": "QR_CODE",
                 "value": f"LUNA-MEMBER:{current['user_id']}",
+                "alternateText": "Ready to scan",
             },
             "textModulesData": [
-                {"header": "TIER", "body": tier.get("name", "Bronze")},
+                {"header": "TIER", "body": tier.get("name", "Bronze").upper()},
                 {"header": "MULTIPLIER", "body": f"{tier.get('points_multiplier', 1.0)}x"},
-                {"header": "WALLET", "body": f"${user.get('wallet_balance', 0.0):.2f}"},
+                {"header": "WALLET BALANCE", "body": f"${wallet_bal:.2f}"},
+                {"header": "MEMBER SINCE", "body": member_since},
+                {"header": "ISSUE", "body": f"#{issue_num}"},
             ],
         }
         
