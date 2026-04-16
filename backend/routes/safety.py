@@ -136,6 +136,22 @@ async def get_emergency_services(venue_id: Optional[str] = None):
     return contacts
 
 
+@router.get("/emergency-contacts")
+async def get_emergency_contacts(venue_id: Optional[str] = None):
+    """Get emergency contacts list for safety page"""
+    contacts = [
+        {"name": "Emergency Services", "number": "000", "type": "emergency"},
+        {"name": "Police (Non-Emergency)", "number": "131 444", "type": "police"},
+        {"name": "Lifeline Australia", "number": "13 11 14", "type": "support"},
+        {"name": "Luna Security", "number": "1800 LUNA 00", "type": "security"},
+    ]
+    if venue_id and venue_id in LUNA_VENUES:
+        venue = LUNA_VENUES[venue_id]
+        contacts.append({"name": f"{venue['name']} Security", "number": venue.get("phone", "N/A"), "type": "venue"})
+    return {"contacts": contacts}
+
+
+
 @router.post("/alert")
 async def send_safety_alert(request: Request, alert_req: SafetyAlertRequest):
     """Send a safety alert to crew members or venue security"""
