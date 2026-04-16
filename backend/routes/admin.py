@@ -369,3 +369,225 @@ async def delete_auction(request: Request, auction_id: str):
     await db.bids.delete_many({"auction_id": auction_id})
     
     return {"success": True, "message": f"Auction {auction_id} deleted"}
+
+
+# ====== GEOFENCE NOTIFICATION MANAGEMENT ======
+
+class GeofenceCreate(BaseModel):
+    name: str
+    venue_id: str
+    latitude: float
+    longitude: float
+    radius: int = 1000
+    cluster: str
+    notification_title: str
+    notification_body: str
+    is_active: bool = True
+
+
+class GeofenceUpdate(BaseModel):
+    name: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    radius: Optional[int] = None
+    cluster: Optional[str] = None
+    notification_title: Optional[str] = None
+    notification_body: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class VenueMessageCreate(BaseModel):
+    venue_id: str
+    time_slot: str  # pre_open, prime, late_night, weekend
+    title: str
+    body: str
+
+
+class VenueMessageUpdate(BaseModel):
+    title: Optional[str] = None
+    body: Optional[str] = None
+    time_slot: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class ClusterMessageCreate(BaseModel):
+    cluster: str
+    time_slot: str  # pre_open, prime, late_night, weekend
+    title: str
+    body: str
+
+
+# ── Geofences CRUD ────────────────────────────────────────────────────────────
+
+@router.get("/geofences")
+async def list_geofences(request: Request):
+    """List all geofences"""
+    await require_admin(request)
+    geofences = await db.geofences.find({}, {"_id": 0}).to_list(100)
+    return {"geofences": geofences, "total": len(geofences)}
+
+
+@router.post("/geofences")
+async def create_geofence(request: Request, body: GeofenceCreate):
+    """Create a new geofence zone"""
+    await require_admin(request)
+    geofence = {
+        "id": f"GEO_{body.venue_id.upper()}_{uuid.uuid4().hex[:4]}",
+        **body.dict(),
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
+    }
+    await db.geofences.insert_one(geofence)
+    return {"success": True, "geofence": {k: v for k, v in geofence.items() if k != "_id"}}
+
+
+@router.put("/geofences/{geofence_id}")
+async def update_geofence(request: Request, geofence_id: str, body: GeofenceUpdate):
+    """Update a geofence"""
+    await require_admin(request)
+    updates = {k: v for k, v in body.dict().items() if v is not None}
+    updates["updated_at"] = datetime.now(timezone.utc)
+    result = await db.geofences.update_one({"id": geofence_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Geofence not found")
+    return {"success": True, "message": f"Geofence {geofence_id} updated"}
+
+
+@router.delete("/geofences/{geofence_id}")
+async def delete_geofence(request: Request, geofence_id: str):
+    """Delete a geofence"""
+    await require_admin(request)
+    result = await db.geofences.delete_one({"id": geofence_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Geofence not found")
+    return {"success": True, "message": f"Geofence {geofence_id} deleted"}
+
+
+# ── Venue Push Messages CRUD ─────────────────────────────────────────────────
+
+@router.get("/push-messages")
+async def list_push_messages(request: Request, venue_id: Optional[str] = None):
+    """List all custom venue push messages (from DB). Falls back to code defaults if empty."""
+    await require_admin(request)
+    query = {}
+    if venue_id:
+        query["venue_id"] = venue_id
+    messages = await db.venue_push_messages.find(query, {"_id": 0}).to_list(500)
+    return {"messages": messages, "total": len(messages)}
+
+
+@router.post("/push-messages")
+async def create_push_message(request: Request, body: VenueMessageCreate):
+    """Add a new push notification message for a venue"""
+    await require_admin(request)
+    msg = {
+        "id": f"msg_{uuid.uuid4().hex[:8]}",
+        **body.dict(),
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc),
+    }
+    await db.venue_push_messages.insert_one(msg)
+    return {"success": True, "message": {k: v for k, v in msg.items() if k != "_id"}}
+
+
+@router.put("/push-messages/{message_id}")
+async def update_push_message(request: Request, message_id: str, body: VenueMessageUpdate):
+    """Update a push notification message"""
+    await require_admin(request)
+    updates = {k: v for k, v in body.dict().items() if v is not None}
+    result = await db.venue_push_messages.update_one({"id": message_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Message not found")
+    return {"success": True, "message": f"Message {message_id} updated"}
+
+
+@router.delete("/push-messages/{message_id}")
+async def delete_push_message(request: Request, message_id: str):
+    """Delete a push notification message"""
+    await require_admin(request)
+    result = await db.venue_push_messages.delete_one({"id": message_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Message not found")
+    return {"success": True, "message": f"Message {message_id} deleted"}
+
+
+# ── Cluster Push Messages CRUD ───────────────────────────────────────────────
+
+@router.get("/cluster-messages")
+async def list_cluster_messages(request: Request, cluster: Optional[str] = None):
+    """List all custom cluster push messages"""
+    await require_admin(request)
+    query = {}
+    if cluster:
+        query["cluster"] = cluster
+    messages = await db.cluster_push_messages.find(query, {"_id": 0}).to_list(200)
+    return {"messages": messages, "total": len(messages)}
+
+
+@router.post("/cluster-messages")
+async def create_cluster_message(request: Request, body: ClusterMessageCreate):
+    """Add a new cluster push notification message"""
+    await require_admin(request)
+    msg = {
+        "id": f"cmsg_{uuid.uuid4().hex[:8]}",
+        **body.dict(),
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc),
+    }
+    await db.cluster_push_messages.insert_one(msg)
+    return {"success": True, "message": {k: v for k, v in msg.items() if k != "_id"}}
+
+
+@router.put("/cluster-messages/{message_id}")
+async def update_cluster_message(request: Request, message_id: str, body: VenueMessageUpdate):
+    """Update a cluster push notification message"""
+    await require_admin(request)
+    updates = {k: v for k, v in body.dict().items() if v is not None}
+    result = await db.cluster_push_messages.update_one({"id": message_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Message not found")
+    return {"success": True, "message": f"Message {message_id} updated"}
+
+
+@router.delete("/cluster-messages/{message_id}")
+async def delete_cluster_message(request: Request, message_id: str):
+    """Delete a cluster push notification message"""
+    await require_admin(request)
+    result = await db.cluster_push_messages.delete_one({"id": message_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Message not found")
+    return {"success": True, "message": f"Message {message_id} deleted"}
+
+
+# ── Geofence Analytics ────────────────────────────────────────────────────────
+
+@router.get("/geofence-analytics")
+async def get_geofence_analytics(request: Request):
+    """Get geofence trigger analytics"""
+    await require_admin(request)
+    
+    pipeline = [
+        {"$group": {
+            "_id": "$cluster",
+            "total_triggers": {"$sum": 1},
+            "unique_users": {"$addToSet": "$user_id"},
+            "last_trigger": {"$max": "$triggered_at"},
+        }},
+        {"$project": {
+            "_id": 0,
+            "cluster": "$_id",
+            "total_triggers": 1,
+            "unique_users": {"$size": "$unique_users"},
+            "last_trigger": 1,
+        }},
+        {"$sort": {"total_triggers": -1}},
+    ]
+    
+    stats = await db.geofence_triggers.aggregate(pipeline).to_list(50)
+    total = await db.geofence_triggers.count_documents({})
+    
+    for s in stats:
+        if s.get("last_trigger") and hasattr(s["last_trigger"], "isoformat"):
+            s["last_trigger"] = s["last_trigger"].isoformat()
+    
+    return {"stats": stats, "total_triggers": total}

@@ -508,7 +508,7 @@ CLUSTER_MESSAGES = {
 # ─── SELECTION FUNCTIONS ──────────────────────────────────────────────────────
 
 def pick_notification(venue_id: str) -> dict:
-    """Pick a contextual notification. Returns None if venue is closed."""
+    """Pick from code defaults (sync fallback)."""
     if not _is_venue_open(venue_id):
         return None
     time_slot = _get_venue_time_slot(venue_id)
@@ -524,8 +524,27 @@ def pick_notification(venue_id: str) -> dict:
     return random.choice(candidates)
 
 
+async def pick_notification_async(venue_id: str) -> dict:
+    """Pick a notification. DB overrides first (from Lovable dashboard), then code defaults.
+    Returns None if venue is closed."""
+    if not _is_venue_open(venue_id):
+        return None
+    time_slot = _get_venue_time_slot(venue_id)
+    weekend = _is_weekend()
+    slots = [time_slot]
+    if weekend:
+        slots.append("weekend")
+    db_msgs = await db.venue_push_messages.find(
+        {"venue_id": venue_id, "is_active": {"$ne": False}, "time_slot": {"$in": slots}},
+        {"_id": 0, "title": 1, "body": 1}
+    ).to_list(50)
+    if db_msgs:
+        return random.choice(db_msgs)
+    return pick_notification(venue_id)
+
+
 def pick_cluster_notification(cluster: str) -> dict:
-    """Pick a contextual cluster notification based on time of day"""
+    """Pick from code defaults (sync fallback)"""
     now = _now_aest()
     hour = now.hour
     weekend = _is_weekend()
@@ -544,6 +563,29 @@ def pick_cluster_notification(cluster: str) -> dict:
     if not candidates:
         candidates = list(cluster_msgs.get("prime", [{"title": "Big night ahead", "body": "There's a lot happening tonight. Open the app to see what's on."}]))
     return random.choice(candidates)
+
+
+async def pick_cluster_notification_async(cluster: str) -> dict:
+    """Pick a cluster notification. DB overrides first, then code defaults."""
+    now = _now_aest()
+    hour = now.hour
+    weekend = _is_weekend()
+    if hour < 5 or hour >= 21:
+        slot = "late_night"
+    elif hour >= 17:
+        slot = "prime"
+    else:
+        slot = "pre_open"
+    slots = [slot]
+    if weekend:
+        slots.append("weekend")
+    db_msgs = await db.cluster_push_messages.find(
+        {"cluster": cluster, "is_active": {"$ne": False}, "time_slot": {"$in": slots}},
+        {"_id": 0, "title": 1, "body": 1}
+    ).to_list(50)
+    if db_msgs:
+        return random.choice(db_msgs)
+    return pick_cluster_notification(cluster)
 
 
 
