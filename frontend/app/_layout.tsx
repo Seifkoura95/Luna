@@ -68,7 +68,6 @@ export default function RootLayout() {
         <Stack.Screen name="subscriptions" />
         <Stack.Screen name="table-booking" />
         <Stack.Screen name="safety" />
-        <Stack.Screen name="social" />
         <Stack.Screen name="events" />
         <Stack.Screen name="notifications" />
         <Stack.Screen name="refer-friend" />

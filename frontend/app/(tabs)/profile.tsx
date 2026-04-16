@@ -426,14 +426,6 @@ export default function ProfileScreen() {
       onPress: () => router.push('/(tabs)/wallet'),
     },
     {
-      id: 'social',
-      icon: 'chatbubbles',
-      title: 'Social Feed',
-      subtitle: 'Friend activity',
-      color: '#00A3FF',
-      onPress: () => router.push('/social'),
-    },
-    {
       id: 'rewards',
       icon: 'star',
       title: 'Rewards',
