@@ -330,10 +330,21 @@ async def get_member_card_html(request: Request, token: str = ""):
         tier_name = tier.get("name", "Bronze")
         member_since = "2024"
         issue_num = str(abs(hash(current["user_id"])) % 99999).zfill(5)
+        # Generate QR as base64
+        qr_data = f"LUNA-MEMBER:{current['user_id']}"
+        qr = qrcode.QRCode(version=1, box_size=10, border=2)
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+        buf = io.BytesIO()
+        qr_img.save(buf, format="PNG")
+        qr_b64 = base64.b64encode(buf.getvalue()).decode()
+        qr_src = f"data:image/png;base64,{qr_b64}"
     else:
         name, email, points, wallet = "Luna Member", "", 0, 0.0
         multiplier, tier_name, tier_id = 1.0, "Bronze", "bronze"
         member_since, issue_num = "2024", "00000"
+        qr_src = ""
     
     tier_class = f"tier-{tier_id}" if tier_id in ("bronze","silver","gold","platinum") else "tier-bronze"
     
@@ -430,7 +441,7 @@ body{{font-family:'Outfit',sans-serif;background:#080808;display:flex;align-item
     </div>
     <div class="card-rule"></div>
     <div class="qr-panel">
-      <div class="qr-inner"><img src="/api/loyalty/member-card/qr.png" alt="QR Code"/></div>
+      <div class="qr-inner"><img src="{qr_src}" alt="QR Code"/></div>
       <div class="qr-scan-label"><span class="qr-pulse"></span>Ready to scan</div>
       <div class="qr-venue-label">Scan at any Luna venue</div>
     </div>
