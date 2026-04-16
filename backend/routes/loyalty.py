@@ -303,6 +303,16 @@ async def generate_apple_wallet_pass(request: Request):
     
     auth = request.headers.get("authorization")
     current = get_current_user(auth)
+
+@router.get("/member-card/preview.png")
+async def get_member_card_preview():
+    """Get a rendered preview of the member card (for sharing/display)"""
+    from fastapi.responses import FileResponse
+    preview = os.path.join(os.path.dirname(__file__), "..", "static", "luna-wallet-card-preview.png")
+    if os.path.exists(preview):
+        return FileResponse(preview, media_type="image/png")
+    raise HTTPException(status_code=404, detail="Preview not available")
+
     
     if not APPLE_PASS_TYPE_ID or not APPLE_TEAM_ID:
         raise HTTPException(status_code=503, detail="Apple Wallet pass not configured. Certificates required.")
