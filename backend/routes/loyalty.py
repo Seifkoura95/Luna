@@ -14,6 +14,9 @@ import base64
 import os
 import logging
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from config import SUBSCRIPTION_TIERS
 from routes.auth import get_current_user
 
@@ -296,14 +299,6 @@ APPLE_PASS_TYPE_ID = os.environ.get("APPLE_PASS_TYPE_ID", "")
 APPLE_TEAM_ID = os.environ.get("APPLE_TEAM_ID", "")
 
 
-@router.get("/wallet-pass/apple")
-async def generate_apple_wallet_pass(request: Request):
-    """Generate Apple Wallet .pkpass file for the member"""
-    from fastapi.responses import Response
-    
-    auth = request.headers.get("authorization")
-    current = get_current_user(auth)
-
 @router.get("/member-card/preview.png")
 async def get_member_card_preview():
     """Get a rendered preview of the member card (for sharing/display)"""
@@ -313,6 +308,14 @@ async def get_member_card_preview():
         return FileResponse(preview, media_type="image/png")
     raise HTTPException(status_code=404, detail="Preview not available")
 
+
+@router.get("/wallet-pass/apple")
+async def generate_apple_wallet_pass(request: Request, token: str = ""):
+    """Generate Apple Wallet .pkpass file for the member"""
+    from fastapi.responses import Response
+    
+    authorization = request.headers.get("authorization") or (f"Bearer {token}" if token else "")
+    current = get_current_user(authorization)
     
     if not APPLE_PASS_TYPE_ID or not APPLE_TEAM_ID:
         raise HTTPException(status_code=503, detail="Apple Wallet pass not configured. Certificates required.")
@@ -365,9 +368,13 @@ async def get_member_card_preview():
         output = io.BytesIO()
         passfile.create(cert_path, key_path, wwdr_path, password, output)
         output.seek(0)
+        pkpass_data = output.read()
+        
+        if len(pkpass_data) < 100:
+            raise HTTPException(status_code=500, detail="Failed to generate pass file")
         
         return Response(
-            content=output.read(),
+            content=pkpass_data,
             media_type="application/vnd.apple.pkpass",
             headers={"Content-Disposition": f"attachment; filename=luna-vip-{current['user_id']}.pkpass"}
         )
@@ -389,12 +396,9 @@ GOOGLE_SERVICE_ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), "certs", "
 
 @router.get("/wallet-pass/google")
 async def generate_google_wallet_link(request: Request):
-    """Generate Google Wallet save link for the member"""
+    """Generate Google Wallet save link for the member's loyalty card"""
     auth = request.headers.get("authorization")
     current = get_current_user(auth)
-    
-    if not GOOGLE_WALLET_ISSUER_ID:
-        raise HTTPException(status_code=503, detail="Google Wallet not configured. Issuer ID required.")
     
     user = await db.users.find_one({"user_id": current["user_id"]}, {"_id": 0, "password": 0})
     if not user:
@@ -403,15 +407,88 @@ async def generate_google_wallet_link(request: Request):
     tier_id = user.get("tier", "bronze").lower()
     tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS.get("bronze", {}))
     
-    # Build the loyalty object for Google Wallet
-    object_id = f"{GOOGLE_WALLET_ISSUER_ID}.luna-{current['user_id']}"
+    issuer_id = GOOGLE_WALLET_ISSUER_ID
+    if not issuer_id:
+        raise HTTPException(status_code=503, detail="Google Wallet not configured")
     
-    return {
-        "save_url": f"https://pay.google.com/gp/v/save/{object_id}",
-        "object_id": object_id,
-        "status": "configured" if os.path.exists(GOOGLE_SERVICE_ACCOUNT_FILE) else "credentials_needed",
-        "message": "Google Wallet pass ready" if os.path.exists(GOOGLE_SERVICE_ACCOUNT_FILE) else "Google service account credentials needed",
-    }
+    try:
+        from google.auth.transport.requests import Request as GoogleRequest
+        from google.oauth2 import service_account
+        import jwt as pyjwt
+        import json
+        import time
+        
+        sa_file = GOOGLE_SERVICE_ACCOUNT_FILE
+        if not os.path.exists(sa_file):
+            raise HTTPException(status_code=503, detail="Google service account not found")
+        
+        with open(sa_file) as f:
+            sa_info = json.load(f)
+        
+        class_id = f"{issuer_id}.luna_vip_loyalty"
+        object_id = f"{issuer_id}.luna-{current['user_id'].replace('-', '')}"
+        
+        loyalty_class = {
+            "id": class_id,
+            "issuerName": "Luna Group Hospitality",
+            "reviewStatus": "UNDER_REVIEW",
+            "programName": "Luna VIP",
+            "programLogo": {
+                "sourceUri": {"uri": "https://birthday-rewards-1.preview.emergentagent.com/api/loyalty/member-card/qr.png"},
+                "contentDescription": {"defaultValue": {"language": "en-AU", "value": "Luna Group"}}
+            },
+            "hexBackgroundColor": "#0A0A10",
+        }
+        
+        loyalty_object = {
+            "id": object_id,
+            "classId": class_id,
+            "state": "ACTIVE",
+            "loyaltyPoints": {
+                "balance": {"int": user.get("points_balance", 0)},
+                "label": "Points",
+            },
+            "accountName": user.get("name", user.get("email", "Member")),
+            "accountId": current["user_id"][:8],
+            "barcode": {
+                "type": "QR_CODE",
+                "value": f"LUNA-MEMBER:{current['user_id']}",
+            },
+            "textModulesData": [
+                {"header": "TIER", "body": tier.get("name", "Bronze")},
+                {"header": "MULTIPLIER", "body": f"{tier.get('points_multiplier', 1.0)}x"},
+                {"header": "WALLET", "body": f"${user.get('wallet_balance', 0.0):.2f}"},
+            ],
+        }
+        
+        # Create JWT for save link
+        claims = {
+            "iss": sa_info["client_email"],
+            "aud": "google",
+            "origins": ["https://birthday-rewards-1.preview.emergentagent.com"],
+            "typ": "savetowallet",
+            "payload": {
+                "loyaltyClasses": [loyalty_class],
+                "loyaltyObjects": [loyalty_object],
+            },
+            "iat": int(time.time()),
+        }
+        
+        token = pyjwt.encode(claims, sa_info["private_key"], algorithm="RS256")
+        save_url = f"https://pay.google.com/gp/v/save/{token}"
+        
+        return {
+            "save_url": save_url,
+            "object_id": object_id,
+            "status": "ready",
+            "message": "Google Wallet pass ready",
+        }
+        
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=f"Missing dependency: {e}")
+    except Exception as e:
+        logger.error(f"Google Wallet error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Scan Member (Staff endpoint) ─────────────────────────────────────────────

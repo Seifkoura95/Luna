@@ -1233,6 +1233,9 @@ export const api = {
   getLoyaltyTransactions: (limit?: number) =>
     apiFetch<{ transactions: any[] }>(`/api/loyalty/transactions?limit=${limit || 20}`),
 
+  getGoogleWalletLink: () =>
+    apiFetch<{ save_url: string; status: string; message: string }>('/api/loyalty/wallet-pass/google'),
+
   // Send Gift Card
   sendGiftCard: (amount: number, originUrl: string, recipientEmail: string, senderMessage?: string) =>
     apiFetch<{ checkout_url: string; session_id: string; gift_code: string; share_url: string; recipient_email: string; is_existing_member: boolean; wallet_credit: number; bonus: number }>('/api/payments/gift-card/send', {

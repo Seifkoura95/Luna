@@ -30,15 +30,25 @@ export default function MemberCard() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || '';
-      await Linking.openURL(`${backendUrl}/api/loyalty/wallet-pass/apple`);
+      const token = require('../src/stores/authStore').useAuthStore.getState().token;
+      await Linking.openURL(`${backendUrl}/api/loyalty/wallet-pass/apple?token=${token}`);
     } catch {
-      Alert.alert('Coming Soon', 'Apple Wallet pass requires certificate setup. Contact Luna Group support.');
+      Alert.alert('Error', 'Could not generate Apple Wallet pass. Please try again.');
     }
   };
 
   const addToGoogleWallet = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert('Coming Soon', 'Google Wallet pass requires issuer setup. Contact Luna Group support.');
+    try {
+      const result = await api.getGoogleWalletLink();
+      if (result.save_url) {
+        await Linking.openURL(result.save_url);
+      } else {
+        Alert.alert('Error', result.message || 'Google Wallet not available');
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Could not generate Google Wallet pass');
+    }
   };
 
   if (loading) return <View style={styles.container}><AppBackground /><ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 200 }} /></View>;
