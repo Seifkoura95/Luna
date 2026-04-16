@@ -146,7 +146,8 @@ VENUE_HOURS = {
     "ember_ash":         {2: (18, 22.5), 3: (18, 23), 4: (18, 23), 5: (18, 23)},
     "su_casa_gold_coast": {2: (18, 24), 3: (18, 24), 4: (18, 24), 5: (18, 24), 6: (18, 22)},
     "juju":              {2: (12, 24), 3: (12, 24), 4: (12, 24), 5: (12, 24), 6: (11, 24)},
-    "bavarian":          {4: (21, 27), 5: (21, 27)},
+    "pump":              {4: (21, 27), 5: (21, 27)},
+    "mamacita":          {4: (21, 27), 5: (21, 27)},
 }
 
 
@@ -394,28 +395,62 @@ VENUE_MESSAGES = {
         ],
     },
 
-    # ── THE BAVARIAN — Fri/Sat 9PM-3AM — German Beer Hall ────────────────────
-    "bavarian": {
+    # ── PUMP — Fri/Sat 9PM-3AM — EDM Nightclub ────────────────────────────────
+    "pump": {
         "pre_open": [
-            {"title": "Pretzels and steins on tap", "body": "The Bavarian is getting ready for a great night. Check the app."},
-            {"title": "Prost!", "body": "The Bavarian is about to open. Check the app for specials."},
-            {"title": "The hall is being prepared", "body": "The Bavarian has a big night ahead. See what's on."},
+            {"title": "The bass is warming up", "body": "Pump is about to go off. Check the app for tonight's lineup."},
+            {"title": "Mainstage energy incoming", "body": "Pump has a massive set planned tonight. See who's playing in the app."},
+            {"title": "Doors open soon", "body": "Pump is almost ready to go. Get on the list in the app."},
+            {"title": "EDM night loading", "body": "Pump is setting up for a huge one. Check the app for details."},
         ],
         "prime": [
-            {"title": "Schnitzel weather", "body": "The Bavarian has comfort food and cold beers ready. See the menu."},
-            {"title": "Steins are flowing", "body": "The Bavarian is in full swing tonight. Check the app."},
-            {"title": "The hall is filling up", "body": "The Bavarian has a great atmosphere tonight. Open the app."},
-            {"title": "Beer, food, good times", "body": "The Bavarian has it all tonight. Check the app for details."},
-            {"title": "Oktoberfest energy", "body": "The Bavarian is bringing the good times. Check the app."},
+            {"title": "The drop is coming", "body": "Pump's sound system is hitting different tonight. Check the app."},
+            {"title": "Mainstage is live", "body": "Pump is in full effect. Skip the line with the app."},
+            {"title": "The LEDs are going crazy", "body": "Pump has an insane light show tonight. Open the app to get in."},
+            {"title": "Bass face activated", "body": "Pump is delivering a mainstage experience right now. Check the app."},
+            {"title": "The energy is electric", "body": "Pump is packed and the DJ is killing it. Open the app."},
+            {"title": "Bottle service booths available", "body": "Premium spots at Pump tonight. Check the app for VIP."},
         ],
         "late_night": [
-            {"title": "Still pouring", "body": "The Bavarian is keeping the steins flowing. Check the app."},
-            {"title": "Late night schnitzel run", "body": "The Bavarian is still serving. Open the app."},
-            {"title": "One more round", "body": "The Bavarian isn't done yet. Check the app."},
+            {"title": "Peak hour at Pump", "body": "The dancefloor is at capacity. Fast-track entry in the app."},
+            {"title": "The set of the night", "body": "Pump's DJ is saving the best for now. Get in via the app."},
+            {"title": "Still going hard", "body": "Pump doesn't slow down. Open the app to get in."},
+            {"title": "The crowd is on another level", "body": "Pump is peaking right now. Skip the line with the app."},
+            {"title": "One more drop", "body": "Pump's closing set is about to be legendary. Check the app."},
         ],
         "weekend": [
-            {"title": "Weekend at The Bavarian", "body": "Big steins, big vibes, big weekend. Check it out."},
-            {"title": "Saturday night steins", "body": "The Bavarian on a weekend is unbeatable. See what's on."},
+            {"title": "Friday night at Pump", "body": "The biggest EDM night on the coast. Check the app."},
+            {"title": "Saturday at Pump", "body": "Mainstage weekend energy. See tonight's lineup in the app."},
+            {"title": "Weekend bass", "body": "Pump is the move this weekend. Check the app for details."},
+        ],
+    },
+
+    # ── MAMACITA — Fri/Sat 9PM-3AM — Latin & Urban Nightclub ─────────────────
+    "mamacita": {
+        "pre_open": [
+            {"title": "Caliente", "body": "Mamacita is heating up for a big night. Check the app for tonight's vibe."},
+            {"title": "Latin heat incoming", "body": "Mamacita has the rhythms ready. Open the app to see what's on."},
+            {"title": "The playlist is fire", "body": "Mamacita is about to bring the heat. Check the app."},
+            {"title": "Get ready to move", "body": "Mamacita has a night of non-stop energy planned. See the app."},
+        ],
+        "prime": [
+            {"title": "The rhythm is calling", "body": "Mamacita is in full swing with Latin and urban heat. Check the app."},
+            {"title": "Reggaeton all night", "body": "Mamacita has the perfect soundtrack going. Open the app."},
+            {"title": "The dancefloor is on fire", "body": "Mamacita is bringing the heat tonight. Check the app to get in."},
+            {"title": "Latin grooves and urban beats", "body": "Mamacita is delivering non-stop energy. Open the app."},
+            {"title": "Bachata to club anthems", "body": "Mamacita's taking you on a journey tonight. Check the app."},
+            {"title": "The vibe is infectious", "body": "Mamacita has the whole room moving. Open the app."},
+        ],
+        "late_night": [
+            {"title": "Peak hour at Mamacita", "body": "The dancefloor is packed with energy. Fast-track entry in the app."},
+            {"title": "The heat is real", "body": "Mamacita is at its best right now. Skip the line with the app."},
+            {"title": "Still dancing", "body": "Mamacita doesn't stop. Open the app to get in."},
+            {"title": "Last sets are always the best", "body": "Mamacita's closing hour hits different. Check the app."},
+        ],
+        "weekend": [
+            {"title": "Friday night fiesta", "body": "Mamacita is the hottest spot on the coast. Check the app."},
+            {"title": "Saturday Latin heat", "body": "Mamacita on a Saturday is unmatched. See what's on."},
+            {"title": "Weekend at Mamacita", "body": "Latin vibes, urban beats, big weekend. Check the app."},
         ],
     },
 }
@@ -927,14 +962,28 @@ async def seed_default_geofences():
             "updated_at": datetime.now(timezone.utc)
         },
         {
-            "id": "GEO_BAVARIAN",
-            "name": "The Bavarian Gold Coast",
+            "id": "GEO_PUMP",
+            "name": "Pump Surfers Paradise",
+            "latitude": -28.0033,
+            "longitude": 153.4300,
+            "radius": 1000,
+            "notification_title": "The bass is warming up",
+            "notification_body": "Pump is about to go off. Check the app for tonight's lineup.",
+            "venue_id": "pump",
+            "cluster": "gold_coast_surfers",
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        },
+        {
+            "id": "GEO_MAMACITA",
+            "name": "Mamacita Surfers Paradise",
             "latitude": -28.0028,
             "longitude": 153.4298,
             "radius": 1000,
-            "notification_title": "Pretzels and steins on tap",
-            "notification_body": "The Bavarian has a great night ahead. Open the app to see what's happening.",
-            "venue_id": "bavarian",
+            "notification_title": "Caliente",
+            "notification_body": "Mamacita is heating up for a big night. Check the app for tonight's vibe.",
+            "venue_id": "mamacita",
             "cluster": "gold_coast_surfers",
             "is_active": True,
             "created_at": datetime.now(timezone.utc),
