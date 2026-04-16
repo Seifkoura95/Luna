@@ -55,6 +55,12 @@
   - Added POST /api/notifications/test-push admin endpoint for testing
   - Needs real device (Expo Go) to register valid push token
 
+- **COMPLETED**: Luna Loyalty Engine — CherryHub Replacement (April 12, 2026)
+  - Built /api/loyalty/* endpoints: points award/redeem, staff award, transactions, digital member card with QR, wallet pass stubs
+  - Digital Member Card screen (/member-card) with QR code, tier badge, points, wallet balance, Apple/Google Wallet buttons
+  - Staff Portal "Award Pts" action: staff enters $ amount, tier multiplier auto-applied
+  - QR format: LUNA-MEMBER:{user_id} — staff scans to look up member
+  - Apple Wallet (.pkpass) and Google Wallet endpoints ready — need certs/issuer ID to activate
 ## Latest Updates (April 12, 2026 - Session 1)
 - **Updated**: Subscription Tiers - Implemented new Bronze/Silver/Gold membership structure with detailed perks
   - **Bronze** (FREE): 2x points on pre-purchases, free entry before 10pm, 5% restaurant discount on weeknights

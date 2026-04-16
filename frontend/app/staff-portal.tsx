@@ -68,8 +68,8 @@ export default function StaffPortal() {
     setScanning(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setShowScanner(false);
-    // QR code data is expected to be a user_id
-    const userId = data.trim();
+    // QR code data format: "LUNA-MEMBER:{user_id}" or just user_id
+    const userId = data.replace('LUNA-MEMBER:', '').trim();
     try {
       const profile = await api.getMemberProfile(userId);
       setSelectedMember(profile);
@@ -134,6 +134,36 @@ export default function StaffPortal() {
   const logGuest = () => doAction('entry/guest', {
     member_user_id: selectedMember!.user_id, venue_id: 'eclipse', guest_name: 'Guest',
   }, 'Guest entry logged');
+
+  const awardPoints = () => {
+    if (!selectedMember) return;
+    Alert.prompt(
+      'Award Points',
+      `Enter purchase amount ($) for ${selectedMember.name}.\nTheir ${selectedMember.tier} tier gives ${selectedMember.benefits?.points_multiplier || 1}x multiplier.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Award',
+          onPress: async (amount?: string) => {
+            const spent = parseFloat(amount || '0');
+            if (spent <= 0) { Alert.alert('Error', 'Enter a valid amount'); return; }
+            setActionLoading('award');
+            try {
+              const result = await api.staffAwardPoints(selectedMember!.user_id, spent, 'eclipse');
+              Alert.alert('Points Awarded', `${result.total_points} pts awarded to ${result.member_name}\n(${result.multiplier}x multiplier)\nNew balance: ${result.new_balance}`);
+              const profile = await api.getMemberProfile(selectedMember!.user_id);
+              setSelectedMember(profile);
+            } catch (e: any) {
+              Alert.alert('Error', e.message || 'Failed to award points');
+            } finally { setActionLoading(''); }
+          }
+        }
+      ],
+      'plain-text',
+      '',
+      'numeric'
+    );
+  };
 
   const m = selectedMember;
 
@@ -261,6 +291,7 @@ export default function StaffPortal() {
             <View style={styles.sectionCard} data-testid="staff-actions-card">
               <Text style={styles.sectionTitle}>Actions</Text>
               <View style={styles.actionsGrid}>
+                <ActionButton icon="card" label="Award Pts" color={colors.gold} loading={actionLoading === 'award'} onPress={awardPoints} testId="action-award-points" />
                 <ActionButton icon="enter" label="Log Entry" color="#22C55E" loading={actionLoading === 'entry/log'} onPress={logEntry} testId="action-log-entry" />
                 <ActionButton icon="wine" label="Comp Drink" color="#8B5CF6" loading={actionLoading === 'drinks/redeem'} onPress={redeemDrink} disabled={m.today.drink_redeemed} testId="action-comp-drink" />
                 <ActionButton icon="people" label={`Guest (${m.today.guest_remaining})`} color={colors.accent} loading={actionLoading === 'entry/guest'} onPress={logGuest} disabled={m.today.guest_remaining <= 0} testId="action-guest-entry" />

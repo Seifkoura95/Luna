@@ -44,6 +44,7 @@ from routes.instagram import router as instagram_router
 from routes.admin import router as admin_router
 from routes.users import router as users_router
 from routes.campaigns import router as campaigns_router
+from routes.loyalty import router as loyalty_router
 from routes.perks import router as perks_router
 
 # Export all routers for easy importing
@@ -121,4 +122,5 @@ ALL_ROUTERS = [
     users_router,
     campaigns_router,
     perks_router,
+    loyalty_router,
 ]

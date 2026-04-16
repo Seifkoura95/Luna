@@ -1220,6 +1220,19 @@ export const api = {
   getMemberProfile: (userId: string) =>
     apiFetch<any>(`/api/perks/member/${userId}/profile`),
 
+  // Luna Loyalty Engine
+  getMemberCard: () =>
+    apiFetch<{ user_id: string; name: string; tier: string; tier_color: string; points_balance: number; wallet_balance: number; qr_code: string; qr_data: string; multiplier: number; member_since: string }>('/api/loyalty/member-card'),
+
+  staffAwardPoints: (memberUserId: string, amountSpent: number, venueId: string, category?: string) =>
+    apiFetch<{ success: boolean; member_name: string; total_points: number; multiplier: number; new_balance: number }>('/api/loyalty/staff/award', {
+      method: 'POST',
+      body: JSON.stringify({ member_user_id: memberUserId, amount_spent: amountSpent, venue_id: venueId, category: category || 'general' })
+    }),
+
+  getLoyaltyTransactions: (limit?: number) =>
+    apiFetch<{ transactions: any[] }>(`/api/loyalty/transactions?limit=${limit || 20}`),
+
   // Send Gift Card
   sendGiftCard: (amount: number, originUrl: string, recipientEmail: string, senderMessage?: string) =>
     apiFetch<{ checkout_url: string; session_id: string; gift_code: string; share_url: string; recipient_email: string; is_existing_member: boolean; wallet_credit: number; bonus: number }>('/api/payments/gift-card/send', {

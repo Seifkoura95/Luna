@@ -484,6 +484,7 @@ export default function ProfileScreen() {
   ];
 
   const settingsItems = [
+    { id: 'member-card', icon: 'card', title: 'Digital Member Card', route: '/member-card' },
     { id: 'edit-profile', icon: 'person', title: 'Edit Profile', route: '/edit-profile' },
     { id: 'settings', icon: 'settings', title: 'Settings', route: '/settings' },
     { id: 'notifications', icon: 'notifications', title: 'Notifications', route: '/notification-settings' },
