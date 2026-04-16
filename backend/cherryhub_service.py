@@ -285,8 +285,13 @@ class CherryHubService:
     async def get_member_by_key(self, member_key: str) -> Optional[Dict[str, Any]]:
         """
         Get member details by MemberKey (SwiftPOS Member Number)
+        CherryHub requires composite ID format: {business_id}.0.{member_key}
         """
-        endpoint = f"/{self.business_id}/members/{member_key}"
+        composite_id = member_key
+        if not member_key.startswith(self.business_id):
+            composite_id = f"{self.business_id}.0.{member_key}"
+        
+        endpoint = f"/{self.business_id}/members/{composite_id}"
         
         try:
             result = await self._make_request("GET", endpoint)
@@ -325,7 +330,8 @@ class CherryHubService:
                     "mock": True
                 }
         
-        endpoint = f"/{self.business_id}/members/{member_key}/dmc"
+        composite_id = member_key if member_key.startswith(self.business_id) else f"{self.business_id}.0.{member_key}"
+        endpoint = f"/{self.business_id}/members/{composite_id}/dmc"
         params = {"passType": pass_type}
         
         try:
@@ -340,7 +346,8 @@ class CherryHubService:
         """
         Update member information
         """
-        endpoint = f"/{self.business_id}/members/{member_key}"
+        composite_id = member_key if member_key.startswith(self.business_id) else f"{self.business_id}.0.{member_key}"
+        endpoint = f"/{self.business_id}/members/{composite_id}"
         
         try:
             result = await self._make_request("PUT", endpoint, data=update_data)
@@ -354,18 +361,15 @@ class CherryHubService:
         """
         Get member's loyalty points balance
         """
-        # Mock mode for testing
         if CHERRYHUB_MOCK_MODE:
             logger.info(f"[MOCK] Getting points balance for {member_key}")
-            return {
-                "points": 1250,
-                "balance": 1250,
-                "tier": "Gold",
-                "lifetimePoints": 5000,
-                "mock": True
-            }
+            return {"points": 1250, "balance": 1250, "tier": "Gold", "lifetimePoints": 5000, "mock": True}
         
-        endpoint = f"/{self.business_id}/members/{member_key}/points"
+        composite_id = member_key
+        if not member_key.startswith(self.business_id):
+            composite_id = f"{self.business_id}.0.{member_key}"
+        
+        endpoint = f"/{self.business_id}/members/{composite_id}/points"
         
         try:
             result = await self._make_request("GET", endpoint)
@@ -397,7 +401,11 @@ class CherryHubService:
                 "mock": True
             }
         
-        endpoint = f"/{self.business_id}/members/{member_key}/points/add"
+        composite_id = member_key
+        if not member_key.startswith(self.business_id):
+            composite_id = f"{self.business_id}.0.{member_key}"
+        
+        endpoint = f"/{self.business_id}/members/{composite_id}/points/add"
         data = {
             "points": points,
             "reason": reason,
@@ -427,7 +435,8 @@ class CherryHubService:
                 "mock": True
             }
         
-        endpoint = f"/{self.business_id}/members/{member_key}/points/deduct"
+        composite_id = member_key if member_key.startswith(self.business_id) else f"{self.business_id}.0.{member_key}"
+        endpoint = f"/{self.business_id}/members/{composite_id}/points/deduct"
         data = {
             "points": points,
             "reason": reason,
