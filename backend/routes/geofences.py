@@ -122,29 +122,287 @@ async def get_active_geofences(authorization: str = Header(None)):
     return {"geofences": geofences}
 
 
-# Cluster notification messages — sent when multiple venues are nearby
-CLUSTER_MESSAGES = {
-    "brisbane_cbd": {
-        "title": "Big night ahead",
-        "body": "There's a lot happening tonight. Open the app to see what's on.",
-        "action": "open_home",
+# ============ Notification Message Library ============
+# Each venue has messages categorised by time-of-day and mood.
+# The system picks one at random based on the current time slot.
+# This ensures users never see the same notification twice in a row.
+
+import random
+from datetime import datetime, timezone, timedelta
+
+# Time slots: afternoon (12-17), evening (17-21), late_night (21-04), morning (04-12)
+def _get_time_slot() -> str:
+    hour = datetime.now(timezone(timedelta(hours=10))).hour  # AEST
+    if 4 <= hour < 12:
+        return "morning"
+    elif 12 <= hour < 17:
+        return "afternoon"
+    elif 17 <= hour < 21:
+        return "evening"
+    else:
+        return "late_night"
+
+
+def _is_weekend() -> bool:
+    return datetime.now(timezone(timedelta(hours=10))).weekday() >= 4  # Fri-Sun
+
+
+VENUE_MESSAGES = {
+    "eclipse": {
+        "evening": [
+            {"title": "Your table is waiting", "body": "Eclipse has something special on tonight. Open the app to see what's happening."},
+            {"title": "Tonight's looking good", "body": "The DJ lineup at Eclipse is stacked. Check the app for details."},
+            {"title": "VIP tables are filling up", "body": "It's going to be a big one at Eclipse. See what's on tonight."},
+            {"title": "New cocktail menu just dropped", "body": "Eclipse has some new creations behind the bar. Worth checking out."},
+            {"title": "The night is young", "body": "Eclipse is warming up for a great night. Open the app to see the vibe."},
+        ],
+        "late_night": [
+            {"title": "The party's in full swing", "body": "Eclipse is going off right now. Skip the line with your app."},
+            {"title": "Still time to join", "body": "Eclipse is buzzing. Open the app to get in quick."},
+            {"title": "Last call for VIP", "body": "A few VIP spots left at Eclipse tonight. Check the app."},
+            {"title": "The energy is unreal right now", "body": "Eclipse is peaking. Your name could be on the list."},
+        ],
+        "afternoon": [
+            {"title": "Tonight at Eclipse", "body": "Something good is brewing for tonight. Check the app to plan your evening."},
+            {"title": "Lock in your night", "body": "Eclipse has a big night planned. Get ahead and check the lineup."},
+            {"title": "Pre-game intel", "body": "See what Eclipse has on tonight before everyone else does."},
+        ],
+        "morning": [
+            {"title": "Plan your weekend", "body": "Eclipse has events coming up. Open the app to see what's on."},
+        ],
+        "weekend": [
+            {"title": "It's the weekend", "body": "Eclipse is going to be packed. Check the app to secure your spot."},
+            {"title": "Saturday night sorted", "body": "Eclipse has the best lineup this weekend. See it in the app."},
+            {"title": "Weekend mode activated", "body": "Eclipse is ready. Are you? Check what's happening tonight."},
+        ],
     },
-    "gold_coast_surfers": {
-        "title": "The coast is buzzing tonight",
-        "body": "Check your app — there's something for everyone tonight.",
-        "action": "open_home",
+    "after_dark": {
+        "evening": [
+            {"title": "Tonight's lineup just dropped", "body": "After Dark has a stacked night ahead. Check your app for the details."},
+            {"title": "The underground is calling", "body": "After Dark has something special tonight. Open the app to find out."},
+            {"title": "Dress code: ready for anything", "body": "After Dark is setting up for a big night. See what's on."},
+            {"title": "The bass is about to drop", "body": "After Dark's DJ has a fire set planned. Check the app."},
+        ],
+        "late_night": [
+            {"title": "The dancefloor is packed", "body": "After Dark is in full effect. Fast-track entry in the app."},
+            {"title": "It's getting wild", "body": "After Dark is going off. Open the app to jump the queue."},
+            {"title": "After Dark. After hours.", "body": "The night's just getting started here. Check the app."},
+        ],
+        "afternoon": [
+            {"title": "Tonight's going to be different", "body": "After Dark has a surprise planned. Keep an eye on the app."},
+            {"title": "Get on the list early", "body": "After Dark fills up fast. Open the app to plan ahead."},
+        ],
+        "morning": [
+            {"title": "This week at After Dark", "body": "New events dropping soon. Check the app for updates."},
+        ],
+        "weekend": [
+            {"title": "Friday night. After Dark.", "body": "You know where to be. Check the app for tonight's details."},
+            {"title": "The weekend starts here", "body": "After Dark is the move. See what's on in the app."},
+        ],
     },
-    "gold_coast_mermaid": {
-        "title": "Good food, good night",
-        "body": "Juju has your favourite dishes and a great atmosphere tonight. Check it out.",
-        "action": "open_home",
+    "su_casa_brisbane": {
+        "evening": [
+            {"title": "Rooftop weather is perfect right now", "body": "Su Casa has a vibe tonight. Tap to see what's on and skip the line."},
+            {"title": "Sunset sessions starting soon", "body": "Su Casa's rooftop is the place to be tonight. Check the app."},
+            {"title": "The cocktails are flowing", "body": "Su Casa has a great night lined up. Open the app for details."},
+            {"title": "Rooftop life", "body": "Perfect evening for Su Casa. See tonight's vibe in the app."},
+        ],
+        "late_night": [
+            {"title": "The rooftop is alive", "body": "Su Casa is in full party mode. Skip the wait with the app."},
+            {"title": "Views and vibes", "body": "Su Casa's rooftop is electric right now. Check the app to get in."},
+        ],
+        "afternoon": [
+            {"title": "Sundowner plans?", "body": "Su Casa's rooftop is calling. See what's on tonight in the app."},
+            {"title": "Golden hour is approaching", "body": "Su Casa has the best sunset spot. Plan your evening in the app."},
+        ],
+        "morning": [
+            {"title": "This week at Su Casa", "body": "Rooftop events and specials dropping. Check the app."},
+        ],
+        "weekend": [
+            {"title": "Weekend on the rooftop", "body": "Su Casa is the spot this weekend. See what's happening in the app."},
+            {"title": "Rooftop Saturday", "body": "Su Casa has a packed weekend ahead. Check it out."},
+        ],
     },
-    "brisbane_south": {
-        "title": "Fire-grilled perfection awaits",
-        "body": "Ember & Ash has premium cuts and cocktails ready. Check your app for tonight's menu.",
-        "action": "open_home",
+    "night_market": {
+        "evening": [
+            {"title": "The woks are firing tonight", "body": "Night Market has new dishes and late-night energy. Open the app for tonight's specials."},
+            {"title": "Street food. Neon lights.", "body": "Night Market is setting up for a great night. See the menu in the app."},
+            {"title": "Hungry? We thought so.", "body": "Night Market has something for every craving tonight. Check the app."},
+            {"title": "The laneway is buzzing", "body": "Night Market's energy is building. Open the app for tonight's specials."},
+        ],
+        "late_night": [
+            {"title": "Late night cravings sorted", "body": "Night Market is still serving. Open the app for the late menu."},
+            {"title": "The kitchen's still open", "body": "Night Market has late-night bites ready. Check the app."},
+        ],
+        "afternoon": [
+            {"title": "Dinner plans?", "body": "Night Market has a fresh menu tonight. Check the app for details."},
+            {"title": "Asian street food calling", "body": "Night Market has something new. Open the app to see what's cooking."},
+        ],
+        "morning": [
+            {"title": "New dishes dropping this week", "body": "Night Market is always evolving. Check the app for updates."},
+        ],
+        "weekend": [
+            {"title": "Weekend feast mode", "body": "Night Market is packed with flavour this weekend. See the specials."},
+        ],
+    },
+    "ember_ash": {
+        "evening": [
+            {"title": "Fire-grilled perfection awaits", "body": "Ember & Ash has premium cuts and cocktails ready. Check your app for tonight's menu."},
+            {"title": "The flames are lit", "body": "Ember & Ash is serving up something special tonight. See the menu."},
+            {"title": "Date night sorted", "body": "Ember & Ash has the perfect setting tonight. Check the app."},
+            {"title": "Steak night done right", "body": "Ember & Ash has premium cuts on the grill. Open the app for the menu."},
+        ],
+        "late_night": [
+            {"title": "Late night rooftop energy", "body": "Ember & Ash transitions to rooftop vibes. Check the app."},
+        ],
+        "afternoon": [
+            {"title": "Tonight's menu is looking fire", "body": "Ember & Ash has something special planned. Reserve in the app."},
+            {"title": "Premium dining tonight", "body": "Ember & Ash has the perfect evening waiting. Check the app."},
+        ],
+        "morning": [
+            {"title": "This week at Ember & Ash", "body": "New specials and events. Check the app for details."},
+        ],
+        "weekend": [
+            {"title": "Weekend indulgence", "body": "Ember & Ash has the best cuts this weekend. Book in the app."},
+        ],
+    },
+    "su_casa_gold_coast": {
+        "evening": [
+            {"title": "Coast vibes are calling", "body": "Something good is happening tonight. Open the app and see what's on."},
+            {"title": "The Gold Coast is heating up", "body": "Su Casa GC has a great night ahead. Check the app."},
+            {"title": "Beachside energy tonight", "body": "Su Casa Gold Coast has the vibe. See what's on in the app."},
+        ],
+        "late_night": [
+            {"title": "The coast doesn't sleep", "body": "Su Casa GC is going strong. Open the app to skip the line."},
+        ],
+        "afternoon": [
+            {"title": "Tonight on the coast", "body": "Su Casa GC has something planned. Check the app to get ahead."},
+        ],
+        "morning": [
+            {"title": "This week on the coast", "body": "Su Casa GC has events coming up. Check the app."},
+        ],
+        "weekend": [
+            {"title": "Gold Coast weekends hit different", "body": "Su Casa GC is the place to be. See what's happening."},
+        ],
+    },
+    "juju": {
+        "evening": [
+            {"title": "Good food, good night", "body": "Juju has your favourite dishes and a great atmosphere tonight. Check it out."},
+            {"title": "Mermaid Beach is calling", "body": "Juju has a vibe tonight. Open the app for tonight's specials."},
+            {"title": "Fresh flavours tonight", "body": "Juju's kitchen is firing on all cylinders. See the menu in the app."},
+        ],
+        "late_night": [
+            {"title": "Late night at Juju", "body": "Still serving, still vibing. Check the app for what's left on the menu."},
+        ],
+        "afternoon": [
+            {"title": "Dinner sorted", "body": "Juju has a great menu tonight. Open the app to see what's on."},
+        ],
+        "morning": [
+            {"title": "This week at Juju", "body": "New dishes and specials. Check the app."},
+        ],
+        "weekend": [
+            {"title": "Weekend at Juju", "body": "Great food, great vibes, great weekend. Check it out in the app."},
+        ],
+    },
+    "bavarian": {
+        "evening": [
+            {"title": "Pretzels and steins on tap", "body": "The Bavarian has a great night ahead. Open the app to see what's happening."},
+            {"title": "Prost!", "body": "The Bavarian is pouring tonight. Check the app for specials."},
+            {"title": "Schnitzel weather", "body": "The Bavarian has comfort food and cold beers ready. See the menu."},
+        ],
+        "late_night": [
+            {"title": "Still pouring", "body": "The Bavarian is keeping the steins flowing. Check the app."},
+        ],
+        "afternoon": [
+            {"title": "Tonight at The Bavarian", "body": "Great food and great beers on tap. Check the app for details."},
+        ],
+        "morning": [
+            {"title": "This week at The Bavarian", "body": "Events and specials coming up. Check the app."},
+        ],
+        "weekend": [
+            {"title": "Weekend at The Bavarian", "body": "Big steins, big vibes, big weekend. Check it out."},
+        ],
     },
 }
+
+
+CLUSTER_MESSAGES = {
+    "brisbane_cbd": {
+        "evening": [
+            {"title": "Big night ahead", "body": "There's a lot happening tonight. Open the app to see what's on."},
+            {"title": "The city's alive tonight", "body": "Multiple spots are going off. Check the app to pick your vibe."},
+            {"title": "Where to tonight?", "body": "So many options, one app. See what's happening right now."},
+            {"title": "Your night, your choice", "body": "Several great nights happening at once. Open the app to explore."},
+        ],
+        "late_night": [
+            {"title": "The city isn't sleeping", "body": "The best nights are still going. Check the app to find your spot."},
+            {"title": "Still early by our standards", "body": "Multiple venues going strong. Open the app to jump in."},
+        ],
+        "afternoon": [
+            {"title": "Tonight's shaping up", "body": "Big things happening across the city tonight. Plan ahead in the app."},
+            {"title": "Lock in your plans", "body": "Multiple venues have great nights ahead. Check the app."},
+        ],
+        "weekend": [
+            {"title": "Weekend in the city", "body": "The best spots are ready for you. See what's on in the app."},
+            {"title": "This is going to be good", "body": "Brisbane's best venues are all firing this weekend. Check the app."},
+        ],
+    },
+    "gold_coast_surfers": {
+        "evening": [
+            {"title": "The coast is buzzing tonight", "body": "Check your app — there's something for everyone tonight."},
+            {"title": "Surfers is going off", "body": "Multiple venues are heating up. Open the app to see what's on."},
+        ],
+        "late_night": [
+            {"title": "The coast doesn't quit", "body": "Still going strong in Surfers. Check the app for the best spot."},
+        ],
+        "afternoon": [
+            {"title": "Tonight on the coast", "body": "Great nights ahead in Surfers. Plan ahead in the app."},
+        ],
+        "weekend": [
+            {"title": "Gold Coast weekend sorted", "body": "The best spots are all within reach. See what's on."},
+        ],
+    },
+}
+
+
+def pick_notification(venue_id: str) -> dict:
+    """Pick a contextual notification message for a venue based on time and day"""
+    time_slot = _get_time_slot()
+    weekend = _is_weekend()
+    
+    venue_msgs = VENUE_MESSAGES.get(venue_id, {})
+    if not venue_msgs:
+        return {"title": "Something good is happening", "body": "Open the app to see what's on tonight."}
+    
+    # Build candidate pool: time-specific + weekend (if applicable)
+    candidates = list(venue_msgs.get(time_slot, []))
+    if weekend:
+        candidates.extend(venue_msgs.get("weekend", []))
+    
+    # Fallback to evening if no candidates
+    if not candidates:
+        candidates = list(venue_msgs.get("evening", [{"title": "Something good is happening", "body": "Open the app to see what's on."}]))
+    
+    return random.choice(candidates)
+
+
+def pick_cluster_notification(cluster: str) -> dict:
+    """Pick a contextual cluster notification"""
+    time_slot = _get_time_slot()
+    weekend = _is_weekend()
+    
+    cluster_msgs = CLUSTER_MESSAGES.get(cluster, {})
+    if not cluster_msgs:
+        return {"title": "Big night ahead", "body": "There's a lot happening tonight. Open the app to see what's on."}
+    
+    candidates = list(cluster_msgs.get(time_slot, []))
+    if weekend:
+        candidates.extend(cluster_msgs.get("weekend", []))
+    
+    if not candidates:
+        candidates = list(cluster_msgs.get("evening", [{"title": "Big night ahead", "body": "There's a lot happening tonight. Open the app to see what's on."}]))
+    
+    return random.choice(candidates)
 
 
 async def has_triggered_cluster_today(user_id: str, cluster: str) -> bool:
@@ -212,20 +470,17 @@ async def check_location(
             continue
         
         if len(venues) > 1:
-            # Multiple venues in cluster — send ONE generic notification
-            cluster_msg = CLUSTER_MESSAGES.get(cluster, {
-                "title": "Big night ahead",
-                "body": "There's a lot happening tonight. Open the app to see what's on.",
-                "action": "open_home",
-            })
-            title = cluster_msg["title"]
-            body = cluster_msg["body"]
+            # Multiple venues in cluster — send ONE contextual cluster notification
+            msg = pick_cluster_notification(cluster)
+            title = msg["title"]
+            body = msg["body"]
             data = {"type": "geofence", "action": "open_home", "cluster": cluster}
         else:
-            # Single venue — send venue-specific notification
+            # Single venue — send contextual venue-specific notification
             venue = venues[0]
-            title = venue.get("notification_title", "Big night ahead")
-            body = venue.get("notification_body", "Open the app to see what's on.")
+            msg = pick_notification(venue.get("venue_id", ""))
+            title = msg["title"]
+            body = msg["body"]
             data = {"type": "geofence", "venue_id": venue.get("venue_id"), "action": "open_venue"}
         
         # Record the trigger (per cluster, not per venue)
