@@ -2,115 +2,96 @@
 
 ## Latest Updates (April 17, 2026 - Session 3)
 
-### COMPLETED: Geofence Admin Push Message System (P0 Fix)
-- **Fixed**: `check-location` endpoint now uses async DB-backed message pickers (`pick_notification_async`, `pick_cluster_notification_async`) so Lovable dashboard edits actually reach users
-- Admin CRUD endpoints verified working:
-  - `GET/POST/PUT/DELETE /api/admin/push-messages` (venue-specific)
-  - `GET/POST/PUT/DELETE /api/admin/cluster-messages` (cluster-wide)
-- Geofence analytics: `GET /api/admin/geofence-analytics`
+### COMPLETED: Staff Portal Overhaul — Primary Points-Awarding Mechanism
+- **Quick Award Flow**: Scan member QR → select venue → pick spending category → enter $ amount → points auto-calculated with tier multiplier → full audit trail
+- **3-Tab Interface**: Award Points | Validate Reward | History
+- **Venue Selector**: All 9 Luna venues selectable (was hardcoded to Eclipse)
+- **Spending Categories**: Food, Drinks, Entry, Booth, Bottle Service, Merchandise, Other
+- **Quick Amount Buttons**: $20, $50, $100, $200, $500 for fast entry
+- **Real-time Preview**: Shows "85 base pts x 1.5 = 128 pts" as staff types
+- **Success Confirmation**: Green card with points awarded, tier info, new balance
+- **Receipt/Docket Reference**: Optional field for POS receipt tracking
+- **Reward QR Validation**: Staff scans customer's reward QR → validates → marks used
+- **Transaction History**: Per-venue log with revenue, points, and category breakdowns
+- **Staff Summary Dashboard**: Today's transactions, total revenue, points given, unique members
+
+### COMPLETED: SwiftPOS Integration Readiness
+- **Webhook Endpoint**: `POST /api/perks/swiftpos/sale` — receives POS sale data, auto-matches member by email or SwiftPOS member key, awards tier-adjusted points
+- **Unmatched Sales Queue**: Sales that can't match to a Luna member are logged for manual reconciliation
+- **Manual Match**: `POST /api/perks/swiftpos/match/{receipt}` — staff matches unmatched sale to a member
+- **Auth**: Supports both staff Bearer token and X-SwiftPOS-Key header (for direct POS→API integration)
+- **Production Setup Required**: Set `SWIFTPOS_WEBHOOK_KEY` env var and configure SwiftPOS POS API middleware
+
+### COMPLETED: Geofence Admin Push Message Fix (P0)
+- Fixed `check-location` to use async DB-backed message pickers
+- Dashboard edits now reach users via push notifications
 
 ### COMPLETED: VIP Table Deposit System
-- **9 venues** with unique VIP table inventory (2-4 tables per venue)
-- `GET /api/venues/{venue_id}/tables?date=YYYY-MM-DD` — Lists tables with availability and venue closure checks
-- `POST /api/bookings/table` — Create table booking (pending deposit)
-- `POST /api/bookings/table/{id}/deposit` — Get deposit payment intent (DEMO MODE, Stripe in production)
-- `POST /api/bookings/table/{id}/confirm` — Confirm after deposit payment, awards loyalty points
-- `DELETE /api/bookings/table/{id}` — Cancel booking
-- `GET /api/bookings/my-tables` — User's table bookings
-- Operating day checks: Eclipse/After Dark (Fri-Sat), Su Casa BNE (Wed-Sun), Juju (Wed-Sun), etc.
-- Duplicate booking prevention per table+date
+- 9 venues with unique VIP table inventory, operating day checks, deposit flow
 
 ### COMPLETED: Bottle Service Pre-Orders
-- **All 9 venues** with curated bottle menus (3-6 items each)
-- Categories: Vodka, Champagne, Cognac, Tequila, Wine, Sake, Soju, Cocktails, Packages
-- `GET /api/bookings/bottle-menu/{venue_id}` — Menu with items grouped by category
-- `POST /api/bookings/bottle-preorder` — Place pre-order (validates items, calculates total, awards 10% of total as Luna Points)
-- `GET /api/bookings/bottle-orders` — User's bottle orders
-- `DELETE /api/bookings/bottle-order/{id}` — Cancel pending orders
-- Frontend: `/bottle-service` page with venue picker, date selector, category tabs, cart system, order modal
-- Accessible from: Profile > Quick Actions > "Bottle Service" and Venue Detail > Bottom CTA > "Bottles"
-
-### COMPLETED: Venue Detail Page CTA Row
-- Bottom CTA now shows 3 buttons: "VIP Tables", "Bottles", and main booking action
-- Glass-morphism styled secondary buttons with venue-colored accents
+- All 9 venues with curated menus, cart system, 10% points reward
 
 ---
 
-## Overview
-Premium hospitality VIP operating system for Luna Group venues (Eclipse, After Dark, Su Casa Brisbane/Gold Coast, Juju, Night Market, Ember & Ash, Pump, Mamacita) — native iOS/Android app built with Expo React Native.
+## Points System Architecture
+
+### How Points Flow
+```
+PHYSICAL VENUE                    LUNA APP                     DASHBOARD
+┌──────────────┐            ┌──────────────────┐          ┌────────────┐
+│  SwiftPOS    │───webhook──│  /perks/swiftpos  │          │  Lovable   │
+│  (POS)       │   (future) │  /sale            │          │  Dashboard │
+└──────┬───────┘            └────────┬─────────┘          └──────┬─────┘
+       │                             │                            │
+       │  Staff scans QR      ┌──────▼──────────┐         Admin CRUD
+       │  enters $ amount     │  points_balance  │     (missions, rewards)
+       └──────────────────────│  (MongoDB)       │◄────────────────┘
+           Staff Portal       │  Source of Truth  │
+           /perks/quick-award └──────────────────┘
+```
+
+### Earning Sources: 1pt per $1 × tier multiplier
+- In-venue spending (Staff Portal quick-award)
+- SwiftPOS webhook (auto-award when POS sale completes)
+- Table booking (50 × party size), Bottle pre-order (10% of total)
+- Missions, Referrals, Birthday, Story shares, Promo codes
+- Points purchase via Stripe
+
+### Tier Multipliers
+- Bronze (Free): 1.0× | Silver ($39.99/mo): 1.5× | Gold ($79.99/mo): 2.0×
+
+### Redemption: 10 pts = $1 value
+- Rewards Shop → QR code → Staff validates via Staff Portal
+
+---
 
 ## Technical Stack
-- Frontend: Expo React Native (expo-router, Zustand, custom Luna UI Kit with glassmorphism)
+- Frontend: Expo React Native (expo-router, Zustand, custom Luna UI Kit)
 - Backend: FastAPI + MongoDB (41 modular route modules)
-- Auth: JWT-based authentication
-- Payments: Stripe (test keys active, awaiting production keys)
-- AI: Claude Sonnet 4.5 via Emergent LLM Key
-- Wallet: Apple Wallet (.pkpass via py-pkpass) + Google Wallet (JWT)
-- Push: Expo Push API with geofence-based notifications
-
-## Brand Colors
-- Background: #101018 | Cards: #202034 | Glass: #1E1E30
-- Accent Blue: #2563EB | Gold: #D4A832 | Luna Red: #E31837
-- Success: #10B981 | Error: #EF4444
-
-## Architecture
-```
-/app/backend/
-├── server.py           # Entry point (597 lines)
-├── routes/             # 41 modular route modules
-│   ├── admin.py        # Missions/Rewards/Auctions/Geofence/Push Messages CRUD
-│   ├── bookings.py     # VIP Tables + Bottle Service + Legacy Bookings
-│   ├── venues.py       # Venue listing + VIP table inventory
-│   ├── geofences.py    # Clustered geofencing with async DB message lookup
-│   ├── payments.py     # Stripe checkout for gift cards, packages
-│   ├── loyalty.py      # Apple/Google Wallet pass generation
-│   └── ... (35 more)
-├── services/           # AI, WebSocket, Churn, Scheduled Jobs
-├── models/             # Pydantic models
-└── certs/              # Apple Wallet certificates
-
-/app/frontend/
-├── app/
-│   ├── (tabs)/         # Main tabs: Tonight, Venues, Luna AI, Wallet, Profile
-│   ├── table-booking.tsx
-│   ├── bottle-service.tsx
-│   ├── rewards-shop.tsx
-│   ├── staff-portal.tsx
-│   ├── member-card.tsx
-│   └── ... (20+ screens)
-├── src/
-│   ├── components/     # Icon.tsx, LunaIcons.tsx, GlassCard.tsx
-│   ├── theme/colors.ts # Design system tokens
-│   └── utils/api.ts    # 100+ API methods
-```
-
-## Key DB Collections
-- `users`: email, tier, points_balance, wallet_balance, push_tokens
-- `table_bookings`: booking_id, venue_id, table_id, date, party_size, deposit_paid, status
-- `bottle_orders`: order_id, venue_id, items[], total, status
-- `geofences`: venue_id, cluster, coordinates, radius (1km)
-- `venue_push_messages`: venue_id, time_slot, title, body (admin-editable)
-- `cluster_push_messages`: cluster, time_slot, title, body (admin-editable)
-- `geofence_triggers`: user_id, cluster, triggered_at (once per cluster per day)
+- Auth: JWT-based | Payments: Stripe (test keys) | AI: Claude via Emergent LLM Key
+- Wallet: Apple Wallet (.pkpass) + Google Wallet (JWT)
+- Push: Expo Push API with clustered geofence notifications
 
 ## Known MOCKED Services
-- **Table Deposit Payments**: Demo mode (returns fake payment_intent_id). Needs Stripe production keys.
-- **Stripe**: Using test keys (`sk_test_emergent`). Awaiting production keys from user.
-- **CherryHub Points**: Disabled due to 500/404 errors. Using native Luna Loyalty Engine.
-- **Instagram**: Demo mode (no API credentials)
+- Table Deposit Payments (demo mode — awaiting Stripe production keys)
+- Stripe (test keys `sk_test_emergent`)
+- CherryHub Points (disabled — read-only CRM, not for points)
+- Instagram (demo mode)
 
 ## Pending Tasks
 ### P1 — Blocked
-- Stripe production keys integration (awaiting `sk_live_...` from user)
+- Stripe production keys (awaiting `sk_live_...`)
 
 ### P2 — Future
-- Server.py continued cleanup (remaining unique endpoints)
-- Connect table deposit flow to real Stripe payment
-- Bottle service payment via Stripe checkout
+- SwiftPOS middleware deployment (configure POS API → webhook → Luna backend)
+- Real Stripe payments for table deposits and bottle pre-orders
+- Server.py continued cleanup
 
 ## Test Reports
-- `/app/test_reports/iteration_28.json` — 100% pass (41/41 tests) — VIP Tables, Bottles, Admin Messages, Geofence
-- `/app/test_reports/iteration_27.json` — 97% backend pass (prior session)
+- `/app/test_reports/iteration_29.json` — 100% (28/28) Staff Portal + SwiftPOS
+- `/app/test_reports/iteration_28.json` — 100% (41/41) VIP Tables + Bottles
+- `/app/test_reports/iteration_27.json` — 97% (prior session)
 
 ## Credentials
 - User: `luna@test.com` / `test123`
