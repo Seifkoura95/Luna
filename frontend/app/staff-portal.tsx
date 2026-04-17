@@ -171,12 +171,33 @@ export default function StaffPortal() {
     const qr = code || qrInput;
     if (!qr) { Alert.alert('Enter QR', 'Scan or enter the reward QR code'); return; }
     setValidating(true); setValidationResult(null);
+
+    // Try milestone ticket QR first (LUNA-TKT-...), then fall back to rewards QR
+    if (qr.startsWith('LUNA-TKT-')) {
+      try {
+        const result = await api.validateTicketQR(qr, activeVenue.id);
+        if (isNative) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setValidationResult({ ...result, success: true, message: `${result.message} (ticket deleted)` });
+        return;
+      } catch (e: any) {
+        setValidationResult({ success: false, message: e.message || 'Invalid milestone ticket' });
+        return;
+      } finally { setValidating(false); }
+    }
+
     try {
       const result = await api.validateRewardQR(qr, activeVenue.id);
       if (isNative) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setValidationResult(result);
     } catch (e: any) {
-      setValidationResult({ success: false, message: e.message || 'Invalid QR code' });
+      // Also try milestone ticket validation as fallback
+      try {
+        const result = await api.validateTicketQR(qr, activeVenue.id);
+        if (isNative) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setValidationResult({ ...result, success: true, message: `${result.message} (ticket deleted)` });
+      } catch {
+        setValidationResult({ success: false, message: e.message || 'Invalid QR code' });
+      }
     } finally { setValidating(false); }
   };
 
