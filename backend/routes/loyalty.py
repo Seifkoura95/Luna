@@ -573,6 +573,20 @@ GOOGLE_WALLET_ISSUER_ID = os.environ.get("GOOGLE_WALLET_ISSUER_ID", "")
 GOOGLE_SERVICE_ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), "certs", "google-service-account.json")
 
 
+def _load_google_service_account():
+    """Load Google service account from env var (preferred) or file fallback"""
+    import json
+    # 1. Try environment variable first (Railway / production)
+    env_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "")
+    if env_json:
+        return json.loads(env_json)
+    # 2. Fall back to file on disk (local dev)
+    if os.path.exists(GOOGLE_SERVICE_ACCOUNT_FILE):
+        with open(GOOGLE_SERVICE_ACCOUNT_FILE) as f:
+            return json.load(f)
+    return None
+
+
 @router.get("/wallet-pass/google")
 async def generate_google_wallet_link(request: Request):
     """Generate Google Wallet save link for the member's loyalty card"""
@@ -597,12 +611,9 @@ async def generate_google_wallet_link(request: Request):
         import json
         import time
         
-        sa_file = GOOGLE_SERVICE_ACCOUNT_FILE
-        if not os.path.exists(sa_file):
-            raise HTTPException(status_code=503, detail="Google service account not found")
-        
-        with open(sa_file) as f:
-            sa_info = json.load(f)
+        sa_info = _load_google_service_account()
+        if not sa_info:
+            raise HTTPException(status_code=503, detail="Google service account not configured. Set GOOGLE_SERVICE_ACCOUNT_JSON env var.")
         
         class_id = f"{issuer_id}.luna_vip_loyalty"
         object_id = f"{issuer_id}.luna-{current['user_id'].replace('-', '')}"
