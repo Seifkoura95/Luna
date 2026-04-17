@@ -473,6 +473,22 @@ export default function ProfileScreen() {
       color: '#E31837',
       onPress: () => router.push('/safety'),
     },
+    {
+      id: 'vip-tables',
+      icon: 'diamond',
+      title: 'VIP Tables',
+      subtitle: 'Reserve & deposit',
+      color: '#D4A832',
+      onPress: () => router.push('/table-booking'),
+    },
+    {
+      id: 'bottles',
+      icon: 'wine',
+      title: 'Bottle Service',
+      subtitle: 'Pre-order',
+      color: '#FF6B35',
+      onPress: () => router.push('/bottle-service'),
+    },
   ];
 
   const settingsItems = [

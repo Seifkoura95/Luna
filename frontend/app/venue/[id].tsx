@@ -597,19 +597,37 @@ export default function VenueDetailScreen() {
 
       {/* Bottom CTA */}
       <View style={[styles.bottomCTA, { paddingBottom: insets.bottom + 10 }]}>
-        <LinearGradient
-          colors={[venue.accent_color, venue.accent_color + 'CC']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.ctaButton}
-        >
-          <TouchableOpacity style={styles.ctaButtonInner} onPress={handleBooking}>
-            <Text style={styles.ctaButtonText}>
-              {getBookingButtonText(venue.id, venue.type)}
-            </Text>
-            <Icon name="arrow-forward" size={20} color={colors.textPrimary} />
+        <View style={styles.ctaRow}>
+          <TouchableOpacity
+            style={styles.ctaSecondaryBtn}
+            onPress={() => router.push(`/table-booking?venue_id=${venue.id}`)}
+            data-testid="venue-vip-tables-btn"
+          >
+            <Icon name="diamond" size={16} color={colors.gold} />
+            <Text style={styles.ctaSecondaryText}>VIP Tables</Text>
           </TouchableOpacity>
-        </LinearGradient>
+          <TouchableOpacity
+            style={styles.ctaSecondaryBtn}
+            onPress={() => router.push(`/bottle-service?venue_id=${venue.id}`)}
+            data-testid="venue-bottle-service-btn"
+          >
+            <Icon name="wine" size={16} color={colors.accentBright} />
+            <Text style={styles.ctaSecondaryText}>Bottles</Text>
+          </TouchableOpacity>
+          <LinearGradient
+            colors={[venue.accent_color, venue.accent_color + 'CC']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.ctaPrimaryGrad}
+          >
+            <TouchableOpacity style={styles.ctaPrimaryInner} onPress={handleBooking} data-testid="venue-booking-btn">
+              <Text style={styles.ctaButtonText}>
+                {getBookingButtonText(venue.id, venue.type)}
+              </Text>
+              <Icon name="arrow-forward" size={18} color={colors.textPrimary} />
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
       </View>
 
       {/* Booking Modal */}
@@ -1089,9 +1107,42 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   ctaButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  ctaSecondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorderSubtle,
+  },
+  ctaSecondaryText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  ctaPrimaryGrad: {
+    flex: 1,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  ctaPrimaryInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
   },
   transportBtn: {
     flexDirection: 'row',

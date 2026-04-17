@@ -1,0 +1,80 @@
+{
+  "summary": "Backend testing complete for VIP Table Booking, Bottle Service Pre-Orders, Admin Push Messages, and Geofence Location Check features. All 41 tests passed (100% success rate).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "bottle-service route", "issue": "Frontend route 'bottle-service' not found in expo-router children (warning in logs)", "affected_selectors": []}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vip_tables_bottles_geofence.py",
+    "/app/test_reports/pytest/pytest_vip_tables_bottles.xml"
+  ],
+  "action_items": [
+    "Frontend: Add bottle-service.tsx route to expo-router if not already present (warning in expo logs)"
+  ],
+  "critical_code_review_comments": [
+    "Table deposit payment uses DEMO MODE (returns fake payment_intent_id) - needs Stripe integration for production",
+    "Geofence check-location uses async DB-backed message pickers which is good for admin customization"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vip_tables_bottles_geofence.py"
+  ],
+  "success_rate": {
+    "backend": "100% (41/41 tests passed)",
+    "frontend": "Not tested (backend only requested)"
+  },
+  "test_credentials": {
+    "user": "luna@test.com / test123 (has admin role)",
+    "admin": "admin@lunagroup.com.au / Trent69!"
+  },
+  "seed_data_creation": "Test data created with TEST_ prefix for table bookings and bottle orders (cleaned up via cancel endpoints)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All new VIP table booking, bottle service, admin push messages, and geofence location check endpoints are working correctly. Test user luna@test.com has admin role so can access admin endpoints. Table deposit is in DEMO MODE (MOCKED). Geofence triggers are stored in geofence_triggers collection - may need cleanup between test runs if testing same user/cluster combination.",
+  "endpoints_tested": {
+    "vip_tables": [
+      "GET /api/venues/eclipse/tables?date=YYYY-MM-DD (PASS) - Returns tables with availability",
+      "GET /api/venues/eclipse/tables (PASS) - Returns all tables without date filtering",
+      "GET /api/venues/juju/tables?date=Sunday (PASS) - Juju open on Sunday",
+      "GET /api/venues/eclipse/tables?date=Tuesday (PASS) - Returns venue_closed=true",
+      "POST /api/bookings/table (PASS) - Create VIP table booking",
+      "POST /api/bookings/table/{id}/deposit (PASS) - Get deposit payment intent (DEMO MODE)",
+      "POST /api/bookings/table/{id}/confirm (PASS) - Confirm booking after deposit",
+      "DELETE /api/bookings/table/{id} (PASS) - Cancel table booking",
+      "GET /api/bookings/my-tables (PASS) - Get user's table bookings"
+    ],
+    "bottle_service": [
+      "GET /api/bookings/bottle-menu/eclipse (PASS)",
+      "GET /api/bookings/bottle-menu/after_dark (PASS)",
+      "GET /api/bookings/bottle-menu/pump (PASS)",
+      "GET /api/bookings/bottle-menu/{all 9 venues} (PASS)",
+      "POST /api/bookings/bottle-preorder (PASS) - Create bottle pre-order",
+      "GET /api/bookings/bottle-orders (PASS) - Get user's bottle orders",
+      "DELETE /api/bookings/bottle-order/{id} (PASS) - Cancel bottle order"
+    ],
+    "admin_push_messages": [
+      "GET /api/admin/push-messages (PASS) - List push messages",
+      "POST /api/admin/push-messages (PASS) - Create push message",
+      "PUT /api/admin/push-messages/{id} (PASS) - Update push message",
+      "DELETE /api/admin/push-messages/{id} (PASS) - Delete push message",
+      "GET /api/admin/cluster-messages (PASS) - List cluster messages",
+      "POST /api/admin/cluster-messages (PASS) - Create cluster message",
+      "DELETE /api/admin/cluster-messages/{id} (PASS) - Delete cluster message"
+    ],
+    "geofence": [
+      "POST /api/geofences/check-location (PASS) - Brisbane CBD location check",
+      "POST /api/geofences/check-location (PASS) - Gold Coast location check",
+      "POST /api/geofences/check-location (PASS) - Outside geofences returns empty",
+      "POST /api/geofences/check-location (PASS) - Requires auth (401 without token)"
+    ]
+  },
+  "mocked_apis": {
+    "Table deposit payment": "DEMO MODE - returns fake payment_intent_id (pi_demo_*). In production connects to Stripe."
+  }
+}

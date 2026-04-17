@@ -680,6 +680,30 @@ export const api = {
       method: 'DELETE'
     }),
 
+  // ====== BOTTLE SERVICE ======
+  getBottleMenu: (venueId: string) =>
+    apiFetch<{ venue_id: string; venue_name: string; menu: any[]; categories: Record<string, any[]> }>(`/api/bookings/bottle-menu/${venueId}`),
+
+  createBottlePreorder: (data: {
+    venue_id: string;
+    booking_id?: string;
+    date: string;
+    items: { package_id: string; quantity: number }[];
+    special_requests?: string;
+  }) =>
+    apiFetch<{ success: boolean; order: any; points_earned: number; message: string }>('/api/bookings/bottle-preorder', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
+  getMyBottleOrders: () =>
+    apiFetch<{ orders: any[] }>('/api/bookings/bottle-orders'),
+
+  cancelBottleOrder: (orderId: string) =>
+    apiFetch<{ success: boolean; message: string }>(`/api/bookings/bottle-order/${orderId}`, {
+      method: 'DELETE'
+    }),
+
   // ====== SMART NOTIFICATIONS ======
   getNotifications: (unreadOnly: boolean = false, limit: number = 50) =>
     apiFetch<{ notifications: any[]; unread_count: number }>(`/api/notifications?unread_only=${unreadOnly}&limit=${limit}`),

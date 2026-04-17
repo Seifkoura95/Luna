@@ -655,14 +655,18 @@ async def check_location(
         
         if len(venues) > 1:
             # Multiple venues in cluster — send ONE contextual cluster notification
-            msg = pick_cluster_notification(cluster)
+            msg = await pick_cluster_notification_async(cluster)
+            if not msg:
+                continue
             title = msg["title"]
             body = msg["body"]
             data = {"type": "geofence", "action": "open_home", "cluster": cluster}
         else:
             # Single venue — send contextual venue-specific notification
             venue = venues[0]
-            msg = pick_notification(venue.get("venue_id", ""))
+            msg = await pick_notification_async(venue.get("venue_id", ""))
+            if not msg:
+                continue
             title = msg["title"]
             body = msg["body"]
             data = {"type": "geofence", "venue_id": venue.get("venue_id"), "action": "open_venue"}
