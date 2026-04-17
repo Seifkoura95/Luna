@@ -18,44 +18,97 @@ logger = logging.getLogger(__name__)
 # ====== PYDANTIC MODELS ======
 
 class MissionCreate(BaseModel):
-    title: str
-    description: str
-    points: int
+    title: Optional[str] = None
+    name: Optional[str] = None  # Lovable sends 'name'
+    description: str = ""
+    points: Optional[int] = None
+    points_reward: Optional[int] = None  # Lovable sends 'points_reward'
     icon: str = "trophy"
+    color: Optional[str] = None
     type: str = "daily"  # daily, weekly, special
     venue_id: Optional[str] = None
-    target_value: int = 1
+    target_value: Optional[int] = None
+    requirement_value: Optional[int] = None  # Lovable sends 'requirement_value'
     is_active: bool = True
+    status: Optional[str] = None
 
 class MissionUpdate(BaseModel):
     title: Optional[str] = None
+    name: Optional[str] = None
     description: Optional[str] = None
     points: Optional[int] = None
+    points_reward: Optional[int] = None
     icon: Optional[str] = None
+    color: Optional[str] = None
     type: Optional[str] = None
     venue_id: Optional[str] = None
     target_value: Optional[int] = None
+    requirement_value: Optional[int] = None
     is_active: Optional[bool] = None
+    status: Optional[str] = None
 
 class RewardCreate(BaseModel):
     name: str
-    description: str
-    points_cost: int
+    description: str = ""
+    points_cost: Optional[int] = None
+    points: Optional[int] = None  # Lovable may send 'points'
     icon: str = "gift"
     category: str = "general"
     venue_restriction: Optional[str] = None
+    venue_id: Optional[str] = None
     quantity_available: int = -1  # -1 = unlimited
     is_active: bool = True
+    status: Optional[str] = None
+    image_url: Optional[str] = None
 
 class RewardUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     points_cost: Optional[int] = None
+    points: Optional[int] = None
     icon: Optional[str] = None
     category: Optional[str] = None
     venue_restriction: Optional[str] = None
+    venue_id: Optional[str] = None
     quantity_available: Optional[int] = None
     is_active: Optional[bool] = None
+    status: Optional[str] = None
+    image_url: Optional[str] = None
+
+class BoostCreate(BaseModel):
+    name: str
+    title: Optional[str] = None
+    description: str = ""
+    type: str = "points_multiplier"  # points_multiplier, bonus_points, free_item
+    multiplier: Optional[float] = None
+    bonus_amount: Optional[int] = None
+    venue_id: Optional[str] = None
+    venue_ids: Optional[List[str]] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    duration_hours: Optional[int] = None
+    icon: str = "flash"
+    color: Optional[str] = None
+    is_active: bool = True
+    conditions: Optional[str] = None
+
+class BoostUpdate(BaseModel):
+    name: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    type: Optional[str] = None
+    multiplier: Optional[float] = None
+    bonus_amount: Optional[int] = None
+    venue_id: Optional[str] = None
+    venue_ids: Optional[List[str]] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    duration_hours: Optional[int] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    is_active: Optional[bool] = None
+    conditions: Optional[str] = None
+    status: Optional[str] = None
 
 class AuctionCreate(BaseModel):
     title: str
@@ -184,17 +237,26 @@ async def create_mission(request: Request, mission: MissionCreate):
     """Create a new mission"""
     await require_admin(request)
     
+    title = mission.title or mission.name or "Untitled Mission"
+    points = mission.points if mission.points is not None else (mission.points_reward or 0)
+    target = mission.target_value if mission.target_value is not None else (mission.requirement_value or 1)
+    
     mission_data = {
         "id": f"mission_{uuid.uuid4().hex[:8]}",
-        "title": mission.title,
-        "name": mission.title,  # Alias for frontend compatibility
+        "title": title,
+        "name": title,
         "description": mission.description,
-        "points": mission.points,
+        "points": points,
+        "points_reward": points,
         "icon": mission.icon,
+        "color": mission.color or "#2563EB",
         "type": mission.type,
         "venue_id": mission.venue_id,
-        "target_value": mission.target_value,
+        "target_value": target,
+        "requirement_value": target,
+        "target": target,
         "is_active": mission.is_active,
+        "status": mission.status or ("active" if mission.is_active else "inactive"),
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -248,16 +310,21 @@ async def create_reward(request: Request, reward: RewardCreate):
     """Create a new reward"""
     await require_admin(request)
     
+    points_cost = reward.points_cost if reward.points_cost is not None else (reward.points or 0)
+    
     reward_data = {
         "id": f"reward_{uuid.uuid4().hex[:8]}",
         "name": reward.name,
         "description": reward.description,
-        "points_cost": reward.points_cost,
+        "points_cost": points_cost,
+        "points": points_cost,
         "icon": reward.icon,
         "category": reward.category,
-        "venue_restriction": reward.venue_restriction,
+        "venue_restriction": reward.venue_restriction or reward.venue_id,
         "quantity_available": reward.quantity_available,
         "is_active": reward.is_active,
+        "status": reward.status or ("active" if reward.is_active else "inactive"),
+        "image_url": reward.image_url,
         "redemption_count": 0,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
@@ -294,6 +361,81 @@ async def delete_reward(request: Request, reward_id: str):
         raise HTTPException(status_code=404, detail="Reward not found")
     
     return {"success": True, "message": f"Reward {reward_id} deleted"}
+
+
+# ====== BOOSTS CRUD ======
+
+@router.get("/boosts")
+async def list_boosts(request: Request):
+    """List all boosts (admin view)"""
+    await require_admin(request)
+    boosts = await db.boosts.find({}, {"_id": 0}).to_list(100)
+    return {"boosts": boosts, "total": len(boosts)}
+
+@router.post("/boosts")
+async def create_boost(request: Request, boost: BoostCreate):
+    """Create a new boost"""
+    await require_admin(request)
+    
+    title = boost.name or boost.title or "Untitled Boost"
+    
+    boost_data = {
+        "id": f"boost_{uuid.uuid4().hex[:8]}",
+        "name": title,
+        "title": title,
+        "description": boost.description,
+        "type": boost.type,
+        "multiplier": boost.multiplier,
+        "bonus_amount": boost.bonus_amount,
+        "venue_id": boost.venue_id,
+        "venue_ids": boost.venue_ids or ([boost.venue_id] if boost.venue_id else []),
+        "start_time": boost.start_time,
+        "end_time": boost.end_time,
+        "duration_hours": boost.duration_hours,
+        "icon": boost.icon,
+        "color": boost.color or "#8B5CF6",
+        "is_active": boost.is_active,
+        "conditions": boost.conditions,
+        "status": "active" if boost.is_active else "inactive",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.boosts.insert_one(boost_data)
+    logger.info(f"Created boost: {boost_data['id']}")
+    
+    return {"success": True, "boost": {k: v for k, v in boost_data.items() if k != "_id"}}
+
+@router.put("/boosts/{boost_id}")
+async def update_boost(request: Request, boost_id: str, boost: BoostUpdate):
+    """Update an existing boost"""
+    await require_admin(request)
+    
+    update_data = {k: v for k, v in boost.dict().items() if v is not None}
+    if "name" in update_data and "title" not in update_data:
+        update_data["title"] = update_data["name"]
+    if "title" in update_data and "name" not in update_data:
+        update_data["name"] = update_data["title"]
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.boosts.update_one({"id": boost_id}, {"$set": update_data})
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Boost not found")
+    
+    updated = await db.boosts.find_one({"id": boost_id}, {"_id": 0})
+    return {"success": True, "boost": updated}
+
+@router.delete("/boosts/{boost_id}")
+async def delete_boost(request: Request, boost_id: str):
+    """Delete a boost"""
+    await require_admin(request)
+    
+    result = await db.boosts.delete_one({"id": boost_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Boost not found")
+    
+    return {"success": True, "message": f"Boost {boost_id} deleted"}
 
 
 # ====== AUCTIONS CRUD ======
