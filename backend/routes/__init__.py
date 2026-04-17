@@ -46,6 +46,7 @@ from routes.users import router as users_router
 from routes.campaigns import router as campaigns_router
 from routes.loyalty import router as loyalty_router
 from routes.perks import router as perks_router
+from routes.milestones import router as milestones_router
 
 # Export all routers for easy importing
 __all__ = [
@@ -123,4 +124,5 @@ ALL_ROUTERS = [
     campaigns_router,
     perks_router,
     loyalty_router,
+    milestones_router,
 ]

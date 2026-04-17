@@ -156,6 +156,8 @@ export default function WalletScreen() {
   // Rewards state
   const [rewards, setRewards] = useState<any[]>([]);
   const [rewardsLoading, setRewardsLoading] = useState(true);
+  // Live missions from API
+  const [liveMissions, setLiveMissions] = useState<any[]>([]);
 
   // Auto scroll to top when tab gains focus
   useFocusEffect(
@@ -232,6 +234,14 @@ export default function WalletScreen() {
         subscriptions: subRes ? [subRes] : [],
         upcomingEvents: eventsData || [],
       });
+
+      // Fetch live missions from admin dashboard
+      try {
+        const missionsRes = await apiFetch<any[]>('/api/missions');
+        setLiveMissions(missionsRes || []);
+      } catch (e) {
+        console.log('Failed to fetch missions:', e);
+      }
     } catch (e) {
       console.error('Failed to fetch wallet data:', e);
       // Use mock data on error
@@ -755,35 +765,41 @@ export default function WalletScreen() {
               <Icon name="flag" size={18} color={colors.accent} />
               <Text style={styles.redeemTitle}>MISSIONS</Text>
             </View>
-            <TouchableOpacity onPress={() => router.push('/rewards-shop')}>
+            <TouchableOpacity onPress={() => router.push('/milestones')}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
           
-          {[
-            { id: 'm1', title: 'Weekend Warrior', description: 'Visit 3 venues this weekend', progress: 1, total: 3, points: 50, icon: 'location', color: colors.accent },
-            { id: 'm2', title: 'First Timer', description: 'Buy your first ticket', progress: 0, total: 1, points: 25, icon: 'ticket', color: '#8B5CF6' },
-            { id: 'm3', title: 'Social Butterfly', description: 'Refer 2 friends', progress: 0, total: 2, points: 100, icon: 'people', color: '#00D4AA' },
-          ].map((mission) => (
-            <View key={mission.id} style={styles.missionCard}>
-              <View style={[styles.missionIcon, { backgroundColor: mission.color + '20' }]}>
-                <Icon name={mission.icon as any} size={20} color={mission.color} />
-              </View>
-              <View style={styles.missionContent}>
-                <Text style={styles.missionTitle}>{mission.title}</Text>
-                <Text style={styles.missionDescription}>{mission.description}</Text>
-                <View style={styles.missionProgress}>
-                  <View style={styles.missionProgressBar}>
-                    <View style={[styles.missionProgressFill, { width: `${(mission.progress / mission.total) * 100}%`, backgroundColor: mission.color }]} />
+          {(liveMissions.length > 0 ? liveMissions.slice(0, 3) : [
+            { id: 'm1', title: 'Weekend Warrior', description: 'Visit 3 venues this weekend', current_progress: 1, target: 3, points_reward: 50, icon: 'location', color: colors.accent },
+            { id: 'm2', title: 'First Timer', description: 'Buy your first ticket', current_progress: 0, target: 1, points_reward: 25, icon: 'ticket', color: '#8B5CF6' },
+            { id: 'm3', title: 'Social Butterfly', description: 'Refer 2 friends', current_progress: 0, target: 2, points_reward: 100, icon: 'people', color: '#00D4AA' },
+          ]).map((mission: any, idx: number) => {
+            const missionColors = [colors.accent, '#8B5CF6', '#00D4AA', '#FF6B35', '#E31837', '#10B981', '#F59E0B'];
+            const mColor = mission.color || missionColors[idx % missionColors.length];
+            const progress = mission.current_progress || mission.progress || 0;
+            const total = mission.target || 1;
+            return (
+              <View key={mission.id || idx} style={styles.missionCard}>
+                <View style={[styles.missionIcon, { backgroundColor: mColor + '20' }]}>
+                  <Icon name={(mission.icon || 'flag') as any} size={20} color={mColor} />
+                </View>
+                <View style={styles.missionContent}>
+                  <Text style={styles.missionTitle}>{mission.title || mission.name}</Text>
+                  <Text style={styles.missionDescription}>{mission.description}</Text>
+                  <View style={styles.missionProgress}>
+                    <View style={styles.missionProgressBar}>
+                      <View style={[styles.missionProgressFill, { width: `${(progress / total) * 100}%`, backgroundColor: mColor }]} />
+                    </View>
+                    <Text style={styles.missionProgressText}>{progress}/{total}</Text>
                   </View>
-                  <Text style={styles.missionProgressText}>{mission.progress}/{mission.total}</Text>
+                </View>
+                <View style={[styles.missionPoints, { backgroundColor: mColor + '20' }]}>
+                  <Text style={[styles.missionPointsText, { color: mColor }]}>+{mission.points_reward || mission.points || 0}</Text>
                 </View>
               </View>
-              <View style={[styles.missionPoints, { backgroundColor: mission.color + '20' }]}>
-                <Text style={[styles.missionPointsText, { color: mission.color }]}>+{mission.points}</Text>
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
         {/* Upcoming Events Section */}
@@ -807,20 +823,21 @@ export default function WalletScreen() {
               <Icon name="flag" size={18} color={colors.accent} />
               <Text style={styles.redeemTitle}>MILESTONES</Text>
             </View>
+            <TouchableOpacity onPress={() => router.push('/milestones')}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
           </View>
 
           {[
-            { points: 250, title: 'Rising Star', icon: 'star-outline' as const, color: colors.success, rewards: '5 Free Drinks' },
-            { points: 500, title: 'VIP Status', icon: 'flash' as const, color: colors.accent, rewards: '10 Drinks + 5 Entries' },
-            { points: 1000, title: 'Luna Elite', icon: 'diamond' as const, color: colors.gold, rewards: 'VIP Booth + 20 Drinks' },
-            { points: 2500, title: 'Supernova', icon: 'star' as const, color: colors.hot, rewards: 'Unlimited Entries + Fast Lane' },
-            { points: 5000, title: 'Legend', icon: 'ribbon' as const, color: colors.goldBright, rewards: 'Gold VIP Card + Concierge' },
+            { points: 500, title: 'Rising Star', icon: 'star' as const, color: '#10B981', rewards: '5 Free Drinks' },
+            { points: 1000, title: 'VIP Status', icon: 'flash' as const, color: '#2563EB', rewards: '10 Drinks + 4 Entries' },
+            { points: 5000, title: 'Luna Elite', icon: 'diamond' as const, color: '#D4A832', rewards: 'VIP Booth + 20 Drinks + 5 Entries' },
           ].map((m) => {
             const pts = pointsData?.points_balance || user?.points_balance || 0;
             const reached = pts >= m.points;
             const progress = Math.min(1, pts / m.points);
             return (
-              <View key={m.points} style={styles.milestoneCard}>
+              <TouchableOpacity key={m.points} style={styles.milestoneCard} onPress={() => router.push('/milestones')}>
                 <LinearGradient
                   colors={reached ? [m.color + '12', colors.glass] : [colors.glass, colors.glass]}
                   style={styles.milestoneGradient}
@@ -841,7 +858,7 @@ export default function WalletScreen() {
                     <Text style={styles.milestoneReward}>{m.rewards}</Text>
                   </View>
                 </LinearGradient>
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>

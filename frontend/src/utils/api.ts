@@ -1382,4 +1382,20 @@ export const api = {
       total_points_awarded: number; unique_members_served: number;
       by_category: Record<string, any>; by_staff: any[];
     }>(`/api/perks/staff/transactions/summary?period=${period || 'today'}${venueId ? `&venue_id=${venueId}` : ''}`),
+
+  // ====== MILESTONES ======
+  getMilestones: () =>
+    apiFetch<{ milestones: any[]; points_balance: number }>('/api/milestones'),
+
+  claimMilestone: (milestoneId: string) =>
+    apiFetch<{ success: boolean; milestone: string; tickets_generated: number; message: string }>(`/api/milestones/claim/${milestoneId}`, { method: 'POST' }),
+
+  getMilestoneTickets: (milestoneId?: string) =>
+    apiFetch<{ tickets: any[]; total: number }>(`/api/milestones/tickets${milestoneId ? `?milestone_id=${milestoneId}` : ''}`),
+
+  useTicket: (ticketId: string, venueId: string) =>
+    apiFetch<{ success: boolean; reward_type: string; reward_label: string; message: string }>(`/api/milestones/tickets/${ticketId}/use?venue_id=${venueId}`, { method: 'POST' }),
+
+  validateTicketQR: (qrCode: string, venueId: string) =>
+    apiFetch<{ success: boolean; valid: boolean; reward_type: string; reward_label: string; milestone: string; member_name: string; message: string }>(`/api/milestones/tickets/validate-qr?qr_code=${encodeURIComponent(qrCode)}&venue_id=${venueId}`, { method: 'POST' }),
 };
