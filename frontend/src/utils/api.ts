@@ -1341,4 +1341,45 @@ export const api = {
       limit: number;
       used_today: number;
     }>('/api/perks/entry/guest/remaining'),
+
+  // ====== STAFF PORTAL — ENHANCED ======
+  quickAwardPoints: (data: {
+    user_id: string;
+    amount_spent: number;
+    venue_id: string;
+    category: string;
+    receipt_ref?: string;
+  }) =>
+    apiFetch<{
+      success: boolean; transaction_id: string; member_name: string;
+      amount_spent: number; category: string;
+      base_points: number; bonus_points: number; total_points: number;
+      multiplier: number; tier: string; new_balance: number;
+    }>('/api/perks/quick-award', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
+  getSpendingCategories: () =>
+    apiFetch<{ categories: { id: string; label: string; icon: string }[] }>('/api/perks/spending-categories'),
+
+  validateRewardQR: (qrCode: string, venueId: string) =>
+    apiFetch<{
+      success: boolean; valid: boolean; reward_name: string;
+      reward_description: string; points_spent: number;
+      member_name: string; member_tier: string; message: string;
+    }>('/api/perks/validate-reward', {
+      method: 'POST',
+      body: JSON.stringify({ qr_code: qrCode, venue_id: venueId })
+    }),
+
+  getStaffTransactions: (venueId?: string, limit?: number) =>
+    apiFetch<{ transactions: any[]; total: number }>(`/api/perks/staff/transactions?${venueId ? `venue_id=${venueId}&` : ''}limit=${limit || 50}`),
+
+  getStaffTransactionSummary: (venueId?: string, period?: string) =>
+    apiFetch<{
+      period: string; total_transactions: number; total_revenue: number;
+      total_points_awarded: number; unique_members_served: number;
+      by_category: Record<string, any>; by_staff: any[];
+    }>(`/api/perks/staff/transactions/summary?period=${period || 'today'}${venueId ? `&venue_id=${venueId}` : ''}`),
 };

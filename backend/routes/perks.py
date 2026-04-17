@@ -831,3 +831,461 @@ async def get_perk_stats(request: Request, days: int = 30):
         "discounts_applied": discounts,
         "total_discount_value": discount_total[0]["total"] if discount_total else 0
     }
+
+
+
+# ====== 8. QUICK AWARD — FAST POINTS FOR BUSY NIGHTS ======
+
+class QuickAwardRequest(BaseModel):
+    """Streamlined award: scan QR → enter $ → done"""
+    user_id: str
+    amount_spent: float
+    venue_id: str
+    category: str = "general"  # food, drinks, entry, booth, bottle_service, merchandise
+    receipt_ref: Optional[str] = None  # SwiftPOS receipt/docket number
+
+SPENDING_CATEGORIES = [
+    {"id": "food", "label": "Food", "icon": "restaurant"},
+    {"id": "drinks", "label": "Drinks", "icon": "wine"},
+    {"id": "entry", "label": "Entry Fee", "icon": "enter"},
+    {"id": "booth", "label": "Booth / Table", "icon": "people"},
+    {"id": "bottle_service", "label": "Bottle Service", "icon": "wine"},
+    {"id": "merchandise", "label": "Merchandise", "icon": "gift"},
+    {"id": "general", "label": "Other", "icon": "card"},
+]
+
+
+@router.post("/quick-award")
+async def quick_award_points(request: Request, data: QuickAwardRequest):
+    """
+    Fast points award: staff scans member QR → enters $ amount → points auto-calculated.
+    Designed for speed during busy service. Logs full audit trail.
+    """
+    staff = await require_staff(request)
+
+    if data.amount_spent <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be greater than $0")
+    if data.amount_spent > 50000:
+        raise HTTPException(status_code=400, detail="Amount exceeds single-transaction limit ($50,000)")
+
+    # Look up member
+    member = await db.users.find_one({"user_id": data.user_id}, {"_id": 0, "password": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+
+    # Calculate points with tier multiplier
+    tier_id = member.get("tier", "bronze").lower()
+    tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS.get("bronze", {}))
+    multiplier = tier.get("points_multiplier", 1.0)
+
+    base_points = int(data.amount_spent)  # 1 point per $1
+    bonus_points = int(base_points * (multiplier - 1))
+    total_points = base_points + bonus_points
+
+    # Credit points
+    await db.users.update_one(
+        {"user_id": data.user_id},
+        {"$inc": {"points_balance": total_points}}
+    )
+
+    # Full audit trail
+    txn_id = f"qa_{uuid.uuid4().hex[:8]}"
+    txn = {
+        "id": txn_id,
+        "type": "quick_award",
+        "user_id": data.user_id,
+        "member_name": member.get("name", member.get("email", "")),
+        "amount_spent": data.amount_spent,
+        "venue_id": data.venue_id,
+        "category": data.category,
+        "receipt_ref": data.receipt_ref,
+        "base_points": base_points,
+        "bonus_points": bonus_points,
+        "total_points": total_points,
+        "multiplier": multiplier,
+        "tier_id": tier_id,
+        "staff_user_id": staff.get("user_id"),
+        "staff_name": staff.get("name", staff.get("email", "")),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.staff_transactions.insert_one(txn)
+
+    # Also log to loyalty_transactions for member's history
+    await db.loyalty_transactions.insert_one({
+        "id": txn_id,
+        "user_id": data.user_id,
+        "type": "earn",
+        "base_points": base_points,
+        "bonus_points": bonus_points,
+        "total_points": total_points,
+        "multiplier": multiplier,
+        "tier_id": tier_id,
+        "amount_spent": data.amount_spent,
+        "venue_id": data.venue_id,
+        "category": data.category,
+        "description": f"${data.amount_spent:.2f} spend ({data.category})",
+        "awarded_by": staff.get("user_id"),
+        "source": "staff_quick_award",
+        "created_at": datetime.now(timezone.utc),
+    })
+
+    updated = await db.users.find_one({"user_id": data.user_id}, {"_id": 0, "points_balance": 1})
+
+    return {
+        "success": True,
+        "transaction_id": txn_id,
+        "member_name": member.get("name", member.get("email", "")),
+        "amount_spent": data.amount_spent,
+        "category": data.category,
+        "base_points": base_points,
+        "bonus_points": bonus_points,
+        "total_points": total_points,
+        "multiplier": multiplier,
+        "tier": tier.get("name", "Bronze"),
+        "new_balance": updated.get("points_balance", 0) if updated else 0,
+    }
+
+
+@router.get("/spending-categories")
+async def get_spending_categories():
+    """Return the list of spending categories for the staff award UI"""
+    return {"categories": SPENDING_CATEGORIES}
+
+
+# ====== 9. REWARD QR VALIDATION — Staff scans customer's reward QR ======
+
+class ValidateRewardQRRequest(BaseModel):
+    qr_code: str
+    venue_id: str
+
+
+@router.post("/validate-reward")
+async def validate_reward_qr(request: Request, data: ValidateRewardQRRequest):
+    """
+    Staff scans a customer's reward redemption QR code.
+    Validates it, marks as used, returns reward details.
+    """
+    staff = await require_staff(request)
+
+    # Find the redemption by QR code
+    redemption = await db.redemptions.find_one({"qr_code": data.qr_code})
+    if not redemption:
+        raise HTTPException(status_code=404, detail="Invalid QR code — no matching redemption found")
+
+    if redemption.get("status") == "used":
+        raise HTTPException(status_code=400, detail=f"Already redeemed at {redemption.get('used_at_venue', 'unknown')} on {str(redemption.get('used_at', ''))[:10]}")
+
+    if redemption.get("status") == "expired":
+        raise HTTPException(status_code=400, detail="This reward has expired")
+
+    # Check expiry
+    expires_at = redemption.get("expires_at")
+    if expires_at and isinstance(expires_at, datetime) and expires_at < datetime.now(timezone.utc):
+        await db.redemptions.update_one({"qr_code": data.qr_code}, {"$set": {"status": "expired"}})
+        raise HTTPException(status_code=400, detail="This reward has expired")
+
+    # Mark as used
+    await db.redemptions.update_one(
+        {"qr_code": data.qr_code},
+        {"$set": {
+            "status": "used",
+            "used_at": datetime.now(timezone.utc).isoformat(),
+            "used_at_venue": data.venue_id,
+            "validated_by": staff.get("user_id"),
+            "validated_by_name": staff.get("name", staff.get("email", "")),
+        }}
+    )
+
+    # Get member info
+    member = await db.users.find_one({"user_id": redemption.get("user_id")}, {"_id": 0, "name": 1, "email": 1, "tier": 1})
+
+    return {
+        "success": True,
+        "valid": True,
+        "reward_name": redemption.get("reward_name", "Reward"),
+        "reward_description": redemption.get("reward_description", ""),
+        "points_spent": redemption.get("points_spent", 0),
+        "member_name": member.get("name", member.get("email", "")) if member else "Unknown",
+        "member_tier": member.get("tier", "bronze"),
+        "message": f"Reward validated: {redemption.get('reward_name', 'Reward')} for {member.get('name', 'member') if member else 'member'}",
+    }
+
+
+# ====== 10. STAFF TRANSACTION LOG ======
+
+@router.get("/staff/transactions")
+async def get_staff_transactions(
+    request: Request,
+    venue_id: Optional[str] = None,
+    limit: int = 50,
+):
+    """Get staff transaction log (all quick awards, entries, redemptions at a venue)"""
+    staff = await require_staff(request)
+
+    query = {}
+    if venue_id:
+        query["venue_id"] = venue_id
+
+    txns = await db.staff_transactions.find(
+        query, {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+
+    return {"transactions": txns, "total": len(txns)}
+
+
+@router.get("/staff/transactions/summary")
+async def get_staff_transaction_summary(
+    request: Request,
+    venue_id: Optional[str] = None,
+    period: str = "today",
+):
+    """Get summary stats for staff transactions (today / week / month)"""
+    staff = await require_staff(request)
+
+    now = datetime.now(timezone.utc)
+    if period == "today":
+        cutoff = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    elif period == "week":
+        cutoff = (now - timedelta(days=7)).isoformat()
+    elif period == "month":
+        cutoff = (now - timedelta(days=30)).isoformat()
+    else:
+        cutoff = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    query: dict = {"created_at": {"$gte": cutoff}}
+    if venue_id:
+        query["venue_id"] = venue_id
+
+    txns = await db.staff_transactions.find(query, {"_id": 0}).to_list(500)
+
+    total_revenue = sum(t.get("amount_spent", 0) for t in txns)
+    total_points = sum(t.get("total_points", 0) for t in txns)
+    unique_members = len(set(t.get("user_id") for t in txns))
+
+    # Group by category
+    by_category: dict = {}
+    for t in txns:
+        cat = t.get("category", "general")
+        if cat not in by_category:
+            by_category[cat] = {"count": 0, "revenue": 0, "points": 0}
+        by_category[cat]["count"] += 1
+        by_category[cat]["revenue"] += t.get("amount_spent", 0)
+        by_category[cat]["points"] += t.get("total_points", 0)
+
+    # Group by staff
+    by_staff: dict = {}
+    for t in txns:
+        sid = t.get("staff_user_id", "unknown")
+        sname = t.get("staff_name", "Unknown")
+        if sid not in by_staff:
+            by_staff[sid] = {"name": sname, "count": 0, "revenue": 0}
+        by_staff[sid]["count"] += 1
+        by_staff[sid]["revenue"] += t.get("amount_spent", 0)
+
+    return {
+        "period": period,
+        "total_transactions": len(txns),
+        "total_revenue": round(total_revenue, 2),
+        "total_points_awarded": total_points,
+        "unique_members_served": unique_members,
+        "by_category": by_category,
+        "by_staff": list(by_staff.values()),
+    }
+
+
+# ====== 11. SWIFTPOS INTEGRATION READINESS ======
+
+class SwiftPOSSaleWebhook(BaseModel):
+    """
+    Payload expected from SwiftPOS POS API or middleware webhook.
+    When a sale completes at the POS, this data is sent to our API
+    to auto-award loyalty points without staff intervention.
+    """
+    terminal_id: str
+    receipt_number: str
+    member_key: Optional[str] = None  # SwiftPOS member number (if scanned)
+    member_email: Optional[str] = None  # Alternative lookup
+    venue_id: str
+    total_amount: float
+    items: Optional[List[dict]] = None  # [{name, qty, price, category}]
+    payment_method: Optional[str] = None  # cash, card, etc.
+    timestamp: Optional[str] = None
+
+
+@router.post("/swiftpos/sale")
+async def handle_swiftpos_sale(request: Request, data: SwiftPOSSaleWebhook):
+    """
+    SwiftPOS Sale Webhook — auto-awards points when a sale is completed at the POS.
+    
+    Integration options:
+    1. SwiftPOS POS API (port 33300) → middleware → this endpoint
+    2. SwiftPOS Web API → direct POST to this endpoint  
+    3. Manual trigger from SwiftPOS Back Office via HTTP call
+    
+    The endpoint looks up the member by member_key or email,
+    calculates tier-adjusted points, and credits them immediately.
+    """
+    # Authenticate the webhook (in production, use API key or IP whitelist)
+    # For now, require staff auth header OR a special webhook key
+    auth_header = request.headers.get("Authorization")
+    webhook_key = request.headers.get("X-SwiftPOS-Key")
+
+    if webhook_key:
+        # Validate webhook key (stored in env)
+        import os
+        expected_key = os.environ.get("SWIFTPOS_WEBHOOK_KEY", "")
+        if not expected_key or webhook_key != expected_key:
+            raise HTTPException(status_code=401, detail="Invalid webhook key")
+    elif auth_header:
+        await require_staff(request)
+    else:
+        raise HTTPException(status_code=401, detail="Authentication required (staff token or X-SwiftPOS-Key header)")
+
+    # Find the member
+    member = None
+    if data.member_key:
+        member = await db.users.find_one(
+            {"$or": [
+                {"cherryhub_member_key": data.member_key},
+                {"swiftpos_member_key": data.member_key},
+            ]},
+            {"_id": 0, "password": 0}
+        )
+    if not member and data.member_email:
+        member = await db.users.find_one(
+            {"email": data.member_email.lower().strip()},
+            {"_id": 0, "password": 0}
+        )
+
+    if not member:
+        # Log the unmatched sale for later reconciliation
+        await db.swiftpos_unmatched_sales.insert_one({
+            "terminal_id": data.terminal_id,
+            "receipt_number": data.receipt_number,
+            "member_key": data.member_key,
+            "member_email": data.member_email,
+            "venue_id": data.venue_id,
+            "total_amount": data.total_amount,
+            "status": "unmatched",
+            "received_at": datetime.now(timezone.utc).isoformat(),
+        })
+        return {
+            "success": False,
+            "matched": False,
+            "message": "Member not found — sale logged for reconciliation",
+            "receipt_number": data.receipt_number,
+        }
+
+    # Calculate points
+    tier_id = member.get("tier", "bronze").lower()
+    tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS.get("bronze", {}))
+    multiplier = tier.get("points_multiplier", 1.0)
+
+    base_points = int(data.total_amount)
+    bonus_points = int(base_points * (multiplier - 1))
+    total_points = base_points + bonus_points
+
+    # Credit points
+    await db.users.update_one(
+        {"user_id": member["user_id"]},
+        {"$inc": {"points_balance": total_points}}
+    )
+
+    # Audit trail
+    txn_id = f"spos_{uuid.uuid4().hex[:8]}"
+    txn = {
+        "id": txn_id,
+        "type": "swiftpos_sale",
+        "user_id": member["user_id"],
+        "member_name": member.get("name", member.get("email", "")),
+        "terminal_id": data.terminal_id,
+        "receipt_number": data.receipt_number,
+        "amount_spent": data.total_amount,
+        "venue_id": data.venue_id,
+        "payment_method": data.payment_method,
+        "base_points": base_points,
+        "bonus_points": bonus_points,
+        "total_points": total_points,
+        "multiplier": multiplier,
+        "tier_id": tier_id,
+        "items": data.items,
+        "source": "swiftpos_webhook",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.staff_transactions.insert_one(txn)
+    await db.loyalty_transactions.insert_one({
+        **{k: v for k, v in txn.items() if k != "_id"},
+        "description": f"POS sale ${data.total_amount:.2f} (receipt {data.receipt_number})",
+        "created_at": datetime.now(timezone.utc),
+    })
+
+    updated = await db.users.find_one({"user_id": member["user_id"]}, {"_id": 0, "points_balance": 1})
+
+    return {
+        "success": True,
+        "matched": True,
+        "transaction_id": txn_id,
+        "member_name": member.get("name", ""),
+        "receipt_number": data.receipt_number,
+        "amount": data.total_amount,
+        "total_points": total_points,
+        "multiplier": multiplier,
+        "new_balance": updated.get("points_balance", 0) if updated else 0,
+    }
+
+
+@router.get("/swiftpos/unmatched")
+async def get_unmatched_sales(request: Request, limit: int = 50):
+    """Get sales that couldn't be matched to a Luna member (for manual reconciliation)"""
+    await require_staff(request)
+    sales = await db.swiftpos_unmatched_sales.find(
+        {"status": "unmatched"}, {"_id": 0}
+    ).sort("received_at", -1).limit(limit).to_list(limit)
+    return {"sales": sales, "total": len(sales)}
+
+
+@router.post("/swiftpos/match/{receipt_number}")
+async def match_swiftpos_sale(request: Request, receipt_number: str, user_id: str):
+    """Manually match an unmatched SwiftPOS sale to a Luna member"""
+    staff = await require_staff(request)
+
+    sale = await db.swiftpos_unmatched_sales.find_one(
+        {"receipt_number": receipt_number, "status": "unmatched"}
+    )
+    if not sale:
+        raise HTTPException(status_code=404, detail="Unmatched sale not found")
+
+    member = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+
+    # Award points
+    tier_id = member.get("tier", "bronze").lower()
+    tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS.get("bronze", {}))
+    multiplier = tier.get("points_multiplier", 1.0)
+    amount = sale.get("total_amount", 0)
+    base_points = int(amount)
+    total_points = int(base_points * multiplier)
+
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$inc": {"points_balance": total_points}}
+    )
+
+    # Mark as matched
+    await db.swiftpos_unmatched_sales.update_one(
+        {"receipt_number": receipt_number},
+        {"$set": {
+            "status": "matched",
+            "matched_user_id": user_id,
+            "matched_by": staff.get("user_id"),
+            "matched_at": datetime.now(timezone.utc).isoformat(),
+            "points_awarded": total_points,
+        }}
+    )
+
+    return {
+        "success": True,
+        "message": f"Matched receipt {receipt_number} to {member.get('name', 'member')}. {total_points} points awarded.",
+        "total_points": total_points,
+    }
