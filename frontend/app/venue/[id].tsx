@@ -598,22 +598,26 @@ export default function VenueDetailScreen() {
       {/* Bottom CTA */}
       <View style={[styles.bottomCTA, { paddingBottom: insets.bottom + 10 }]}>
         <View style={styles.ctaRow}>
-          <TouchableOpacity
-            style={styles.ctaSecondaryBtn}
-            onPress={() => router.push(`/table-booking?venue_id=${venue.id}`)}
-            data-testid="venue-vip-tables-btn"
-          >
-            <Icon name="diamond" size={16} color={colors.gold} />
-            <Text style={styles.ctaSecondaryText}>VIP Tables</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.ctaSecondaryBtn}
-            onPress={() => router.push(`/bottle-service?venue_id=${venue.id}`)}
-            data-testid="venue-bottle-service-btn"
-          >
-            <Icon name="wine" size={16} color={colors.accentBright} />
-            <Text style={styles.ctaSecondaryText}>Bottles</Text>
-          </TouchableOpacity>
+          {venue.id === 'eclipse' && (
+            <TouchableOpacity
+              style={styles.ctaSecondaryBtn}
+              onPress={() => router.push(`/bottle-service?venue_id=${venue.id}`)}
+              data-testid="venue-bottle-service-btn"
+            >
+              <Icon name="wine" size={16} color={colors.accentBright} />
+              <Text style={styles.ctaSecondaryText}>Bottles</Text>
+            </TouchableOpacity>
+          )}
+          {(venue.id === 'juju' || venue.id === 'night_market') && (
+            <TouchableOpacity
+              style={styles.ctaSecondaryBtn}
+              onPress={() => router.push(`/venue-menu?venue_id=${venue.id}`)}
+              data-testid="venue-view-menu-btn"
+            >
+              <Icon name="book" size={16} color={colors.gold} />
+              <Text style={styles.ctaSecondaryText}>View Menu</Text>
+            </TouchableOpacity>
+          )}
           <LinearGradient
             colors={[venue.accent_color, venue.accent_color + 'CC']}
             start={{ x: 0, y: 0 }}

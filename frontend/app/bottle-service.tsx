@@ -23,14 +23,6 @@ import * as Haptics from 'expo-haptics';
 
 const BOTTLE_VENUES = [
   { id: 'eclipse', name: 'Eclipse', color: '#E31837' },
-  { id: 'after_dark', name: 'After Dark', color: '#8B00FF' },
-  { id: 'su_casa_brisbane', name: 'Su Casa BNE', color: '#FFB800' },
-  { id: 'su_casa_gold_coast', name: 'Su Casa GC', color: '#FF6B35' },
-  { id: 'pump', name: 'Pump', color: '#FF1493' },
-  { id: 'mamacita', name: 'Mamacita', color: '#FF4500' },
-  { id: 'juju', name: 'Juju', color: '#00D4AA' },
-  { id: 'night_market', name: 'Night Market', color: '#FF4757' },
-  { id: 'ember_and_ash', name: 'Ember & Ash', color: '#FFA502' },
 ];
 
 type CartItem = { package_id: string; name: string; price: number; quantity: number };

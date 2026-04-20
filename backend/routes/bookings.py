@@ -17,15 +17,6 @@ router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
 # ── Models ────────────────────────────────────────────────────────────────────
 
-class TableBookingCreate(BaseModel):
-    venue_id: str
-    table_id: str
-    date: str  # YYYY-MM-DD
-    party_size: int
-    special_requests: Optional[str] = None
-    contact_phone: Optional[str] = None
-
-
 class BottlePreOrderCreate(BaseModel):
     venue_id: str
     booking_id: Optional[str] = None  # Link to existing table booking
@@ -55,284 +46,65 @@ class GuestlistRequest(BaseModel):
 
 BOTTLE_MENUS = {
     "eclipse": [
-        {"id": "ecl_grey_goose", "name": "Grey Goose Vodka", "category": "Vodka", "price": 350, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "700ml premium French vodka with mixers"},
-        {"id": "ecl_moet", "name": "Moet & Chandon", "category": "Champagne", "price": 250, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "750ml Brut Imperial champagne"},
-        {"id": "ecl_dom_p", "name": "Dom Perignon", "category": "Champagne", "price": 650, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "750ml vintage champagne"},
-        {"id": "ecl_hennessy", "name": "Hennessy VS", "category": "Cognac", "price": 400, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "700ml cognac with mixers"},
-        {"id": "ecl_premium_pkg", "name": "Premium Package", "category": "Package", "price": 800, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "2x bottles (vodka + champagne), mixers, ice, garnishes, dedicated host"},
-        {"id": "ecl_ultra_pkg", "name": "Ultra VIP Package", "category": "Package", "price": 1500, "image_url": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400", "description": "3x premium bottles, Dom Perignon, sparklers, VIP host, priority entry x10"},
-    ],
-    "after_dark": [
-        {"id": "ad_ciroc", "name": "Ciroc Vodka", "category": "Vodka", "price": 320, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "700ml premium vodka with mixers"},
-        {"id": "ad_hennessy", "name": "Hennessy VS", "category": "Cognac", "price": 380, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "700ml cognac with mixers"},
-        {"id": "ad_ace", "name": "Ace of Spades", "category": "Champagne", "price": 800, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "750ml Armand de Brignac Gold Brut"},
-        {"id": "ad_hiphop_pkg", "name": "Hip Hop Package", "category": "Package", "price": 900, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Hennessy + Ciroc + mixers + sparklers + VIP host"},
-    ],
-    "su_casa_brisbane": [
-        {"id": "scb_aperol", "name": "Aperol Spritz Jug", "category": "Cocktails", "price": 85, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "1.5L jug of Aperol Spritz (serves 4-6)"},
-        {"id": "scb_espresso", "name": "Espresso Martini Jug", "category": "Cocktails", "price": 95, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "1.5L jug of Espresso Martini (serves 4-6)"},
-        {"id": "scb_prosecco", "name": "Prosecco Bottle", "category": "Wine", "price": 60, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "750ml Italian Prosecco"},
-        {"id": "scb_rooftop_pkg", "name": "Rooftop Package", "category": "Package", "price": 450, "image_url": "https://images.unsplash.com/photo-1517263904808-5dc91e3e7044?w=400", "description": "2x cocktail jugs + prosecco + grazing board + reserved seating"},
-    ],
-    "su_casa_gold_coast": [
-        {"id": "scgc_ciroc", "name": "Ciroc Vodka", "category": "Vodka", "price": 300, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "700ml premium vodka with mixers"},
-        {"id": "scgc_moet", "name": "Moet & Chandon", "category": "Champagne", "price": 230, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "750ml Brut Imperial champagne"},
-        {"id": "scgc_coast_pkg", "name": "Coast Package", "category": "Package", "price": 700, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "2x bottles + champagne + mixers + VIP host + sparklers"},
-    ],
-    "pump": [
-        {"id": "pump_absolut", "name": "Absolut Vodka", "category": "Vodka", "price": 280, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "700ml vodka with energy drinks & mixers"},
-        {"id": "pump_jager", "name": "Jagermeister", "category": "Spirits", "price": 250, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "700ml Jagermeister with Red Bull"},
-        {"id": "pump_edm_pkg", "name": "EDM Package", "category": "Package", "price": 750, "image_url": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400", "description": "2x bottles + Red Bull supply + LED sparklers + VIP wristbands x8"},
-    ],
-    "mamacita": [
-        {"id": "mama_patron", "name": "Patron Silver", "category": "Tequila", "price": 350, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "700ml premium tequila with limes & salt"},
-        {"id": "mama_don_julio", "name": "Don Julio 1942", "category": "Tequila", "price": 550, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "750ml premium aged tequila"},
-        {"id": "mama_latin_pkg", "name": "Latin Heat Package", "category": "Package", "price": 850, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Patron + Don Julio + margarita pitcher + sparklers + VIP host"},
-    ],
-    "juju": [
-        {"id": "juju_wine_w", "name": "Premium White Wine", "category": "Wine", "price": 65, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "750ml house premium Sauvignon Blanc"},
-        {"id": "juju_wine_r", "name": "Premium Red Wine", "category": "Wine", "price": 75, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "750ml house premium Shiraz"},
-        {"id": "juju_dining_pkg", "name": "Dining Experience", "category": "Package", "price": 350, "image_url": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400", "description": "2x wine bottles + chef's grazing platter + dessert board"},
-    ],
-    "night_market": [
-        {"id": "nm_sake", "name": "Premium Sake Carafe", "category": "Sake", "price": 55, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "500ml house premium sake"},
-        {"id": "nm_soju", "name": "Soju Tower", "category": "Soju", "price": 45, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Soju tower with fruit flavours (serves 4)"},
-        {"id": "nm_feast_pkg", "name": "Night Market Feast", "category": "Package", "price": 250, "image_url": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400", "description": "Sake + soju + shared banquet menu (8 dishes) for up to 6 people"},
-    ],
-    "ember_and_ash": [
-        {"id": "ea_penfolds", "name": "Penfolds Bin 389", "category": "Wine", "price": 120, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "750ml Cabernet Shiraz"},
-        {"id": "ea_veuve", "name": "Veuve Clicquot", "category": "Champagne", "price": 200, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "750ml Yellow Label Brut"},
-        {"id": "ea_fine_pkg", "name": "Fine Dining Package", "category": "Package", "price": 500, "image_url": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400", "description": "Veuve Clicquot + Penfolds + wagyu sharing board + dessert"},
+        # ── Vodka ───────────────────────────────────────────
+        {"id": "ecl_belvedere_700", "name": "Belvedere", "category": "Vodka", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Polish luxury rye vodka, 700mL"},
+        {"id": "ecl_belvedere_175", "name": "Belvedere Magnum", "category": "Vodka", "size": "1.75L", "price": 800, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Belvedere, 1.75L magnum"},
+        {"id": "ecl_belvedere_3", "name": "Belvedere Jeroboam", "category": "Vodka", "size": "3L", "price": 1600, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Belvedere, 3L jeroboam"},
+        {"id": "ecl_belvedere_6", "name": "Belvedere Imperial", "category": "Vodka", "size": "6L", "price": 2500, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Belvedere, 6L imperial"},
+        {"id": "ecl_belvedere_10", "name": "Belvedere 10", "category": "Vodka", "size": "700mL", "price": 950, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Belvedere 10, 700mL"},
+        {"id": "ecl_grey_goose", "name": "Grey Goose", "category": "Vodka", "size": "700mL", "price": 450, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "French premium vodka, 700mL"},
+        {"id": "ecl_ciroc_750", "name": "Cîroc", "category": "Vodka", "size": "750mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "French grape vodka, 750mL"},
+        {"id": "ecl_ciroc_175", "name": "Cîroc Magnum", "category": "Vodka", "size": "1.75L", "price": 900, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Cîroc, 1.75L magnum"},
+        # ── Gin ─────────────────────────────────────────────
+        {"id": "ecl_bombay", "name": "Bombay Sapphire", "category": "Gin", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "London dry gin, 700mL"},
+        {"id": "ecl_tanq10", "name": "Tanqueray 10", "category": "Gin", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Tanqueray No. 10, 700mL"},
+        # ── Tequila ─────────────────────────────────────────
+        {"id": "ecl_patron_silver", "name": "Patrón Silver", "category": "Tequila", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Patrón Silver blanco, 700mL"},
+        {"id": "ecl_patron_repo", "name": "Patrón Reposado", "category": "Tequila", "size": "700mL", "price": 450, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Patrón Reposado, 700mL"},
+        {"id": "ecl_1800_silver", "name": "1800 Silver", "category": "Tequila", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "1800 Silver blanco, 700mL"},
+        {"id": "ecl_1800_coconut", "name": "1800 Coconut", "category": "Tequila", "size": "700mL", "price": 450, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "1800 Coconut, 700mL"},
+        {"id": "ecl_1800_anejo", "name": "1800 Añejo", "category": "Tequila", "size": "700mL", "price": 500, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "1800 Añejo, 700mL"},
+        {"id": "ecl_1800_crist", "name": "1800 Cristalino", "category": "Tequila", "size": "700mL", "price": 550, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "1800 Cristalino, 700mL"},
+        {"id": "ecl_dj_blanco", "name": "Don Julio Blanco", "category": "Tequila", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Don Julio Blanco, 700mL"},
+        {"id": "ecl_dj_repo", "name": "Don Julio Reposado", "category": "Tequila", "size": "700mL", "price": 500, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Don Julio Reposado, 700mL"},
+        {"id": "ecl_dj_1942", "name": "Don Julio 1942", "category": "Tequila", "size": "700mL", "price": 1000, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Don Julio 1942 Añejo, 700mL"},
+        {"id": "ecl_volcan_blanco", "name": "Volcán Blanco", "category": "Tequila", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Volcán Blanco, 700mL"},
+        {"id": "ecl_volcan_xa", "name": "Volcán XA Luminous", "category": "Tequila", "size": "700mL", "price": 1000, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Volcán XA Luminous, 700mL"},
+        {"id": "ecl_volando", "name": "Volando Blanco", "category": "Tequila", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Volando Blanco, 700mL"},
+        {"id": "ecl_clase_azul", "name": "Clase Azul Reposado", "category": "Tequila", "size": "700mL", "price": 1500, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Clase Azul Reposado, 700mL"},
+        {"id": "ecl_cincoro_gold", "name": "Cincoro Gold", "category": "Tequila", "size": "700mL", "price": 1600, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Cincoro Gold, 700mL"},
+        {"id": "ecl_cincoro_blanco_175", "name": "Cincoro Blanco Magnum", "category": "Tequila", "size": "1.75L", "price": 1800, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Cincoro Blanco, 1.75L"},
+        {"id": "ecl_cincoro_repo", "name": "Cincoro Reposado", "category": "Tequila", "size": "700mL", "price": 1000, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Cincoro Reposado, 700mL"},
+        {"id": "ecl_cincoro_blanco", "name": "Cincoro Blanco", "category": "Tequila", "size": "700mL", "price": 850, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Cincoro Blanco, 700mL"},
+        {"id": "ecl_cincoro_anejo", "name": "Cincoro Añejo", "category": "Tequila", "size": "700mL", "price": 1300, "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "description": "Cincoro Añejo, 700mL"},
+        # ── Scotch ──────────────────────────────────────────
+        {"id": "ecl_jameson", "name": "Jameson", "category": "Scotch", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Jameson Irish whiskey, 700mL"},
+        {"id": "ecl_jw_black", "name": "Johnnie Walker Black", "category": "Scotch", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "JW Black Label 12yo, 700mL"},
+        {"id": "ecl_chivas", "name": "Chivas Regal", "category": "Scotch", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Chivas Regal, 700mL"},
+        {"id": "ecl_glenm", "name": "Glenmorangie Original", "category": "Scotch", "size": "700mL", "price": 500, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Glenmorangie 10yo Original, 700mL"},
+        {"id": "ecl_glenfiddich", "name": "Glenfiddich", "category": "Scotch", "size": "700mL", "price": 450, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Glenfiddich single malt, 700mL"},
+        {"id": "ecl_macallan12", "name": "Macallan 12 Year Old", "category": "Scotch", "size": "700mL", "price": 600, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Macallan 12yo Double Cask, 700mL"},
+        # ── Rum ─────────────────────────────────────────────
+        {"id": "ecl_captain", "name": "Captain Morgan", "category": "Rum", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Captain Morgan Original, 700mL"},
+        {"id": "ecl_kraken", "name": "The Kraken", "category": "Rum", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "The Kraken Black Spiced, 700mL"},
+        {"id": "ecl_bacardi", "name": "Bacardi", "category": "Rum", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Bacardi Superior, 700mL"},
+        # ── Bourbon ─────────────────────────────────────────
+        {"id": "ecl_jd", "name": "Jack Daniel's", "category": "Bourbon", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Jack Daniel's Old No. 7, 700mL"},
+        {"id": "ecl_makers", "name": "Maker's Mark", "category": "Bourbon", "size": "700mL", "price": 450, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Maker's Mark, 700mL"},
+        {"id": "ecl_gent_jack", "name": "Gentleman Jack Magnum", "category": "Bourbon", "size": "1.75L", "price": 750, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Gentleman Jack, 1.75L"},
+        # ── Liqueur ─────────────────────────────────────────
+        {"id": "ecl_alize", "name": "Alizé", "category": "Liqueur", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Alizé passion liqueur, 700mL"},
+        {"id": "ecl_sourpuss", "name": "Sour Puss Collection", "category": "Liqueur", "size": "4x 700mL", "price": 300, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Watermelon, Apple, Grape, Passionfruit"},
+        {"id": "ecl_wetpussy", "name": "Wet Pussy", "category": "Liqueur", "size": "700mL", "price": 300, "image_url": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=400", "description": "Wet Pussy shooter mix, 700mL"},
+        # ── Cognac ──────────────────────────────────────────
+        {"id": "ecl_henn_vs", "name": "Hennessy VS", "category": "Cognac", "size": "700mL", "price": 400, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Hennessy VS, 700mL"},
+        {"id": "ecl_henn_vsop", "name": "Hennessy VSOP", "category": "Cognac", "size": "700mL", "price": 600, "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400", "description": "Hennessy VSOP Privilège, 700mL"},
+        # ── Champagne ───────────────────────────────────────
+        {"id": "ecl_veuve", "name": "Veuve Clicquot", "category": "Champagne", "size": "750mL", "price": 250, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "Veuve Clicquot Yellow Label, 750mL"},
+        {"id": "ecl_moet", "name": "Moët & Chandon", "category": "Champagne", "size": "750mL", "price": 200, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "Moët & Chandon Brut Impérial, 750mL"},
+        {"id": "ecl_dom", "name": "Dom Pérignon", "category": "Champagne", "size": "750mL", "price": 800, "image_url": "https://images.unsplash.com/photo-1592845539422-7c8e1f95fa31?w=400", "description": "Dom Pérignon Vintage, 750mL"},
     ],
 }
-
-
-# ── VIP Table Booking ─────────────────────────────────────────────────────────
-
-@router.post("/table")
-async def create_table_booking(request: Request, body: TableBookingCreate):
-    """Create a VIP table booking (pending deposit payment)"""
-    auth_header = request.headers.get("authorization")
-    user = get_current_user(auth_header)
-
-    if body.venue_id not in LUNA_VENUES:
-        raise HTTPException(status_code=404, detail="Venue not found")
-
-    # Import VENUE_TABLES from venues route
-    from routes.venues import VENUE_TABLES
-    tables = VENUE_TABLES.get(body.venue_id, [])
-    table = next((t for t in tables if t["id"] == body.table_id), None)
-    if not table:
-        raise HTTPException(status_code=404, detail="Table not found")
-
-    if body.party_size > table["capacity"]:
-        raise HTTPException(status_code=400, detail=f"Max capacity is {table['capacity']} guests")
-
-    # Check if table is already booked
-    existing = await db.table_bookings.find_one({
-        "venue_id": body.venue_id,
-        "table_id": body.table_id,
-        "date": body.date,
-        "status": {"$in": ["confirmed", "pending"]},
-    })
-    if existing:
-        raise HTTPException(status_code=409, detail="This table is already booked for that date")
-
-    booking_id = f"TB-{uuid.uuid4().hex[:8].upper()}"
-    venue = LUNA_VENUES[body.venue_id]
-
-    booking = {
-        "booking_id": booking_id,
-        "user_id": user["user_id"],
-        "venue_id": body.venue_id,
-        "venue_name": venue["name"],
-        "table_id": body.table_id,
-        "table_name": table["name"],
-        "table_location": table["location"],
-        "date": body.date,
-        "party_size": body.party_size,
-        "min_spend": table["min_spend"],
-        "deposit_amount": table["deposit_amount"],
-        "deposit_paid": False,
-        "special_requests": body.special_requests,
-        "contact_phone": body.contact_phone,
-        "status": "pending",
-        "features": table["features"],
-        "created_at": datetime.now(timezone.utc),
-        "updated_at": datetime.now(timezone.utc),
-    }
-
-    await db.table_bookings.insert_one(booking)
-
-    return {
-        "success": True,
-        "booking": clean_mongo_doc(booking),
-        "message": f"Table reserved at {venue['name']}! Pay the ${table['deposit_amount']} deposit to confirm.",
-    }
-
-
-@router.post("/table/{booking_id}/deposit")
-async def create_deposit_intent(request: Request, booking_id: str):
-    """Create a Stripe checkout session for the table deposit.
-
-    Returns `checkout_url` the client must redirect to. Points + confirmation
-    happen via the Stripe webhook after payment.succeeded.
-    """
-    auth_header = request.headers.get("authorization")
-    user = get_current_user(auth_header)
-
-    booking = await db.table_bookings.find_one({
-        "booking_id": booking_id,
-        "user_id": user["user_id"],
-    })
-    if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    if booking.get("deposit_paid"):
-        raise HTTPException(status_code=400, detail="Deposit already paid")
-
-    # DEV_MODE bypass for test account so we can exercise the flow without a real card.
-    if user.get("email") == "luna@test.com":
-        payment_intent_id = f"pi_dev_{uuid.uuid4().hex[:12]}"
-        await db.table_bookings.update_one(
-            {"booking_id": booking_id},
-            {"$set": {
-                "status": "confirmed",
-                "deposit_paid": True,
-                "payment_intent_id": payment_intent_id,
-                "confirmed_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc),
-            }},
-        )
-        from config import POINTS_PER_DOLLAR
-        points_earned = int(booking["deposit_amount"] * POINTS_PER_DOLLAR)
-        await db.users.update_one(
-            {"user_id": user["user_id"]},
-            {"$inc": {"points_balance": points_earned}},
-        )
-        return {
-            "success": True,
-            "dev_mode": True,
-            "payment_intent_id": payment_intent_id,
-            "amount": booking["deposit_amount"],
-            "currency": "aud",
-            "points_earned": points_earned,
-            "message": "DEV_MODE: skipped Stripe. Booking confirmed for test account.",
-        }
-
-    # Real Stripe checkout — required for all production users.
-    from routes.payments import get_stripe_checkout
-    from emergentintegrations.payments.stripe.checkout import CheckoutSessionRequest
-
-    origin = request.headers.get("origin") or str(request.base_url).rstrip('/')
-    success_url = f"{origin}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{origin}/payment-cancelled"
-
-    metadata = {
-        "user_id": user["user_id"],
-        "package_type": "table_deposit",
-        "booking_id": booking_id,
-        "venue_id": booking.get("venue_id", ""),
-        "booking_date": booking.get("date", ""),
-    }
-
-    stripe_checkout = get_stripe_checkout(request)
-    checkout_request = CheckoutSessionRequest(
-        amount=float(booking["deposit_amount"]),
-        currency="aud",
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata=metadata,
-    )
-    session = await stripe_checkout.create_checkout_session(checkout_request)
-
-    # Track transaction so webhook can credit points
-    await db.payment_transactions.insert_one({
-        "session_id": session.session_id,
-        "user_id": user["user_id"],
-        "amount": float(booking["deposit_amount"]),
-        "currency": "aud",
-        "package_id": f"table_{booking['venue_id']}",
-        "package_name": f"Table deposit - {booking.get('venue_name', booking['venue_id'])}",
-        "package_type": "table_deposit",
-        "metadata": metadata,
-        "payment_status": "pending",
-        "status": "initiated",
-        "created_at": datetime.now(timezone.utc),
-    })
-
-    await db.table_bookings.update_one(
-        {"booking_id": booking_id},
-        {"$set": {"payment_session_id": session.session_id, "updated_at": datetime.now(timezone.utc)}},
-    )
-
-    return {
-        "success": True,
-        "checkout_url": session.url,
-        "session_id": session.session_id,
-        "amount": booking["deposit_amount"],
-        "currency": "aud",
-        "message": "Redirect to Stripe to complete the deposit payment.",
-    }
-
-
-@router.post("/table/{booking_id}/confirm")
-async def confirm_table_booking(request: Request, booking_id: str, payment_intent_id: str = ""):
-    """Confirm table booking after deposit payment"""
-    auth_header = request.headers.get("authorization")
-    user = get_current_user(auth_header)
-
-    booking = await db.table_bookings.find_one({
-        "booking_id": booking_id,
-        "user_id": user["user_id"],
-    })
-    if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
-
-    points_earned = 50 * booking.get("party_size", 2)
-
-    await db.table_bookings.update_one(
-        {"booking_id": booking_id},
-        {"$set": {
-            "status": "confirmed",
-            "deposit_paid": True,
-            "payment_intent_id": payment_intent_id,
-            "confirmed_at": datetime.now(timezone.utc),
-            "updated_at": datetime.now(timezone.utc),
-        }},
-    )
-
-    # Award loyalty points
-    await db.users.update_one(
-        {"user_id": user["user_id"]},
-        {"$inc": {"points_balance": points_earned}},
-    )
-
-    return {
-        "success": True,
-        "message": f"Your {booking['table_name']} at {booking['venue_name']} is confirmed!",
-        "points_earned": points_earned,
-    }
-
-
-@router.delete("/table/{booking_id}")
-async def cancel_table_booking(request: Request, booking_id: str):
-    """Cancel a table booking"""
-    auth_header = request.headers.get("authorization")
-    user = get_current_user(auth_header)
-
-    booking = await db.table_bookings.find_one({
-        "booking_id": booking_id,
-        "user_id": user["user_id"],
-    })
-    if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
-
-    await db.table_bookings.update_one(
-        {"booking_id": booking_id},
-        {"$set": {"status": "cancelled", "updated_at": datetime.now(timezone.utc)}},
-    )
-
-    return {"success": True, "message": "Booking cancelled"}
 
 
 # ── Bottle Service ────────────────────────────────────────────────────────────
@@ -371,6 +143,10 @@ async def create_bottle_preorder(request: Request, body: BottlePreOrderCreate):
     if body.venue_id not in LUNA_VENUES:
         raise HTTPException(status_code=404, detail="Venue not found")
 
+    # Bottle service is Eclipse-only
+    if body.venue_id != "eclipse":
+        raise HTTPException(status_code=400, detail="Bottle service is only available at Eclipse.")
+
     menu = BOTTLE_MENUS.get(body.venue_id, [])
     menu_map = {item["id"]: item for item in menu}
 
@@ -393,6 +169,10 @@ async def create_bottle_preorder(request: Request, body: BottlePreOrderCreate):
             "line_total": line_total,
         })
 
+    # Deposit = $50 flat OR 10% of total, whichever is higher
+    deposit_amount = max(50, round(total * 0.10, 2))
+    balance_due = max(0, round(total - deposit_amount, 2))
+
     venue = LUNA_VENUES[body.venue_id]
     order_id = f"BO-{uuid.uuid4().hex[:8].upper()}"
 
@@ -405,6 +185,8 @@ async def create_bottle_preorder(request: Request, body: BottlePreOrderCreate):
         "date": body.date,
         "items": order_items,
         "total": total,
+        "deposit_amount": deposit_amount,
+        "balance_due": balance_due,
         "special_requests": body.special_requests,
         "status": "pending",
         "payment_status": "unpaid",
@@ -433,10 +215,12 @@ async def create_bottle_preorder(request: Request, body: BottlePreOrderCreate):
             "dev_mode": True,
             "order": clean_mongo_doc(order),
             "points_earned": points_earned,
-            "message": f"DEV_MODE: Bottle service order confirmed at {venue['name']}. ${total} (skipped Stripe).",
+            "deposit_amount": deposit_amount,
+            "balance_due": balance_due,
+            "message": f"DEV_MODE: Bottle service order confirmed at {venue['name']}. ${total} total (skipped Stripe).",
         }
 
-    # Real Stripe checkout for all other users
+    # Real Stripe checkout for all other users — only charge deposit now, balance at venue
     from routes.payments import get_stripe_checkout
     from emergentintegrations.payments.stripe.checkout import CheckoutSessionRequest
 
@@ -450,11 +234,13 @@ async def create_bottle_preorder(request: Request, body: BottlePreOrderCreate):
         "order_id": order_id,
         "venue_id": body.venue_id,
         "booking_date": body.date,
+        "order_total": str(total),
+        "balance_due": str(balance_due),
     }
 
     stripe_checkout = get_stripe_checkout(request)
     checkout_request = CheckoutSessionRequest(
-        amount=float(total),
+        amount=float(deposit_amount),
         currency="aud",
         success_url=success_url,
         cancel_url=cancel_url,
@@ -465,10 +251,10 @@ async def create_bottle_preorder(request: Request, body: BottlePreOrderCreate):
     await db.payment_transactions.insert_one({
         "session_id": session.session_id,
         "user_id": user["user_id"],
-        "amount": float(total),
+        "amount": float(deposit_amount),
         "currency": "aud",
         "package_id": f"bottle_{body.venue_id}",
-        "package_name": f"Bottle service - {venue['name']}",
+        "package_name": f"Bottle service deposit - {venue['name']}",
         "package_type": "bottle_service",
         "metadata": metadata,
         "payment_status": "pending",
@@ -486,7 +272,9 @@ async def create_bottle_preorder(request: Request, body: BottlePreOrderCreate):
         "order": clean_mongo_doc(order),
         "checkout_url": session.url,
         "session_id": session.session_id,
-        "message": f"Redirect to Stripe to complete ${total} bottle service payment for {venue['name']}.",
+        "deposit_amount": deposit_amount,
+        "balance_due": balance_due,
+        "message": f"${deposit_amount} deposit due now. Balance of ${balance_due} payable at {venue['name']} on the night.",
     }
 
 
@@ -689,20 +477,4 @@ async def cancel_booking(request: Request, booking_id: str):
     raise HTTPException(status_code=404, detail="Booking not found")
 
 
-@router.get("/my-tables")
-async def get_my_table_bookings(request: Request):
-    """Get user's VIP table bookings"""
-    auth_header = request.headers.get("authorization")
-    current_user = get_current_user(auth_header)
 
-    bookings = await db.table_bookings.find(
-        {"user_id": current_user["user_id"]},
-        {"_id": 0},
-    ).sort("created_at", -1).to_list(50)
-
-    for b in bookings:
-        for key in ("created_at", "updated_at", "confirmed_at"):
-            if key in b and hasattr(b[key], "isoformat"):
-                b[key] = b[key].isoformat()
-
-    return {"bookings": bookings}

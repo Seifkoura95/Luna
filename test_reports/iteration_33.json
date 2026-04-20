@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 33: Tested VIP Table removal, Eclipse 48-item bottle menu, Eclipse-only bottle service enforcement, deposit formula max($50, 10%), DEV_MODE points, real Stripe checkout for fresh user, JuJu's + Night Market view-only menus, and regression on existing endpoints. 26/26 backend tests passed. Frontend is Expo React Native (mobile); public preview URL does not serve the app (502) so browser-based UI testing is not applicable. Frontend code changes verified at source level (table-booking.tsx removed, venue-menu.tsx added, VIP Tables filtered in venue detail, getVenueMenu in api.ts).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_bottle_and_menus.py",
+    "/app/test_reports/pytest/pytest_bottle_and_menus.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Deposit formula max(50, round(total*0.10, 2)) is correct — verified for $200 (→$50) and $1600 (→$160).",
+    "Venue-menu endpoint uses prefix /venues and collides conceptually with existing /venues router. Works because FastAPI matches GET /{venue_id}/menu only here, but future endpoints on venues router must avoid collisions.",
+    "bottle-preorder: when real Stripe path fails mid-flow, the already-inserted bottle_orders record is left in 'pending/unpaid' state without rollback. Minor — a retention job or cleanup task would prevent orphan orders.",
+    "routes/__init__.py __all__ list doesn't include the newly added venue_menus_router (it is registered in ALL_ROUTERS but not exported). Non-functional but inconsistent."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_bottle_and_menus.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "N/A (Expo mobile app, preview URL returns 502)"
+  },
+  "test_credentials": "luna@test.com / test123 (DEV_MODE bypass). Fresh user registered via POST /api/auth/register per test run.",
+  "seed_data_creation": "Created pending bottle_orders records via happy-path tests (luna@test.com + ephemeral TEST_stripe_* users). Also created a restaurant reservation at juju and a guestlist entry at eclipse.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Test file /app/backend/tests/test_bottle_and_menus.py covers all iteration-33 acceptance criteria. /api/leaderboard requires authorization (not public). Bottle service endpoint path is POST /api/bookings/bottle-preorder and only venue_id=='eclipse' is accepted (others return 400 with message 'Bottle service is only available at Eclipse.'). POST /api/bookings/table returns 405 (not 404) because /bookings/{booking_id} DELETE route exists for same base path — both 404/405 are acceptable per acceptance criteria; test allows either.",
+  "rca of the issue": "No bugs found. One test-side assertion issue initially (leaderboard requires auth) was fixed in the test itself — not a code bug."
+}

@@ -93,7 +93,7 @@ export default function NotificationsScreen() {
     
     // Handle navigation based on notification type
     if (notification.data?.booking_id) {
-      router.push('/my-bookings');
+      router.push('/(tabs)/profile');
     } else if (notification.data?.event_id) {
       // Navigate to event
     }

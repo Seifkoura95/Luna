@@ -641,48 +641,20 @@ export const api = {
   // ====== VIP TABLE BOOKING ======
   getVenueTables: (venueId: string, date?: string) =>
     apiFetch<{ tables: any[]; venue_id: string }>(`/api/venues/${venueId}/tables${date ? `?date=${date}` : ''}`),
-  
-  createTableBooking: (data: {
-    venue_id: string;
-    table_id: string;
-    date: string;
-    party_size: number;
-    special_requests?: string;
-    contact_phone?: string;
-  }) =>
-    apiFetch<{ success: boolean; booking: any; message: string }>('/api/bookings/table', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    }),
-  
-  getTableDepositIntent: (bookingId: string) =>
-    apiFetch<{
-      success: boolean;
-      client_secret: string;
-      payment_intent_id: string;
-      amount: number;
-      currency: string;
-      demo_mode?: boolean;
-    }>(`/api/bookings/table/${bookingId}/deposit`, {
-      method: 'POST'
-    }),
-  
-  confirmTableBooking: (bookingId: string, paymentIntentId: string) =>
-    apiFetch<{ success: boolean; message: string; points_earned: number }>(`/api/bookings/table/${bookingId}/confirm?payment_intent_id=${paymentIntentId}`, {
-      method: 'POST'
-    }),
-  
-  getMyTableBookings: () =>
-    apiFetch<{ bookings: any[] }>('/api/bookings/my-tables'),
-  
-  cancelTableBooking: (bookingId: string) =>
-    apiFetch<{ success: boolean; message: string }>(`/api/bookings/table/${bookingId}`, {
-      method: 'DELETE'
-    }),
 
   // ====== BOTTLE SERVICE ======
   getBottleMenu: (venueId: string) =>
     apiFetch<{ venue_id: string; venue_name: string; menu: any[]; categories: Record<string, any[]> }>(`/api/bookings/bottle-menu/${venueId}`),
+
+  // ====== VIEW-ONLY VENUE MENUS (JuJu + Night Market) ======
+  getVenueMenu: (venueId: string) =>
+    apiFetch<{
+      venue_id: string;
+      venue_name: string;
+      description: string;
+      food: Record<string, any[]>;
+      drinks: Record<string, any[]>;
+    }>(`/api/venues/${venueId}/menu`),
 
   createBottlePreorder: (data: {
     venue_id: string;
