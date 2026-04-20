@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     backgroundColor: 'rgba(6, 6, 10, 0.92)',
-    borderTopColor: colors.glassBorder,
+    borderTopColor: '#D4AF5A40',
     borderTopWidth: 1,
     paddingTop: spacing.sm + 2,
     paddingBottom: Platform.OS === 'ios' ? 32 : 16,

@@ -121,23 +121,25 @@ const generateParticles = (count: number) => {
   const particles = [];
   const colors = [
     '#ffffff',      // White
-    '#2563EB',      // Blue (replaced red)
-    '#D4AF37',      // Gold
+    '#D4AF5A',      // Gold
+    '#D4AF5A',      // More gold
+    '#2563EB',      // Blue
     '#8B5CF6',      // Purple
     '#00D4AA',      // Cyan
-    '#ffffff',      // More white for balance
-    '#ffffff',
+    '#ffffff',      // White
+    '#FF6B35',      // Orange
+    '#ffffff',      // White
   ];
 
   for (let i = 0; i < count; i++) {
     particles.push({
       id: i,
-      size: Math.random() * 3 + 1, // 1-4px
+      size: Math.random() * 4 + 1, // 1-5px
       initialX: Math.random() * SCREEN_WIDTH,
-      initialY: SCREEN_HEIGHT + Math.random() * SCREEN_HEIGHT, // Start below screen
-      duration: 15000 + Math.random() * 20000, // 15-35 seconds to float up
-      delay: Math.random() * 10000, // Stagger start times
-      opacity: Math.random() * 0.6 + 0.2, // 0.2-0.8 opacity
+      initialY: SCREEN_HEIGHT + Math.random() * SCREEN_HEIGHT,
+      duration: 12000 + Math.random() * 18000, // 12-30 seconds
+      delay: Math.random() * 8000,
+      opacity: Math.random() * 0.7 + 0.15, // 0.15-0.85 opacity
       color: colors[Math.floor(Math.random() * colors.length)],
     });
   }
@@ -145,8 +147,8 @@ const generateParticles = (count: number) => {
 };
 
 export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
-  // Memoize particles - reduced to 30 for performance
-  const particles = useMemo(() => generateParticles(30), []);
+  // More particles for a livelier feel
+  const particles = useMemo(() => generateParticles(65), []);
 
   return (
     <View style={styles.container}>
@@ -160,17 +162,31 @@ export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
 
       {/* Subtle ambient glows for depth */}
       <LinearGradient
-        colors={['rgba(59, 130, 246, 0.35)', 'transparent']}
+        colors={['rgba(59, 130, 246, 0.25)', 'transparent']}
         style={styles.topLeftGlow}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
       
       <LinearGradient
-        colors={['rgba(212, 175, 55, 0.1)', 'transparent']}
+        colors={['rgba(212, 175, 90, 0.15)', 'transparent']}
         style={styles.topRightGlow}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
+      />
+
+      <LinearGradient
+        colors={['rgba(139, 92, 246, 0.12)', 'transparent']}
+        style={styles.bottomLeftGlow}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 1, y: 0 }}
+      />
+
+      <LinearGradient
+        colors={['rgba(212, 175, 90, 0.10)', 'transparent']}
+        style={styles.centerGlow}
+        start={{ x: 0.5, y: 0.5 }}
+        end={{ x: 0, y: 0 }}
       />
 
       {/* Floating particles/stars */}
@@ -226,6 +242,22 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
+  },
+  bottomLeftGlow: {
+    position: 'absolute',
+    bottom: -50,
+    left: -80,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+  },
+  centerGlow: {
+    position: 'absolute',
+    top: SCREEN_HEIGHT * 0.35,
+    left: SCREEN_WIDTH * 0.2,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
   },
   particlesContainer: {
     ...StyleSheet.absoluteFillObject,
