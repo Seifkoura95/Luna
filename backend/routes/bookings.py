@@ -173,7 +173,11 @@ async def create_table_booking(request: Request, body: TableBookingCreate):
 
 @router.post("/table/{booking_id}/deposit")
 async def create_deposit_intent(request: Request, booking_id: str):
-    """Create a payment intent for the table deposit"""
+    """Create a Stripe checkout session for the table deposit.
+
+    Returns `checkout_url` the client must redirect to. Points + confirmation
+    happen via the Stripe webhook after payment.succeeded.
+    """
     auth_header = request.headers.get("authorization")
     user = get_current_user(auth_header)
 
@@ -186,15 +190,88 @@ async def create_deposit_intent(request: Request, booking_id: str):
     if booking.get("deposit_paid"):
         raise HTTPException(status_code=400, detail="Deposit already paid")
 
-    # Demo mode — simulate Stripe payment
-    payment_intent_id = f"pi_demo_{uuid.uuid4().hex[:12]}"
+    # DEV_MODE bypass for test account so we can exercise the flow without a real card.
+    if user.get("email") == "luna@test.com":
+        payment_intent_id = f"pi_dev_{uuid.uuid4().hex[:12]}"
+        await db.table_bookings.update_one(
+            {"booking_id": booking_id},
+            {"$set": {
+                "status": "confirmed",
+                "deposit_paid": True,
+                "payment_intent_id": payment_intent_id,
+                "confirmed_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
+            }},
+        )
+        from config import POINTS_PER_DOLLAR
+        points_earned = int(booking["deposit_amount"] * POINTS_PER_DOLLAR)
+        await db.users.update_one(
+            {"user_id": user["user_id"]},
+            {"$inc": {"points_balance": points_earned}},
+        )
+        return {
+            "success": True,
+            "dev_mode": True,
+            "payment_intent_id": payment_intent_id,
+            "amount": booking["deposit_amount"],
+            "currency": "aud",
+            "points_earned": points_earned,
+            "message": "DEV_MODE: skipped Stripe. Booking confirmed for test account.",
+        }
+
+    # Real Stripe checkout — required for all production users.
+    from routes.payments import get_stripe_checkout
+    from emergentintegrations.payments.stripe.checkout import CheckoutSessionRequest
+
+    origin = request.headers.get("origin") or str(request.base_url).rstrip('/')
+    success_url = f"{origin}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{origin}/payment-cancelled"
+
+    metadata = {
+        "user_id": user["user_id"],
+        "package_type": "table_deposit",
+        "booking_id": booking_id,
+        "venue_id": booking.get("venue_id", ""),
+        "booking_date": booking.get("date", ""),
+    }
+
+    stripe_checkout = get_stripe_checkout(request)
+    checkout_request = CheckoutSessionRequest(
+        amount=float(booking["deposit_amount"]),
+        currency="aud",
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata=metadata,
+    )
+    session = await stripe_checkout.create_checkout_session(checkout_request)
+
+    # Track transaction so webhook can credit points
+    await db.payment_transactions.insert_one({
+        "session_id": session.session_id,
+        "user_id": user["user_id"],
+        "amount": float(booking["deposit_amount"]),
+        "currency": "aud",
+        "package_id": f"table_{booking['venue_id']}",
+        "package_name": f"Table deposit - {booking.get('venue_name', booking['venue_id'])}",
+        "package_type": "table_deposit",
+        "metadata": metadata,
+        "payment_status": "pending",
+        "status": "initiated",
+        "created_at": datetime.now(timezone.utc),
+    })
+
+    await db.table_bookings.update_one(
+        {"booking_id": booking_id},
+        {"$set": {"payment_session_id": session.session_id, "updated_at": datetime.now(timezone.utc)}},
+    )
+
     return {
         "success": True,
-        "payment_intent_id": payment_intent_id,
+        "checkout_url": session.url,
+        "session_id": session.session_id,
         "amount": booking["deposit_amount"],
         "currency": "aud",
-        "demo_mode": True,
-        "message": "Demo payment mode — in production this connects to Stripe",
+        "message": "Redirect to Stripe to complete the deposit payment.",
     }
 
 
@@ -337,17 +414,79 @@ async def create_bottle_preorder(request: Request, body: BottlePreOrderCreate):
 
     await db.bottle_orders.insert_one(order)
 
-    points_earned = int(total * 0.1)  # 10% of total as points
-    await db.users.update_one(
-        {"user_id": user["user_id"]},
-        {"$inc": {"points_balance": points_earned}},
+    from config import POINTS_PER_DOLLAR
+
+    # DEV_MODE bypass for test account
+    if user.get("email") == "luna@test.com":
+        points_earned = int(total * POINTS_PER_DOLLAR)
+        await db.bottle_orders.update_one(
+            {"order_id": order_id},
+            {"$set": {"status": "confirmed", "payment_status": "paid_dev",
+                      "confirmed_at": datetime.now(timezone.utc)}},
+        )
+        await db.users.update_one(
+            {"user_id": user["user_id"]},
+            {"$inc": {"points_balance": points_earned}},
+        )
+        return {
+            "success": True,
+            "dev_mode": True,
+            "order": clean_mongo_doc(order),
+            "points_earned": points_earned,
+            "message": f"DEV_MODE: Bottle service order confirmed at {venue['name']}. ${total} (skipped Stripe).",
+        }
+
+    # Real Stripe checkout for all other users
+    from routes.payments import get_stripe_checkout
+    from emergentintegrations.payments.stripe.checkout import CheckoutSessionRequest
+
+    origin = request.headers.get("origin") or str(request.base_url).rstrip('/')
+    success_url = f"{origin}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{origin}/payment-cancelled"
+
+    metadata = {
+        "user_id": user["user_id"],
+        "package_type": "bottle_service",
+        "order_id": order_id,
+        "venue_id": body.venue_id,
+        "booking_date": body.date,
+    }
+
+    stripe_checkout = get_stripe_checkout(request)
+    checkout_request = CheckoutSessionRequest(
+        amount=float(total),
+        currency="aud",
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata=metadata,
+    )
+    session = await stripe_checkout.create_checkout_session(checkout_request)
+
+    await db.payment_transactions.insert_one({
+        "session_id": session.session_id,
+        "user_id": user["user_id"],
+        "amount": float(total),
+        "currency": "aud",
+        "package_id": f"bottle_{body.venue_id}",
+        "package_name": f"Bottle service - {venue['name']}",
+        "package_type": "bottle_service",
+        "metadata": metadata,
+        "payment_status": "pending",
+        "status": "initiated",
+        "created_at": datetime.now(timezone.utc),
+    })
+
+    await db.bottle_orders.update_one(
+        {"order_id": order_id},
+        {"$set": {"payment_session_id": session.session_id}},
     )
 
     return {
         "success": True,
         "order": clean_mongo_doc(order),
-        "points_earned": points_earned,
-        "message": f"Bottle service pre-order placed at {venue['name']}! ${total} total.",
+        "checkout_url": session.url,
+        "session_id": session.session_id,
+        "message": f"Redirect to Stripe to complete ${total} bottle service payment for {venue['name']}.",
     }
 
 

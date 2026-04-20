@@ -18,6 +18,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Icon } from '../../src/components/Icon';
+import { LunaIcon } from '../../src/components/LunaIcons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius } from '../../src/theme/colors';
@@ -288,7 +289,7 @@ export default function LunaAIScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <Icon name="sparkles" size={16} color="#fff" />
+              <LunaIcon name="aiMoon" size={16} color="#fff" />
             </LinearGradient>
             <View style={styles.aiOnlineIndicator} />
           </View>
@@ -375,7 +376,7 @@ export default function LunaAIScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Icon name="sparkles" size={20} color="#fff" />
+                  <LunaIcon name="aiMoon" size={20} color="#fff" />
                 </LinearGradient>
               </Animated.View>
               <View style={styles.headerTextWrapper}>
@@ -411,8 +412,8 @@ export default function LunaAIScreen() {
 
       <KeyboardAvoidingView 
         style={styles.chatContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.bottom > 0 ? 85 : 70) : 0}
       >
         {/* Messages */}
         <FlatList
@@ -422,6 +423,8 @@ export default function LunaAIScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messagesList}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           ListFooterComponent={
             isLoading ? (
@@ -433,7 +436,7 @@ export default function LunaAIScreen() {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <Icon name="sparkles" size={16} color="#fff" />
+                    <LunaIcon name="aiMoon" size={16} color="#fff" />
                   </LinearGradient>
                 </View>
                 <View style={styles.typingBubble}>
@@ -480,7 +483,7 @@ export default function LunaAIScreen() {
         )}
 
         {/* Premium Input Area */}
-        <View style={[styles.inputContainer, { paddingBottom: keyboardVisible ? 4 : insets.bottom + 8 }]}>
+        <View style={[styles.inputContainer, { paddingBottom: keyboardVisible ? 4 : 8 }]}>
           <BlurView intensity={60} style={styles.inputBlur}>
             <View style={styles.inputWrapper}>
               <TextInput

@@ -58,7 +58,7 @@ class StaffAwardRequest(BaseModel):
 
 # ── Points Engine ─────────────────────────────────────────────────────────────
 
-POINTS_PER_DOLLAR = 1  # Base: 1 point per $1 spent
+POINTS_PER_DOLLAR = 10  # 10 points per $1 spent (redeem at 10 pts = $0.25 → 25% cashback)
 
 
 async def _get_tier_multiplier(user_id: str) -> tuple:

@@ -587,7 +587,7 @@ export default function ProfileScreen() {
                   <LunaIcon name="star" size={20} color={colors.gold} filled />
                 </View>
                 <View>
-                  <Text style={styles.compactPointsLabel}>LUNA POINTS</Text>
+                  <Text style={styles.compactPointsLabel}>LUNA POINTS · 25% BACK</Text>
                   <Text style={styles.compactPointsValue}>
                     {(pointsData?.points_balance || user?.points_balance || user?.points || 0).toLocaleString()}
                   </Text>

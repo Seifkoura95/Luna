@@ -89,17 +89,30 @@ export default function SubscriptionsScreen() {
 
     Alert.alert(
       `Subscribe to ${tier.name}`,
-      tier.price === 0 
+      tier.price === 0
         ? 'Switch to the free Luna plan?'
-        : `Subscribe for $${tier.price}/month?\n\nThis is a demo - no real payment will be processed.`,
+        : `Subscribe for $${tier.price}/month?\n\nYou'll be redirected to secure Stripe checkout.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: tier.price === 0 ? 'Switch' : 'Subscribe',
+          text: tier.price === 0 ? 'Switch' : 'Continue to Payment',
           onPress: async () => {
             try {
               setSubscribing(tierId);
               const result = await api.subscribeTo(tierId);
+
+              // Requires Stripe payment
+              if (result.checkout_url) {
+                if (Platform.OS === 'web') {
+                  window.location.href = result.checkout_url;
+                } else {
+                  const Linking = require('expo-linking');
+                  await Linking.openURL(result.checkout_url);
+                }
+                return;
+              }
+
+              // Free tier or DEV_MODE → instant
               Alert.alert('Success! 🌙', result.message);
               fetchData();
             } catch (error: any) {

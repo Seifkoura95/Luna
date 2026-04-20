@@ -75,7 +75,7 @@ const SLIDES: Slide[] = [
     id: '3',
     tag: 'LUNA REWARDS',
     headline: 'Every Visit\nEarns More.',
-    sub: 'Collect Luna Points on every visit. Unlock exclusive perks, free entry, and bottle upgrades as you level up.',
+    sub: 'Collect 10 Luna Points for every $1 spent. Redeem 10 points for $0.25 back — that\'s 25% cashback at every Luna venue.',
     accentColor: ACCENT_GOLD,
     gradientColors: ['#1A1400', '#0A0900', LUNA_BLACK],
     illustration: 'rewards',

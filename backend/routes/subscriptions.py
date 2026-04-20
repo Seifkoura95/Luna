@@ -33,7 +33,7 @@ async def award_points(user_id: str, amount_spent: float, source: str, source_id
     tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS["bronze"])
     multiplier = tier.get("points_multiplier", 1.0)
     
-    base_points = int(amount_spent)  # 1 point per dollar
+    base_points = int(amount_spent * 10)  # 10 points per $1 (= 25% cashback when redeemed at 10pts = $0.25)
     bonus_points = int(base_points * (multiplier - 1))
     total_points = base_points + bonus_points
     
@@ -102,59 +102,115 @@ async def get_my_subscription(request: Request):
 
 @router.post("/subscribe")
 async def subscribe_to_tier(request: Request, sub_req: SubscribeRequest):
-    """Subscribe to a tier"""
+    """Subscribe to a tier.
+
+    - Free (bronze) tier: activates instantly.
+    - Paid tiers: creates a Stripe checkout session — the webhook activates
+      the subscription only after payment.succeeded.
+    - DEV_MODE bypass for `luna@test.com`.
+    """
     auth_header = request.headers.get("authorization")
     current_user = get_current_user(auth_header)
-    
+
     if sub_req.tier_id not in SUBSCRIPTION_TIERS:
         raise HTTPException(status_code=400, detail="Invalid tier")
-    
+
     tier = SUBSCRIPTION_TIERS[sub_req.tier_id]
-    
-    await db.subscriptions.update_many(
-        {"user_id": current_user["user_id"], "status": "active"},
-        {"$set": {"status": "cancelled", "cancelled_at": datetime.now(timezone.utc)}}
-    )
-    
-    subscription = {
-        "id": str(uuid.uuid4())[:8],
-        "user_id": current_user["user_id"],
-        "tier_id": sub_req.tier_id,
-        "tier_name": tier["name"],
-        "price": tier["price"],
-        "status": "active",
-        "billing_period": tier["billing_period"],
-        "current_period_start": datetime.now(timezone.utc),
-        "current_period_end": datetime.now(timezone.utc) + timedelta(days=30),
-        "free_entries_remaining": tier["benefits"]["free_entries_per_month"],
-        "created_at": datetime.now(timezone.utc),
-        "mock": True
-    }
-    await db.subscriptions.insert_one(subscription)
-    
-    await db.users.update_one(
-        {"user_id": current_user["user_id"]},
-        {"$set": {"subscription_tier": sub_req.tier_id}}
-    )
-    
-    points_result = {"total_points": 0}
-    subscription_amount = tier["price"]
-    if subscription_amount > 0:
-        points_result = await award_points(
-            user_id=current_user["user_id"],
-            amount_spent=subscription_amount,
-            source="subscription",
-            source_id=subscription["id"]
+    price = float(tier.get("price") or 0)
+
+    is_dev_account = current_user.get("email") == "luna@test.com"
+    is_free_tier = price <= 0
+
+    if is_free_tier or is_dev_account:
+        # Instant activation — cancel any active sub, insert new one
+        await db.subscriptions.update_many(
+            {"user_id": current_user["user_id"], "status": "active"},
+            {"$set": {"status": "cancelled", "cancelled_at": datetime.now(timezone.utc)}}
         )
-        logger.info(f"Awarded {points_result['total_points']} points for subscription purchase")
-    
+
+        subscription = {
+            "id": str(uuid.uuid4())[:8],
+            "user_id": current_user["user_id"],
+            "tier_id": sub_req.tier_id,
+            "tier_name": tier["name"],
+            "price": price,
+            "status": "active",
+            "billing_period": tier["billing_period"],
+            "current_period_start": datetime.now(timezone.utc),
+            "current_period_end": datetime.now(timezone.utc) + timedelta(days=30),
+            "free_entries_remaining": tier["benefits"]["free_entries_per_month"],
+            "created_at": datetime.now(timezone.utc),
+            "dev_mode": is_dev_account and not is_free_tier,
+        }
+        await db.subscriptions.insert_one(subscription)
+        await db.users.update_one(
+            {"user_id": current_user["user_id"]},
+            {"$set": {"subscription_tier": sub_req.tier_id}}
+        )
+
+        points_result = {"total_points": 0}
+        if price > 0:
+            points_result = await award_points(
+                user_id=current_user["user_id"],
+                amount_spent=price,
+                source="subscription",
+                source_id=subscription["id"],
+            )
+
+        return {
+            "success": True,
+            "message": f"Welcome to {tier['name']}!",
+            "subscription": clean_mongo_doc(subscription),
+            "tier": tier,
+            "points_earned": points_result.get("total_points", 0),
+            "dev_mode": is_dev_account and not is_free_tier,
+        }
+
+    # Paid tier, real user — require Stripe checkout
+    from routes.payments import get_stripe_checkout
+    from emergentintegrations.payments.stripe.checkout import CheckoutSessionRequest
+
+    origin = request.headers.get("origin") or str(request.base_url).rstrip('/')
+    success_url = f"{origin}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{origin}/payment-cancelled"
+
+    metadata = {
+        "user_id": current_user["user_id"],
+        "package_type": "subscription",
+        "tier_id": sub_req.tier_id,
+    }
+
+    stripe_checkout = get_stripe_checkout(request)
+    checkout_request = CheckoutSessionRequest(
+        amount=price,
+        currency="aud",
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata=metadata,
+    )
+    session = await stripe_checkout.create_checkout_session(checkout_request)
+
+    await db.payment_transactions.insert_one({
+        "session_id": session.session_id,
+        "user_id": current_user["user_id"],
+        "amount": price,
+        "currency": "aud",
+        "package_id": f"subscription_{sub_req.tier_id}",
+        "package_name": f"{tier['name']} subscription",
+        "package_type": "subscription",
+        "metadata": metadata,
+        "payment_status": "pending",
+        "status": "initiated",
+        "created_at": datetime.now(timezone.utc),
+    })
+
     return {
         "success": True,
-        "message": f"Welcome to {tier['name']}!",
-        "subscription": clean_mongo_doc(subscription),
+        "requires_payment": True,
+        "checkout_url": session.url,
+        "session_id": session.session_id,
         "tier": tier,
-        "points_earned": points_result.get("total_points", 0),
-        "mock": True
+        "message": f"Redirect to Stripe to complete {tier['name']} subscription.",
     }
 
 

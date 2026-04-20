@@ -209,37 +209,33 @@ export default function TableBookingScreen() {
 
     try {
       const depositResponse = await api.getTableDepositIntent(createdBooking.booking_id);
-      
-      if (depositResponse.demo_mode) {
+
+      // DEV_MODE bypass for test account — instant confirmation
+      if (depositResponse.dev_mode) {
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
         Alert.alert(
-          'Demo Payment',
-          `This is demo mode. In production, you'd pay $${depositResponse.amount} via Stripe.\n\nSimulating successful payment...`,
-          [
-            {
-              text: 'Confirm Payment',
-              onPress: async () => {
-                const confirmResponse = await api.confirmTableBooking(
-                  createdBooking.booking_id,
-                  depositResponse.payment_intent_id
-                );
-                
-                if (Platform.OS !== 'web') {
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                }
-                
-                Alert.alert(
-                  'Booking Confirmed! 🎉',
-                  `Your ${selectedTable.name} is confirmed!\n\nYou earned ${confirmResponse.points_earned} points!`,
-                  [{ text: 'View My Bookings', onPress: () => router.push('/my-bookings') }]
-                );
-                setShowConfirmModal(false);
-              }
-            }
-          ]
+          'Booking Confirmed (DEV_MODE)',
+          `Your ${selectedTable.name} is confirmed!\n\nYou earned ${depositResponse.points_earned} Luna Points!`,
+          [{ text: 'View My Bookings', onPress: () => router.push('/my-bookings') }]
         );
-      } else {
-        Alert.alert('Payment', 'Stripe payment sheet would open here');
+        setShowConfirmModal(false);
+        return;
       }
+
+      // Real Stripe checkout — open the URL
+      if (depositResponse.checkout_url) {
+        if (Platform.OS === 'web') {
+          window.location.href = depositResponse.checkout_url;
+        } else {
+          const Linking = require('expo-linking');
+          await Linking.openURL(depositResponse.checkout_url);
+        }
+        return;
+      }
+
+      Alert.alert('Payment Error', 'Could not start payment session. Please try again.');
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to process payment');
     }

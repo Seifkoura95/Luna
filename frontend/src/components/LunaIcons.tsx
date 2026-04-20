@@ -34,7 +34,7 @@ type IconName =
   // Features
   | 'auction' | 'mission' | 'reward' | 'ticket' | 'booking' | 'event'
   // Actions
-  | 'bid' | 'checkin' | 'scan' | 'gift' | 'star' | 'crown'
+  | 'bid' | 'checkin' | 'scan' | 'gift' | 'star' | 'crown' | 'aiMoon' | 'people'
   // Social
   | 'friends' | 'share' | 'activity' | 'safety' | 'lostfound' | 'notify'
   // Venue
@@ -204,6 +204,33 @@ const ICONS: Record<IconName, (props: IconProps) => React.ReactNode> = {
       <Path d="M2 18l3-10 4.5 5L12 4l2.5 9 4.5-5 3 10H2z"
         stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
       <Path d="M2 18h20" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+    </Svg>
+  ),
+
+  // Luna AI — crescent moon with sparkle accents (the app's signature mark)
+  aiMoon: ({ size = 24, color = '#F0F0F5', strokeWidth = 1.5 }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {/* Crescent moon */}
+      <Path d="M20 13.5A8 8 0 119.5 3.4a6.5 6.5 0 0010.5 10.1z"
+        stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" fill="none" />
+      {/* Top-right sparkle */}
+      <Path d="M18 4.5l.7 1.5 1.5.7-1.5.7L18 8.9l-.7-1.5-1.5-.7 1.5-.7z"
+        fill={color} stroke="none" />
+      {/* Small sparkle bottom-left */}
+      <Path d="M5 16l.4.8.8.4-.8.4-.4.8-.4-.8-.8-.4.8-.4z"
+        fill={color} stroke="none" />
+    </Svg>
+  ),
+
+  // People / Social (grouped heads)
+  people: ({ size = 24, color = '#F0F0F5', strokeWidth = 1.5 }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="9" cy="8" r="3.2" stroke={color} strokeWidth={strokeWidth} />
+      <Circle cx="17" cy="9" r="2.6" stroke={color} strokeWidth={strokeWidth} />
+      <Path d="M2.5 20c0-3.3 2.9-5.8 6.5-5.8s6.5 2.5 6.5 5.8"
+        stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+      <Path d="M16 14.5c3.2 0 5.5 2.3 5.5 5"
+        stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
     </Svg>
   ),
 

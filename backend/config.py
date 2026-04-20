@@ -24,7 +24,9 @@ EMAIL_VERIFICATION_EXPIRY_HOURS = 24
 REFERRAL_POINTS_REWARD = 10
 
 # Points Configuration
-POINTS_PER_DOLLAR = 1
+# 10 points per $1 spent. Points redeem at 10 pts = $0.25 (25% cashback advertised).
+POINTS_PER_DOLLAR = 10
+POINTS_REDEEM_CENTS = 25  # 10 pts = 25 cents
 POINTS_PER_CHECKIN = 5
 POINTS_PER_MISSION = 25
 

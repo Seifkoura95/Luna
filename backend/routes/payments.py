@@ -520,62 +520,140 @@ async def process_successful_payment(transaction: dict):
             logger.info(f"Added {points_to_add} points to user {user_id}")
             
         elif package_type == "table_deposit":
-            # Create table booking
-            booking = {
-                "user_id": user_id,
-                "venue_id": metadata.get("venue_id"),
-                "booking_date": metadata.get("booking_date"),
-                "guests": int(metadata.get("guests", 2)),
-                "status": "confirmed",
-                "deposit_paid": transaction["amount"],
-                "payment_session_id": transaction["session_id"],
-                "created_at": datetime.now(timezone.utc)
-            }
-            await db.table_bookings.insert_one(booking)
-            logger.info(f"Created table booking for user {user_id}")
+            # Confirm the existing booking (created before checkout)
+            booking_id = metadata.get("booking_id")
+            if booking_id:
+                await db.table_bookings.update_one(
+                    {"booking_id": booking_id},
+                    {"$set": {
+                        "status": "confirmed",
+                        "deposit_paid": True,
+                        "payment_session_id": transaction["session_id"],
+                        "confirmed_at": datetime.now(timezone.utc),
+                        "updated_at": datetime.now(timezone.utc),
+                    }},
+                )
+                # Award points at 10pts/$1 (POINTS_PER_DOLLAR)
+                from config import POINTS_PER_DOLLAR
+                points_earned = int(transaction["amount"] * POINTS_PER_DOLLAR)
+                await db.users.update_one(
+                    {"user_id": user_id},
+                    {"$inc": {"points_balance": points_earned}},
+                )
+                logger.info(f"Confirmed table booking {booking_id} for user {user_id} (+{points_earned} pts)")
+            else:
+                # Legacy path — create fresh booking from metadata
+                booking = {
+                    "user_id": user_id,
+                    "venue_id": metadata.get("venue_id"),
+                    "booking_date": metadata.get("booking_date"),
+                    "guests": int(metadata.get("guests", 2)),
+                    "status": "confirmed",
+                    "deposit_paid": transaction["amount"],
+                    "payment_session_id": transaction["session_id"],
+                    "created_at": datetime.now(timezone.utc)
+                }
+                await db.table_bookings.insert_one(booking)
+                logger.info(f"Created table booking for user {user_id}")
             
         elif package_type == "bottle_service":
-            # Create bottle service order
-            order = {
-                "user_id": user_id,
-                "venue_id": metadata.get("venue_id"),
-                "package_name": transaction["package_name"],
-                "booking_date": metadata.get("booking_date"),
-                "status": "confirmed",
-                "amount_paid": transaction["amount"],
-                "payment_session_id": transaction["session_id"],
-                "created_at": datetime.now(timezone.utc)
-            }
-            await db.bottle_orders.insert_one(order)
-            logger.info(f"Created bottle service order for user {user_id}")
+            # Confirm the existing bottle_order (created before checkout)
+            order_id = metadata.get("order_id")
+            if order_id:
+                await db.bottle_orders.update_one(
+                    {"order_id": order_id},
+                    {"$set": {
+                        "status": "confirmed",
+                        "payment_status": "paid",
+                        "payment_session_id": transaction["session_id"],
+                        "confirmed_at": datetime.now(timezone.utc),
+                        "updated_at": datetime.now(timezone.utc),
+                    }},
+                )
+                from config import POINTS_PER_DOLLAR
+                points_earned = int(transaction["amount"] * POINTS_PER_DOLLAR)
+                await db.users.update_one(
+                    {"user_id": user_id},
+                    {"$inc": {"points_balance": points_earned}},
+                )
+                logger.info(f"Confirmed bottle order {order_id} for user {user_id} (+{points_earned} pts)")
+            else:
+                order = {
+                    "user_id": user_id,
+                    "venue_id": metadata.get("venue_id"),
+                    "package_name": transaction["package_name"],
+                    "booking_date": metadata.get("booking_date"),
+                    "status": "confirmed",
+                    "amount_paid": transaction["amount"],
+                    "payment_session_id": transaction["session_id"],
+                    "created_at": datetime.now(timezone.utc)
+                }
+                await db.bottle_orders.insert_one(order)
+                logger.info(f"Created bottle service order for user {user_id}")
             
         elif package_type == "subscription":
-            # Update user subscription
-            is_yearly = "yearly" in transaction["package_id"]
-            expires_at = datetime.now(timezone.utc)
-            if is_yearly:
-                expires_at = expires_at.replace(year=expires_at.year + 1)
-            else:
-                if expires_at.month == 12:
-                    expires_at = expires_at.replace(year=expires_at.year + 1, month=1)
-                else:
-                    expires_at = expires_at.replace(month=expires_at.month + 1)
-            
-            await db.users.update_one(
-                {"user_id": user_id},
-                {
-                    "$set": {
-                        "subscription": {
-                            "plan": "luna_plus",
-                            "status": "active",
-                            "started_at": datetime.now(timezone.utc),
-                            "expires_at": expires_at,
-                            "payment_session_id": transaction["session_id"]
-                        }
-                    }
+            # Paid tier subscription — activate and award points
+            tier_id = metadata.get("tier_id")
+            from config import SUBSCRIPTION_TIERS, POINTS_PER_DOLLAR
+            tier = SUBSCRIPTION_TIERS.get(tier_id) if tier_id else None
+            if tier:
+                # Cancel any existing active sub
+                await db.subscriptions.update_many(
+                    {"user_id": user_id, "status": "active"},
+                    {"$set": {"status": "cancelled", "cancelled_at": datetime.now(timezone.utc)}},
+                )
+                from datetime import timedelta as _td
+                subscription = {
+                    "id": transaction["session_id"][-8:],
+                    "user_id": user_id,
+                    "tier_id": tier_id,
+                    "tier_name": tier["name"],
+                    "price": tier["price"],
+                    "status": "active",
+                    "billing_period": tier["billing_period"],
+                    "current_period_start": datetime.now(timezone.utc),
+                    "current_period_end": datetime.now(timezone.utc) + _td(days=30),
+                    "free_entries_remaining": tier["benefits"]["free_entries_per_month"],
+                    "payment_session_id": transaction["session_id"],
+                    "created_at": datetime.now(timezone.utc),
                 }
-            )
-            logger.info(f"Activated Luna+ subscription for user {user_id}")
+                await db.subscriptions.insert_one(subscription)
+                await db.users.update_one(
+                    {"user_id": user_id},
+                    {"$set": {"subscription_tier": tier_id}},
+                )
+                points_earned = int(transaction["amount"] * POINTS_PER_DOLLAR)
+                await db.users.update_one(
+                    {"user_id": user_id},
+                    {"$inc": {"points_balance": points_earned}},
+                )
+                logger.info(f"Activated {tier['name']} subscription for user {user_id} (+{points_earned} pts)")
+            else:
+                # Legacy Luna+ plan fallback
+                is_yearly = "yearly" in transaction["package_id"]
+                expires_at = datetime.now(timezone.utc)
+                if is_yearly:
+                    expires_at = expires_at.replace(year=expires_at.year + 1)
+                else:
+                    if expires_at.month == 12:
+                        expires_at = expires_at.replace(year=expires_at.year + 1, month=1)
+                    else:
+                        expires_at = expires_at.replace(month=expires_at.month + 1)
+                await db.users.update_one(
+                    {"user_id": user_id},
+                    {
+                        "$set": {
+                            "subscription": {
+                                "plan": "luna_plus",
+                                "status": "active",
+                                "started_at": datetime.now(timezone.utc),
+                                "expires_at": expires_at,
+                                "payment_session_id": transaction["session_id"],
+                            }
+                        }
+                    },
+                )
+                logger.info(f"Activated Luna+ subscription for user {user_id}")
             
         elif package_type == "gift_card":
             # Add wallet balance (gift card value + 10% bonus)

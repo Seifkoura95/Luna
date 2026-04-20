@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius } from '../../src/theme/colors';
 import { AppBackground } from '../../src/components/AppBackground';
 import { useAuthStore } from '../../src/store/authStore';
-import api from '../../src/utils/api';
+import { apiFetch } from '../../src/utils/api';
 
 const LUNA_LOGO = 'https://customer-assets.emergentagent.com/job_c826baa4-6640-40ce-9e0d-38132d9944fc/artifacts/2k76js5m_luna-group-logo-2.webp';
 
@@ -65,31 +65,25 @@ export default function LeaderboardPage() {
 
   const fetchLeaderboard = useCallback(async () => {
     try {
-      const response = await api.get(`/leaderboard?period=${period}&category=${category}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      setLeaders(response.data.leaders || []);
-      setCurrentUser(response.data.current_user);
-      setGapToFirst(response.data.gap_to_first || 0);
-      setFirstPlaceScore(response.data.first_place_score || 0);
+      const data: any = await apiFetch(`/api/leaderboard?period=${period}&category=${category}`);
+      setLeaders(data.leaders || []);
+      setCurrentUser(data.current_user);
+      setGapToFirst(data.gap_to_first || 0);
+      setFirstPlaceScore(data.first_place_score || 0);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
     }
-  }, [token, period, category]);
+  }, [period, category]);
 
   const fetchStrategies = useCallback(async () => {
     try {
-      const response = await api.get('/leaderboard/strategies', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      setStrategies(response.data.strategies || []);
-      setQuickWins(response.data.quick_wins || []);
+      const data: any = await apiFetch('/api/leaderboard/strategies');
+      setStrategies(data.strategies || []);
+      setQuickWins(data.quick_wins || []);
     } catch (error) {
       console.error('Error fetching strategies:', error);
     }
-  }, [token]);
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);

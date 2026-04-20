@@ -1,0 +1,36 @@
+{
+  "summary": "Backend-only testing of Luna Group Stripe enforcement + 10pts/$1 changes. 18/18 tests PASSED in /app/backend/tests/test_stripe_enforcement_points.py. All P0 flows (paid subscription, table deposit, bottle pre-order) correctly return Stripe checkout_url for NEW users. DEV_MODE bypass (luna@test.com) activates instantly and awards points at 10pts/$1. Leaderboard and all regression endpoints healthy.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/loyalty/points/award", "issue": "Correct path is /api/loyalty/points/award (not /api/loyalty/award). Frontend & docs should match."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_stripe_enforcement_points.py",
+    "/app/test_reports/pytest/pytest_stripe_enforcement.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes/bookings.py line ~195: DEV_MODE branch issues payment_intent_id 'pi_dev_...' without calling Stripe — acceptable for luna@test.com only; confirm frontend handles both {dev_mode, payment_intent_id} and {checkout_url, session_id} response shapes.",
+    "routes/subscriptions.py: DEV_MODE subscribe passes amount_spent=price to award_points() but the internal multiplier there uses existing subscription. When user upgrades bronze->silver via dev path, the silver sub is inserted first then points computed based on newly-active silver tier (1.5x). This awards 600 pts (base 400 + 200 bonus). If design expects base only (400), re-evaluate.",
+    "routes/payments.py process_successful_payment() subscription branch creates a NEW subscription instead of updating the 'pending' state. Ensure webhook cancels any pre-existing active sub before inserting — currently does via update_many (good).",
+    "routes/bookings.py bottle-preorder: On Stripe path, bottle_orders row is created with status=pending BEFORE Stripe success. Good — webhook flips to confirmed. Ensure reconciliation job cleans up stale 'pending' orders if user abandons checkout.",
+    "config POINTS_PER_DOLLAR=10 is used consistently across bookings, payments.process_successful_payment, and loyalty.points/award — verified."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_stripe_enforcement_points.py (new)"
+  ],
+  "success_rate": {"backend": "100% (18/18)", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "luna@test.com / test123 (DEV_MODE). Stripe-enforced tests auto-register throwaway users stripetest_<hex>@lunatest.com / Test123!.",
+  "seed_data_creation": "Each test run registers 1 fresh user via /api/auth/register for Stripe flows. Test data prefix: 'stripetest_'. Created a bronze sub, 1-2 table_bookings, 1 bottle_order for the new user. luna@test.com received 1 silver subscription, 1 confirmed table booking, 1 confirmed bottle order with points awarded.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Tests live at /app/backend/tests/test_stripe_enforcement_points.py. Stripe key is real test-mode via emergentintegrations — checkout_url is live Stripe URL (checkout.stripe.com). Webhook flow was NOT end-to-end tested (would require Stripe CLI or completing payment on hosted page). Payload assertions cover success=true, requires_payment=true, checkout_url present, session_id starts with cs_, no pi_demo_xxx, no dev_mode for new users. DEV bypass verified for luna@test.com across all 3 flows with exact 10pts/$1 math. Leaderboard backend returns 200 with leaders array.",
+  "rca of the issue": "N/A — no issues found. Previous iteration bugs (Stripe bypass, 1pt/$1, leaderboard backend path) are all resolved per this test suite."
+}

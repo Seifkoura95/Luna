@@ -130,8 +130,19 @@ export default function BottleServiceScreen() {
         special_requests: specialRequests || undefined,
       });
 
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Stripe flow — open checkout, webhook confirms & awards points
+      if (res.checkout_url) {
+        if (Platform.OS === 'web') {
+          window.location.href = res.checkout_url;
+        } else {
+          const Linking = require('expo-linking');
+          await Linking.openURL(res.checkout_url);
+        }
+        return;
+      }
 
+      // DEV_MODE / free path
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         'Pre-Order Confirmed!',
         `${res.message}\n\nYou earned ${res.points_earned} Luna Points!`,

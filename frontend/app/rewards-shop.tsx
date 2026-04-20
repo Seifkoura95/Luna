@@ -56,7 +56,7 @@ export default function RewardsShopPage() {
   const [sendingGift, setSendingGift] = useState(false);
 
   const currentPoints = user?.points_balance || 0;
-  const dollarValue = currentPoints / 10;
+  const dollarValue = currentPoints * 0.025; // 10 pts = $0.25 (25% cashback)
 
   const handleHaptic = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -204,7 +204,10 @@ export default function RewardsShopPage() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Icon name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>REDEEM POINTS</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle}>REDEEM POINTS</Text>
+            <Text style={styles.headerSubtitle}>Earn 25% back in Luna Points</Text>
+          </View>
         </View>
 
         {/* Points Balance */}
@@ -237,7 +240,7 @@ export default function RewardsShopPage() {
             </View>
             <Icon name="arrow-forward" size={16} color={colors.textMuted} />
             <View style={styles.conversionBadge}>
-              <Text style={styles.conversionText}>$1 value</Text>
+              <Text style={styles.conversionText}>$0.25 back</Text>
             </View>
           </View>
         </View>
@@ -562,6 +565,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
     letterSpacing: 1.5,
+  },
+  headerSubtitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.gold,
+    letterSpacing: 1.2,
+    marginTop: 2,
   },
   // Points Card
   pointsCard: {
