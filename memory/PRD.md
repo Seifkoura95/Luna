@@ -1,5 +1,40 @@
 # Luna Group VIP App - Product Requirements Document
 
+## Latest Update: April 20, 2026 - Session 8
+
+### COMPLETED: Phase A — Hard Blockers for App Store + Play Store Approval
+
+**iOS submission-blocking issues resolved:**
+- `splash-icon.png` asset restored (was missing, causing build failure)
+- Added 9 concrete iOS Info.plist permission strings (Location background, Microphone, FaceID, Tracking, Calendars, etc.)
+- Added `ITSAppUsesNonExemptEncryption = false` — skips Apple's 24h encryption review delay
+- Added `UIBackgroundModes: [location, fetch, remote-notification]`
+- Added `associatedDomains: applinks:lunagroup.com.au` + APS production entitlement
+- Added `buildNumber: 1`
+
+**Android submission-blocking issues resolved:**
+- Blocked deprecated `READ_EXTERNAL_STORAGE` + `WRITE_EXTERNAL_STORAGE` (Play Store auto-flags these)
+- Added Android 13+ modern permissions: `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`, `POST_NOTIFICATIONS`
+- Added background location permissions: `ACCESS_BACKGROUND_LOCATION`, `FOREGROUND_SERVICE_LOCATION`
+- Added `versionCode: 1`
+
+**Expo plugins properly registered** (were missing — would crash on fresh iOS 18):
+- `expo-location` with foreground + background permission strings
+- `expo-notifications` with icon + brand gold `#D4A832`
+- `expo-image-picker` with photo/camera strings
+
+**Apple-mandatory Account Deletion verified:**
+- Backend `DELETE /api/auth/account` endpoint confirmed (soft-delete + email anonymization). Tested via curl: returns `{success: true}`.
+- Frontend UI exists at `/settings` with 2-step confirmation flow.
+
+**Submission guide created:** `/app/STORE_SUBMISSION.md` — tracks all remaining Phase B (user-provided URLs + brand assets + monetization decision), Phase C (store listing copy drafts), Phase D (Privacy Nutrition / Data Safety answers), and EAS build commands.
+
+**Awaiting from user (blocks submission):**
+- Public Privacy Policy + Terms + Support URLs
+- Luna-branded 1024×1024 app icon + splash icon
+- Luna+ subscription monetization decision (Stripe/IAP/free)
+- Apple Developer + Google Play Console access/credentials
+
 ## Latest Update: April 20, 2026 - Session 7
 
 ### COMPLETED: Ember & Ash Menus + Coming Soon Removed + Gold Rays on Hero Card

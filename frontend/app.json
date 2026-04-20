@@ -16,12 +16,43 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lunagroup.app",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
-        "NSCameraUsageDescription": "Take photos at Luna venues to share with friends",
-        "NSPhotoLibraryUsageDescription": "Share photos from your gallery in the app",
-        "NSLocationWhenInUseUsageDescription": "Find nearby Luna venues and check in",
-        "NSContactsUsageDescription": "Invite friends to join you at Luna venues",
-        "NSFaceIDUsageDescription": "Securely access your Luna account"
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Luna uses your camera to let you share photos from venues with your crew and scan QR codes at the door.",
+        "NSPhotoLibraryUsageDescription": "Luna accesses your photo library so you can share memories from Luna Group venues.",
+        "NSPhotoLibraryAddUsageDescription": "Luna saves shared event photos to your library when you tap save.",
+        "NSLocationWhenInUseUsageDescription": "Luna uses your location to show nearby venues, auto-check you in when you arrive, and unlock location-based rewards.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Luna uses your location in the background to automatically check you in when you arrive at a Luna venue and deliver event boosts while you're on the dance floor.",
+        "NSLocationAlwaysUsageDescription": "Luna uses your location in the background to automatically check you in when you arrive at a Luna venue.",
+        "NSContactsUsageDescription": "Luna uses your contacts so you can invite friends to join you at Luna Group venues.",
+        "NSFaceIDUsageDescription": "Luna uses Face ID to securely unlock your wallet passes and confirm high-value transactions.",
+        "NSMicrophoneUsageDescription": "Luna may use the microphone when recording short venue video clips to share with your crew.",
+        "NSUserTrackingUsageDescription": "Luna uses this permission to personalise event recommendations and measure which events you enjoy most. We do not share your data with third-party advertisers.",
+        "NSCalendarsUsageDescription": "Luna adds booked events to your calendar so you never miss a night out.",
+        "UIBackgroundModes": [
+          "location",
+          "fetch",
+          "remote-notification"
+        ],
+        "LSApplicationQueriesSchemes": [
+          "https",
+          "http",
+          "tel",
+          "mailto",
+          "instagram",
+          "fb",
+          "twitter"
+        ]
+      },
+      "associatedDomains": [
+        "applinks:lunagroup.com.au"
+      ],
+      "entitlements": {
+        "aps-environment": "production"
       }
     },
     "android": {
@@ -30,15 +61,27 @@
         "backgroundColor": "#000000"
       },
       "package": "com.lunagroup.app",
+      "versionCode": 1,
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "READ_CONTACTS",
-        "VIBRATE"
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.READ_CONTACTS",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.INTERNET",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
@@ -55,6 +98,33 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#000000"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Luna uses your location in the background to automatically check you in when you arrive at a Luna venue and deliver event boosts while you're on the dance floor.",
+          "locationAlwaysPermission": "Luna uses your location in the background to automatically check you in when you arrive at a Luna venue.",
+          "locationWhenInUsePermission": "Luna uses your location to show nearby venues, auto-check you in when you arrive, and unlock location-based rewards.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/adaptive-icon.png",
+          "color": "#D4A832",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Luna accesses your photo library so you can share memories from Luna Group venues.",
+          "cameraPermission": "Luna uses your camera to let you share photos from venues with your crew and scan QR codes at the door.",
+          "microphonePermission": false
         }
       ],
       "@react-native-community/datetimepicker"
