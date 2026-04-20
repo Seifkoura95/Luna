@@ -548,42 +548,6 @@ export default function ProfileScreen() {
           showPoints={false}
         />
 
-        {/* Earned Badges */}
-        <View style={styles.badgesSection}>
-          <View style={styles.badgeHeader}>
-            <Text style={styles.sectionTitle}>EARNED BADGES</Text>
-            <TouchableOpacity onPress={() => router.push('/rewards-shop')}>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesScroll}>
-            {[
-              { id: 'b1', icon: 'star', iconColor: colors.gold, title: 'First Visit', earned: true },
-              { id: 'b2', icon: 'crown', iconColor: colors.accent, title: 'Party Starter', earned: true },
-              { id: 'b3', icon: 'vip', iconColor: colors.gold, title: 'VIP', earned: currentPoints >= 500 },
-              { id: 'b4', icon: 'star', iconColor: colors.accent, title: 'Rising Star', earned: currentPoints >= 250 },
-              { id: 'b5', icon: 'leaderboard', iconColor: colors.gold, title: 'Legend', earned: currentPoints >= 5000 },
-              { id: 'b6', icon: 'streak', iconColor: colors.hot, title: 'On Fire', earned: stats?.current_streak >= 3 },
-              { id: 'b7', icon: 'crown', iconColor: colors.gold, title: 'Promo King', earned: stats?.referral_count >= 10 },
-              { id: 'b8', icon: 'crown', iconColor: colors.accent, title: 'Promo Queen', earned: stats?.referral_count >= 10 },
-              { id: 'b9', icon: 'share', iconColor: colors.accent, title: 'Ambassador', earned: stats?.referral_count >= 20 },
-              { id: 'b10', icon: 'star', iconColor: colors.gold, title: 'Review Star', earned: stats?.reviews_count >= 5 },
-              { id: 'b11', icon: 'photos', iconColor: colors.accent, title: 'Influencer', earned: stats?.instagram_tags >= 20 },
-            ].map((badge) => (
-              <View key={badge.id} style={[styles.badgeItem, !badge.earned && styles.badgeItemLocked]}>
-                <View style={[styles.badgeEmoji, !badge.earned && styles.badgeEmojiLocked]}>
-                  {badge.earned ? (
-                    <LunaIcon name={badge.icon as any} size={20} color={badge.iconColor} />
-                  ) : (
-                    <LunaIcon name="lock" size={18} color={colors.textMuted} />
-                  )}
-                </View>
-                <Text style={[styles.badgeTitle, !badge.earned && styles.badgeTitleLocked]}>{badge.title}</Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
