@@ -1,5 +1,15 @@
 # Luna Group VIP App - Product Requirements Document
 
+## Latest Update: April 20, 2026 - Session 6
+
+### COMPLETED: VIP Table Removal + Eclipse Real Menu + Venue Menus
+- **VIP Table Booking REMOVED** globally — deleted `table-booking.tsx`, 4 backend endpoints (`POST /table`, `/table/{id}/deposit`, `/table/{id}/confirm`, `GET /my-tables`), `TableBookingCreate` model, all api.ts methods, Profile quick-action, and venue-page CTA.
+- **Eclipse bottle menu** — replaced 7 mock items with 48 real items from client's PDF across Vodka, Gin, Tequila, Scotch, Rum, Bourbon, Liquor, Cognac, Champagne. Prices $200–$2500.
+- **Bottle service Eclipse-only** — BOTTLE_MENUS now has only 'eclipse' key; backend rejects non-Eclipse orders with 400; frontend picker collapsed to single venue.
+- **Deposit formula** — `max($50, total × 10%)`. Stripe charges deposit only; balance collected at venue. DEV_MODE for `luna@test.com` skips Stripe.
+- **JuJu's & Night Market view-only menus** — new `/app/backend/routes/venue_menus.py` endpoint `GET /api/venues/{id}/menu` + new `/app/frontend/app/venue-menu.tsx` screen with Food/Drinks tabs, category sections, $price display. Reachable via "View Menu" CTA on venue detail.
+- **Testing** — `iteration_33.json`: 26/26 backend tests PASSED (100%).
+
 ## Latest Update: April 20, 2026 - Session 5
 
 ### COMPLETED: Stripe Enforcement + Points Overhaul + Luna AI Polish
