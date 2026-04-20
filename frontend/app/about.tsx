@@ -64,7 +64,7 @@ export default function AboutPage() {
             operating some of the most iconic venues across Brisbane and the Gold Coast.
           </Text>
           <Text style={styles.aboutText}>
-            From exclusive nightclubs to sophisticated dining experiences, we create unforgettable 
+            From exclusive nightlife venues to sophisticated dining experiences, we create unforgettable 
             moments that define Queensland's nightlife scene.
           </Text>
         </View>

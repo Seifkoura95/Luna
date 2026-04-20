@@ -24,10 +24,10 @@ import * as Haptics from 'expo-haptics';
 
 // Venues that offer table booking
 const TABLE_VENUES = [
-  { id: 'eclipse', name: 'Eclipse', type: 'Nightclub', color: '#E31837' },
-  { id: 'after_dark', name: 'After Dark', type: 'Nightclub', color: '#8B00FF' },
+  { id: 'eclipse', name: 'Eclipse', type: 'Nightlife', color: '#E31837' },
+  { id: 'after_dark', name: 'After Dark', type: 'Nightlife', color: '#8B00FF' },
   { id: 'su_casa_brisbane', name: 'Su Casa Brisbane', type: 'Rooftop Bar', color: '#FFB800' },
-  { id: 'su_casa_gold_coast', name: 'Su Casa Gold Coast', type: 'Nightclub', color: '#FF6B35' },
+  { id: 'su_casa_gold_coast', name: 'Su Casa Gold Coast', type: 'Nightlife', color: '#FF6B35' },
   { id: 'juju', name: 'Juju Mermaid Beach', type: 'Restaurant', color: '#00D4AA' },
   { id: 'night_market', name: 'Night Market', type: 'Restaurant', color: '#FF4757' },
   { id: 'ember_and_ash', name: 'Ember & Ash', type: 'Restaurant', color: '#FFA502' },

@@ -15,12 +15,12 @@ import { AppBackground } from '../../src/components/AppBackground';
 const isNative = Platform.OS !== 'web';
 
 const VENUES_SHORT = [
-  { id: 'eclipse', name: 'Eclipse', color: '#E31837', type: 'nightclub' },
-  { id: 'after_dark', name: 'After Dark', color: '#8B00FF', type: 'nightclub' },
+  { id: 'eclipse', name: 'Eclipse', color: '#E31837', type: 'nightlife' },
+  { id: 'after_dark', name: 'After Dark', color: '#8B00FF', type: 'nightlife' },
   { id: 'su_casa_brisbane', name: 'Su Casa BNE', color: '#FFB800', type: 'bar' },
   { id: 'su_casa_gold_coast', name: 'Su Casa GC', color: '#FF6B35', type: 'bar' },
-  { id: 'pump', name: 'Pump', color: '#FF1493', type: 'nightclub' },
-  { id: 'mamacita', name: 'Mamacita', color: '#FF4500', type: 'nightclub' },
+  { id: 'pump', name: 'Pump', color: '#FF1493', type: 'nightlife' },
+  { id: 'mamacita', name: 'Mamacita', color: '#FF4500', type: 'nightlife' },
   { id: 'juju', name: 'Juju', color: '#00D4AA', type: 'restaurant' },
   { id: 'night_market', name: 'Night Market', color: '#FF4757', type: 'restaurant' },
   { id: 'ember_and_ash', name: 'Ember & Ash', color: '#FFA502', type: 'restaurant' },

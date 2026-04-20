@@ -594,6 +594,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     marginBottom: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   heroImage: {
     ...StyleSheet.absoluteFillObject,
@@ -721,6 +723,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     marginRight: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   venueImage: {
     ...StyleSheet.absoluteFillObject,
@@ -765,6 +769,8 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   trendingImage: {
     ...StyleSheet.absoluteFillObject,
@@ -828,10 +834,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tonightPickLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    letterSpacing: 1,
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#D4AF5A',
+    letterSpacing: 2.5,
   },
   tonightPickSub: {
     fontSize: 11,
@@ -848,6 +854,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#12121E',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   tonightPickImage: {
     width: '100%',
@@ -899,6 +907,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#12121E',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   auctionImage: {
     width: '100%',

@@ -57,7 +57,7 @@ export default function ReferFriendScreen() {
     }
 
     try {
-      const message = `Join me on Luna Group VIP! 🌙✨\n\nGet exclusive access to Brisbane & Gold Coast's best nightclubs, bars, and restaurants.\n\nUse my code: ${referralData?.referral_code}\n\n${referralData?.referral_link}`;
+      const message = `Join me on Luna Group VIP!\n\nGet exclusive access to Brisbane & Gold Coast's best nightlife, bars, and restaurants.\n\nUse my code: ${referralData?.referral_code}\n\n${referralData?.referral_link}`;
       
       if (Platform.OS === 'web') {
         await navigator.clipboard.writeText(message);

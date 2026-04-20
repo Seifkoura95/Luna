@@ -345,7 +345,7 @@ export default function SubscriptionsScreen() {
         {/* Category-specific Perks */}
         <View style={styles.categoryPerksSection}>
           <Text style={styles.categoryPerksTitle}>
-            {compareCategory === 'nightclub' ? '🌙 Nightclub Perks' : 
+            {compareCategory === 'nightclub' ? 'Nightlife Perks' : 
              compareCategory === 'restaurant' ? '🍽️ Restaurant Perks' : '⭐ General Perks'}
           </Text>
           

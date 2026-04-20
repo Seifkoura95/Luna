@@ -404,7 +404,7 @@ export default function VenueDetailScreen() {
             </View>
           )}
 
-          {/* Music & Vibe (for nightclubs/bars) */}
+          {/* Music & Vibe (for nightlife/bars) */}
           {venue.music_genres && venue.music_genres.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Music & Vibe</Text>
