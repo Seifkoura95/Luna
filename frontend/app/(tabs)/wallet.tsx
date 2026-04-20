@@ -765,24 +765,37 @@ export default function WalletScreen() {
               <Icon name="flag" size={18} color={colors.accent} />
               <Text style={styles.redeemTitle}>MISSIONS</Text>
             </View>
-            <TouchableOpacity onPress={() => router.push('/milestones')}>
+            <TouchableOpacity onPress={() => router.push('/missions')}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
           
           {(liveMissions.length > 0 ? liveMissions.slice(0, 3) : [
-            { id: 'm1', title: 'Weekend Warrior', description: 'Visit 3 venues this weekend', current_progress: 1, target: 3, points_reward: 50, icon: 'location', color: colors.accent },
+            { id: 'm1', title: 'Weekend Warrior', description: 'Visit 3 venues this weekend', current_progress: 1, target: 3, points_reward: 50, icon: 'flash', color: colors.accent },
             { id: 'm2', title: 'First Timer', description: 'Buy your first ticket', current_progress: 0, target: 1, points_reward: 25, icon: 'ticket', color: '#8B5CF6' },
             { id: 'm3', title: 'Social Butterfly', description: 'Refer 2 friends', current_progress: 0, target: 2, points_reward: 100, icon: 'people', color: '#00D4AA' },
           ]).map((mission: any, idx: number) => {
             const missionColors = [colors.accent, '#8B5CF6', '#00D4AA', '#FF6B35', '#E31837', '#10B981', '#F59E0B'];
             const mColor = mission.color || missionColors[idx % missionColors.length];
             const progress = mission.current_progress || mission.progress || 0;
-            const total = mission.target || 1;
+            const total = mission.target || mission.target_value || 1;
+            // Smart icon picker
+            const title = (mission.title || mission.name || '').toLowerCase();
+            let mIcon = mission.icon || 'flag';
+            if (title.includes('check in') || title.includes('visit')) mIcon = 'location';
+            else if (title.includes('drink') || title.includes('cocktail') || title.includes('happy hour')) mIcon = 'wine';
+            else if (title.includes('refer') || title.includes('friend')) mIcon = 'people';
+            else if (title.includes('spend') || title.includes('buy')) mIcon = 'card';
+            else if (title.includes('event') || title.includes('party')) mIcon = 'musical-notes';
+            else if (title.includes('weekend') || title.includes('warrior')) mIcon = 'flash';
+            else if (title.includes('photo') || title.includes('selfie')) mIcon = 'camera';
+            else if (title.includes('food') || title.includes('dine')) mIcon = 'restaurant';
+            else if (title.includes('early') || title.includes('bird')) mIcon = 'sunny';
+            else if (title.includes('social') || title.includes('share')) mIcon = 'share';
             return (
               <View key={mission.id || idx} style={styles.missionCard}>
                 <View style={[styles.missionIcon, { backgroundColor: mColor + '20' }]}>
-                  <Icon name={(mission.icon || 'flag') as any} size={20} color={mColor} />
+                  <Icon name={mIcon as any} size={20} color={mColor} />
                 </View>
                 <View style={styles.missionContent}>
                   <Text style={styles.missionTitle}>{mission.title || mission.name}</Text>

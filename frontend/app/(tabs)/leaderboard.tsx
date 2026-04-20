@@ -239,7 +239,7 @@ export default function LeaderboardPage() {
                   <View style={[styles.podiumAvatar, { borderColor: '#C0C0C0' }]}>
                     <Icon name="person" size={24} color="#C0C0C0" />
                   </View>
-                  <Icon name="medal" size={20} color="#C0C0C0" />
+                  <View style={[styles.podiumRankBadge, { backgroundColor: '#C0C0C0' }]}><Text style={styles.podiumRankText}>2</Text></View>
                   <Text style={styles.podiumName} numberOfLines={1}>{leaders[1]?.display_name}</Text>
                   <Text style={styles.podiumScore}>{getScoreValue(leaders[1])}</Text>
                   <View style={[styles.podiumBar, { height: 60, backgroundColor: '#C0C0C030' }]} />
@@ -250,7 +250,7 @@ export default function LeaderboardPage() {
                   <View style={[styles.podiumAvatar, styles.podiumAvatarFirst, { borderColor: '#FFD700' }]}>
                     <Icon name="person" size={28} color="#FFD700" />
                   </View>
-                  <Icon name="trophy" size={24} color="#FFD700" />
+                  <View style={[styles.podiumRankBadge, styles.podiumRankBadgeFirst, { backgroundColor: '#FFD700' }]}><Text style={[styles.podiumRankText, { fontSize: 16 }]}>1</Text></View>
                   <Text style={[styles.podiumName, styles.podiumNameFirst]} numberOfLines={1}>{leaders[0]?.display_name}</Text>
                   <Text style={[styles.podiumScore, styles.podiumScoreFirst]}>{getScoreValue(leaders[0])}</Text>
                   <View style={[styles.podiumBar, { height: 80, backgroundColor: '#FFD70030' }]} />
@@ -261,7 +261,7 @@ export default function LeaderboardPage() {
                   <View style={[styles.podiumAvatar, { borderColor: '#CD7F32' }]}>
                     <Icon name="person" size={24} color="#CD7F32" />
                   </View>
-                  <Icon name="medal-outline" size={20} color="#CD7F32" />
+                  <View style={[styles.podiumRankBadge, { backgroundColor: '#CD7F32' }]}><Text style={styles.podiumRankText}>3</Text></View>
                   <Text style={styles.podiumName} numberOfLines={1}>{leaders[2]?.display_name}</Text>
                   <Text style={styles.podiumScore}>{getScoreValue(leaders[2])}</Text>
                   <View style={[styles.podiumBar, { height: 45, backgroundColor: '#CD7F3230' }]} />
@@ -545,6 +545,24 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     borderWidth: 3,
+  },
+  podiumRankBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  podiumRankBadgeFirst: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
+  podiumRankText: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#08080E',
   },
   podiumName: {
     fontSize: 11,

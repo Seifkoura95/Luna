@@ -28,7 +28,7 @@ MILESTONES = [
         "id": "newbie",
         "title": "Newbie",
         "points_required": 0,
-        "icon": "person",
+        "icon": "person-add",
         "color": "#8B8B8B",
         "description": "Welcome to Luna Group! Your journey starts here.",
         "rewards": [],
@@ -37,7 +37,7 @@ MILESTONES = [
         "id": "rising_star",
         "title": "Rising Star",
         "points_required": 500,
-        "icon": "star",
+        "icon": "trending-up",
         "color": "#10B981",
         "description": "You're making moves! Enjoy 5 free drinks on us.",
         "rewards": [
