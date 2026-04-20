@@ -120,7 +120,7 @@ export default function VenueDetailScreen() {
     'juju': 'https://www.sevenrooms.com/reservations/jujumermaidbeach',
     // Night Market - SevenRooms Reservations
     'night_market': 'https://www.sevenrooms.com/explore/nightmarket/reservations/create/search',
-    // Ember & Ash - Coming Soon (website)
+    // Ember & Ash - Now Open
     'ember_and_ash': 'https://www.emberandashbrisbane.com.au',
   };
 
@@ -128,8 +128,7 @@ export default function VenueDetailScreen() {
   const getBookingButtonText = (venueId: string, venueType: string): string => {
     // Venues with direct booking links
     if (VENUE_BOOKING_URLS[venueId]) {
-      if (venueId === 'ember_and_ash') return 'Coming Soon';
-      if (venueId === 'juju' || venueId === 'night_market') return 'Book a Table';
+      if (venueId === 'juju' || venueId === 'night_market' || venueId === 'ember_and_ash') return 'Book a Table';
       return 'Bookings';
     }
     // Default text based on venue type
@@ -608,10 +607,10 @@ export default function VenueDetailScreen() {
               <Text style={styles.ctaSecondaryText}>Bottles</Text>
             </TouchableOpacity>
           )}
-          {(venue.id === 'juju' || venue.id === 'night_market') && (
+          {(venue.id === 'juju' || venue.id === 'night_market' || venue.id === 'ember_and_ash') && (
             <TouchableOpacity
               style={styles.ctaSecondaryBtn}
-              onPress={() => router.push(`/venue-menu?venue_id=${venue.id}`)}
+              onPress={() => router.push(`/venue-menu?venue_id=${venue.id === 'ember_and_ash' ? 'ember_and_ash' : venue.id}`)}
               data-testid="venue-view-menu-btn"
             >
               <Icon name="book" size={16} color={colors.gold} />

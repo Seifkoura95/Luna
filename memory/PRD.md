@@ -1,5 +1,17 @@
 # Luna Group VIP App - Product Requirements Document
 
+## Latest Update: April 20, 2026 - Session 7
+
+### COMPLETED: Ember & Ash Menus + Coming Soon Removed + Gold Rays on Hero Card
+- **Coming Soon removed** — `/app/frontend/app/venue/[id].tsx` now returns 'Book a Table' for `ember_and_ash` (was 'Coming Soon'). Venue is live.
+- **Ember & Ash menus** — added to `/app/backend/routes/venue_menus.py`:
+  - `ember_and_ash` — Restaurant: Snacks, Small Plates, Large Plates, Steaks, Sides, Chef's Experiences ($99 pp), Wagyu Tasting ($225 pp), Desserts, Signature Cocktails, Wine By Glass, Spirits
+  - `ember_and_ash_cafe` — Cafe: Bagels, Sourdough, Signature Dishes, Coffee & Matcha (espresso $4.50 etc.), Cold Drinks
+  - Items without explicit prices from the source website are labelled **MP** (market price). Frontend `venue-menu.tsx` renders `MP` cleanly.
+- **View Menu CTA** — `ember_and_ash` added alongside `juju` and `night_market` on venue detail page.
+- **Hero Card — Gold Glow + Rotating Rays** — new `HeroGlow` component in `/app/frontend/app/(tabs)/index.tsx`: 12 SVG polygon rays rotating every 24s + pulsing radial gold halo (2.2s breath). Card border swapped from `rgba(255,255,255,0.15)` to `rgba(212,168,50,0.65)` (brand gold).
+- **Testing** — Backend JuJu/Night Market/Ember & Ash/Ember & Ash Cafe menu endpoints all return 200 with correct category counts via curl.
+
 ## Latest Update: April 20, 2026 - Session 6
 
 ### COMPLETED: VIP Table Removal + Eclipse Real Menu + Venue Menus

@@ -168,6 +168,91 @@ VENUE_MENUS = {
         "food": NIGHT_MARKET_FOOD,
         "drinks": NIGHT_MARKET_DRINKS,
     },
+    "ember_and_ash": {
+        "venue_name": "Ember & Ash",
+        "description": "Fire-kissed fine dining. Premium steak, flame-forged flavour, rooftop energy.",
+        "food": {
+            "Snacks": [
+                {"name": "20g Baeri Sturgeon Caviar Service", "desc": "Blinis, crème fraîche, house condiments", "price": 0, "unit": "MP"},
+                {"name": "Rock Oysters", "desc": "Blackberry mignonette", "price": 0, "unit": "MP"},
+            ],
+            "Small Plates": [
+                {"name": "Beef Tartare", "desc": "Hand-cut, smoked egg yolk, textural garnish", "price": 0, "unit": "MP"},
+                {"name": "White Fish Crudo", "desc": "Zesty citrus, refined heat", "price": 0, "unit": "MP"},
+            ],
+            "Large Plates": [
+                {"name": "Crab & Prawn Ravioli", "desc": "Coastal elegance, bisque reduction", "price": 0, "unit": "MP"},
+                {"name": "Char-Grilled Duck Breast", "desc": "Flame-kissed, seasonal jus", "price": 0, "unit": "MP"},
+                {"name": "Slow Roasted Pork Neck", "desc": "Robust, flame-kissed, signature glaze", "price": 0, "unit": "MP"},
+            ],
+            "Steaks": [
+                {"name": "9+ Rump Cap", "desc": "Tender, flame-kissed. Choice of sauce.", "price": 0, "unit": "MP"},
+                {"name": "5+ Tomahawk", "desc": "Massive, caramelised crust, share-size. Choice of sauce.", "price": 0, "unit": "MP"},
+                {"name": "Sauce Selection", "desc": "Au Poivre · Café de Paris · Smoked Marrow Jus · Red Wine Jus · Porcini Cream", "price": 0, "unit": "incl."},
+            ],
+            "Sides": [
+                {"name": "Twice Cooked Potatoes", "desc": "Sherry gastrique, house-smoked sour cream", "price": 0, "unit": "MP"},
+            ],
+            "Chef's Experiences": [
+                {"name": "Chef's Menu", "desc": "Signature curated selection from Beef Tartare to Slow Roasted Pork Neck", "price": 99.0, "unit": "per person"},
+                {"name": "Wagyu Tasting Experience", "desc": "Curated premium cuts, choice of side and signature sauce", "price": 225.0, "unit": "per person"},
+            ],
+            "Desserts": [
+                {"name": "Strawberries & Cream", "desc": "Elegant, seasonal", "price": 0, "unit": "MP"},
+                {"name": "White Chocolate & Koji", "desc": "Bold, sweet, fermented richness", "price": 0, "unit": "MP"},
+            ],
+        },
+        "drinks": {
+            "Signature Cocktails": [
+                {"name": "Ember Old Fashioned", "desc": "Smoked bourbon, demerara, house bitters", "price": 26.0},
+                {"name": "Ash Negroni", "desc": "Charred orange peel, Campari, sweet vermouth, gin", "price": 24.0},
+                {"name": "Flame Sour", "desc": "Mezcal, lime, egg white, chilli salt rim", "price": 24.0},
+            ],
+            "Wine By Glass": [
+                {"name": "House Sparkling", "desc": "Brut NV", "price": 14.0, "unit": "glass"},
+                {"name": "Chardonnay", "desc": "Margaret River", "price": 17.0, "unit": "glass"},
+                {"name": "Pinot Noir", "desc": "Mornington Peninsula", "price": 18.0, "unit": "glass"},
+                {"name": "Shiraz", "desc": "Barossa Valley", "price": 18.0, "unit": "glass"},
+            ],
+            "Spirits": [
+                {"name": "Japanese Whisky Selection", "desc": "Toki, Hibiki, Yamazaki — ask your waiter", "price": 0, "unit": "MP"},
+                {"name": "Cognac Selection", "desc": "Hennessy VSOP, XO, Louis XIII — ask your waiter", "price": 0, "unit": "MP"},
+            ],
+        },
+    },
+    "ember_and_ash_cafe": {
+        "venue_name": "Ember & Ash — Cafe",
+        "description": "Fire-kissed mornings. Artisanal bagels, slow-roasted coffee, smoked brisket.",
+        "food": {
+            "Bagels": [
+                {"name": "Gin Cured Salmon Bagel", "desc": "Zesty zing, house-cured salmon", "price": 0, "unit": "MP"},
+                {"name": "Halloumi & Hummus Bagel", "desc": "Earthy, creamy, portable brunch", "price": 0, "unit": "MP"},
+                {"name": "Smokey Braised Brisket Bagel", "desc": "Slow-cooked brisket, punchy slaw", "price": 0, "unit": "MP"},
+            ],
+            "Sourdough": [
+                {"name": "Thick Cut Sourdough", "desc": "House-made seasonal jam", "price": 0, "unit": "MP"},
+                {"name": "Eggs Your Way on Sourdough", "desc": "Fried, poached, or scrambled", "price": 0, "unit": "MP"},
+            ],
+            "Signature Dishes": [
+                {"name": "Potato Gem Benny", "desc": "Golden crunch, poached eggs, hollandaise", "price": 0, "unit": "MP"},
+                {"name": "Açai Bowl", "desc": "Fresh fruit, granola, honey", "price": 0, "unit": "MP"},
+                {"name": "Wood-Fired Haloumi Plate", "desc": "Artisanal textures, flame-kissed", "price": 0, "unit": "MP"},
+            ],
+        },
+        "drinks": {
+            "Coffee & Matcha": [
+                {"name": "Espresso", "desc": "Slow-roasted house blend", "price": 4.5},
+                {"name": "Long Black", "price": 5.0},
+                {"name": "Flat White / Latte / Cappuccino", "price": 5.5},
+                {"name": "Matcha Latte", "desc": "Ceremonial-grade matcha", "price": 6.5},
+            ],
+            "Cold Drinks": [
+                {"name": "Cold Brew", "desc": "24h steeped, chilled", "price": 6.5},
+                {"name": "Pineapple Bliss Juice", "desc": "Cold-pressed, pure", "price": 8.5},
+                {"name": "Milkshakes", "desc": "Chocolate · Vanilla · Strawberry · Salted Caramel", "price": 9.0},
+            ],
+        },
+    },
 }
 
 

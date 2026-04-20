@@ -133,10 +133,16 @@ export default function VenueMenuScreen() {
                   {!!item.desc && <Text style={styles.itemDesc}>{item.desc}</Text>}
                 </View>
                 <Text style={styles.itemPrice}>
-                  ${item.price.toFixed(item.price % 1 === 0 ? 0 : 2)}
-                  {item.unit ? (
-                    <Text style={styles.itemUnit}>  /{item.unit}</Text>
-                  ) : null}
+                  {item.price > 0 ? (
+                    <>
+                      ${item.price.toFixed(item.price % 1 === 0 ? 0 : 2)}
+                      {item.unit ? (
+                        <Text style={styles.itemUnit}>  /{item.unit}</Text>
+                      ) : null}
+                    </>
+                  ) : (
+                    <Text style={styles.itemUnit}>{item.unit || 'MP'}</Text>
+                  )}
                 </Text>
               </View>
             ))}
