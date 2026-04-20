@@ -489,6 +489,22 @@ export default function ProfileScreen() {
       color: '#FF6B35',
       onPress: () => router.push('/bottle-service'),
     },
+    {
+      id: 'social-feed',
+      icon: 'people',
+      title: 'Social Feed',
+      subtitle: 'See activity',
+      color: '#2563EB',
+      onPress: () => router.push('/(tabs)/photos'),
+    },
+    {
+      id: 'night-builder',
+      icon: 'calendar',
+      title: 'Night Builder',
+      subtitle: 'Plan your night',
+      color: '#FF4500',
+      onPress: () => router.push('/(tabs)/photos'),
+    },
   ];
 
   const settingsItems = [
