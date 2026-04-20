@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -282,6 +282,7 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [userInteracted, setUserInteracted] = useState(false);
   const scrollX = useRef(new Animated.Value(0)).current;
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 });
@@ -295,6 +296,19 @@ export default function OnboardingScreen() {
     []
   );
 
+  // Auto-advance slides every 6s until the user interacts or reaches the last slide
+  useEffect(() => {
+    if (userInteracted) return;
+    if (currentIndex >= SLIDES.length - 1) return;
+    const timer = setTimeout(() => {
+      flatListRef.current?.scrollToIndex({
+        index: currentIndex + 1,
+        animated: true,
+      });
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [currentIndex, userInteracted]);
+
   const completeAndGoToLogin = async () => {
     try {
       await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
@@ -306,6 +320,7 @@ export default function OnboardingScreen() {
 
   const goNext = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
+    setUserInteracted(true);
     if (currentIndex < SLIDES.length - 1) {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
     } else {
@@ -315,6 +330,7 @@ export default function OnboardingScreen() {
 
   const skip = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
+    setUserInteracted(true);
     completeAndGoToLogin();
   };
 
@@ -362,6 +378,7 @@ export default function OnboardingScreen() {
         showsHorizontalScrollIndicator={false}
         bounces={false}
         scrollEventThrottle={16}
+        onScrollBeginDrag={() => setUserInteracted(true)}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
           { useNativeDriver: false }
