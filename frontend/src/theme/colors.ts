@@ -2,58 +2,58 @@
 // Complete rewrite with proper depth, glassmorphism, and premium feel
 
 export const colors = {
-  // Primary Backgrounds - Layered depth system
-  bg: '#101018',
-  background: '#101018',
-  surface: '#181824',
-  surfaceElevated: '#202030',
-  surfaceFloat: '#282840',
-  surfaceHover: '#303048',
-  surfaceActive: '#383850',
+  // Primary Backgrounds - Deep layered depth (darker base, brighter cards)
+  bg: '#08080E',
+  background: '#08080E',
+  surface: '#12121E',
+  surfaceElevated: '#1A1A2E',
+  surfaceFloat: '#242440',
+  surfaceHover: '#2C2C4C',
+  surfaceActive: '#343458',
   
-  // Legacy mappings - MUCH BRIGHTER for card visibility
-  backgroundElevated: '#1C1C2C',
-  backgroundCard: '#202034',
-  backgroundCardHover: '#282844',
+  // Card surfaces - intentionally brighter for depth contrast
+  backgroundElevated: '#1A1A2E',
+  backgroundCard: '#1E1E34',
+  backgroundCardHover: '#26263E',
   
-  // Card Gradient Colors - Subtle accent tints
-  cardGradientStart: '#1E1E2E',
-  cardGradientEnd: '#14141E',
-  cardGradientBlue: 'rgba(37, 99, 235, 0.08)',
-  cardGradientGold: 'rgba(212, 168, 50, 0.06)',
+  // Card Gradient Colors - Warm accent tints
+  cardGradientStart: '#1C1C30',
+  cardGradientEnd: '#10101A',
+  cardGradientBlue: 'rgba(37, 99, 235, 0.06)',
+  cardGradientGold: 'rgba(212, 175, 90, 0.08)',
   cardGradientPurple: 'rgba(139, 92, 246, 0.06)',
-  cardAccentBorder: 'rgba(37, 99, 235, 0.25)',
+  cardAccentBorder: 'rgba(37, 99, 235, 0.20)',
   
-  // True Glassmorphism System - WITH ACCENT TINTS
-  glass: '#1E1E30',
-  glassMid: '#252540',
-  glassHigh: '#2C2C4A',
-  glassAccent: 'rgba(37, 99, 235, 0.18)',
-  glassGold: 'rgba(212, 168, 50, 0.14)',
-  glassLight: 'rgba(255, 255, 255, 0.12)',
-  glassBorder: 'rgba(255, 255, 255, 0.28)',
-  glassBorderStrong: 'rgba(255, 255, 255, 0.38)',
-  glassBorderSubtle: 'rgba(255, 255, 255, 0.18)',
-  glassHighlight: 'rgba(255, 255, 255, 0.38)',
-  glassShine: 'rgba(255, 255, 255, 0.45)',
+  // Glassmorphism System - richer, more dimensional
+  glass: 'rgba(255, 255, 255, 0.06)',
+  glassMid: 'rgba(255, 255, 255, 0.09)',
+  glassHigh: 'rgba(255, 255, 255, 0.12)',
+  glassAccent: 'rgba(37, 99, 235, 0.12)',
+  glassGold: 'rgba(212, 175, 90, 0.10)',
+  glassLight: 'rgba(255, 255, 255, 0.08)',
+  glassBorder: 'rgba(255, 255, 255, 0.14)',
+  glassBorderStrong: 'rgba(255, 255, 255, 0.22)',
+  glassBorderSubtle: 'rgba(255, 255, 255, 0.08)',
+  glassHighlight: 'rgba(255, 255, 255, 0.25)',
+  glassShine: 'rgba(255, 255, 255, 0.35)',
   
-  // Text - High contrast hierarchy
-  text: '#F5F5FA',
-  textPrimary: '#F5F5FA',
-  textSecondary: 'rgba(245, 245, 250, 0.65)',
-  textTertiary: 'rgba(245, 245, 250, 0.40)',
-  textMuted: 'rgba(245, 245, 250, 0.50)',
-  textDisabled: 'rgba(245, 245, 250, 0.25)',
+  // Text - sharper hierarchy (wider spread between levels)
+  text: '#F0F0F8',
+  textPrimary: '#F0F0F8',
+  textSecondary: 'rgba(240, 240, 248, 0.60)',
+  textTertiary: 'rgba(240, 240, 248, 0.35)',
+  textMuted: 'rgba(240, 240, 248, 0.45)',
+  textDisabled: 'rgba(240, 240, 248, 0.20)',
   textInverse: '#050507',
   
-  // Border System - Hierarchical - HIGH VISIBILITY
-  border: 'rgba(255, 255, 255, 0.22)',
-  borderHover: 'rgba(255, 255, 255, 0.30)',
-  borderStrong: 'rgba(255, 255, 255, 0.38)',
-  borderLight: 'rgba(255, 255, 255, 0.15)',
-  borderAccent: 'rgba(37, 99, 235, 0.65)',
-  borderGold: 'rgba(212, 168, 50, 0.65)',
-  borderCard: 'rgba(255, 255, 255, 0.28)',
+  // Border System - subtler for premium feel
+  border: 'rgba(255, 255, 255, 0.10)',
+  borderHover: 'rgba(255, 255, 255, 0.18)',
+  borderStrong: 'rgba(255, 255, 255, 0.25)',
+  borderLight: 'rgba(255, 255, 255, 0.06)',
+  borderAccent: 'rgba(37, 99, 235, 0.50)',
+  borderGold: 'rgba(212, 175, 90, 0.50)',
+  borderCard: 'rgba(255, 255, 255, 0.12)',
   
   // Brand Accent - Electric Blue
   accent: '#2563EB',
