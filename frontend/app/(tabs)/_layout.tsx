@@ -128,12 +128,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="photos"
+        name="luna-ai"
         options={{
-          title: 'Social',
+          title: 'Luna AI',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon IconComponent={SocialIcon} color={color} focused={focused} />
+            <TabBarIcon IconComponent={LunaAIIcon} color={color} focused={focused} />
           ),
         }}
       />
@@ -148,7 +148,7 @@ export default function TabLayout() {
         }}
       />
       {/* Hidden screens */}
-      <Tabs.Screen name="luna-ai" options={{ href: null, headerShown: false }} />
+      <Tabs.Screen name="photos" options={{ href: null, headerShown: false }} />
       <Tabs.Screen name="leaderboard" options={{ href: null, headerShown: false }} />
       <Tabs.Screen name="auctions" options={{ href: null, headerShown: false }} />
     </Tabs>

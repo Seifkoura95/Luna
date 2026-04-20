@@ -300,10 +300,12 @@ export default function SocialScreen() {
                       <Text style={styles.planTitle}>{plan.title}</Text>
                       <Text style={styles.planDate}>{plan.date} - {plan.members?.length || 1} people</Text>
                     </View>
-                    <View style={[styles.vibeBadge, { backgroundColor: plan.vibe_score >= 60 ? '#10B981' : plan.vibe_score >= 30 ? '#F59E0B' : colors.glassMid }]}>
-                      <Text style={styles.vibeText}>{plan.vibe_score}</Text>
-                      <Text style={styles.vibeLabel}>VIBE</Text>
-                    </View>
+                    {plan.is_crew_plan && (
+                      <View style={[styles.crewBadge]}>
+                        <Icon name="people" size={12} color="#FF6B35" />
+                        <Text style={styles.crewBadgeText}>CREW</Text>
+                      </View>
+                    )}
                   </View>
 
                   {/* Stops Timeline */}
@@ -339,10 +341,31 @@ export default function SocialScreen() {
 
                   {/* Actions */}
                   <View style={styles.planActions}>
-                    <TouchableOpacity style={styles.planActionBtn} onPress={() => { setPollPlanId(plan.id); setShowPoll(true); }} data-testid={`create-poll-${plan.id}`}>
-                      <Icon name="stats-chart" size={16} color="#8B5CF6" />
-                      <Text style={[styles.planActionText, { color: '#8B5CF6' }]}>Create Poll</Text>
+                    <TouchableOpacity
+                      style={[styles.planActionBtn, plan.likes?.includes('current') && { backgroundColor: '#E3183720', borderColor: '#E31837' }]}
+                      onPress={async () => {
+                        try {
+                          const liked = plan.likes_count > 0;
+                          if (liked) {
+                            await apiFetch(`/api/social/night-plan/${plan.id}/like`, { method: 'DELETE' });
+                          } else {
+                            await apiFetch(`/api/social/night-plan/${plan.id}/like`, { method: 'POST' });
+                          }
+                          if (isNative) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          loadPlans();
+                        } catch {}
+                      }}
+                      data-testid={`like-plan-${plan.id}`}
+                    >
+                      <Icon name={plan.likes_count > 0 ? 'heart' : 'heart-outline'} size={16} color={plan.likes_count > 0 ? '#E31837' : colors.textMuted} />
+                      <Text style={[styles.planActionText, plan.likes_count > 0 && { color: '#E31837' }]}>{plan.likes_count || 0} Like{plan.likes_count !== 1 ? 's' : ''}</Text>
                     </TouchableOpacity>
+                    {plan.is_crew_plan && (
+                      <TouchableOpacity style={styles.planActionBtn} onPress={() => { setPollPlanId(plan.id); setShowPoll(true); }} data-testid={`create-poll-${plan.id}`}>
+                        <Icon name="stats-chart" size={16} color="#8B5CF6" />
+                        <Text style={[styles.planActionText, { color: '#8B5CF6' }]}>Create Poll</Text>
+                      </TouchableOpacity>
+                    )}
                     <TouchableOpacity style={styles.planActionBtn}>
                       <Icon name="share" size={16} color={colors.accent} />
                       <Text style={[styles.planActionText, { color: colors.accent }]}>Share</Text>
@@ -573,9 +596,8 @@ const styles = StyleSheet.create({
   planHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
   planTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
   planDate: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  vibeBadge: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center' },
-  vibeText: { fontSize: 16, fontWeight: '800', color: '#FFF' },
-  vibeLabel: { fontSize: 8, fontWeight: '700', color: 'rgba(255,255,255,0.7)', letterSpacing: 1 },
+  crewBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full, backgroundColor: '#FF6B3515', borderWidth: 1, borderColor: '#FF6B3540' },
+  crewBadgeText: { fontSize: 10, fontWeight: '800', color: '#FF6B35', letterSpacing: 1 },
 
   // Timeline
   timeline: { marginBottom: spacing.md },

@@ -101,11 +101,14 @@ async def express_interest(request: Request, data: EventInterestCreate):
     if data.visibility not in ["public", "friends", "private"]:
         raise HTTPException(status_code=400, detail="Visibility must be public, friends, or private")
 
-    # Get event info
+    # Get event info — check cached events first, then events collection
     event = await db.events.find_one({"id": data.event_id}, {"_id": 0})
     if not event:
-        # Try event_id field
         event = await db.events.find_one({"event_id": data.event_id}, {"_id": 0})
+    if not event:
+        event = await db.cached_events.find_one({"id": data.event_id}, {"_id": 0})
+    if not event:
+        event = await db.cached_events.find_one({"event_id": data.event_id}, {"_id": 0})
 
     # Get user info
     user = await db.users.find_one({"user_id": current["user_id"]}, {"_id": 0, "name": 1, "tier": 1})
@@ -134,7 +137,7 @@ async def express_interest(request: Request, data: EventInterestCreate):
         "event_id": data.event_id,
         "event_title": event.get("title", event.get("name", "Event")) if event else "Event",
         "event_venue": event.get("venue_name", event.get("venue_id", "")) if event else "",
-        "event_date": event.get("date", "") if event else "",
+        "event_date": event.get("date", event.get("datetime_start", "")) if event else "",
         "event_image": event.get("image_url", event.get("image", "")) if event else "",
         "visibility": data.visibility,
         "likes_count": 0,
@@ -144,6 +147,14 @@ async def express_interest(request: Request, data: EventInterestCreate):
     }
 
     await db.social_activity.insert_one(activity)
+
+    # Cache event so it persists after EventFinda removal
+    if event:
+        await db.cached_events.update_one(
+            {"id": data.event_id},
+            {"$set": {**{k: v for k, v in event.items() if k != "_id"}, "cached_at": datetime.now(timezone.utc).isoformat()}},
+            upsert=True,
+        )
 
     # Award points for social engagement
     await db.users.update_one(
@@ -309,8 +320,10 @@ async def create_night_plan(request: Request, data: NightPlanCreate):
         "stops": enriched_stops,
         "members": [{"user_id": current["user_id"], "name": user.get("name", "") if user else "", "status": "confirmed", "role": "organizer"}],
         "polls": [],
+        "is_crew_plan": bool(data.invite_crew_id or (data.invite_user_ids and len(data.invite_user_ids) > 0)),
         "status": "planning",  # planning, locked, active, completed
-        "vibe_score": 0,
+        "likes": [],
+        "likes_count": 0,
         "total_stops": len(enriched_stops),
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -452,13 +465,9 @@ async def respond_to_invite(request: Request, plan_id: str, accept: bool = True)
     if not updated:
         raise HTTPException(status_code=404, detail="You're not invited to this plan")
 
-    # Update vibe score (more confirmed = higher vibe)
-    confirmed = sum(1 for m in members if m["status"] == "confirmed")
-    vibe = min(100, confirmed * 20 + len(plan.get("stops", [])) * 10)
-
     await db.night_plans.update_one(
         {"id": plan_id},
-        {"$set": {"members": members, "vibe_score": vibe, "updated_at": datetime.now(timezone.utc).isoformat()}},
+        {"$set": {"members": members, "updated_at": datetime.now(timezone.utc).isoformat()}},
     )
 
     if accept:
@@ -509,16 +518,102 @@ async def invite_to_plan(request: Request, plan_id: str, user_ids: List[str] = [
     return {"success": True, "invited": len(new_members), "message": f"{len(new_members)} friends invited!"}
 
 
-# ── Polls ─────────────────────────────────────────────────────────────────────
+# ── Plan Likes (crew plans only) ─────────────────────────────────────────────
+
+@router.post("/night-plan/{plan_id}/like")
+async def like_plan(request: Request, plan_id: str):
+    """Like a crew night plan — crew members vote on the plan."""
+    auth = request.headers.get("authorization")
+    current = get_current_user(auth)
+
+    plan = await db.night_plans.find_one({"id": plan_id})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    likes = plan.get("likes", [])
+    if current["user_id"] in likes:
+        raise HTTPException(status_code=400, detail="Already liked this plan")
+
+    likes.append(current["user_id"])
+    await db.night_plans.update_one(
+        {"id": plan_id},
+        {"$set": {"likes": likes, "likes_count": len(likes), "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+
+    return {"success": True, "likes_count": len(likes), "message": "Liked!"}
+
+
+@router.delete("/night-plan/{plan_id}/like")
+async def unlike_plan(request: Request, plan_id: str):
+    """Unlike a crew night plan."""
+    auth = request.headers.get("authorization")
+    current = get_current_user(auth)
+
+    plan = await db.night_plans.find_one({"id": plan_id})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    likes = plan.get("likes", [])
+    if current["user_id"] not in likes:
+        return {"success": True, "likes_count": len(likes)}
+
+    likes.remove(current["user_id"])
+    await db.night_plans.update_one(
+        {"id": plan_id},
+        {"$set": {"likes": likes, "likes_count": len(likes), "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+
+    return {"success": True, "likes_count": len(likes)}
+
+
+# ── Update Stop Time ──────────────────────────────────────────────────────────
+
+class StopTimeUpdate(BaseModel):
+    stop_index: int
+    time: Optional[str] = None
+    notes: Optional[str] = None
+
+@router.put("/night-plan/{plan_id}/stop")
+async def update_stop_time(request: Request, plan_id: str, data: StopTimeUpdate):
+    """Update the time or notes for a specific stop in a plan."""
+    auth = request.headers.get("authorization")
+    current = get_current_user(auth)
+
+    plan = await db.night_plans.find_one({"id": plan_id})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    stops = plan.get("stops", [])
+    if data.stop_index < 0 or data.stop_index >= len(stops):
+        raise HTTPException(status_code=400, detail="Invalid stop index")
+
+    if data.time is not None:
+        stops[data.stop_index]["time"] = data.time
+    if data.notes is not None:
+        stops[data.stop_index]["notes"] = data.notes
+
+    await db.night_plans.update_one(
+        {"id": plan_id},
+        {"$set": {"stops": stops, "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+
+    return {"success": True, "stop": stops[data.stop_index]}
+
+
+# ── Polls (crew plans only) ──────────────────────────────────────────────────
 
 @router.post("/poll")
 async def create_poll(request: Request, data: PollCreate):
-    """Create a poll within a night plan (e.g., which venue to go to?)."""
+    """Create a poll within a night plan. Only allowed for crew plans (not solo)."""
     auth = request.headers.get("authorization")
     current = get_current_user(auth)
 
     plan = await db.night_plans.find_one({"id": data.plan_id})
     if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    if not plan.get("is_crew_plan") and len(plan.get("members", [])) <= 1:
+        raise HTTPException(status_code=400, detail="Polls are only available for crew/group plans. Invite friends first!")
         raise HTTPException(status_code=404, detail="Plan not found")
 
     user = await db.users.find_one({"user_id": current["user_id"]}, {"_id": 0, "name": 1})
