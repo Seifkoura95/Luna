@@ -1,5 +1,14 @@
 # Luna Group VIP App - Product Requirements Document
 
+## Latest Update: April 20, 2026 - Session 4
+
+### COMPLETED: First-Time Onboarding Carousel
+- **5-slide animated onboarding** added at `/app/frontend/app/onboarding.tsx` (Welcome → Venues → Events → Rewards → VIP)
+- Gated by AsyncStorage key `luna_onboarding_complete` — shown once per install
+- `index.tsx` routes unauth'd first-time users to `/onboarding`; returning users go straight to `/login`
+- Adapted to expo-router + existing app design tokens (blue accent, gold for Rewards slide, system fonts)
+- Skip button + final "Get Started" both mark complete and navigate to `/login`
+
 ## Latest Update: April 17, 2026 - Session 3
 
 ### COMPLETED: Social Feed + Night Builder
