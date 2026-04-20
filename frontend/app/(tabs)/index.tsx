@@ -32,117 +32,48 @@ import { AppBackground } from '../../src/components/AppBackground';
 import { SectionTitle } from '../../src/components/SectionTitle';
 import { EmptyState } from '../../src/components/EmptyState';
 import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';
-import Svg, { Polygon, Defs, RadialGradient as SvgRadialGradient, Stop } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 const VENUE_CARD_WIDTH = width * 0.72;
 
-// Gold ray constants
-const GOLD = '#D4A832';
-const GOLD_BRIGHT = '#F5D77A';
-const HERO_HEIGHT = 340;
-const GLOW_PAD = 24; // rays extend this far past the card
-
-// ─── HeroGlow: rotating gold rays + pulsing glow around Featured card ────────
-const HeroGlow: React.FC<{ width: number; height: number }> = ({ width, height }) => {
-  const rotation = useSharedValue(0);
+// ─── HeroCardWithGoldPulse: featured card with gold border pulsing brightness ─
+const HeroCardWithGoldPulse: React.FC<{
+  onPress: () => void;
+  children: React.ReactNode;
+}> = ({ onPress, children }) => {
   const pulse = useSharedValue(0);
 
   React.useEffect(() => {
-    rotation.value = withRepeat(
-      withTiming(1, { duration: 24000, easing: Easing.linear }),
-      -1,
-      false,
-    );
     pulse.value = withRepeat(
-      withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.quad) }),
+      withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.quad) }),
       -1,
       true,
     );
   }, []);
 
-  const rayStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${interpolate(rotation.value, [0, 1], [0, 360])}deg` }],
-    opacity: interpolate(pulse.value, [0, 1], [0.55, 0.95]),
-  }));
-
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(pulse.value, [0, 1], [0.35, 0.75]),
-    transform: [{ scale: interpolate(pulse.value, [0, 1], [0.98, 1.05]) }],
-  }));
-
-  // Build 12 triangular rays pointing outward
-  const centerX = (width + GLOW_PAD * 2) / 2;
-  const centerY = (height + GLOW_PAD * 2) / 2;
-  const innerRadius = Math.min(width, height) / 2 + 4;
-  const outerRadius = innerRadius + 60;
-
-  const rays = Array.from({ length: 12 }, (_, i) => {
-    const angle = (i * 30 * Math.PI) / 180;
-    const w = 14; // ray base width in degrees
-    const wRad = (w * Math.PI) / 180;
-    const a1 = angle - wRad / 2;
-    const a2 = angle + wRad / 2;
-    const p1x = centerX + innerRadius * Math.cos(a1);
-    const p1y = centerY + innerRadius * Math.sin(a1);
-    const p2x = centerX + innerRadius * Math.cos(a2);
-    const p2y = centerY + innerRadius * Math.sin(a2);
-    const p3x = centerX + outerRadius * Math.cos(angle);
-    const p3y = centerY + outerRadius * Math.sin(angle);
-    return `${p1x},${p1y} ${p3x},${p3y} ${p2x},${p2y}`;
+  const animatedStyle = useAnimatedStyle(() => {
+    // Dim → Bright gold. Interpolate individual RGB channels.
+    // Dim  rgba(212,168,50,0.35) → Bright rgba(245,215,122,1)
+    const r = interpolate(pulse.value, [0, 1], [212, 245]);
+    const g = interpolate(pulse.value, [0, 1], [168, 215]);
+    const b = interpolate(pulse.value, [0, 1], [50, 122]);
+    const a = interpolate(pulse.value, [0, 1], [0.35, 1]);
+    return {
+      borderColor: `rgba(${r}, ${g}, ${b}, ${a})`,
+      shadowOpacity: interpolate(pulse.value, [0, 1], [0.15, 0.55]),
+    };
   });
 
   return (
-    <View
-      pointerEvents="none"
-      style={{
-        position: 'absolute',
-        top: -GLOW_PAD,
-        left: -GLOW_PAD,
-        width: width + GLOW_PAD * 2,
-        height: height + GLOW_PAD * 2,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {/* Soft gold glow halo */}
-      <Animated.View
-        style={[
-          glowStyle,
-          {
-            position: 'absolute',
-            width: width + GLOW_PAD * 2,
-            height: height + GLOW_PAD * 2,
-            borderRadius: 24,
-            shadowColor: GOLD,
-            shadowOpacity: 1,
-            shadowRadius: 40,
-            shadowOffset: { width: 0, height: 0 },
-            elevation: 24,
-            backgroundColor: 'rgba(212, 168, 50, 0.14)',
-          },
-        ]}
-      />
-      {/* Rotating gold rays */}
-      <Animated.View style={[rayStyle, { position: 'absolute' }]}>
-        <Svg
-          width={width + GLOW_PAD * 2}
-          height={height + GLOW_PAD * 2}
-          viewBox={`0 0 ${width + GLOW_PAD * 2} ${height + GLOW_PAD * 2}`}
-        >
-          <Defs>
-            <SvgRadialGradient id="rayGrad" cx="50%" cy="50%" r="50%">
-              <Stop offset="0%" stopColor={GOLD_BRIGHT} stopOpacity={0.0} />
-              <Stop offset="60%" stopColor={GOLD} stopOpacity={0.45} />
-              <Stop offset="100%" stopColor={GOLD} stopOpacity={0.0} />
-            </SvgRadialGradient>
-          </Defs>
-          {rays.map((pts, i) => (
-            <Polygon key={i} points={pts} fill="url(#rayGrad)" />
-          ))}
-        </Svg>
-      </Animated.View>
-    </View>
+    <Animated.View style={[styles.heroCardAnimated, animatedStyle]}>
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.9}
+        style={styles.heroCardInner}
+      >
+        {children}
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
@@ -381,11 +312,8 @@ export default function HomeScreen() {
         {/* Hero Event */}
         {featuredEvent && (
           <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.heroWrapper}>
-            <HeroGlow width={width - 40} height={HERO_HEIGHT} />
-            <TouchableOpacity 
-              style={styles.heroCard}
+            <HeroCardWithGoldPulse
               onPress={() => { handleHaptic(); router.push(`/event/${featuredEvent.id}`); }}
-              activeOpacity={0.9}
             >
               <Image source={{ uri: featuredEvent.image || featuredEvent.image_url }} style={styles.heroImage} contentFit="cover" />
               <LinearGradient 
@@ -402,7 +330,7 @@ export default function HomeScreen() {
                   <Text style={styles.heroMeta}>{formatDate(featuredEvent)} · {getTime(featuredEvent)}</Text>
                 </View>
               </LinearGradient>
-            </TouchableOpacity>
+            </HeroCardWithGoldPulse>
           </Animated.View>
         )}
 
@@ -703,14 +631,20 @@ const styles = StyleSheet.create({
   // Hero - Tall, atmospheric, fills top 40% of screen
   heroWrapper: {
     marginBottom: 28,
-    position: 'relative',
   },
-  heroCard: {
-    height: HERO_HEIGHT,
+  heroCardAnimated: {
+    height: 340,
     borderRadius: 20,
+    borderWidth: 2,
+    shadowColor: '#D4A832',
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  heroCardInner: {
+    flex: 1,
+    borderRadius: 18,
     overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: 'rgba(212, 168, 50, 0.65)',
   },
   heroImage: {
     ...StyleSheet.absoluteFillObject,
