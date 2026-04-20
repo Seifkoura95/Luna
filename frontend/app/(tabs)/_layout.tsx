@@ -14,6 +14,7 @@ const CardIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string
 const StarIcon = ({ size = 14, color = '#fff' }: { size?: number; color?: string }) => <LunaIcon name="star" size={size} color={color} />;
 const GuestIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <LunaIcon name="profile" size={size} color={color} />;
 const LunaAIIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <LunaIcon name="star" size={size} color={color} />;
+const SocialIcon = ({ size = 22, color = '#fff' }: { size?: number; color?: string }) => <LunaIcon name="people" size={size} color={color} />;
 
 // Custom tab bar icon using Luna Icons with optional badge
 const TabBarIcon = ({ 
@@ -127,12 +128,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="luna-ai"
+        name="photos"
         options={{
-          title: 'Luna AI',
+          title: 'Social',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon IconComponent={LunaAIIcon} color={color} focused={focused} />
+            <TabBarIcon IconComponent={SocialIcon} color={color} focused={focused} />
           ),
         }}
       />
@@ -147,7 +148,7 @@ export default function TabLayout() {
         }}
       />
       {/* Hidden screens */}
-      <Tabs.Screen name="photos" options={{ href: null, headerShown: false }} />
+      <Tabs.Screen name="luna-ai" options={{ href: null, headerShown: false }} />
       <Tabs.Screen name="leaderboard" options={{ href: null, headerShown: false }} />
       <Tabs.Screen name="auctions" options={{ href: null, headerShown: false }} />
     </Tabs>

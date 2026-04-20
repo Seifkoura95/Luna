@@ -1,0 +1,98 @@
+{
+  "summary": "Backend testing complete for Social Feed & Night Builder APIs. All 40 tests passed. Tested: Event interests (public/friends/private visibility), social feed with visibility rules, likes/unlikes, night plans (CRUD), polls (create/vote/close), and Instagram route removal verification.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_social_night_builder.py",
+    "/app/test_reports/pytest/pytest_social_night_builder.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Social feed correctly implements visibility rules: public posts visible to all, friends-only to friends, private only to creator",
+    "Points system working: 5pts for expressing interest, 10pts for creating night plan, 5pts for accepting invite",
+    "Vibe score calculation correct: (confirmed_members * 20) + (stops * 10), capped at 100",
+    "Duplicate interest correctly updates visibility instead of creating new entry",
+    "Poll voting allows changing vote (removes previous vote before adding new)",
+    "Only poll creator can close poll (403 for non-creators)",
+    "Instagram routes properly removed - /api/instagram/* returns 404"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_social_night_builder.py"
+  ],
+  "success_rate": {
+    "backend": "100% (40 passed)",
+    "frontend": "Not tested (backend only requested)"
+  },
+  "test_credentials": {
+    "user": "luna@test.com / test123 (22349 points after tests)",
+    "admin": "admin@lunagroup.com.au / Trent69!"
+  },
+  "seed_data_creation": "Created multiple TEST_ prefixed activities, night plans, and polls during testing. Test data includes: event interests with various visibility settings, night plans with multiple stops, polls with voting.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Social Feed & Night Builder APIs fully functional. Test user luna@test.com has multiple social activities, night plans, and polls. Existing data from previous iterations: event interest for ef_399720, night plan plan_f8423043 (may be inaccessible), poll poll_64b1bd5d. Instagram routes are removed and return 404.",
+  "endpoints_tested": {
+    "instagram_removal": [
+      "GET /api/instagram/feed (PASS) - Returns 404 (removed)",
+      "GET /api/instagram/connect (PASS) - Returns 404 (removed)"
+    ],
+    "event_interest": [
+      "POST /api/social/interest (PASS) - Express public interest, earns 5 pts",
+      "POST /api/social/interest (PASS) - Duplicate updates visibility instead of creating new",
+      "POST /api/social/interest (PASS) - Express private interest",
+      "POST /api/social/interest (PASS) - Invalid visibility returns 400",
+      "POST /api/social/interest (PASS) - Requires authentication (401)"
+    ],
+    "social_feed": [
+      "GET /api/social/feed (PASS) - Returns activity feed with liked_by_me enrichment",
+      "GET /api/social/feed (PASS) - Feed items have required fields (id, type, user_id, visibility, created_at)",
+      "GET /api/social/feed (PASS) - Requires authentication (401)",
+      "GET /api/social/feed (PASS) - Supports pagination (limit, offset)"
+    ],
+    "likes": [
+      "POST /api/social/like/{activity_id} (PASS) - Like an activity",
+      "POST /api/social/like/{activity_id} (PASS) - Cannot double-like (returns 400)",
+      "DELETE /api/social/like/{activity_id} (PASS) - Unlike an activity",
+      "POST /api/social/like/{activity_id} (PASS) - 404 for nonexistent activity",
+      "POST /api/social/like/{activity_id} (PASS) - Requires authentication (401)"
+    ],
+    "event_interested": [
+      "GET /api/social/interested/{event_id} (PASS) - Get who's interested with visibility rules",
+      "DELETE /api/social/interest/{event_id} (PASS) - Remove interest",
+      "DELETE /api/social/interest/{event_id} (PASS) - 404 for nonexistent interest"
+    ],
+    "night_plans": [
+      "POST /api/social/night-plan (PASS) - Create plan with multiple stops, earns 10 pts",
+      "GET /api/social/night-plans (PASS) - Get user's night plans",
+      "GET /api/social/night-plan/{plan_id} (PASS) - Get specific plan details",
+      "PUT /api/social/night-plan/{plan_id} (PASS) - Update plan title/stops",
+      "POST /api/social/night-plan/{plan_id}/respond?accept=true (PASS) - Accept invite, earns 5 pts, updates vibe score",
+      "POST /api/social/night-plan/{plan_id}/respond?accept=false (PASS) - Decline invite",
+      "GET /api/social/night-plan/{plan_id} (PASS) - 404 for nonexistent plan",
+      "POST /api/social/night-plan (PASS) - Requires authentication (401)",
+      "DELETE /api/social/night-plan/{plan_id} (PASS) - Delete plan",
+      "DELETE /api/social/night-plan/{plan_id} (PASS) - 404 for nonexistent plan"
+    ],
+    "polls": [
+      "POST /api/social/poll (PASS) - Create poll within night plan",
+      "GET /api/social/poll/{poll_id} (PASS) - Get poll results with my_vote",
+      "POST /api/social/poll/{poll_id}/vote?option_id=X (PASS) - Vote on poll",
+      "POST /api/social/poll/{poll_id}/vote (PASS) - Can change vote",
+      "POST /api/social/poll/{poll_id}/close (PASS) - Close poll and determine winner",
+      "POST /api/social/poll/{poll_id}/vote (PASS) - Cannot vote on closed poll (400)",
+      "POST /api/social/poll/{poll_id}/vote (PASS) - 404 for invalid option",
+      "GET /api/social/poll/{poll_id} (PASS) - 404 for nonexistent poll"
+    ]
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
