@@ -761,10 +761,7 @@ export default function WalletScreen() {
         {/* Active Missions */}
         <View style={styles.missionsSection}>
           <View style={styles.missionHeader}>
-            <View style={styles.missionTitleRow}>
-              <Icon name="flag" size={18} color={colors.accent} />
-              <Text style={styles.redeemTitle}>MISSIONS</Text>
-            </View>
+            <Text style={styles.redeemTitle}>MISSIONS</Text>
             <TouchableOpacity onPress={() => router.push('/missions')}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
@@ -832,10 +829,7 @@ export default function WalletScreen() {
         {/* =============== MILESTONES SECTION =============== */}
         <View style={styles.redeemSection}>
           <View style={styles.redeemHeader}>
-            <View style={styles.redeemTitleRow}>
-              <Icon name="flag" size={18} color={colors.accent} />
-              <Text style={styles.redeemTitle}>MILESTONES</Text>
-            </View>
+            <Text style={styles.redeemTitle}>MILESTONES</Text>
             <TouchableOpacity onPress={() => router.push('/milestones')}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
@@ -1862,10 +1856,10 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   redeemTitle: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '800',
-    color: colors.textPrimary,
-    letterSpacing: 1,
+    color: '#D4AF5A',
+    letterSpacing: 2.5,
   },
   viewAllRewardsBtn: {
     flexDirection: 'row',

@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Icon } from './Icon';
 import { colors, spacing } from '../theme/colors';
 
 interface SectionTitleProps {
@@ -15,21 +14,13 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
   title,
   onSeeAll,
   seeAllText = 'See All',
-  icon,
-  iconColor = colors.textMuted,
 }) => {
   return (
     <View style={styles.container}>
-      <View style={styles.titleRow}>
-        {icon && (
-          <Icon name={icon as any} size={14} color={iconColor} style={styles.icon} />
-        )}
-        <Text style={styles.title}>{title}</Text>
-      </View>
+      <Text style={styles.title}>{title.toUpperCase()}</Text>
       {onSeeAll && (
         <TouchableOpacity onPress={onSeeAll} style={styles.seeAllBtn}>
           <Text style={styles.seeAllText}>{seeAllText}</Text>
-          <Icon name="chevron-forward" size={14} color={colors.accent} />
         </TouchableOpacity>
       )}
     </View>
@@ -43,24 +34,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  icon: {
-    marginRight: spacing.xs,
-  },
   title: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2.5,
+    color: '#D4AF5A',
   },
   seeAllBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
@@ -68,7 +48,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 1,
-    color: colors.accent,
+    color: 'rgba(240, 240, 248, 0.45)',
     textTransform: 'uppercase',
   },
 });

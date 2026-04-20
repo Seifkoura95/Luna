@@ -572,8 +572,6 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <SectionTitle 
             title="Rewards & Membership" 
-            icon="star"
-            iconColor={colors.gold}
           />
           
           {/* Compact Points Card */}
@@ -685,8 +683,6 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <SectionTitle 
             title="Quick Actions" 
-            icon="flash"
-            iconColor={colors.accent}
           />
           
           {/* Primary CTAs - Full width */}
@@ -1648,7 +1644,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: spacing.lg,
     gap: spacing.sm,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   statCard: {
     width: (width - spacing.lg * 2 - spacing.sm) / 2 - spacing.sm / 2,
@@ -1674,10 +1670,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 2,
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#D4AF5A',
+    letterSpacing: 2.5,
     marginBottom: spacing.md,
     textAlign: 'center',
   },

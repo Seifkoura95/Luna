@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.lg,
   },
   logoContainer: {
     marginBottom: spacing.xs,
