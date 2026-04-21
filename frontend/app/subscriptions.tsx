@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as WebBrowser from 'expo-web-browser';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api } from '../src/utils/api';
 import { Icon } from '../src/components/Icon';
@@ -87,36 +88,51 @@ export default function SubscriptionsScreen() {
       return;
     }
 
+    const tier = tiers.find(t => t.id === tierId);
+    if (!tier) return;
+
+    // Paid subscriptions happen OUTSIDE the app on our web portal to
+    // comply with Apple IAP rules. The app only supports free tier switches.
+    if (tier.price > 0) {
+      Alert.alert(
+        `Subscribe to ${tier.name}`,
+        `${tier.name} is $${tier.price}/month. You'll be redirected to our secure subscription portal to complete payment.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Continue in Browser',
+            onPress: async () => {
+              const portalUrl = 'https://lunagroup.com.au/subscribe?tier=' + encodeURIComponent(tierId);
+              try {
+                await WebBrowser.openBrowserAsync(portalUrl);
+              } catch (e) {
+                Alert.alert(
+                  'Subscribe on the web',
+                  `Visit ${portalUrl} to subscribe.`
+                );
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+
     Alert.alert(
-      `Subscribe to ${tier.name}`,
-      tier.price === 0
-        ? 'Switch to the free Luna plan?'
-        : `Subscribe for $${tier.price}/month?\n\nYou'll be redirected to secure Stripe checkout.`,
+      'Switch to Free Plan',
+      'Switch to the free Luna plan?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: tier.price === 0 ? 'Switch' : 'Continue to Payment',
+          text: 'Switch',
           onPress: async () => {
             try {
               setSubscribing(tierId);
               const result = await api.subscribeTo(tierId);
-
-              // Requires Stripe payment
-              if (result.checkout_url) {
-                if (Platform.OS === 'web') {
-                  window.location.href = result.checkout_url;
-                } else {
-                  const Linking = require('expo-linking');
-                  await Linking.openURL(result.checkout_url);
-                }
-                return;
-              }
-
-              // Free tier or DEV_MODE → instant
-              Alert.alert('Success! 🌙', result.message);
+              Alert.alert('Done', result.message);
               fetchData();
             } catch (error: any) {
-              Alert.alert('Error', error.message || 'Failed to subscribe');
+              Alert.alert('Error', error.message || 'Failed to switch');
             } finally {
               setSubscribing(null);
             }

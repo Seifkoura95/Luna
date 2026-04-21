@@ -1,5 +1,17 @@
 # Luna Group VIP App - Product Requirements Document
 
+## Latest Update: April 21, 2026 - Session 9
+
+### COMPLETED: Brand Assets + Live Stripe + Subscription Web-Out
+
+- **New Luna Group Hospitality brand icon** applied: source logo (594×1146) processed into:
+  - `icon.png` 1024×1024 (iOS App Store)
+  - `splash-icon.png` 512×512
+  - `adaptive-icon.png` 1024×1024 with 700×700 safe-zone foreground (Android)
+  - `favicon.png` 48×48
+- **Live Stripe secret key** (restricted key) added to `backend/.env` → `STRIPE_API_KEY=rk_live_51KOwmp...`. Backend restarted; bottle service deposits now charge real money.
+- **Subscriptions moved OUTSIDE the app** (Apple IAP compliance) — paid tier tap opens `https://lunagroup.com.au/subscribe?tier={tierId}` in system browser via `expo-web-browser`. Free tier still switches in-app. This uses Apple's "reader app" exception which is the cleanest path to approval.
+
 ## Latest Update: April 20, 2026 - Session 8
 
 ### COMPLETED: Phase A — Hard Blockers for App Store + Play Store Approval
