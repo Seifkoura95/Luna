@@ -55,7 +55,7 @@ export default function Index() {
       <VideoView
         style={StyleSheet.absoluteFillObject}
         player={player}
-        contentFit="cover"
+        contentFit="contain"
         nativeControls={false}
         allowsPictureInPicture={false}
         data-testid="luna-splash-video"
