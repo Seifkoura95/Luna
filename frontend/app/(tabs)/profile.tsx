@@ -489,22 +489,6 @@ export default function ProfileScreen() {
       color: colors.gold,
       onPress: () => router.push('/how-points-work'),
     },
-    {
-      id: 'social-feed',
-      icon: 'people',
-      title: 'Social Feed',
-      subtitle: 'See activity',
-      color: '#2563EB',
-      onPress: () => router.push('/(tabs)/photos'),
-    },
-    {
-      id: 'night-builder',
-      icon: 'calendar',
-      title: 'Night Builder',
-      subtitle: 'Plan your night',
-      color: '#FF4500',
-      onPress: () => router.push('/(tabs)/photos'),
-    },
   ];
 
   const settingsItems = [
@@ -799,8 +783,6 @@ export default function ProfileScreen() {
           <Text style={styles.footerText}>Luna Group Hospitality App</Text>
           <Text style={styles.footerSubtext}>made by Simple Dev</Text>
         </View>
-
-        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* CherryHub Digital Pass Modal */}
@@ -1315,7 +1297,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.md,
   },
   profileHeader: {
     alignItems: 'center',

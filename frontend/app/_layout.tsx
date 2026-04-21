@@ -80,7 +80,6 @@ export default function RootLayout() {
         <Stack.Screen name="refer-friend" />
         <Stack.Screen name="birthday-club" />
         <Stack.Screen name="lost-found" />
-        <Stack.Screen name="photos" />
         <Stack.Screen name="venue-dashboard" />
         <Stack.Screen name="about" />
         <Stack.Screen name="help-support" />
@@ -90,7 +89,6 @@ export default function RootLayout() {
         <Stack.Screen name="notification-settings" />
         <Stack.Screen name="location-settings" />
         <Stack.Screen name="safety-settings" />
-        <Stack.Screen name="stories" />
         <Stack.Screen name="staff-portal" />
         <Stack.Screen name="member-card" />
       </Stack>

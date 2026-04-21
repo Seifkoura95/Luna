@@ -32,7 +32,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const user = useAuthStore((state) => state.user);
 
   return (
-    <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+    <View style={[styles.header, { paddingTop: insets.top + 48 }]}>
       {showLogo && (
         <View style={styles.logoContainer}>
           <Image 
@@ -82,19 +82,19 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
+    marginBottom: 20,
   },
   logoContainer: {
-    marginBottom: spacing.xs,
+    marginBottom: 10,
     alignItems: 'center',
   },
   logo: {
-    width: 180,
-    height: 52,
+    width: 260,
+    height: 75,
   },
   logoCompact: {
-    width: 140,
-    height: 40,
+    width: 180,
+    height: 52,
   },
   accentContainer: {
     marginTop: spacing.sm,

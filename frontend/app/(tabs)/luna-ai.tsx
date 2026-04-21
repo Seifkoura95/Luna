@@ -25,6 +25,7 @@ import { colors, spacing, radius } from '../../src/theme/colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/utils/api';
 import { AppBackground } from '../../src/components/AppBackground';
+import { PageHeader } from '../../src/components/PageHeader';
 import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -364,51 +365,29 @@ export default function LunaAIScreen() {
     <TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
       <View style={styles.container}>
         <AppBackground />
-        
-        {/* Premium Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-          <BlurView intensity={40} style={styles.headerBlur}>
-            <View style={styles.headerContent}>
-              <Animated.View style={[styles.headerIconWrapper, { transform: [{ scale: pulseAnim }] }]}>
-                <LinearGradient
-                  colors={[colors.accent, colors.accentDark, colors.accentBright]}
-                  style={styles.headerIcon}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <LunaIcon name="aiMoon" size={20} color="#fff" />
-                </LinearGradient>
-              </Animated.View>
-              <View style={styles.headerTextWrapper}>
-                <View style={styles.headerTitleRow}>
-                  <Text style={styles.headerTitle}>Luna</Text>
-                  <View style={styles.aiTag}>
-                    <Text style={styles.aiTagText}>AI</Text>
-                  </View>
-                </View>
-                <Text style={styles.headerSubtitle}>Your nightlife bestie</Text>
-              </View>
-              <View style={styles.headerActions}>
-                <TouchableOpacity 
-                  style={styles.newChatBtn}
-                  onPress={async () => {
-                    setMessages([]);
-                    setSessionId(null);
-                    setShowQuickCards(true);
-                    setSelectedCategory(null);
-                    // Clear persisted chat
-                    try {
-                    await AsyncStorage.removeItem('luna_chat_messages');
-                    await AsyncStorage.removeItem('luna_chat_session');
-                  } catch (e) {}
-                }}
-              >
-                <Icon name="add-circle-outline" size={24} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </BlurView>
-      </View>
+
+        {/* Unified header — same logo & spacing as Home */}
+        <PageHeader title="LUNA AI" showAccent={false} />
+
+        {/* New Chat action */}
+        <View style={styles.subHeaderRow}>
+          <TouchableOpacity
+            style={styles.newChatBtn}
+            onPress={async () => {
+              setMessages([]);
+              setSessionId(null);
+              setShowQuickCards(true);
+              setSelectedCategory(null);
+              try {
+                await AsyncStorage.removeItem('luna_chat_messages');
+                await AsyncStorage.removeItem('luna_chat_session');
+              } catch (e) {}
+            }}
+          >
+            <Icon name="add-circle-outline" size={18} color={colors.textSecondary} />
+            <Text style={styles.newChatLabel}>New Chat</Text>
+          </TouchableOpacity>
+        </View>
 
       <KeyboardAvoidingView 
         style={styles.chatContainer}
@@ -599,7 +578,28 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   newChatBtn: {
-    padding: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  newChatLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+  },
+  subHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: spacing.lg,
+    marginTop: -12,
+    marginBottom: spacing.sm,
   },
   // Chat Container
   chatContainer: {

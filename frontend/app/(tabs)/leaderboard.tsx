@@ -16,8 +16,7 @@ import { colors, spacing, radius } from '../../src/theme/colors';
 import { AppBackground } from '../../src/components/AppBackground';
 import { useAuthStore } from '../../src/store/authStore';
 import { apiFetch } from '../../src/utils/api';
-
-const LUNA_LOGO = 'https://customer-assets.emergentagent.com/job_c826baa4-6640-40ce-9e0d-38132d9944fc/artifacts/2k76js5m_luna-group-logo-2.webp';
+import { PageHeader } from '../../src/components/PageHeader';
 
 type Period = 'all_time' | 'monthly' | 'weekly';
 type Category = 'points' | 'visits' | 'spend';
@@ -161,16 +160,14 @@ export default function LeaderboardPage() {
       
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 48 }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
-        {/* Header with Logo */}
-        <View style={styles.header}>
-          <Image source={{ uri: LUNA_LOGO }} style={styles.logo} resizeMode="contain" />
-        </View>
+        {/* Header matches Home */}
+        <PageHeader title="LEADERBOARD" showAccent={false} />
 
         {/* Title */}
         <View style={styles.titleContainer}>
