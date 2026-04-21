@@ -43,6 +43,33 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
 }
 
 export const api = {
+  // Entry Tickets (gifted free-entry passes)
+  getMyEntryTickets: (status?: string) =>
+    apiFetch<{
+      tickets: Array<{
+        id: string;
+        venue_id: string;
+        venue_name: string;
+        qr_code: string;
+        status: string;
+        live_status: 'active' | 'scheduled' | 'used' | 'expired' | 'revoked';
+        valid_from: string;
+        valid_until: string;
+        note?: string | null;
+        created_at: string;
+      }>;
+      total: number;
+    }>(`/api/entry-tickets/my${status ? `?status=${status}` : ''}`),
+
+  getEntryTicket: (ticketId: string) =>
+    apiFetch<{ ticket: any }>(`/api/entry-tickets/${ticketId}`),
+
+  validateEntryQR: (qr_code: string, venue_id: string) =>
+    apiFetch<any>(`/api/entry-tickets/validate-qr`, {
+      method: 'POST',
+      body: JSON.stringify({ qr_code, venue_id }),
+    }),
+
   // Public App Config (status pill, maintenance, etc.)
   getPublicConfig: () =>
     apiFetch<{

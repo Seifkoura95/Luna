@@ -51,6 +51,7 @@ from routes.push_broadcasts import router as push_broadcasts_router
 from routes.push_broadcasts import engagement_router as engagement_tracking_router
 from routes.social import router as social_router
 from routes.venue_menus import router as venue_menus_router
+from routes.entry_tickets import router as entry_tickets_router
 
 # Export all routers for easy importing
 __all__ = [
@@ -132,5 +133,6 @@ ALL_ROUTERS = [
     engagement_tracking_router,
     social_router,
     venue_menus_router,
+    entry_tickets_router,
     public_config_router,
 ]

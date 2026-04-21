@@ -217,10 +217,14 @@ async def create_bottle_preorder(request: Request, body: BottlePreOrderCreate):
             {"$set": {"status": "confirmed", "payment_status": "paid_dev",
                       "confirmed_at": datetime.now(timezone.utc)}},
         )
-        await db.users.update_one(
-            {"user_id": user["user_id"]},
-            {"$inc": {"points_balance": points_earned}},
-        )
+        from utils.points_guard import can_earn_points
+        if await can_earn_points(user["user_id"]):
+            await db.users.update_one(
+                {"user_id": user["user_id"]},
+                {"$inc": {"points_balance": points_earned}},
+            )
+        else:
+            points_earned = 0
         return {
             "success": True,
             "dev_mode": True,
@@ -400,10 +404,14 @@ async def create_booking(request: Request, booking: BookingRequest):
 
     await db.bookings.insert_one(booking_record)
 
-    await db.users.update_one(
-        {"user_id": current_user["user_id"]},
-        {"$inc": {"points_balance": booking_record["points_earned"]}},
-    )
+    from utils.points_guard import can_earn_points
+    if await can_earn_points(current_user["user_id"]):
+        await db.users.update_one(
+            {"user_id": current_user["user_id"]},
+            {"$inc": {"points_balance": booking_record["points_earned"]}},
+        )
+    else:
+        booking_record["points_earned"] = 0
 
     return {
         "success": True,
@@ -442,10 +450,14 @@ async def add_to_guestlist(request: Request, guestlist: GuestlistRequest):
 
     await db.guestlist.insert_one(guestlist_record)
 
-    await db.users.update_one(
-        {"user_id": current_user["user_id"]},
-        {"$inc": {"points_balance": guestlist_record["points_earned"]}},
-    )
+    from utils.points_guard import can_earn_points
+    if await can_earn_points(current_user["user_id"]):
+        await db.users.update_one(
+            {"user_id": current_user["user_id"]},
+            {"$inc": {"points_balance": guestlist_record["points_earned"]}},
+        )
+    else:
+        guestlist_record["points_earned"] = 0
 
     return {
         "success": True,

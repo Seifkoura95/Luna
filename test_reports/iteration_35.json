@@ -1,0 +1,38 @@
+{
+  "summary": "Iteration 35 - Backend-only test pass for Luna Group VIP role system (admin/manager/staff/artist/user), admin user CRUD, points gifting, free-entry ticket gifting with Brisbane midnight->midnight scheduling, staff QR validation, and earn-guard enforcement. 35/35 tests passed on the live preview URL. All bespoke review acceptance checks satisfied: role update validation, 400/404 error paths, HUB-key and JWT auth, grant-points transaction with source='admin_grant', artist bypass for gift-points vs earn-guard block on /api/missions/claim, scheduled ticket UTC offsets (valid_from=2026-06-14T14:00Z, valid_until=2026-06-15T14:00Z for scheduled_for=2026-06-15), single-use consumption via /validate-qr, wrong_venue/invalid_qr/not_yet_active/revoked reason codes, admin list filters by user_id/venue_id/status, revoke 400 on used tickets. Regression for Lovable Hub CRUD (config/milestones/bottles/venues) still green.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/admin/users/{id}/grant-points", "issue": "total_points_earned is $inc'd by amount even when the grant is a correction/adjustment (body.note='...'). No way for the admin to flag 'adjust lifetime earn stat: no'. Minor — lifetime stat is slightly inflated on manual grants but this is arguably correct for artist allocations."},
+      {"endpoint": "POST /api/admin/users/{id}/gift-entry", "issue": "scheduled_for uses naive strptime without bounds check; accepting dates far in the past (e.g. 1999-01-01) will produce a ticket that is immediately 'expired' rather than rejected. Not strictly a bug but worth a sanity validation (must be >= today Brisbane)."},
+      {"endpoint": "POST /api/entry-tickets/validate-qr", "issue": "Treats 'expired' tickets (past valid_until) as a scan failure with reason='expired' but the ticket status in DB stays 'active' forever. No lazy-cleanup job — admin list with ?status=active includes these. Consider computing live_status for list filters too, or a periodic sweeper."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_luna_vip_roles_entry_tickets.py",
+    "/app/test_reports/pytest/iter35_vip_roles.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes/admin.py now 1355 lines (~10 distinct domains: users, missions, rewards, boosts, auctions, config, milestones, bottles, venues, campaigns, entry-tickets, seed). Was already flagged in iter34 at 1122 lines — crossed another threshold. Strongly recommend splitting into per-domain modules under routes/admin/*.py.",
+    "routes/entry_tickets.py hard-codes QR_SECRET = 'luna_entry_ticket_qr_2026' in source. Should move to env var (LUNA_ENTRY_QR_SECRET) — leak of repo == leak of QR signing key == ability to forge tickets.",
+    "gift_entry_ticket computes Brisbane midnight as 'UTC 14:00 previous day'. This is correct for year-round AEST (UTC+10, no DST in QLD) but will silently drift if the ticket is ever re-used for NSW/VIC which DO observe DST. Add a code comment linking to the assumption, or use zoneinfo('Australia/Brisbane') to be future-proof.",
+    "_generate_qr uses ticket_id[:8].upper() which in practice becomes 'ENT_1234' (first 4 hex chars after the 'ent_' prefix). Collision risk is low because of the 10-char HMAC tail, but the name prefix leaks the fact that only 4 hex of entropy are in the visible portion of the ID.",
+    "points_guard NON_EARNING_ROLES is case-sensitive ({admin,manager,staff,artist}) and compares via role.lower() — if a DB record ever has role='Admin' (bad capitalisation) it WILL be correctly caught by .lower(), but a role='ADMIN ' with trailing whitespace would leak through. Strip + lower would be safer.",
+    "grant-points unconditionally increments total_points_earned by max(0, amount). A negative deduct therefore leaves total_points_earned stale (records more earn than actual). Consider tracking admin deductions separately (e.g. total_points_deducted) so reporting stays accurate.",
+    "Entry ticket revoke endpoint allows revoking a ticket that is already 'revoked' (no guard) and will silently no-op, returning success. Minor. Consider adding an explicit check."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_luna_vip_roles_entry_tickets.py",
+    "/app/test_reports/iteration_35.json",
+    "/app/test_reports/pytest/iter35_vip_roles.xml"
+  ],
+  "success_rate": {"backend": "100% (35/35)", "frontend": "N/A (backend-only per review request)"},
+  "test_credentials": "Hub key X-Luna-Hub-Key=luna_hub_live_682fbaaa19a6a4594f58618b803531ee6fad8016. Admin JWT via POST /api/auth/login {admin@lunagroup.com.au, Trent69!}. User JWT via {luna@test.com, test123}. Test user B created per-run and left as orphan (email TEST_userb_*@test.com) — no cleanup endpoint available via public API.",
+  "seed_data_creation": "During run: flipped luna@test.com role user->artist->user (restored), created 2 entry tickets for luna (1 used, 1 revoked in-test), granted +500/-100/+250 points (net +650, plus whatever mission claim awarded if succeeded). Registered a throwaway user TEST_userb_<uuid>@test.com. POST-RUN STATE CONFIRMED: luna role=user, name=Luna, tier=gold (tier change is a side-effect of the role-CRUD test — not reset; tier is cosmetic). Both luna tickets ended in terminal states (used/revoked) so they no longer surface as active on /api/entry-tickets/my?status=active.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "35 pytests in /app/backend/tests/test_luna_vip_roles_entry_tickets.py are green against the live preview URL. File is idempotent — it resets luna's role to 'user' on teardown. Run with: `python -m pytest backend/tests/test_luna_vip_roles_entry_tickets.py -v`. Note: iteration 34's claim that '/api/missions is public' is incorrect — it requires auth. Luna's name was changed to 'Luna Test' by the CRUD test and then reset to 'Luna' via curl after the run. Luna's points_balance will be net +650 vs. the pre-run state from the admin grants; existing tests do not reset points (arguably should not, as the transactions are real audit records). The throwaway TEST_userb_*@test.com user is left in the DB — the code has no DELETE /api/admin/users/{id} endpoint so cleanup is impossible via API. Consider adding one.",
+  "rca of the issue": "No backend bugs found. One test file correction was made mid-run: test_regression_public_missions_list originally asserted /api/missions returns 200 without auth (per iter34 context note). Actual behaviour: /api/missions requires auth and returns 401 unauth'd. This is consistent with its implementation (uses get_current_user to compute per-user mission progress). Test was updated to include the luna Bearer token and now passes. This is not a regression — iter34 context was imprecise."
+}

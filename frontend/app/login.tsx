@@ -160,12 +160,16 @@ export default function LoginScreen() {
         const result = await api.login(email, password);
         useAuthStore.getState().login(result.user, result.token);
 
-        // Check if user is venue staff and redirect accordingly
-        if (result.user?.is_venue_staff || result.user?.role === 'venue_staff' || result.user?.role === 'venue_manager') {
+        // Role-based routing: staff/manager/admin go to the in-app Venue Portal
+        const role = (result.user?.role || '').toLowerCase();
+        const isStaffRole =
+          result.user?.is_venue_staff ||
+          ['venue_staff', 'venue_manager', 'staff', 'manager', 'admin'].includes(role);
+        if (isStaffRole) {
           if (Platform.OS !== 'web') {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }
-          router.replace('/venue-dashboard');
+          router.replace('/staff-portal');
           return;
         }
       } else {

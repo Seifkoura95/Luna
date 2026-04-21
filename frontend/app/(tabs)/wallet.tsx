@@ -593,11 +593,22 @@ export default function WalletScreen() {
           {rewardsLoading ? (
             <ActivityIndicator size="small" color={colors.accent} style={{ marginVertical: 20 }} />
           ) : (
-            <TouchableOpacity style={styles.viewAllRewardsFullBtn} onPress={() => router.push('/claim-reward')}>
-              <Icon name="ticket" size={20} color={colors.gold} />
-              <Text style={styles.viewAllRewardsFullText}>Claim a Reward</Text>
-              <Icon name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity style={styles.viewAllRewardsFullBtn} onPress={() => router.push('/claim-reward')}>
+                <Icon name="ticket" size={20} color={colors.gold} />
+                <Text style={styles.viewAllRewardsFullText}>Claim a Reward</Text>
+                <Icon name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.viewAllRewardsFullBtn}
+                onPress={() => router.push('/my-entry-tickets')}
+                data-testid="wallet-free-entries-btn"
+              >
+                <Icon name="sparkles" size={20} color={colors.gold} />
+                <Text style={styles.viewAllRewardsFullText}>My Free Entries</Text>
+                <Icon name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            </>
           )}
         </View>
 

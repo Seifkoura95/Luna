@@ -109,6 +109,10 @@ async def claim_mission_reward(request: Request, mission_id: str):
     if user_progress.get("claimed"):
         raise HTTPException(status_code=400, detail="Reward already claimed for this mission")
     
+    from utils.points_guard import can_earn_points
+    if not await can_earn_points(current_user["user_id"]):
+        raise HTTPException(status_code=403, detail="This account type cannot earn mission points")
+    
     points_reward = mission.get("points_reward", 0)
     await db.users.update_one(
         {"user_id": current_user["user_id"]},

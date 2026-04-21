@@ -18,7 +18,13 @@ router = APIRouter(prefix="/points", tags=["Points"])
 async def award_points(user_id: str, amount_spent: float, source: str, source_id: str):
     """Award points to a user based on spending, with tier multiplier applied."""
     import logging
+    from utils.points_guard import can_earn_points
     logger = logging.getLogger(__name__)
+
+    # Staff/managers/admins/artists can't auto-earn
+    if not await can_earn_points(user_id):
+        logger.info(f"Skipping auto-earn for {user_id} (role blocks earning)")
+        return {"total_points": 0, "base_points": 0, "bonus_points": 0, "blocked": True}
 
     subscription = await db.subscriptions.find_one({
         "user_id": user_id,

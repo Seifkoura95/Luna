@@ -106,10 +106,14 @@ async def purchase_ticket(request: Request, ticket_req: PurchaseTicketRequest):
         tickets_created.append(clean_mongo_doc(ticket))
     
     points = 50 * ticket_req.quantity
-    await db.users.update_one(
-        {"user_id": current_user["user_id"]},
-        {"$inc": {"points_balance": points}}
-    )
+    from utils.points_guard import can_earn_points
+    if await can_earn_points(current_user["user_id"]):
+        await db.users.update_one(
+            {"user_id": current_user["user_id"]},
+            {"$inc": {"points_balance": points}}
+        )
+    else:
+        points = 0
     
     return {
         "success": True,

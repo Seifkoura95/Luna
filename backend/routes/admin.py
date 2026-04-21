@@ -4,7 +4,7 @@ Admin Routes - Administrative endpoints for seeding and management
 from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import logging
 import uuid
 
@@ -1120,3 +1120,235 @@ async def get_public_config():
         "maintenance_mode": cfg.get("maintenance_mode", False),
         "maintenance_message": cfg.get("maintenance_message"),
     }
+
+
+
+# ====== USERS CRUD (Admin user management from Lovable Hub) ======
+# Supports: search, role change (admin/manager/staff/artist/user), direct point grant,
+# entry-ticket gifting (24h expiry with optional future-dated scheduling).
+
+ALLOWED_ROLES = {"user", "artist", "staff", "manager", "admin"}
+
+
+class AdminUserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None     # user|artist|staff|manager|admin
+    tier: Optional[str] = None     # bronze|silver|gold
+    assigned_venue_id: Optional[str] = None  # for staff/manager
+    phone: Optional[str] = None
+    notes: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class GrantPointsRequest(BaseModel):
+    amount: int
+    reason: str = "Admin grant"
+    note: Optional[str] = None
+
+
+class GiftEntryRequest(BaseModel):
+    venue_id: str
+    note: Optional[str] = None
+    scheduled_for: Optional[str] = None
+    # Optional ISO date (YYYY-MM-DD). If set, ticket is valid from that day 00:00 Brisbane
+    # time → next day 00:00 Brisbane time. If not set, valid from now → now + 24h.
+
+
+def _strip_user(u: dict) -> dict:
+    out = {k: v for k, v in u.items() if k != "_id"}
+    out.pop("password", None)
+    out.pop("password_hash", None)
+    for dk in ("created_at", "updated_at", "date_of_birth", "last_login"):
+        v = out.get(dk)
+        if hasattr(v, "isoformat"):
+            out[dk] = v.isoformat()
+    return out
+
+
+@router.get("/users")
+async def list_users_admin(
+    request: Request,
+    q: Optional[str] = None,
+    role: Optional[str] = None,
+    limit: int = 50,
+    skip: int = 0,
+):
+    """List users with optional search (matches email or name, case-insensitive) and role filter."""
+    await require_admin(request)
+    query: dict = {}
+    if role:
+        query["role"] = role
+    if q:
+        import re
+        regex = {"$regex": re.escape(q), "$options": "i"}
+        query["$or"] = [{"email": regex}, {"name": regex}]
+    total = await db.users.count_documents(query)
+    users = await db.users.find(query).sort("created_at", -1).skip(skip).limit(min(limit, 200)).to_list(200)
+    return {"users": [_strip_user(u) for u in users], "total": total, "skip": skip, "limit": limit}
+
+
+@router.get("/users/{user_id}")
+async def get_user_admin(request: Request, user_id: str):
+    """Get a single user by user_id."""
+    await require_admin(request)
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"user": _strip_user(user)}
+
+
+@router.put("/users/{user_id}")
+async def update_user_admin(request: Request, user_id: str, body: AdminUserUpdate):
+    """Update a user's profile fields and role."""
+    await require_admin(request)
+    updates = {k: v for k, v in body.dict().items() if v is not None}
+    if "role" in updates:
+        if updates["role"] not in ALLOWED_ROLES:
+            raise HTTPException(status_code=400, detail=f"role must be one of {sorted(ALLOWED_ROLES)}")
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.users.update_one({"user_id": user_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = await db.users.find_one({"user_id": user_id})
+    return {"success": True, "user": _strip_user(user)}
+
+
+@router.post("/users/{user_id}/grant-points")
+async def grant_points(request: Request, user_id: str, body: GrantPointsRequest):
+    """Gift arbitrary points to a user (any role — bypasses the earn-guard).
+    Primarily used for allocating points to artists."""
+    admin = await require_admin(request)
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if body.amount == 0:
+        raise HTTPException(status_code=400, detail="amount cannot be zero")
+
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$inc": {"points_balance": body.amount, "total_points_earned": max(0, body.amount)}}
+    )
+    tx = {
+        "id": f"tx_{uuid.uuid4().hex[:10]}",
+        "user_id": user_id,
+        "amount": body.amount,
+        "type": "admin_grant" if body.amount > 0 else "admin_deduct",
+        "source": "admin_grant",
+        "reason": body.reason,
+        "note": body.note,
+        "granted_by": admin.get("user_id", "luna_hub"),
+        "granted_via": admin.get("via", "jwt"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.points_transactions.insert_one(tx)
+    user_updated = await db.users.find_one({"user_id": user_id}, {"_id": 0, "points_balance": 1, "name": 1})
+    return {
+        "success": True,
+        "new_balance": user_updated.get("points_balance", 0),
+        "transaction": {k: v for k, v in tx.items() if k != "_id"},
+    }
+
+
+@router.post("/users/{user_id}/gift-entry")
+async def gift_entry_ticket(request: Request, user_id: str, body: GiftEntryRequest):
+    """Gift a free-entry QR ticket to a user, valid for 24h.
+
+    - If `scheduled_for` is omitted → valid from now to now + 24h.
+    - If `scheduled_for` is an ISO date (YYYY-MM-DD) → valid from that date 00:00 AEST
+      to the next day 00:00 AEST (so a full 24-hour window midnight→midnight in Brisbane).
+    """
+    admin = await require_admin(request)
+    user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "name": 1, "email": 1})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    from luna_venues_config import LUNA_VENUES
+    if body.venue_id not in LUNA_VENUES:
+        raise HTTPException(status_code=404, detail="Venue not found")
+    venue = LUNA_VENUES[body.venue_id]
+
+    from routes.entry_tickets import _generate_qr
+
+    # Compute validity window
+    now = datetime.now(timezone.utc)
+    if body.scheduled_for:
+        try:
+            # Brisbane is UTC+10 year-round (no DST). Midnight Brisbane = 14:00 UTC previous day.
+            scheduled_date = datetime.strptime(body.scheduled_for, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="scheduled_for must be YYYY-MM-DD")
+        # Midnight (start of day) in Brisbane = YYYY-MM-DD 00:00 AEST = (YYYY-MM-DD - 1) 14:00 UTC
+        brisbane_midnight_utc = datetime(
+            scheduled_date.year, scheduled_date.month, scheduled_date.day,
+            14, 0, 0, tzinfo=timezone.utc
+        ) - timedelta(days=1)
+        valid_from = brisbane_midnight_utc
+        valid_until = brisbane_midnight_utc + timedelta(hours=24)
+    else:
+        valid_from = now
+        valid_until = now + timedelta(hours=24)
+
+    ticket_id = f"ent_{uuid.uuid4().hex[:10]}"
+    ticket = {
+        "id": ticket_id,
+        "user_id": user_id,
+        "user_name": user.get("name"),
+        "venue_id": body.venue_id,
+        "venue_name": venue["name"],
+        "qr_code": _generate_qr(ticket_id, user_id),
+        "status": "active",
+        "valid_from": valid_from.isoformat(),
+        "valid_until": valid_until.isoformat(),
+        "note": body.note,
+        "gifted_by": admin.get("user_id", "luna_hub"),
+        "gifted_via": admin.get("via", "jwt"),
+        "created_at": now.isoformat(),
+    }
+    await db.entry_tickets.insert_one(ticket)
+    return {"success": True, "ticket": {k: v for k, v in ticket.items() if k != "_id"}}
+
+
+@router.get("/entry-tickets")
+async def list_entry_tickets_admin(
+    request: Request,
+    user_id: Optional[str] = None,
+    venue_id: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 100,
+):
+    """List entry tickets (admin view). Filter by user_id / venue_id / status."""
+    await require_admin(request)
+    query: dict = {}
+    if user_id:
+        query["user_id"] = user_id
+    if venue_id:
+        query["venue_id"] = venue_id
+    if status:
+        query["status"] = status
+    tickets = await db.entry_tickets.find(query, {"_id": 0}).sort("created_at", -1).limit(min(limit, 500)).to_list(500)
+    return {"tickets": tickets, "total": len(tickets)}
+
+
+@router.delete("/entry-tickets/{ticket_id}")
+async def revoke_entry_ticket(request: Request, ticket_id: str):
+    """Revoke an unused entry ticket."""
+    await require_admin(request)
+    ticket = await db.entry_tickets.find_one({"id": ticket_id})
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    if ticket.get("status") == "used":
+        raise HTTPException(status_code=400, detail="Cannot revoke a used ticket")
+    await db.entry_tickets.update_one(
+        {"id": ticket_id},
+        {"$set": {"status": "revoked", "revoked_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"success": True, "message": f"Ticket {ticket_id} revoked"}
+
+
+@router.get("/users/{user_id}/points-transactions")
+async def get_user_points_history_admin(request: Request, user_id: str, limit: int = 100):
+    """View a user's recent points transactions (admin)."""
+    await require_admin(request)
+    txs = await db.points_transactions.find({"user_id": user_id}, {"_id": 0}).sort("created_at", -1).limit(min(limit, 500)).to_list(500)
+    return {"transactions": txs, "total": len(txs)}

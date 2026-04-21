@@ -24,6 +24,9 @@ class SubscribeRequest(BaseModel):
 
 async def award_points(user_id: str, amount_spent: float, source: str, source_id: str):
     """Award points to a user based on spending"""
+    from utils.points_guard import can_earn_points
+    if not await can_earn_points(user_id):
+        return {"total_points": 0, "base_points": 0, "bonus_points": 0, "blocked": True}
     subscription = await db.subscriptions.find_one({
         "user_id": user_id,
         "status": "active"

@@ -35,10 +35,12 @@ async def complete_referral(referred_user_id: str):
         }}
     )
     
-    await db.users.update_one(
-        {"user_id": referral["referrer_user_id"]},
-        {"$inc": {"points_balance": REFERRAL_POINTS_REWARD}}
-    )
+    from utils.points_guard import can_earn_points
+    if await can_earn_points(referral["referrer_user_id"]):
+        await db.users.update_one(
+            {"user_id": referral["referrer_user_id"]},
+            {"$inc": {"points_balance": REFERRAL_POINTS_REWARD}}
+        )
     
     await create_notification(
         user_id=referral["referrer_user_id"],
