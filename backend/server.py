@@ -230,6 +230,10 @@ app.add_middleware(
 )
 app.include_router(api_router)
 
+# Serve AI-generated bottle service product photos
+from fastapi.staticfiles import StaticFiles
+app.mount("/api/static/bottles", StaticFiles(directory="/app/backend/static/bottles"), name="bottle-photos")
+
 
 @app.get("/")
 async def root():
