@@ -8,7 +8,7 @@
     "scheme": "lunagroup",
     "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/luna-splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },

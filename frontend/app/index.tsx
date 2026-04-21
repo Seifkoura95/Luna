@@ -9,7 +9,7 @@ import { colors } from '../src/theme/colors';
 import { ONBOARDING_KEY } from './onboarding';
 import { AGE_GATE_KEY } from './age-gate';
 
-const LUNA_LOGO = 'https://customer-assets.emergentagent.com/job_c826baa4-6640-40ce-9e0d-38132d9944fc/artifacts/2k76js5m_luna-group-logo-2.webp';
+const LUNA_SPLASH = require('../assets/images/luna-splash.png');
 
 export default function Index() {
   const router = useRouter();
@@ -60,10 +60,10 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <Image 
-        source={{ uri: LUNA_LOGO }} 
-        style={styles.logo} 
-        contentFit="contain" 
+      <Image
+        source={LUNA_SPLASH}
+        style={styles.splashImage}
+        contentFit="contain"
       />
       <ActivityIndicator size="small" color={colors.accent} style={styles.loader} />
     </View>
@@ -77,11 +77,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logo: {
-    width: 280,
-    height: 80,
+  splashImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
   },
   loader: {
-    marginTop: 30,
+    position: 'absolute',
+    bottom: 80,
   },
 });
