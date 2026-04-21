@@ -99,7 +99,12 @@ export default function SubscriptionsScreen() {
           {
             text: 'Continue in Browser',
             onPress: async () => {
-              const portalUrl = 'https://lunagroup.com.au/subscribe?tier=' + encodeURIComponent(tierId);
+              const STRIPE_LINKS: Record<string, string> = {
+                silver: 'https://buy.stripe.com/7sY8wP03ugUIeLE3O3aVa00',
+                gold: 'https://buy.stripe.com/14A28r4jK1ZO5b43O3aVa01',
+              };
+              const portalUrl = STRIPE_LINKS[tierId]
+                || `https://lunagroupapp.com.au/subscribe?tier=${encodeURIComponent(tierId)}`;
               try {
                 await WebBrowser.openBrowserAsync(portalUrl);
               } catch (e) {
