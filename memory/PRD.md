@@ -1,6 +1,53 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Feb 22, 2026 - Session 14 (UI Polish + Luna AI Revamp + Advisories)
+
+### COMPLETED this session
+
+**Luna AI — full revamp:**
+- Gold header at top of chat screen: moon avatar gradient + "Luna" title (gold) + "Your Nightlife Concierge" subtitle. Small gold "New" pill (icon+label) for resetting the chat.
+- Keyboard gap fixed: `keyboardVerticalOffset = insets.top + 72` (matches the header height). Input now rests above the keyboard without flying to the top.
+- System prompt rewritten (`/app/backend/services/ai_service.py`): sassy-best-mate tone, 2–3 sentence replies, subtle but relentless upsell toward Luna venues + subscription + bottle packages + points-earning hooks. Occasion heuristics for birthdays/dates/groups/solos. Strict "no markdown / no competitor mentions" rules.
+
+**Wallet page — replaced event-ticket tabs with QR-ticket section:**
+- Old "MY TICKETS" (active/upcoming/history tabs pulling event tickets) is GONE.
+- New "MY QR TICKETS" section shows **only gifted free-entry tickets** (`/api/entry-tickets/my`). Supports live_status active/scheduled only in preview; full list at `/my-entry-tickets`.
+- Empty state: "No QR tickets yet · Complete Missions and unlock Milestones to earn free-entry QR tickets" with two gold CTA pills → `/missions` and `/milestones`.
+- Added "My Free Entries" card next to "Claim a Reward".
+- Bottom-scroll padding trimmed (32 → 8) to kill the dead-space overscroll.
+
+**Home page featured card:** Added `borderWidth: 1` / `borderColor: 'rgba(255,255,255,0.15)'` to `heroCardAnimated` to match the other cards.
+
+**Profile — LEGEND pill contrast fix:** Tier badge now uses a tinted-background + high-contrast text approach, with special bright colors for the milestone titles (Legend #FFD700 gold, Supernova #FF6B9D pink, Nova #FF9A3C, Rising Star #60A5FA, Newbie grey) rather than the dark-bronze fallback.
+
+**Backend — advisories from iteration_35 resolved:**
+- `POST /api/admin/users/{id}/gift-entry`: `scheduled_for` dates in the past now return `400 scheduled_for cannot be in the past`. Today and future dates still work.
+- `GET /api/entry-tickets/my`: lazy-sweep flips any `status='active'` ticket with `valid_until < now` to `status='expired'` on every read. Keeps the DB consistent without a cron job.
+
+**Staff Portal wired for gifted free-entry tickets:**
+- `/app/frontend/app/staff-portal.tsx` `handleValidateReward` now detects `LUNA-ENT-` prefix and calls `api.validateEntryQR()`. Success + error states both trigger the correct haptic feedback.
+- Validate-QR flow is now: LUNA-ENT (gifted entries) → LUNA-TKT (milestone tickets) → standard reward QRs.
+
+### Files touched this session
+- `/app/backend/routes/admin.py` — past-date rejection for gift-entry
+- `/app/backend/routes/entry_tickets.py` — lazy sweep of expired tickets in `/my`
+- `/app/backend/services/ai_service.py` — new Luna system prompt
+- `/app/frontend/app/(tabs)/luna-ai.tsx` — gold header, keyboard fix
+- `/app/frontend/app/(tabs)/wallet.tsx` — QR tickets section, entry tickets fetch, bottom spacer
+- `/app/frontend/app/(tabs)/profile.tsx` — LEGEND pill tinted-background + special colors
+- `/app/frontend/app/(tabs)/index.tsx` — featured card border
+- `/app/frontend/app/staff-portal.tsx` — LUNA-ENT QR validation wired
+
+### Pending (next session priority)
+- 🟡 (P1) Glass-card style consistency across Wallet/Profile (leaderboard's `rgba(0,0,0,0.4)` + `borderColor: rgba(255,255,255,0.1)` is the spec)
+- 🟡 (P1) Verify on-device (Expo Go) that Luna keyboard gap is fully gone; verify tap-to-focus behaviour
+- 🟡 (P1) App Store listing copy + Privacy Nutrition Label answers
+- 🟢 (P2) Sentry crash reporting
+- 🟢 (P2) Grant-points UI in Staff Portal (currently Lovable-only; staff could get a button too)
+- 🟢 (P2) `total_points_earned` should not increment on negative grants (admin deduction)
+
+
 ## Latest Update: Feb 22, 2026 - Session 13 (Roles + Gift Entries + Artist Points)
 
 ### COMPLETED: 5-role account system with points earn-guard, entry-ticket gifting, artist point allocation

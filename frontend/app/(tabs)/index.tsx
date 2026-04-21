@@ -608,6 +608,8 @@ const styles = StyleSheet.create({
     height: 420,
     borderRadius: 20,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   heroCardInner: {
     flex: 1,

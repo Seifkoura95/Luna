@@ -71,6 +71,17 @@ async def list_my_tickets(request: Request, status: Optional[str] = None):
     auth = request.headers.get("authorization")
     current = get_current_user(auth)
 
+    # Lazy-sweep: flip any tickets of this user that are past valid_until to status=expired
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.entry_tickets.update_many(
+        {
+            "user_id": current["user_id"],
+            "status": "active",
+            "valid_until": {"$lt": now_iso},
+        },
+        {"$set": {"status": "expired"}},
+    )
+
     tickets = await db.entry_tickets.find(
         {"user_id": current["user_id"]}
     ).sort("created_at", -1).to_list(200)

@@ -534,16 +534,32 @@ export default function ProfileScreen() {
                 </View>
               </View>
               <View style={styles.compactPointsRight}>
-                <View style={styles.compactTierBadge}>
-                  <Icon 
-                    name={TIER_CONFIG[pointsData?.tier_id || user?.tier || 'bronze']?.icon as any} 
-                    size={14} 
-                    color={TIER_CONFIG[pointsData?.tier_id || user?.tier || 'bronze']?.color} 
-                  />
-                  <Text style={[styles.compactTierText, { color: TIER_CONFIG[pointsData?.tier_id || user?.tier || 'bronze']?.color }]}>
-                    {(pointsData?.tier_name || user?.tier || 'bronze').toUpperCase()}
-                  </Text>
-                </View>
+                {(() => {
+                  const tierKey = (pointsData?.tier_id || user?.tier || 'bronze').toLowerCase();
+                  const tierName = (pointsData?.tier_name || user?.tier || 'bronze').toUpperCase();
+                  // Map milestone titles (Legend / Supernova) to bright accent colors
+                  const specialColors: Record<string, string> = {
+                    legend: '#FFD700',
+                    supernova: '#FF6B9D',
+                    nova: '#FF9A3C',
+                    'rising star': '#60A5FA',
+                    newbie: '#9CA3AF',
+                  };
+                  const byName = specialColors[tierName.toLowerCase()];
+                  const tierColor = byName || TIER_CONFIG[tierKey]?.color || colors.gold;
+                  const tierIcon = TIER_CONFIG[tierKey]?.icon || 'trophy';
+                  return (
+                    <View style={[
+                      styles.compactTierBadge,
+                      { backgroundColor: `${tierColor}22`, borderColor: `${tierColor}88` },
+                    ]}>
+                      <Icon name={tierIcon as any} size={14} color={tierColor} />
+                      <Text style={[styles.compactTierText, { color: tierColor }]}>
+                        {tierName}
+                      </Text>
+                    </View>
+                  );
+                })()}
                 <TouchableOpacity 
                   style={styles.compactRedeemBtn}
                   onPress={() => router.push('/wallet')}

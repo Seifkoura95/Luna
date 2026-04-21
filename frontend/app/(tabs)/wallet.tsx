@@ -152,6 +152,9 @@ export default function WalletScreen() {
   const [rewardsLoading, setRewardsLoading] = useState(true);
   // Live missions from API
   const [liveMissions, setLiveMissions] = useState<any[]>([]);
+  // Entry tickets (gifted free entries + future milestone QR tickets)
+  const [entryTickets, setEntryTickets] = useState<any[]>([]);
+  const [entryTicketsLoading, setEntryTicketsLoading] = useState(true);
 
   // Auto scroll to top when tab gains focus
   useFocusEffect(
@@ -172,12 +175,19 @@ export default function WalletScreen() {
     }
     
     try {
-      const [ticketsData, eventsData, pointsRes, subRes] = await Promise.all([
+      const [ticketsData, eventsData, pointsRes, subRes, entryRes] = await Promise.all([
         api.getTickets().catch(() => null),
         api.getEvents(),
         api.getPointsBalance().catch(() => null),
         api.getMySubscription().catch(() => null),
+        api.getMyEntryTickets().catch(() => null),
       ]);
+      // Show only active + scheduled in the wallet preview (user wants actionable tickets)
+      const visible = (entryRes?.tickets || []).filter((t: any) =>
+        t.live_status === 'active' || t.live_status === 'scheduled'
+      );
+      setEntryTickets(visible);
+      setEntryTicketsLoading(false);
       // Merge mock data with API data for demonstration
       if (ticketsData && (ticketsData.active?.length > 0 || ticketsData.upcoming?.length > 0 || ticketsData.history?.length > 0)) {
         setTickets(ticketsData);
@@ -612,60 +622,77 @@ export default function WalletScreen() {
           )}
         </View>
 
-        {/* Tab Selector - My Tickets */}
+        {/* My QR Tickets — gifted free entries + milestone reward tickets */}
         <View style={styles.ticketsSection}>
           <View style={styles.ticketsSectionHeader}>
-            <Icon name="ticket" size={18} color={colors.gold} />
-            <Text style={styles.redeemTitle}>MY TICKETS</Text>
-          </View>
-          <View style={styles.tabContainer}>
-            {(['active', 'upcoming', 'history'] as TabType[]).map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.tab, activeTab === tab && styles.tabActive]}
-                onPress={() => {
-                  setActiveTab(tab);
-                  if (Platform.OS !== 'web') Haptics.selectionAsync();
-                }}
-              >
-                <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                  {tab === 'active' ? 'TONIGHT' : tab === 'upcoming' ? 'UPCOMING' : 'HISTORY'}
-                </Text>
-                {tickets[tab]?.length > 0 && (
-                  <View style={[styles.tabBadge, activeTab === tab && styles.tabBadgeActive]}>
-                    <Text style={[styles.tabBadgeText, activeTab === tab && styles.tabBadgeTextActive]}>
-                      {tickets[tab].length}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
+            <Icon name="qr-code-outline" size={18} color={colors.gold} />
+            <Text style={styles.redeemTitle}>MY QR TICKETS</Text>
+            <TouchableOpacity
+              onPress={() => router.push('/my-entry-tickets')}
+              style={{ marginLeft: 'auto' }}
+              data-testid="wallet-qr-tickets-see-all"
+            >
+              <Text style={styles.seeAllText}>See all</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Tickets List */}
-          <View style={styles.ticketsList}>
-            {currentTickets.length > 0 ? (
-              currentTickets.map(renderTicketCard)
-            ) : (
-              <View style={styles.emptyState}>
-                <Icon 
-                  name={activeTab === 'active' ? 'moon' : activeTab === 'upcoming' ? 'calendar-outline' : 'time-outline'} 
-                  size={48} 
-                  color={colors.textMuted} 
-                />
-                <Text style={styles.emptyTitle}>
-                  {activeTab === 'active' 
-                    ? 'No tickets for tonight' 
-                    : activeTab === 'upcoming' 
-                      ? 'No upcoming tickets' 
-                      : 'No past tickets'}
-                </Text>
-                <Text style={styles.emptySubtitle}>
-                  Browse events below to get tickets
-                </Text>
+          {entryTicketsLoading ? (
+            <ActivityIndicator size="small" color={colors.accent} style={{ marginVertical: 20 }} />
+          ) : entryTickets.length > 0 ? (
+            <View style={styles.ticketsList}>
+              {entryTickets.slice(0, 3).map((t) => (
+                <TouchableOpacity
+                  key={t.id}
+                  style={styles.qrTicketCard}
+                  onPress={() => router.push('/my-entry-tickets')}
+                  data-testid={`wallet-qr-ticket-${t.id}`}
+                >
+                  <View style={styles.qrTicketIconWrap}>
+                    <Icon name="ticket" size={20} color={colors.gold} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.qrTicketTitle} numberOfLines={1}>
+                      Free Entry · {t.venue_name}
+                    </Text>
+                    <Text style={styles.qrTicketSubtitle} numberOfLines={1}>
+                      {t.live_status === 'scheduled'
+                        ? `Starts ${new Date(t.valid_from).toLocaleDateString('en-AU', { day: '2-digit', month: 'short' })}`
+                        : t.live_status === 'active'
+                        ? `Expires ${new Date(t.valid_until).toLocaleString('en-AU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+                        : t.live_status.toUpperCase()}
+                    </Text>
+                  </View>
+                  <Icon name="chevron-forward" size={16} color={colors.textMuted} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Icon name="qr-code-outline" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyTitle}>No QR tickets yet</Text>
+              <Text style={styles.emptySubtitle}>
+                Complete Missions and unlock Milestones to earn free-entry QR tickets.
+              </Text>
+              <View style={styles.emptyCtaRow}>
+                <TouchableOpacity
+                  style={styles.emptyCtaBtn}
+                  onPress={() => router.push('/missions')}
+                  data-testid="wallet-cta-missions"
+                >
+                  <Icon name="flash" size={14} color={colors.accent} />
+                  <Text style={styles.emptyCtaText}>Missions</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.emptyCtaBtn}
+                  onPress={() => router.push('/milestones')}
+                  data-testid="wallet-cta-milestones"
+                >
+                  <Icon name="trophy" size={14} color={colors.accent} />
+                  <Text style={styles.emptyCtaText}>Milestones</Text>
+                </TouchableOpacity>
               </View>
-            )}
-          </View>
+            </View>
+          )}
         </View>
 
         {/* Active Missions */}
@@ -780,7 +807,7 @@ export default function WalletScreen() {
           })}
         </View>
 
-        <View style={{ height: 32 }} />
+        <View style={{ height: 8 }} />
       </ScrollView>
 
       {/* Ticket Detail Modal */}
@@ -1333,6 +1360,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textMuted,
     marginTop: spacing.xs,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xl,
+    lineHeight: 20,
+  },
+  emptyCtaRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  emptyCtaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(212,168,50,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(212,168,50,0.35)',
+  },
+  emptyCtaText: {
+    color: colors.accent,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  qrTicketCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(212,168,50,0.25)',
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  qrTicketIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(212,168,50,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrTicketTitle: {
+    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  qrTicketSubtitle: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
   },
   eventsContainer: {
     gap: spacing.md,

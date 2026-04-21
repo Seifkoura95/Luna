@@ -1278,6 +1278,10 @@ async def gift_entry_ticket(request: Request, user_id: str, body: GiftEntryReque
             scheduled_date = datetime.strptime(body.scheduled_for, "%Y-%m-%d")
         except ValueError:
             raise HTTPException(status_code=400, detail="scheduled_for must be YYYY-MM-DD")
+        # Reject dates in the past (using Brisbane-local today as cutoff)
+        today_brisbane = (datetime.now(timezone.utc) + timedelta(hours=10)).date()
+        if scheduled_date.date() < today_brisbane:
+            raise HTTPException(status_code=400, detail="scheduled_for cannot be in the past")
         # Midnight (start of day) in Brisbane = YYYY-MM-DD 00:00 AEST = (YYYY-MM-DD - 1) 14:00 UTC
         brisbane_midnight_utc = datetime(
             scheduled_date.year, scheduled_date.month, scheduled_date.day,

@@ -366,8 +366,22 @@ export default function LunaAIScreen() {
       <View style={styles.container}>
         <AppBackground />
 
-        {/* New Chat action (no logo header per design) */}
-        <View style={[styles.subHeaderRow, { paddingTop: insets.top + 12 }]}>
+        {/* Luna AI Header */}
+        <View style={[styles.lunaHeader, { paddingTop: insets.top + 12 }]}>
+          <View style={styles.lunaHeaderLeft}>
+            <LinearGradient
+              colors={[colors.accent, colors.accentDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.lunaHeaderAvatar}
+            >
+              <LunaIcon name="aiMoon" size={18} color="#fff" />
+            </LinearGradient>
+            <View>
+              <Text style={styles.lunaHeaderTitle}>Luna</Text>
+              <Text style={styles.lunaHeaderSubtitle}>Your Nightlife Concierge</Text>
+            </View>
+          </View>
           <TouchableOpacity
             style={styles.newChatBtn}
             onPress={async () => {
@@ -381,15 +395,15 @@ export default function LunaAIScreen() {
               } catch (e) {}
             }}
           >
-            <Icon name="add-circle-outline" size={18} color={colors.textSecondary} />
-            <Text style={styles.newChatLabel}>New Chat</Text>
+            <Icon name="add-circle-outline" size={18} color={colors.accent} />
+            <Text style={styles.newChatLabel}>New</Text>
           </TouchableOpacity>
         </View>
 
       <KeyboardAvoidingView 
         style={styles.chatContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.bottom + 50 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 72 : 0}
       >
         {/* Messages */}
         <FlatList
@@ -581,15 +595,49 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(212,168,50,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(212,168,50,0.30)',
   },
   newChatLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.textSecondary,
+    color: colors.accent,
     letterSpacing: 0.5,
+  },
+  // Luna Header
+  lunaHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(212,168,50,0.15)',
+  },
+  lunaHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  lunaHeaderAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lunaHeaderTitle: {
+    color: colors.accent,
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  lunaHeaderSubtitle: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    marginTop: 1,
   },
   subHeaderRow: {
     flexDirection: 'row',

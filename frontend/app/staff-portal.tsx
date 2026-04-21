@@ -172,7 +172,24 @@ export default function StaffPortal() {
     if (!qr) { Alert.alert('Enter QR', 'Scan or enter the reward QR code'); return; }
     setValidating(true); setValidationResult(null);
 
-    // Try milestone ticket QR first (LUNA-TKT-...), then fall back to rewards QR
+    // Gifted Entry Ticket QR (LUNA-ENT-...)
+    if (qr.startsWith('LUNA-ENT-')) {
+      try {
+        const result = await api.validateEntryQR(qr, activeVenue.id);
+        if (result.success && isNative) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else if (!result.success && isNative) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        }
+        setValidationResult(result);
+        return;
+      } catch (e: any) {
+        setValidationResult({ success: false, message: e.message || 'Invalid entry ticket' });
+        return;
+      } finally { setValidating(false); }
+    }
+
+    // Milestone ticket QR (LUNA-TKT-...)
     if (qr.startsWith('LUNA-TKT-')) {
       try {
         const result = await api.validateTicketQR(qr, activeVenue.id);
