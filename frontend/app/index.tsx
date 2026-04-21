@@ -1,62 +1,69 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Image } from 'expo-image';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { useAuthStore } from '../src/store/authStore';
 import { api } from '../src/utils/api';
 import { colors } from '../src/theme/colors';
-import { ONBOARDING_KEY } from './onboarding';
 
-const LUNA_SPLASH = require('../assets/images/luna-splash.png');
+const LUNA_SPLASH_VIDEO = require('../assets/videos/luna-splash.mp4');
+
+// Maximum time to wait for the splash — if the video fails to play for any
+// reason (codec, low-power mode, etc.) we route onward anyway.
+const MAX_SPLASH_MS = 6000;
 
 export default function Index() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
+  const [videoDone, setVideoDone] = useState(false);
+  const routedRef = useRef(false);
+
+  const player = useVideoPlayer(LUNA_SPLASH_VIDEO, (p) => {
+    p.loop = false;
+    p.muted = Platform.OS === 'web';
+    p.play();
+  });
 
   useEffect(() => {
-    // Seed data on app start
-    api.seedData().catch(console.error);
+    // Seed data on app start (non-blocking)
+    api.seedData().catch(() => {});
   }, []);
 
+  // Mark done when the video ends
   useEffect(() => {
+    const sub = player.addListener('playToEnd', () => setVideoDone(true));
+    return () => sub.remove();
+  }, [player]);
+
+  // Safety timeout — never get stuck on the splash
+  useEffect(() => {
+    const t = setTimeout(() => setVideoDone(true), MAX_SPLASH_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Route once both auth has resolved AND the video has finished (or timed out)
+  useEffect(() => {
+    if (routedRef.current) return;
     if (isLoading) return;
-
-    if (isAuthenticated) {
-      router.replace('/(tabs)');
-      return;
-    }
-
-    // Route sequence for unauth'd users: onboarding -> login (age is collected at signup)
-    let cancelled = false;
-    const routeUnauthed = async () => {
-      let seenOnboarding: string | null = null;
-      try {
-        seenOnboarding = await AsyncStorage.getItem(ONBOARDING_KEY);
-      } catch {
-        // fall through and show login if storage broken
-      }
-      if (cancelled) return;
-      // brief splash
-      setTimeout(() => {
-        if (cancelled) return;
-        router.replace(seenOnboarding ? '/login' : '/onboarding');
-      }, 1200);
-    };
-    routeUnauthed();
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoading, isAuthenticated]);
+    if (!videoDone) return;
+    routedRef.current = true;
+    router.replace(isAuthenticated ? '/(tabs)' : '/login');
+  }, [isAuthenticated, isLoading, videoDone, router]);
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={LUNA_SPLASH}
-        style={styles.splashImage}
-        contentFit="contain"
+    <View style={styles.container} data-testid="luna-splash-root">
+      <VideoView
+        style={StyleSheet.absoluteFillObject}
+        player={player}
+        contentFit="cover"
+        nativeControls={false}
+        allowsPictureInPicture={false}
+        data-testid="luna-splash-video"
       />
-      <ActivityIndicator size="small" color={colors.accent} style={styles.loader} />
+      {/* Subtle loader while routing if user waits for auth to resolve after video */}
+      {videoDone && isLoading && (
+        <ActivityIndicator size="small" color={colors.accent} style={styles.loader} />
+      )}
     </View>
   );
 }
@@ -67,11 +74,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  splashImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
   },
   loader: {
     position: 'absolute',
