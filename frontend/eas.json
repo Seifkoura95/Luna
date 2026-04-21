@@ -12,10 +12,20 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "ios": {
+        "resourceClass": "m-medium"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleTeamId": "BZRA747G9M",
+        "ascApiKeyPath": "../secrets/AuthKey_WGLASK4H5W.p8",
+        "ascApiKeyId": "WGLASK4H5W",
+        "ascApiKeyIssuerId": "a15a1517-cda8-41da-9d1c-2d20f6e6a9ef"
+      }
+    }
   }
 }
