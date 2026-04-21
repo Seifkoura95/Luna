@@ -694,9 +694,9 @@ export default function WalletScreen() {
           {rewardsLoading ? (
             <ActivityIndicator size="small" color={colors.accent} style={{ marginVertical: 20 }} />
           ) : (
-            <TouchableOpacity style={styles.viewAllRewardsFullBtn} onPress={() => router.push('/rewards-shop')}>
-              <Icon name="storefront" size={20} color={colors.gold} />
-              <Text style={styles.viewAllRewardsFullText}>Browse Rewards Shop</Text>
+            <TouchableOpacity style={styles.viewAllRewardsFullBtn} onPress={() => router.push('/claim-reward')}>
+              <Icon name="ticket" size={20} color={colors.gold} />
+              <Text style={styles.viewAllRewardsFullText}>Claim a Reward</Text>
               <Icon name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
           )}

@@ -1,6 +1,59 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Feb 21, 2026 - Session 11d
+
+### COMPLETED: Moon Centering + DOB Required + Stripe Cleanup + Claim Reward QR Screen
+
+**1. Moon background now perfectly centred** (`/app/frontend/src/components/AppBackground.tsx`)
+- Switched `resizeMode: "cover"` → `"contain"`
+- Wrapped the ImageBackground in a centred container (`alignItems:'center', justifyContent:'center'`)
+- Moon now renders dead-centre regardless of screen aspect ratio / device
+- Verified via login screen screenshot: moon visible centrally behind form fields
+
+**2. DOB field is now required at signup** (`/app/frontend/app/login.tsx`, `/app/frontend/src/utils/api.ts`)
+- Added `dobDay / dobMonth / dobYear` state and three numeric input boxes between Full Name and Email
+- Red `*` required marker, hint copy: "Luna Group is for adults aged 18+"
+- Client-side validation: rejects invalid calendar dates, rejects age < 18 with friendly alert
+- `api.register` signature extended to pass `date_of_birth` as ISO `YYYY-MM-DD` to backend
+- Backend `/api/auth/register` already enforces 18+ from previous session — double-checked
+
+**3. Archived legacy Stripe Payment Links + Products** (run via `sk_live_` key)
+- Deactivated: `buy.stripe.com/14A28r4jK1ZO5b43O3aVa01` ($79 old Gold)
+- Deactivated: `buy.stripe.com/7sY8wP03ugUIeLE3O3aVa00` ($29 old Silver)
+- Deactivated product `prod_UNDgEjiClc2m2F "Luna+ Gold"` and `prod_UNDfSg5hb8nqrF "Luna Silver"`
+- Live links remaining: only the correct `$39.99 Silver` + `$79.99 Gold`
+
+**4. NEW: /claim-reward screen** (`/app/frontend/app/claim-reward.tsx`)
+- Full-page "Claim a Reward" route linked from wallet tab
+- Header, back button, gold balance pill showing current points + AUD value
+- "READY TO SHOW STAFF" section listing any pending redemptions (tap to reopen QR modal)
+- "REWARDS SHOP" section showing all 10 items from `/api/rewards`:
+  - Category-coloured icon tile (drinks/vip/dining/bottles/merch)
+  - Category label + venue restriction tag (e.g. "VIP · ECLIPSE")
+  - Name, description, point cost, and gold **CLAIM** or grey **LOCKED** button
+- Tap CLAIM → confirmation alert → `api.redeemRewardWithQR()` → existing `RedemptionQRModal` opens with full-screen QR
+- QR deducted points, 48h expiry shown, haptic feedback, local state updated
+- Pull-to-refresh, loading / empty states
+- Wallet tab's "Browse Rewards Shop" button now points to `/claim-reward` instead of the old gift-card screen
+- Registered in `_layout.tsx` Stack
+
+**Verified end-to-end:**
+- Smoke screenshot: claim-reward renders 10 rewards correctly with LOCKED on all (test user has 0 pts). ✅
+- Login screenshot: DOB fields present between Name and Email, moon centred behind form. ✅
+- `POST /api/rewards/redeem-with-qr?reward_id=<cocktail>` as admin (100,330 pts) → `success: true`, `qr_code: LUNA-0EC7F43D-...`, `new_balance: 100130`. ✅
+- Old Stripe links confirmed archived via API. ✅
+
+**Files touched:**
+- `/app/frontend/src/components/AppBackground.tsx` — moon centring
+- `/app/frontend/app/login.tsx` — DOB fields + validation + api wiring
+- `/app/frontend/src/utils/api.ts` — `register()` signature extended with `dateOfBirth`
+- `/app/frontend/app/claim-reward.tsx` — NEW
+- `/app/frontend/app/(tabs)/wallet.tsx` — rewards button now → `/claim-reward`
+- `/app/frontend/app/_layout.tsx` — registered `claim-reward` route
+
+
+
 ## Latest Update: Feb 21, 2026 - Session 11c
 
 ### COMPLETED: Doc-to-Code Audit + 18+ Age Gate + PII Hard Delete + My Data Export

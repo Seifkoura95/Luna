@@ -57,6 +57,7 @@ export default function RootLayout() {
           gestureDirection: 'horizontal',
         }}
       >
+        <Stack.Screen name="claim-reward" />
         <Stack.Screen name="index" />
         <Stack.Screen name="age-gate" />
         <Stack.Screen name="onboarding" />

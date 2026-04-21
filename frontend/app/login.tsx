@@ -37,6 +37,9 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [referralCode, setReferralCode] = useState('');
+  const [dobDay, setDobDay] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobYear, setDobYear] = useState('');
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
@@ -119,12 +122,44 @@ export default function LoginScreen() {
       return;
     }
 
+    // Registration-only: validate DOB (18+ required for Luna Group)
+    let dobIso: string | undefined;
+    if (!isLogin) {
+      if (!dobDay || !dobMonth || !dobYear) {
+        Alert.alert('Date of Birth Required', 'Please enter your date of birth to create an account. Luna Group is for adults 18+.');
+        return;
+      }
+      const d = parseInt(dobDay, 10);
+      const m = parseInt(dobMonth, 10);
+      const y = parseInt(dobYear, 10);
+      const date = new Date(y, m - 1, d);
+      if (
+        Number.isNaN(date.getTime()) ||
+        date.getFullYear() !== y ||
+        date.getMonth() !== m - 1 ||
+        date.getDate() !== d ||
+        y < 1900 ||
+        y > new Date().getFullYear()
+      ) {
+        Alert.alert('Invalid Date', 'Please enter a valid date of birth (DD / MM / YYYY).');
+        return;
+      }
+      const today = new Date();
+      let age = today.getFullYear() - y;
+      if (today.getMonth() < m - 1 || (today.getMonth() === m - 1 && today.getDate() < d)) age--;
+      if (age < 18) {
+        Alert.alert('Sorry', 'Luna Group is for adults aged 18 and over. You cannot create an account at this time.');
+        return;
+      }
+      dobIso = `${y.toString().padStart(4, '0')}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+    }
+
     setLoading(true);
     try {
       if (isLogin) {
         const result = await api.login(email, password);
         useAuthStore.getState().login(result.user, result.token);
-        
+
         // Check if user is venue staff and redirect accordingly
         if (result.user?.is_venue_staff || result.user?.role === 'venue_staff' || result.user?.role === 'venue_manager') {
           if (Platform.OS !== 'web') {
@@ -134,9 +169,9 @@ export default function LoginScreen() {
           return;
         }
       } else {
-        const result = await api.register(email, password, name, referralCode || undefined);
+        const result = await api.register(email, password, name, referralCode || undefined, dobIso);
         useAuthStore.getState().login(result.user, result.token);
-        
+
         // Show referral bonus message if applicable
         if (result.referral_bonus) {
           setTimeout(() => {
@@ -245,6 +280,75 @@ export default function LoginScreen() {
                         autoCapitalize="words"
                       />
                     </View>
+                  </View>
+                )}
+
+                {!isLogin && (
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputLabel}>
+                      DATE OF BIRTH <Text style={styles.requiredMark}>*</Text>
+                    </Text>
+                    <View style={styles.dobRow}>
+                      <View
+                        style={[
+                          styles.dobFieldBox,
+                          focusedField === 'dobDay' && styles.inputContainerFocused,
+                        ]}
+                      >
+                        <TextInput
+                          style={styles.dobField}
+                          placeholder="DD"
+                          placeholderTextColor={colors.textMuted + '60'}
+                          value={dobDay}
+                          onChangeText={(t) => setDobDay(t.replace(/\D/g, '').slice(0, 2))}
+                          onFocus={() => setFocusedField('dobDay')}
+                          onBlur={() => setFocusedField(null)}
+                          keyboardType="number-pad"
+                          inputMode="numeric"
+                          maxLength={2}
+                        />
+                      </View>
+                      <View
+                        style={[
+                          styles.dobFieldBox,
+                          focusedField === 'dobMonth' && styles.inputContainerFocused,
+                        ]}
+                      >
+                        <TextInput
+                          style={styles.dobField}
+                          placeholder="MM"
+                          placeholderTextColor={colors.textMuted + '60'}
+                          value={dobMonth}
+                          onChangeText={(t) => setDobMonth(t.replace(/\D/g, '').slice(0, 2))}
+                          onFocus={() => setFocusedField('dobMonth')}
+                          onBlur={() => setFocusedField(null)}
+                          keyboardType="number-pad"
+                          inputMode="numeric"
+                          maxLength={2}
+                        />
+                      </View>
+                      <View
+                        style={[
+                          styles.dobFieldBox,
+                          { flex: 1.4 },
+                          focusedField === 'dobYear' && styles.inputContainerFocused,
+                        ]}
+                      >
+                        <TextInput
+                          style={styles.dobField}
+                          placeholder="YYYY"
+                          placeholderTextColor={colors.textMuted + '60'}
+                          value={dobYear}
+                          onChangeText={(t) => setDobYear(t.replace(/\D/g, '').slice(0, 4))}
+                          onFocus={() => setFocusedField('dobYear')}
+                          onBlur={() => setFocusedField(null)}
+                          keyboardType="number-pad"
+                          inputMode="numeric"
+                          maxLength={4}
+                        />
+                      </View>
+                    </View>
+                    <Text style={styles.dobHint}>Luna Group is for adults aged 18+</Text>
                   </View>
                 )}
 
@@ -638,6 +742,38 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontWeight: '500',
     letterSpacing: 1,
+  },
+  requiredMark: {
+    color: '#FF6B6B',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  dobRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  dobFieldBox: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 0.5,
+    borderColor: colors.border,
+    height: 56,
+    justifyContent: 'center',
+  },
+  dobField: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  dobHint: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 6,
+    marginLeft: spacing.xs,
+    letterSpacing: 0.3,
   },
   referralHint: {
     fontSize: 11,

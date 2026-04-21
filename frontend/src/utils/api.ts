@@ -51,7 +51,7 @@ export const api = {
     apiFetch<any>(`/api/venues/${venueId}`, { auth: false }),
   
   // Auth
-  register: (email: string, password: string, name: string, referralCode?: string) =>
+  register: (email: string, password: string, name: string, referralCode?: string, dateOfBirth?: string) =>
     apiFetch<{ user: any; token: string; referral_bonus?: string }>(
       '/api/auth/register',
       { 
@@ -60,7 +60,8 @@ export const api = {
           email, 
           password, 
           name, 
-          referral_code: referralCode || undefined 
+          referral_code: referralCode || undefined,
+          date_of_birth: dateOfBirth || undefined,
         }), 
         auth: false 
       }
