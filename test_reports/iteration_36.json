@@ -1,0 +1,40 @@
+{
+  "summary": "Iteration 36 — backend-only incremental batch verifying (1) POST /api/admin/users/{id}/grant-points no longer inflates total_points_earned on negative (deduct) grants — the conditional $inc in routes/admin.py now only adds to total_points_earned when amount > 0; (2) Staff Portal Gift Points UI flow works because require_admin accepts staff/manager/admin JWTs (and X-Luna-Hub-Key hub-key); (3) all prior iteration_35 tests still pass. NEW FILE: /app/backend/tests/test_luna_grant_points_earned_stat.py (15 tests). REGRESSION: /app/backend/tests/test_luna_vip_roles_entry_tickets.py (35 tests). TOTAL 50/50 PASSED against https://birthday-rewards-1.preview.emergentagent.com.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/admin/users/{id}/grant-points", "issue": "negative (adjust/deduct) grants record transaction.type='admin_deduct' but source='admin_grant' and are retrieved through /points-transactions with source=admin_grant — consider a distinct source='admin_deduct' for cleaner filtering in reports."},
+      {"endpoint": "DELETE /api/admin/users/{id}", "issue": "Still missing. Test-generated staff/user records (TEST_staff_*@test.com, TEST_userb_*@test.com) accumulate across iterations with no API-side cleanup path. Low priority but worth adding for test hygiene and GDPR/erasure support."},
+      {"endpoint": "POST /api/admin/users/{id}/grant-points", "issue": "No ledger-side balance floor — a negative grant can drive points_balance negative (not tested this iter but observed in code: {'$inc':{'points_balance': body.amount}}). If that's intentional (debt/reversal), fine; if not, add a guard."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_luna_grant_points_earned_stat.py",
+    "/app/backend/tests/test_luna_vip_roles_entry_tickets.py",
+    "/app/test_reports/pytest/iter36_grant_points.xml",
+    "/app/test_reports/pytest/iter36_regression_vip_roles.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes/admin.py is now 1363 lines — still monolithic. Split recommendation from iter34/35 remains open (per-domain modules under routes/admin/*.py).",
+    "grant-points now correctly gates total_points_earned on amount>0. Consider also tracking a total_points_deducted counter so admin reporting can reconcile lifetime earn vs. lifetime adjustment.",
+    "The Staff Portal gift-points flow works because require_admin treats {admin, staff, manager} as admin-equivalent. If product intent is 'staff can gift but cannot CRUD milestones/bottles/venues', this endpoint grouping is too coarse — all admin endpoints share the same gate. Consider a per-endpoint role matrix (e.g. a require_roles({'admin','staff'}) dependency) or at least RBAC documentation in the route file.",
+    "No audit-log action for who the staff_user was when gifting — currently stored in points_transactions.granted_by/granted_via which is good. A dedicated audit collection (admin_actions) with diff/payload would help compliance if staff ever disputes a grant.",
+    "TEST_staff_*@test.com and TEST_userb_*@test.com test users are left in the DB across iterations (no DELETE /api/admin/users/{id}). Accumulating technical debt on the users collection — at least a DB-side TTL index on TEST_-prefixed emails, or an admin purge endpoint.",
+    "routes/admin.py imports `os` twice (module-level and inside require_admin). Tiny nit — remove the local import on line 154."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_luna_grant_points_earned_stat.py (new)",
+    "/app/test_reports/pytest/iter36_grant_points.xml (new)",
+    "/app/test_reports/pytest/iter36_regression_vip_roles.xml (new)",
+    "/app/test_reports/iteration_36.json (new)"
+  ],
+  "success_rate": {"backend": "100% (50/50 — 15 new + 35 regression)", "frontend": "N/A (backend-only per review request)"},
+  "test_credentials": "Hub key X-Luna-Hub-Key=luna_hub_live_682fbaaa19a6a4594f58618b803531ee6fad8016. Admin JWT via POST /api/auth/login {admin@lunagroup.com.au, Trent69!}. User JWT via {luna@test.com, test123}. Test staff JWT created per-run with email TEST_staff_<uuid>@test.com / StaffTest123! and demoted back to role=user on teardown.",
+  "seed_data_creation": "Created throwaway TEST_staff_<uuid>@test.com registered with password StaffTest123!, promoted to role=staff for the Staff-JWT grant-points check, then demoted back to role=user on teardown. Granted luna +500, -500, +100 (via staff JWT), +50 (via hub-key) = net +150 points; total_points_earned net increase = +600 (positive grants only: 500+100, per the new logic). Created 2 short-lived gift-entry tickets (1 immediate was revoked immediately; 1 scheduled-future and 1 past-date attempt that was correctly rejected). POST-RUN STATE (verified via hub-key): luna email=luna@test.com, role=user, name=Luna (reset), tier=gold (cosmetic, inherited from iter35). Current points_balance ~81,898, total_points_earned ~3,500. TEST_staff user left as orphan at role=user — no DELETE endpoint. Brisbane scheduled-for ticket for 2026-06-15 was revoked in-test.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "50/50 green across 2 test files: test_luna_grant_points_earned_stat.py (iter36, 15 tests) and test_luna_vip_roles_entry_tickets.py (iter35 regression, 35 tests). Run: `python -m pytest backend/tests/test_luna_grant_points_earned_stat.py backend/tests/test_luna_vip_roles_entry_tickets.py -v` — both are idempotent and reset luna.role=user on teardown. Luna was renamed 'Luna Test'->'Luna' via cleanup curl; if iter35 suite runs again alone it will rename to 'Luna Test' which persists until next manual reset. Still no DELETE /api/admin/users/{id} — test users orphan in DB. New key assertion to watch going forward: `after['total_points_earned'] == before['total_points_earned']` after a negative grant — this is the whole point of iter36 and will regress silently if someone removes the `if body.amount > 0` guard in routes/admin.py:1233. Staff-JWT path uses require_admin which accepts {admin,staff,manager}; if product later adds granular RBAC (e.g. staff cannot edit milestones) tests should be added for that split.",
+  "rca of the issue": "No new backend bugs. The negative-grant inflation of total_points_earned previously flagged in iter35 (minor #1) is now fixed: routes/admin.py grant_points builds the $inc dict conditionally — `**({'total_points_earned': body.amount} if body.amount > 0 else {})`. Verified by a before/after snapshot of luna.total_points_earned across a +500 then -500 round-trip: balance went +500/-500 as expected, total_points_earned went +500/+0 (preserved on deduct). Staff JWT path verified by creating a TEST_staff user, promoting via hub-key, logging in to obtain JWT, and invoking grant-points; response shows granted_by=<staff_user_id> and granted_via='jwt' (i.e. require_admin correctly accepted staff role). Regular-user JWT correctly rejected with 403; missing-auth correctly rejects with 401. All iter35 regression tests remain green."
+}

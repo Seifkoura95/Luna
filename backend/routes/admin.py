@@ -1227,7 +1227,11 @@ async def grant_points(request: Request, user_id: str, body: GrantPointsRequest)
 
     await db.users.update_one(
         {"user_id": user_id},
-        {"$inc": {"points_balance": body.amount, "total_points_earned": max(0, body.amount)}}
+        {"$inc": {
+            "points_balance": body.amount,
+            # Only count POSITIVE grants toward lifetime earnings; corrections (negative) shouldn't inflate it.
+            **({"total_points_earned": body.amount} if body.amount > 0 else {}),
+        }}
     )
     tx = {
         "id": f"tx_{uuid.uuid4().hex[:10]}",

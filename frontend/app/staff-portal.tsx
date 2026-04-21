@@ -69,6 +69,12 @@ export default function StaffPortal() {
   const [summary, setSummary] = useState<any>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  // Gift Points state (direct grant, bypasses earn-guard — useful for artists/VIP gestures)
+  const [showGiftPoints, setShowGiftPoints] = useState(false);
+  const [giftPointsAmount, setGiftPointsAmount] = useState('');
+  const [giftPointsReason, setGiftPointsReason] = useState('');
+  const [gifting, setGifting] = useState(false);
+
   // Scanner
   const [showScanner, setShowScanner] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -241,6 +247,33 @@ export default function StaffPortal() {
     } catch (e: any) { Alert.alert('Error', e.message || 'Action failed'); }
   };
 
+  const handleGiftPoints = async () => {
+    if (!member) return;
+    const amt = parseInt(giftPointsAmount, 10);
+    if (!amt || amt < 1 || amt > 100000) {
+      Alert.alert('Invalid amount', 'Enter between 1 and 100,000 points');
+      return;
+    }
+    setGifting(true);
+    try {
+      const result = await apiFetch<any>(`/api/admin/users/${member.user_id}/grant-points`, {
+        method: 'POST',
+        body: JSON.stringify({ amount: amt, reason: giftPointsReason || 'Staff gift' }),
+      });
+      if (isNative) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('Gifted', `${amt} pts added. New balance: ${result.new_balance?.toLocaleString()}`);
+      setShowGiftPoints(false);
+      setGiftPointsAmount('');
+      setGiftPointsReason('');
+      const profile = await api.getMemberProfile(member.user_id);
+      setMember(profile);
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Could not gift points');
+    } finally {
+      setGifting(false);
+    }
+  };
+
   return (
     <View style={styles.container} data-testid="staff-portal-screen">
       <AppBackground />
@@ -398,6 +431,7 @@ export default function StaffPortal() {
                     <PerkBtn icon="wine" label="Comp Drink" color="#8B5CF6" disabled={member.today.drink_redeemed} onPress={() => doAction('drinks/redeem', { user_id: member.user_id, venue_id: activeVenue.id, drink_type: 'house_beer' }, 'Drink redeemed')} testId="action-comp-drink" />
                     <PerkBtn icon="people" label={`Guest (${member.today.guest_remaining})`} color={colors.accent} disabled={member.today.guest_remaining <= 0} onPress={() => doAction('entry/guest', { member_user_id: member.user_id, venue_id: activeVenue.id, guest_name: 'Guest' }, 'Guest entry logged')} testId="action-guest-entry" />
                     <PerkBtn icon="pricetag" label="Discount" color={colors.gold} onPress={() => Alert.alert('Discount', `${member.tier}: ${member.benefits?.restaurant_discount || 0}% off`)} testId="action-discount" />
+                    <PerkBtn icon="gift" label="Gift Points" color="#FFD700" onPress={() => setShowGiftPoints(true)} testId="action-gift-points" />
                   </View>
                 </View>
               </>
@@ -488,6 +522,69 @@ export default function StaffPortal() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Gift Points Modal */}
+      <Modal visible={showGiftPoints} transparent animationType="fade" onRequestClose={() => setShowGiftPoints(false)}>
+        <View style={styles.giftModalBackdrop}>
+          <View style={styles.giftModalSheet}>
+            <View style={styles.giftModalHeader}>
+              <Icon name="gift" size={28} color="#FFD700" />
+              <Text style={styles.giftModalTitle}>Gift Points</Text>
+              <TouchableOpacity onPress={() => setShowGiftPoints(false)} data-testid="gift-points-close">
+                <Icon name="close" size={22} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            {member && (
+              <Text style={styles.giftModalSubtitle}>
+                To {member.name} · Balance {member.points_balance.toLocaleString()} pts
+              </Text>
+            )}
+            <Text style={styles.giftModalLabel}>AMOUNT</Text>
+            <TextInput
+              style={styles.giftModalInput}
+              value={giftPointsAmount}
+              onChangeText={setGiftPointsAmount}
+              placeholder="500"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="number-pad"
+              data-testid="gift-points-amount"
+            />
+            <View style={styles.giftQuickRow}>
+              {[100, 500, 1000, 2500].map((v) => (
+                <TouchableOpacity key={v} style={styles.giftQuickBtn} onPress={() => setGiftPointsAmount(String(v))} data-testid={`gift-points-quick-${v}`}>
+                  <Text style={styles.giftQuickText}>{v}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.giftModalLabel}>REASON (optional)</Text>
+            <TextInput
+              style={styles.giftModalInput}
+              value={giftPointsReason}
+              onChangeText={setGiftPointsReason}
+              placeholder="Birthday gift / Artist allocation / VIP gesture"
+              placeholderTextColor={colors.textMuted}
+              data-testid="gift-points-reason"
+            />
+            <TouchableOpacity
+              style={[styles.giftConfirmBtn, (!giftPointsAmount || gifting) && { opacity: 0.5 }]}
+              onPress={handleGiftPoints}
+              disabled={!giftPointsAmount || gifting}
+              data-testid="gift-points-confirm"
+            >
+              {gifting ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <Text style={styles.giftConfirmText}>
+                  Gift {giftPointsAmount ? `${parseInt(giftPointsAmount, 10).toLocaleString()} pts` : 'Points'}
+                </Text>
+              )}
+            </TouchableOpacity>
+            <Text style={styles.giftModalNote}>
+              Bypasses normal earn rules. Works on any account (incl. artists).
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -610,4 +707,18 @@ const styles = StyleSheet.create({
   txnName: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
   txnMeta: { fontSize: 11, color: colors.textMuted },
   txnPts: { fontSize: 15, fontWeight: '700' },
+  // Gift Points modal
+  giftModalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xl },
+  giftModalSheet: { width: '100%', maxWidth: 420, backgroundColor: colors.background, borderRadius: radius.xl, padding: spacing.xl, borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)' },
+  giftModalHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs },
+  giftModalTitle: { flex: 1, color: '#FFD700', fontSize: 20, fontWeight: '800', letterSpacing: 0.5 },
+  giftModalSubtitle: { color: colors.textSecondary, fontSize: 13, marginBottom: spacing.lg },
+  giftModalLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.2, marginBottom: 6, marginTop: spacing.md },
+  giftModalInput: { backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.25)', borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.textPrimary, fontSize: 16 },
+  giftQuickRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm },
+  giftQuickBtn: { flex: 1, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: 'rgba(255,215,0,0.10)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.30)', alignItems: 'center' },
+  giftQuickText: { color: '#FFD700', fontWeight: '700', fontSize: 13 },
+  giftConfirmBtn: { backgroundColor: '#FFD700', paddingVertical: spacing.md, borderRadius: radius.pill, alignItems: 'center', marginTop: spacing.xl },
+  giftConfirmText: { color: '#000', fontWeight: '800', fontSize: 15, letterSpacing: 0.5 },
+  giftModalNote: { color: colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: spacing.sm },
 });

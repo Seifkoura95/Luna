@@ -25,15 +25,16 @@ export const colors = {
   cardAccentBorder: 'rgba(37, 99, 235, 0.20)',
   
   // Glassmorphism System - richer, more dimensional
-  glass: 'rgba(255, 255, 255, 0.06)',
-  glassMid: 'rgba(255, 255, 255, 0.09)',
+  // Leaderboard-style cards: solid black translucent with subtle light border
+  glass: 'rgba(0, 0, 0, 0.40)',
+  glassMid: 'rgba(0, 0, 0, 0.30)',
   glassHigh: 'rgba(255, 255, 255, 0.12)',
   glassAccent: 'rgba(37, 99, 235, 0.12)',
   glassGold: 'rgba(212, 175, 90, 0.10)',
   glassLight: 'rgba(255, 255, 255, 0.08)',
   glassBorder: 'rgba(255, 255, 255, 0.14)',
   glassBorderStrong: 'rgba(255, 255, 255, 0.22)',
-  glassBorderSubtle: 'rgba(255, 255, 255, 0.08)',
+  glassBorderSubtle: 'rgba(255, 255, 255, 0.10)',
   glassHighlight: 'rgba(255, 255, 255, 0.25)',
   glassShine: 'rgba(255, 255, 255, 0.35)',
   
