@@ -1,5 +1,39 @@
 # Luna Group VIP App - Product Requirements Document
 
+## Latest Update: April 21, 2026 - Session 10
+
+### COMPLETED: Marketing Site + Points System Documentation
+
+**Public marketing site (`/app/public-site/`)** — ready to deploy at `lunagroupapp.com.au`:
+- `index.html` — landing page
+- `subscribe/index.html` — 3-tier subscription page (Bronze free, Silver $29, Gold $79) with placeholders for user's Stripe Payment Links
+- `how-points-work/index.html` — full rewards explainer (rate, missions, milestones, anti-abuse)
+- `README.md` — step-by-step deployment instructions (Cloudflare Pages, Netlify, Vercel, or SFTP)
+
+**In-app "How Points Work" screen (`/app/frontend/app/how-points-work.tsx`)**:
+- Accessible from Profile → "How Points Work" menu item
+- Explains the 10pts/$1 rate, 25% cashback
+- Details all 6 missions with their exact server-side verification logic
+- Lists 6 milestone tiers (Newbie → Legend) with lifetime point thresholds
+- 3-step deposit → venue → balance flow diagram explaining why bottle/auction points only award after staff confirmation
+- 6-layer anti-abuse defence summary
+
+**Bottle service transparency:**
+- Cart modal now shows split `Bottle Total / Due Now (Deposit) / Balance (Pay at Venue)`
+- Points text updated to clarify points are awarded "when staff confirm your final spend at the venue"
+
+**Files added/modified this session:**
+- NEW: `/app/public-site/index.html`, `subscribe/index.html`, `how-points-work/index.html`, `README.md`
+- NEW: `/app/frontend/app/how-points-work.tsx`
+- Modified: `/app/frontend/app/_layout.tsx` (registered new screen)
+- Modified: `/app/frontend/app/(tabs)/profile.tsx` (added menu entry)
+- Modified: `/app/frontend/app/bottle-service.tsx` (deposit/balance/points transparency)
+
+**Awaiting user action:**
+- Create 2 Stripe Payment Links (Silver $29/mo, Gold $79/mo) and paste URLs into `subscribe/index.html`
+- Host `public-site/` folder on lunagroupapp.com.au
+- Register bottle-service/auction point confirmation flow with venue staff (Staff Portal already has the UI)
+
 ## Latest Update: April 21, 2026 - Session 9
 
 ### COMPLETED: Brand Assets + Live Stripe + Subscription Web-Out

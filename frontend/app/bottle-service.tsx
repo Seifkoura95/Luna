@@ -354,13 +354,33 @@ export default function BottleServiceScreen() {
               />
 
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Total</Text>
+                <Text style={styles.totalLabel}>Bottle Total</Text>
                 <Text style={[styles.totalAmount, { color: selectedVenue.color }]}>${cartTotal}</Text>
               </View>
 
+              {/* Deposit vs balance breakdown */}
+              {(() => {
+                const deposit = Math.max(50, Math.round(cartTotal * 0.10));
+                const balance = Math.max(0, cartTotal - deposit);
+                return (
+                  <>
+                    <View style={styles.depositRow}>
+                      <Text style={styles.depositLabel}>Due Now (Deposit)</Text>
+                      <Text style={styles.depositAmt}>${deposit}</Text>
+                    </View>
+                    <View style={styles.depositRow}>
+                      <Text style={styles.depositLabel}>Balance (Pay at Venue)</Text>
+                      <Text style={styles.balanceAmt}>${balance}</Text>
+                    </View>
+                  </>
+                );
+              })()}
+
               <View style={styles.pointsRow}>
                 <Icon name="star" size={16} color={colors.gold} />
-                <Text style={styles.pointsText}>Earn {Math.round(cartTotal * 0.1)} Luna Points</Text>
+                <Text style={styles.pointsText}>
+                  Earn {cartTotal * 10} pts ({Math.round(cartTotal * 0.1 * 100) / 100 === cartTotal * 0.25 ? '25%' : '25%'} back) — awarded when staff confirm your final spend at the venue
+                </Text>
               </View>
             </ScrollView>
 
@@ -465,8 +485,12 @@ const styles = StyleSheet.create({
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
   totalLabel: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
   totalAmount: { fontSize: 24, fontWeight: '800' },
-  pointsRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  pointsText: { fontSize: 13, color: colors.gold },
+  pointsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, paddingHorizontal: 4, marginTop: 8 },
+  pointsText: { flex: 1, fontSize: 12, color: colors.gold, lineHeight: 17 },
+  depositRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
+  depositLabel: { fontSize: 13, color: colors.textMuted },
+  depositAmt: { fontSize: 15, fontWeight: '800', color: colors.gold },
+  balanceAmt: { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
   modalFooter: { padding: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border },
   orderBtn: { paddingVertical: spacing.md, borderRadius: radius.lg, alignItems: 'center' },
   orderBtnText: { fontSize: 16, fontWeight: '700', color: '#FFF' },

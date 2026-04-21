@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>How Luna Points Work — Luna Group</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <style>
+    :root {
+      --bg: #050709; --surface: rgba(18, 18, 28, 0.72);
+      --border: rgba(255, 255, 255, 0.08); --gold: #D4A832;
+      --gold-bright: #F5D77A; --text: #F0F0F5; --muted: #8B8B95;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; line-height: 1.55; }
+    body { background-image: radial-gradient(ellipse at 50% 0%, rgba(212, 168, 50, 0.1) 0%, transparent 50%), linear-gradient(180deg, #050709, #000); background-attachment: fixed; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 56px; }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-mark { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--gold) 0%, var(--gold-bright) 100%); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; color: #000; }
+    .logo-text { font-size: 14px; letter-spacing: 3px; font-weight: 800; }
+    nav a { color: var(--muted); text-decoration: none; margin-left: 20px; font-size: 13px; letter-spacing: 1px; }
+    nav a:hover { color: var(--text); }
+
+    .eyebrow { font-size: 11px; letter-spacing: 4px; color: var(--gold); font-weight: 700; margin-bottom: 12px; }
+    h1 { font-size: clamp(36px, 6vw, 56px); font-weight: 900; letter-spacing: -1px; line-height: 1.05; margin-bottom: 20px; }
+    .lede { font-size: 17px; color: var(--muted); margin-bottom: 48px; max-width: 640px; }
+
+    section { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 32px; margin-bottom: 20px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+    section h2 { font-size: 22px; font-weight: 900; letter-spacing: -0.3px; margin-bottom: 10px; }
+    section h2 .tag { font-size: 11px; letter-spacing: 2px; color: var(--gold); background: rgba(212,168,50,0.1); padding: 4px 10px; border-radius: 999px; vertical-align: middle; margin-left: 10px; font-weight: 700; }
+    section h3 { font-size: 15px; font-weight: 700; margin: 20px 0 8px; color: var(--text); }
+    section p, section li { color: #CCCCD2; font-size: 14px; margin-bottom: 10px; }
+    section ul { padding-left: 22px; margin-bottom: 16px; }
+    section code { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, monospace; font-size: 12px; color: var(--gold-bright); }
+
+    .rate-card { background: linear-gradient(135deg, rgba(212,168,50,0.12), rgba(212,168,50,0.03)); border: 1px solid rgba(212,168,50,0.25); border-radius: 16px; padding: 24px; margin: 20px 0; }
+    .rate-row { display: flex; align-items: center; gap: 16px; font-size: 15px; }
+    .rate-row strong { color: var(--gold-bright); font-weight: 900; }
+    .arrow { color: var(--muted); font-size: 18px; }
+
+    .mission { border-left: 3px solid var(--gold); padding-left: 16px; margin: 16px 0; }
+    .mission .title { font-weight: 700; font-size: 15px; color: var(--text); }
+    .mission .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .mission .verify { font-size: 12px; color: #AAA; margin-top: 6px; font-style: italic; }
+
+    .milestone { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .milestone:last-child { border-bottom: none; }
+    .milestone .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+    .milestone .level { font-weight: 800; font-size: 14px; width: 120px; }
+    .milestone .threshold { color: var(--gold-bright); font-weight: 700; font-size: 13px; width: 90px; }
+    .milestone .reward { color: var(--muted); font-size: 13px; flex: 1; }
+
+    .warning { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 16px; font-size: 13px; color: #FCA5A5; margin-top: 16px; }
+
+    .footer { margin-top: 60px; text-align: center; font-size: 12px; color: var(--muted); padding-top: 28px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a href="/" style="text-decoration:none; color:inherit;"><div class="logo">
+        <div class="logo-mark">✦</div>
+        <div class="logo-text">LUNA GROUP</div>
+      </div></a>
+      <nav>
+        <a href="/subscribe">Subscribe</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
+    </header>
+
+    <div class="eyebrow">REWARDS PROGRAM</div>
+    <h1>How Luna Points Work</h1>
+    <p class="lede">Earn 25% back at every Luna Group venue. Every dollar you spend, every mission you complete, every milestone you hit — Luna Points stack, and they redeem for real dollar value inside the app.</p>
+
+    <!-- RATE -->
+    <section>
+      <h2>The Rate <span class="tag">10 PTS = $1 SPEND</span></h2>
+      <div class="rate-card">
+        <div class="rate-row">
+          <strong>$1 spent</strong>
+          <span class="arrow">→</span>
+          <strong>10 Luna Points</strong>
+          <span class="arrow">→</span>
+          <strong>$0.25 redemption value</strong>
+        </div>
+      </div>
+      <p>Effective cashback: <strong style="color:var(--gold-bright)">25% of every dollar you spend</strong> comes back to you in redeemable Luna Points. Silver members earn 2× (20 pts/$1), Gold members earn 3× (30 pts/$1).</p>
+    </section>
+
+    <!-- HOW POINTS ARE ACTUALLY AWARDED -->
+    <section>
+      <h2>When &amp; How Points Are Awarded</h2>
+      <p>There are <strong>three ways</strong> to earn Luna Points, and each has a different flow — designed to prevent any kind of gaming or abuse:</p>
+
+      <h3>1. In-app actions (instant)</h3>
+      <ul>
+        <li><strong>Subscribing to Luna+</strong> (Silver/Gold) — points credited the moment your subscription activates</li>
+        <li><strong>Completing missions</strong> — points credited the instant all criteria pass server-side verification</li>
+        <li><strong>Hitting milestones</strong> — tier unlock rewards credited automatically</li>
+      </ul>
+
+      <h3>2. Venue purchases (post-verification at the venue)</h3>
+      <p>When you buy something at a Luna venue — bottle service, auction items, tables, or anything the staff rings up — points are awarded <strong>only after the full transaction is verified by a staff member</strong> at the venue on the night.</p>
+      <ul>
+        <li>You place the order (or win the auction) through the app</li>
+        <li>Stripe charges your deposit, not the full amount</li>
+        <li>At the venue, the staff member confirms what you actually consumed via the Venue Staff Portal</li>
+        <li>Staff enter the final dollar amount → points are awarded at 10 pts / $1 (or your multiplier)</li>
+      </ul>
+      <div class="warning">
+        <strong>Why this matters:</strong> This prevents people from ordering a $2,000 bottle service in the app, paying the $200 deposit, and walking out with 20,000 fake points. Points are tied to real consumption, verified at the bar.
+      </div>
+
+      <h3>3. Check-ins (venue-verified)</h3>
+      <p>Walking into a Luna venue via the app's geofence earns small "show up" bonus points, but these require the staff or QR scanner at the door to mark you present. Location alone isn't enough.</p>
+    </section>
+
+    <!-- MISSIONS -->
+    <section>
+      <h2>Current Missions <span class="tag">ALL AUTO-VERIFIED</span></h2>
+      <p>Missions are small, time-boxed challenges. Points drop the moment the server detects all criteria are met — no manual approval needed.</p>
+
+      <div class="mission">
+        <div class="title">Early Bird Special — 150 pts</div>
+        <div class="meta">Check in before 10:30pm at any Luna nightclub tonight.</div>
+        <div class="verify">Verified by: geofence timestamp on check-in. Only counts 1× per mission instance. Reset weekly.</div>
+      </div>
+
+      <div class="mission">
+        <div class="title">Luna Explorer — 750 pts</div>
+        <div class="meta">Visit 3 different Luna venues this week.</div>
+        <div class="verify">Verified by: distinct venue_ids in the user's <code>check_ins</code> collection within a 7-day rolling window. Can't double-count same venue same night.</div>
+      </div>
+
+      <div class="mission">
+        <div class="title">Dine &amp; Dance — 400 pts</div>
+        <div class="meta">Eat at a restaurant + dance at a nightclub same night.</div>
+        <div class="verify">Verified by: 1 restaurant-type check-in AND 1 nightclub-type check-in within the same 24h window for the same user. Venue types come from our venue config, not user-editable.</div>
+      </div>
+
+      <div class="mission">
+        <div class="title">Eclipse Loyalist — 500 pts</div>
+        <div class="meta">Check in at Eclipse 3 times this month.</div>
+        <div class="verify">Verified by: check-in count where <code>venue_id = "eclipse"</code> within calendar month. Duplicate check-ins same day collapsed to 1.</div>
+      </div>
+
+      <div class="mission">
+        <div class="title">Weekend Warrior — 600 pts</div>
+        <div class="meta">Hit a Luna venue 4 Saturdays in a row.</div>
+        <div class="verify">Verified by: consecutive Saturday check-ins (day-of-week =5), streak tracked in <code>user_streaks</code>. Break the streak and counter resets.</div>
+      </div>
+
+      <div class="mission">
+        <div class="title">Social Butterfly — 800 pts</div>
+        <div class="meta">Invite 5 friends who accept &amp; visit a Luna venue.</div>
+        <div class="verify">Verified by: referral code was applied + the invited user has ≥1 verified check-in. Points only release on the 5th verified visit, not the 5th signup.</div>
+      </div>
+
+      <h3>Anti-abuse controls on every mission</h3>
+      <ul>
+        <li><strong>Server-side-only state</strong>: mission progress lives in MongoDB, never trusted from the client</li>
+        <li><strong>Geofence + time-stamp</strong>: check-ins require GPS match + current time window</li>
+        <li><strong>Idempotency keys</strong>: each check-in has a unique server ID; replaying requests does nothing</li>
+        <li><strong>Staff override</strong>: a staff member can revoke points awarded on fraudulent missions via the admin panel</li>
+        <li><strong>Rate limits</strong>: 1 check-in per venue per 4 hours per user</li>
+        <li><strong>Account binding</strong>: check-ins require an active auth token tied to a verified email &amp; phone</li>
+      </ul>
+    </section>
+
+    <!-- MILESTONES -->
+    <section>
+      <h2>Milestones &amp; Tier Progression <span class="tag">LIFETIME POINTS</span></h2>
+      <p>Milestones are unlocked by your <strong>lifetime Luna Points total</strong> — they don't reset. Each milestone unlocks a one-time QR-ticket reward that you redeem at the venue.</p>
+
+      <div class="milestone">
+        <div class="dot" style="background: #8B8B8B"></div>
+        <div class="level">Newbie</div>
+        <div class="threshold">0 pts</div>
+        <div class="reward">Welcome pack — unlocked on sign-up</div>
+      </div>
+      <div class="milestone">
+        <div class="dot" style="background: #CD7F32"></div>
+        <div class="level">Rising Star</div>
+        <div class="threshold">500 pts</div>
+        <div class="reward">5 free drinks over the next 30 days (single-use QR ticket)</div>
+      </div>
+      <div class="milestone">
+        <div class="dot" style="background: #C0C0C0"></div>
+        <div class="level">VIP Status</div>
+        <div class="threshold">1,000 pts</div>
+        <div class="reward">10 free drinks + 4 free entries (single-use QR tickets)</div>
+      </div>
+      <div class="milestone">
+        <div class="dot" style="background: #D4A832"></div>
+        <div class="level">Luna Elite</div>
+        <div class="threshold">5,000 pts</div>
+        <div class="reward">Free VIP booth + 20 drinks + 5 entries</div>
+      </div>
+      <div class="milestone">
+        <div class="dot" style="background: #B794F4"></div>
+        <div class="level">Supernova</div>
+        <div class="threshold">10,000 pts</div>
+        <div class="reward">Free VIP booth + 30 drinks + 5 entries + 5 exclusive perks</div>
+      </div>
+      <div class="milestone">
+        <div class="dot" style="background: #F5D77A"></div>
+        <div class="level">Legend</div>
+        <div class="threshold">25,000 pts</div>
+        <div class="reward">Gold VIP, unlimited entries, 1 booth/month, dedicated host line</div>
+      </div>
+
+      <h3>How milestone rewards are protected</h3>
+      <ul>
+        <li><strong>Single-use QR codes</strong>: each reward generates a unique QR. Once scanned at the venue, it's marked redeemed in the database and can never be scanned again — even if screenshot-shared</li>
+        <li><strong>Server-side redemption</strong>: the app shows the QR but the redemption state lives on our servers. Taking a screenshot of a used QR and showing it to another bar = won't work, the scan returns "already redeemed"</li>
+        <li><strong>Milestone unlock is lifetime</strong>: once you hit 5,000 lifetime points, you're Luna Elite forever — redeeming doesn't "un-unlock" you</li>
+        <li><strong>Staff confirmation on major perks</strong>: booth reservations, free entries, etc. show up in the Venue Staff Portal with the user's name + photo on the night</li>
+      </ul>
+    </section>
+
+    <!-- ABUSE DEFENCE SUMMARY -->
+    <section>
+      <h2>Preventing Abuse — The Short Version</h2>
+      <p>Luna Group uses 6 layers of defence so that points always reflect real spend or real visits:</p>
+      <ol style="padding-left: 22px;">
+        <li><strong>Nothing user-reported</strong>: users never "submit" what they spent. Only staff or verified sensors (geofence, Stripe webhook) can trigger point awards.</li>
+        <li><strong>Stripe is the source of truth for money</strong>: points from purchases only flow after <code>payment_intent.succeeded</code> or staff confirmation of in-venue spend.</li>
+        <li><strong>Server-side idempotency</strong>: same action replayed 100 times = 1 award.</li>
+        <li><strong>QR tickets are single-use</strong>: once scanned, flipped to <code>status: redeemed</code> server-side instantly.</li>
+        <li><strong>Rate limiting</strong>: check-ins, mission progress, and referrals are throttled at the user + IP + venue level.</li>
+        <li><strong>Staff revoke panel</strong>: if fraud is detected, points can be clawed back in the admin panel — users see an entry in their activity feed explaining why.</li>
+      </ol>
+    </section>
+
+    <footer class="footer">
+      <p>© 2026 Luna Group Hospitality Pty Ltd · Brisbane, Australia</p>
+      <p style="margin-top: 10px;">
+        <a href="/subscribe">Subscribe</a>·
+        <a href="/privacy">Privacy Policy</a>·
+        <a href="/terms">Terms of Service</a>·
+        <a href="mailto:support@lunagroupapp.com.au">Support</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

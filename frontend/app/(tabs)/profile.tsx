@@ -482,6 +482,14 @@ export default function ProfileScreen() {
       onPress: () => router.push('/bottle-service'),
     },
     {
+      id: 'how-points',
+      icon: 'star',
+      title: 'How Points Work',
+      subtitle: '25% back — verified & fair',
+      color: colors.gold,
+      onPress: () => router.push('/how-points-work'),
+    },
+    {
       id: 'social-feed',
       icon: 'people',
       title: 'Social Feed',

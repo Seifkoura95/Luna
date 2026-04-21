@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Subscribe — Luna Group</title>
+  <meta name="description" content="Join Luna+ for priority entry, venue perks, and exclusive VIP access at Eclipse, Kenjin, JuJu's, Night Market, Ember & Ash and more." />
+  <meta property="og:title" content="Subscribe to Luna+" />
+  <meta property="og:description" content="Brisbane's premier nightlife membership." />
+  <meta property="og:image" content="https://lunagroupapp.com.au/luna-og.jpg" />
+  <meta property="og:url" content="https://lunagroupapp.com.au/subscribe" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <style>
+    :root {
+      --bg: #050709;
+      --surface: rgba(18, 18, 28, 0.72);
+      --border: rgba(255, 255, 255, 0.08);
+      --gold: #D4A832;
+      --gold-bright: #F5D77A;
+      --gold-dim: rgba(212, 168, 50, 0.35);
+      --text: #F0F0F5;
+      --muted: #8B8B95;
+      --accent: #2563EB;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    body {
+      background-image: radial-gradient(ellipse at 50% 30%, rgba(212, 168, 50, 0.12) 0%, transparent 50%),
+                        linear-gradient(180deg, #050709 0%, #000000 100%);
+      background-attachment: fixed;
+    }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 64px; }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-bright) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 18px; color: #000;
+    }
+    .logo-text { font-size: 14px; letter-spacing: 3px; font-weight: 800; }
+    nav a { color: var(--muted); text-decoration: none; margin-left: 24px; font-size: 13px; letter-spacing: 1px; }
+    nav a:hover { color: var(--text); }
+
+    .hero { text-align: center; margin-bottom: 56px; }
+    .eyebrow { font-size: 11px; letter-spacing: 4px; color: var(--gold); font-weight: 700; margin-bottom: 14px; }
+    h1 {
+      font-size: clamp(40px, 7vw, 72px);
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      line-height: 1;
+      margin-bottom: 18px;
+    }
+    h1 span { color: var(--gold); }
+    .sub { color: var(--muted); font-size: 17px; max-width: 580px; margin: 0 auto; line-height: 1.5; }
+
+    .tiers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 48px;
+    }
+    .tier {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      position: relative;
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+    .tier:hover { transform: translateY(-4px); border-color: var(--gold-dim); }
+    .tier.featured {
+      border-color: var(--gold-dim);
+      box-shadow: 0 0 0 1px rgba(212, 168, 50, 0.18), 0 24px 60px -24px rgba(212, 168, 50, 0.3);
+    }
+    .tier-badge {
+      position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+      color: #000; font-size: 10px; font-weight: 800; letter-spacing: 2px;
+      padding: 5px 14px; border-radius: 999px;
+    }
+    .tier-name { font-size: 11px; letter-spacing: 3px; color: var(--muted); font-weight: 700; margin-bottom: 10px; }
+    .tier-price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
+    .tier-price .amt { font-size: 48px; font-weight: 900; letter-spacing: -1.5px; }
+    .tier-price .per { font-size: 14px; color: var(--muted); }
+    .tier-desc { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+    .perks { list-style: none; margin: 0 0 28px 0; padding: 0; }
+    .perks li {
+      font-size: 13px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex; align-items: flex-start; gap: 10px; line-height: 1.45;
+    }
+    .perks li:last-child { border-bottom: none; }
+    .check {
+      display: inline-block; width: 16px; height: 16px; border-radius: 50%;
+      background: var(--gold); color: #000; font-size: 11px; font-weight: 900;
+      text-align: center; line-height: 16px; flex-shrink: 0; margin-top: 2px;
+    }
+
+    .btn {
+      display: block; width: 100%;
+      padding: 14px 20px;
+      border-radius: 12px;
+      text-align: center; text-decoration: none;
+      font-size: 13px; font-weight: 800; letter-spacing: 2px;
+      border: none; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+      color: #000;
+    }
+    .btn-gold:hover { filter: brightness(1.1); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--gold-dim); }
+
+    .footer {
+      margin-top: 72px;
+      padding: 32px 0 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 12px; }
+    .footer a:hover { color: var(--text); }
+
+    .fine { font-size: 11px; color: var(--muted); margin-top: 18px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <div class="logo-mark">✦</div>
+        <div class="logo-text">LUNA GROUP</div>
+      </div>
+      <nav>
+        <a href="/how-points-work">Points</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">MEMBERSHIP</div>
+      <h1>Join <span>Luna+</span></h1>
+      <p class="sub">Priority entry, complimentary drinks, reserved tables and exclusive events across Eclipse, Kenjin, JuJu's, Night Market and Ember &amp; Ash.</p>
+    </section>
+
+    <div class="tiers">
+
+      <!-- BRONZE (FREE) -->
+      <div class="tier">
+        <div class="tier-name">BRONZE · FREE</div>
+        <div class="tier-price">
+          <span class="amt">$0</span>
+          <span class="per">/ forever</span>
+        </div>
+        <div class="tier-desc">The starter tier. Earn Luna Points on every check-in.</div>
+        <ul class="perks">
+          <li><span class="check">✓</span> 10 Luna Points per $1 spent at any venue</li>
+          <li><span class="check">✓</span> Free entry on Wednesdays &amp; Thursdays</li>
+          <li><span class="check">✓</span> Birthday week bonus points (+500)</li>
+          <li><span class="check">✓</span> Event RSVPs + push alerts</li>
+        </ul>
+        <a href="#" class="btn btn-outline">Included by default</a>
+      </div>
+
+      <!-- SILVER -->
+      <div class="tier featured">
+        <div class="tier-badge">MOST POPULAR</div>
+        <div class="tier-name">SILVER</div>
+        <div class="tier-price">
+          <span class="amt">$29</span>
+          <span class="per">/ month</span>
+        </div>
+        <div class="tier-desc">Weekly regulars — priority queue + perks stack.</div>
+        <ul class="perks">
+          <li><span class="check">✓</span> Everything in Bronze</li>
+          <li><span class="check">✓</span> 2 free entries per month (any venue)</li>
+          <li><span class="check">✓</span> 1 complimentary drink per visit</li>
+          <li><span class="check">✓</span> 2× Luna Points multiplier (20 pts per $1)</li>
+          <li><span class="check">✓</span> Priority queue at Eclipse, Kenjin, After Dark</li>
+          <li><span class="check">✓</span> Silver tier exclusive events</li>
+        </ul>
+        <!-- TODO: paste your Stripe Payment Link for Silver here -->
+        <a href="PASTE_STRIPE_PAYMENT_LINK_SILVER_HERE" class="btn btn-gold">SUBSCRIBE — $29/MO</a>
+      </div>
+
+      <!-- GOLD -->
+      <div class="tier">
+        <div class="tier-name">GOLD</div>
+        <div class="tier-price">
+          <span class="amt">$79</span>
+          <span class="per">/ month</span>
+        </div>
+        <div class="tier-desc">VIPs — reserved tables, host assigned, no queues.</div>
+        <ul class="perks">
+          <li><span class="check">✓</span> Everything in Silver</li>
+          <li><span class="check">✓</span> 5 free entries per month</li>
+          <li><span class="check">✓</span> Free Luna Wallet upgrades (Apple/Google)</li>
+          <li><span class="check">✓</span> 3× Luna Points multiplier (30 pts per $1)</li>
+          <li><span class="check">✓</span> Dedicated VIP host at every visit</li>
+          <li><span class="check">✓</span> 20% off bottle service deposits</li>
+          <li><span class="check">✓</span> Annual Luna Gold gift box</li>
+        </ul>
+        <!-- TODO: paste your Stripe Payment Link for Gold here -->
+        <a href="PASTE_STRIPE_PAYMENT_LINK_GOLD_HERE" class="btn btn-gold">SUBSCRIBE — $79/MO</a>
+      </div>
+
+    </div>
+
+    <p class="fine">
+      Luna+ is a recurring monthly subscription. You can cancel anytime from your Stripe customer portal (link in the confirmation email). No refunds for partial months. Benefits apply from the first day of each billing cycle. Luna Group reserves the right to modify perks with 30 days notice.
+    </p>
+
+    <footer class="footer">
+      <p>© 2026 Luna Group Hospitality Pty Ltd · Brisbane, Australia</p>
+      <p style="margin-top: 10px;">
+        <a href="/privacy">Privacy Policy</a>·
+        <a href="/terms">Terms of Service</a>·
+        <a href="mailto:support@lunagroupapp.com.au">Support</a>
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // Simple tap analytics (optional — swap with plausible/umami if you want)
+    document.querySelectorAll('.btn-gold').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        if (btn.href.includes('PASTE_')) {
+          e.preventDefault();
+          alert('Stripe Payment Link not yet configured. See README.md.');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

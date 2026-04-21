@@ -69,6 +69,7 @@ export default function RootLayout() {
         <Stack.Screen name="subscriptions" />
         <Stack.Screen name="bottle-service" />
         <Stack.Screen name="venue-menu" />
+        <Stack.Screen name="how-points-work" />
         <Stack.Screen name="milestones" />
         <Stack.Screen name="missions" />
         <Stack.Screen name="safety" />
