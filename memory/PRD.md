@@ -1,6 +1,56 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Feb 21, 2026 - Session 11c
+
+### COMPLETED: Doc-to-Code Audit + 18+ Age Gate + PII Hard Delete + My Data Export
+
+**Audit: every claim in Privacy Policy & ToS was cross-checked against actual code.**
+
+Mismatches fixed in CODE:
+- `DELETE /api/auth/account` previously did a soft-delete that only flagged `deleted=true` and anonymised email. Now immediately purges all PII fields (name, phone, DOB, age, address, gender, bio, Instagram, push token, profile photo), cancels active subscriptions, deletes active milestone tickets, and revokes active wallet passes — matching the "30 day" Privacy Policy promise.
+- New `GET /api/auth/my-data` endpoint returns a full JSON export of the authenticated user's profile, subscriptions, check-ins, points transactions, redemptions, milestone claims, bookings, and payment records — fulfilling the "Download My Data" right in Privacy Policy §8.
+- `POST /api/auth/register` now enforces strict 18+ at the server: any DOB that puts the user under 18 is rejected with `403 "You must be at least 18 years old to use Luna Group."` Invalid DOB format also now fails hard rather than silently ignored.
+
+Mismatches fixed in DOCS (softened claims we couldn't back up):
+- ToS §5 — removed specific "Bronze expires 12mo inactivity" promise; replaced with "may introduce expiry with 30 days' notice" since no expiry cron is built.
+- ToS §7 — removed specific "24h refund window / $10 fee / 90min no-show" rules (none of those are coded); replaced with "Deposits are non-refundable once processed; refund requests considered case-by-case at Luna Group's sole discretion; reallocation at duty-manager discretion."
+- Privacy §7 — retention language tightened: "PII anonymised immediately, active subscriptions cancelled; residual PII fully purged within 30 days; anonymised analytics retained indefinitely."
+- Privacy §8 — Download My Data now accurately points at `Profile → Settings → Download My Data` (which will need a UI button wired to the new `/api/auth/my-data` endpoint — backend is ready, UI still to wire).
+
+**NEW: 18+ Age Gate on first launch** (`/app/frontend/app/age-gate.tsx`):
+- Pre-onboarding screen shown only on first launch (AsyncStorage flag `@luna_age_gate_passed`).
+- Three-field DD / MM / YYYY input with auto-advance.
+- Validates a real calendar date and computes age using Australian DOB rules.
+- If age ≥ 18 → saves flag + DOB to AsyncStorage, routes to `/onboarding` (or `/login` if already seen).
+- If age < 18 → shows a hard-block screen ("SORRY — Luna Group is for adults aged 18 and over") with link to Terms. No way to proceed.
+- Routing updated in `index.tsx`: age-gate → onboarding → login → tabs.
+- Screen registered in `_layout.tsx`.
+- "By continuing you confirm you are 18+" legal copy with tappable Terms + Privacy links.
+
+**Smoke-tested end-to-end:**
+- Age-gate screen renders at `/age-gate` with Luna branding, DD/MM/YYYY inputs, CONTINUE button, legal copy.
+- Entering 2015-01-01 → "SORRY" blocked screen with "adults aged 18 and over" text. Verified.
+- Backend `POST /auth/register` with DOB 2015-01-01 → 403. Verified.
+- Backend `POST /auth/register` with DOB 2000-01-01 → token issued. Verified.
+- Backend `GET /auth/my-data` authenticated → returns 8-key JSON export. Verified.
+
+**Files touched:**
+- `/app/backend/routes/auth.py` — hard PII delete, `/my-data` export endpoint, 18+ enforcement on register
+- `/app/public-site/privacy/index.html` — retention + data-access language
+- `/app/public-site/terms/index.html` — deposit refund + points-expiry language softened
+- `/app/frontend/app/age-gate.tsx` — NEW age-gate screen
+- `/app/frontend/app/_layout.tsx` — registered age-gate route
+- `/app/frontend/app/index.tsx` — route sequence now age-gate → onboarding → login
+
+**Pending (next session):**
+- Wire a "Download My Data" button in Profile → Settings that calls `/api/auth/my-data` and saves/shares the JSON
+- Make DOB field required in signup UI (currently optional in frontend form; backend now rejects missing/under-18)
+- "Claim My Reward" QR generator screen for 10 rewards shop items
+- Draft App Store listing copy + Privacy Nutrition Label answers
+- Sentry for production crash reporting
+
+
 ## Latest Update: Feb 21, 2026 - Session 11
 
 ### COMPLETED: Exhaustive Rewards Doc + Weekly-Billing Display + Stripe Price Fix

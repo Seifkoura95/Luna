@@ -7,6 +7,7 @@ import { useAuthStore } from '../src/store/authStore';
 import { api } from '../src/utils/api';
 import { colors } from '../src/theme/colors';
 import { ONBOARDING_KEY } from './onboarding';
+import { AGE_GATE_KEY } from './age-gate';
 
 const LUNA_LOGO = 'https://customer-assets.emergentagent.com/job_c826baa4-6640-40ce-9e0d-38132d9944fc/artifacts/2k76js5m_luna-group-logo-2.webp';
 
@@ -27,20 +28,28 @@ export default function Index() {
       return;
     }
 
-    // Check onboarding flag and route first-time users to onboarding
+    // Route sequence for unauth'd users: age-gate -> onboarding -> login
     let cancelled = false;
     const routeUnauthed = async () => {
-      let completed: string | null = null;
+      let agePassed: string | null = null;
+      let seenOnboarding: string | null = null;
       try {
-        completed = await AsyncStorage.getItem(ONBOARDING_KEY);
+        agePassed = await AsyncStorage.getItem(AGE_GATE_KEY);
+        seenOnboarding = await AsyncStorage.getItem(ONBOARDING_KEY);
       } catch {
-        // fall through and show login
+        // fall through and show login if storage broken
       }
       if (cancelled) return;
       // brief splash
       setTimeout(() => {
         if (cancelled) return;
-        router.replace(completed ? '/login' : '/onboarding');
+        if (!agePassed) {
+          router.replace('/age-gate');
+        } else if (!seenOnboarding) {
+          router.replace('/onboarding');
+        } else {
+          router.replace('/login');
+        }
       }, 1200);
     };
     routeUnauthed();

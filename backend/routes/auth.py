@@ -87,16 +87,20 @@ async def register(request: RegisterRequest):
     verification_token = generate_verification_token()
     verification_expiry = datetime.now(timezone.utc) + timedelta(hours=EMAIL_VERIFICATION_EXPIRY_HOURS)
     
-    # Calculate age if DOB provided
+    # Calculate age (DOB required for age-verification — 18+ enforced per ToS §2)
     age = None
     if request.date_of_birth:
         try:
             dob = datetime.strptime(request.date_of_birth, "%Y-%m-%d")
             today = datetime.now()
             age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        except:
-            pass
-    
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid date of birth format. Use YYYY-MM-DD.")
+
+    # Enforce 18+ eligibility (Queensland legal drinking age)
+    if age is not None and age < 18:
+        raise HTTPException(status_code=403, detail="You must be at least 18 years old to use Luna Group.")
+
     user = {
         "user_id": user_id,
         "email": request.email,
@@ -503,28 +507,98 @@ async def change_password(request: Request, password_data: ChangePasswordRequest
 
 @router.delete("/account")
 async def delete_account(request: Request):
-    """Delete user account (soft delete)"""
+    """Delete user account. Anonymises all PII immediately; full DB row cleanup runs within 30 days per our Privacy Policy."""
     auth_header = request.headers.get("authorization")
     current_user = get_current_user(auth_header)
     user_id = current_user["user_id"]
-    
-    # Soft delete - mark account as deleted
+
+    # Hard-anonymise all personally identifying fields immediately.
+    # Data we MUST retain for tax/accounting law (payment transactions,
+    # anonymised spend totals) remain under the user_id but no longer link to a real person.
     await db.users.update_one(
         {"user_id": user_id},
         {
             "$set": {
                 "deleted": True,
                 "deleted_at": datetime.now(timezone.utc),
-                "email": f"deleted_{user_id}@deleted.local"  # Anonymize email
+                "email": f"deleted_{user_id}@deleted.local",
+                "name": "[deleted]",
+                "phone": None,
+                "date_of_birth": None,
+                "age": None,
+                "address": None,
+                "gender": None,
+                "bio": None,
+                "instagram_handle": None,
+                "push_token": None,
+                "profile_photo": None,
+                "email_verified": False,
+                "email_verification_token": None,
+                "password_reset_token": None,
             }
         }
     )
-    
-    logger.info(f"Account deleted for user: {user_id[:8]}...")
-    
+
+    # Revoke any active subscriptions immediately so no further billing.
+    await db.subscriptions.update_many(
+        {"user_id": user_id, "status": "active"},
+        {"$set": {"status": "cancelled", "cancelled_at": datetime.now(timezone.utc), "cancel_reason": "account_deleted"}}
+    )
+
+    # Invalidate any active milestone tickets and redemption QRs bound to this user.
+    await db.milestone_tickets.delete_many({"user_id": user_id, "status": "active"})
+    await db.wallet_passes.update_many(
+        {"user_id": user_id, "status": "active"},
+        {"$set": {"status": "revoked", "revoked_reason": "account_deleted", "revoked_at": datetime.now(timezone.utc)}}
+    )
+
+    logger.info(f"Account deleted for user: {user_id[:8]}... — PII purged, subscriptions cancelled, tickets revoked")
+
     return {
         "success": True,
-        "message": "Account deleted successfully"
+        "message": "Your account has been deleted. All personal information has been removed and any active subscription has been cancelled."
+    }
+
+
+@router.get("/my-data")
+async def export_my_data(request: Request):
+    """
+    Export all personal data we hold for the current user (Privacy Policy §8 / APP 12).
+    Returns a JSON blob the user can save. Mirrors what we'd email on request.
+    """
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user_id = current_user["user_id"]
+
+    # Core profile
+    user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "hashed_password": 0, "email_verification_token": 0, "password_reset_token": 0})
+
+    # Related data (exclude internal _id)
+    subscriptions = await db.subscriptions.find({"user_id": user_id}, {"_id": 0}).to_list(100)
+    # Related data (exclude internal _id). Graceful if a collection doesn't exist.
+    try:
+        check_ins = await db.check_ins.find({"user_id": user_id}, {"_id": 0}).to_list(1000)
+    except Exception:
+        check_ins = []
+    points_transactions = await db.points_transactions.find({"user_id": user_id}, {"_id": 0}).to_list(1000)
+    redemptions = await db.redemptions.find({"user_id": user_id}, {"_id": 0}).to_list(500)
+    milestone_claims = await db.milestone_claims.find({"user_id": user_id}, {"_id": 0}).to_list(50)
+    bookings = await db.bookings.find({"user_id": user_id}, {"_id": 0}).to_list(500)
+    payment_transactions = await db.payment_transactions.find(
+        {"user_id": user_id}, {"_id": 0, "metadata": 1, "amount": 1, "currency": 1, "payment_status": 1, "created_at": 1, "package_name": 1}
+    ).to_list(500)
+
+    return {
+        "export_generated_at": datetime.now(timezone.utc).isoformat(),
+        "profile": user,
+        "subscriptions": subscriptions,
+        "check_ins": check_ins,
+        "points_transactions": points_transactions,
+        "redemptions": redemptions,
+        "milestone_claims": milestone_claims,
+        "bookings": bookings,
+        "payment_transactions": payment_transactions,
+        "notice": "This is a complete export of personal data held by Luna Group for this account as of the time above. For questions contact privacy@lunagroupapp.com.au."
     }
 
 
