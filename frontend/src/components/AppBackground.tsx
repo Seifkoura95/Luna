@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { StyleSheet, View, Dimensions, ImageBackground } from 'react-native';
+import { StyleSheet, View, Dimensions, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -157,13 +157,17 @@ export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
       {/* Base pure black — matches moon image background */}
       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000000' }]} />
 
-      {/* Moon image — fixed full-bleed, subtle so content stays legible */}
-      <ImageBackground
-        source={MOON_BG}
-        resizeMode="cover"
-        style={StyleSheet.absoluteFillObject}
-        imageStyle={styles.moonImage}
-      />
+      {/* Moon image — wrapped in a centred flex container so it sits dead-centre
+          on every viewport. `resizeMode: contain` preserves the moon's aspect,
+          fits within the wrapper, and the wrapper's alignItems/justifyContent
+          centres it both axes. */}
+      <View style={styles.moonWrapper} pointerEvents="none">
+        <Image
+          source={MOON_BG}
+          resizeMode="contain"
+          style={styles.moonImage}
+        />
+      </View>
 
       {/* Soft darkening overlay for content contrast */}
       <LinearGradient
@@ -216,6 +220,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   moonImage: {
+    width: '100%',
+    height: '100%',
     opacity: 0.85,
   },
   particlesContainer: {
