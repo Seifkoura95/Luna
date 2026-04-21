@@ -85,6 +85,24 @@ export const api = {
       maintenance_message: string | null;
     }>(`/api/config/public`, { auth: false }),
 
+  getAnnouncements: (inTicker?: boolean) =>
+    apiFetch<{
+      announcements: Array<{
+        id: string;
+        category: string;
+        title: string;
+        body?: string;
+        date?: string;
+        color?: string;
+        link_url?: string;
+        active: boolean;
+        show_in_ticker: boolean;
+        sort_order: number;
+      }>;
+      total: number;
+      source: string;
+    }>(`/api/config/announcements${inTicker !== undefined ? `?in_ticker=${inTicker}` : ''}`, { auth: false }),
+
   // Venues
   getVenues: (region?: string) => 
     apiFetch<any[]>(`/api/venues${region ? `?region=${region}` : ''}`, { auth: false }),

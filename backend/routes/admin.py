@@ -1020,8 +1020,10 @@ class VenueOverrideUpdate(BaseModel):
     contact: Optional[dict] = None
     social: Optional[dict] = None
     accent_color: Optional[str] = None
-    status: Optional[str] = None  # open/closed/coming_soon
+    status: Optional[str] = None
     is_hidden: Optional[bool] = None
+    sevenrooms_url: Optional[str] = None  # VIP table booking link
+    bottle_menu_url: Optional[str] = None  # Override bottle service menu link
 
 
 @router.get("/venues")
@@ -1120,6 +1122,34 @@ async def get_public_config():
         "maintenance_mode": cfg.get("maintenance_mode", False),
         "maintenance_message": cfg.get("maintenance_message"),
     }
+
+
+@public_router.get("/announcements")
+async def get_public_announcements(in_ticker: Optional[bool] = None):
+    """Public read of active announcements. Used by the home-screen ticker + What's New cards."""
+    q = {"active": True}
+    if in_ticker is not None:
+        q["show_in_ticker"] = in_ticker
+    items = await db.announcements.find(q, {"_id": 0}).sort(
+        [("sort_order", 1), ("created_at", -1)]
+    ).to_list(200)
+
+    # If empty, return sensible defaults so the UI isn't blank on first launch
+    if not items:
+        defaults = [
+            {"id": "seed_1", "category": "APP UPDATE", "title": "Eclipse 2nd Birthday — Founders App Launch This Saturday",
+             "date": "22 Feb", "active": True, "show_in_ticker": True, "color": "#FFD700", "sort_order": 0},
+            {"id": "seed_2", "category": "ARTIST ANNOUNCED", "title": "Venjent (UK) returning May 15",
+             "date": "Mar", "active": True, "show_in_ticker": True, "color": "#E31837", "sort_order": 1},
+            {"id": "seed_3", "category": "NEWS", "title": "Luna Rewards now live — earn points on every visit",
+             "date": "Feb", "active": True, "show_in_ticker": True, "color": "#60A5FA", "sort_order": 2},
+            {"id": "seed_4", "category": "ARTIST ANNOUNCED", "title": "Denzel Curry coming soon",
+             "date": "TBA", "active": True, "show_in_ticker": True, "color": "#E31837", "sort_order": 3},
+        ]
+        if in_ticker:
+            return {"announcements": [d for d in defaults if d["show_in_ticker"]], "total": 4, "source": "default"}
+        return {"announcements": defaults, "total": 4, "source": "default"}
+    return {"announcements": items, "total": len(items), "source": "custom"}
 
 
 
@@ -1360,3 +1390,81 @@ async def get_user_points_history_admin(request: Request, user_id: str, limit: i
     await require_admin(request)
     txs = await db.points_transactions.find({"user_id": user_id}, {"_id": 0}).sort("created_at", -1).limit(min(limit, 500)).to_list(500)
     return {"transactions": txs, "total": len(txs)}
+
+
+# ====== ANNOUNCEMENTS CRUD (for the home-screen ticker + What's New cards) ======
+
+ANNOUNCEMENT_CATEGORIES = {"APP UPDATE", "ARTIST ANNOUNCED", "NEW VENUE", "EVENT", "NEWS", "PROMO"}
+
+
+class AnnouncementCreate(BaseModel):
+    category: str
+    title: str
+    body: Optional[str] = None
+    date: Optional[str] = None  # ISO date display string
+    color: Optional[str] = None  # pill color
+    link_url: Optional[str] = None
+    active: bool = True
+    show_in_ticker: bool = False  # if True, included in the marquee strip
+    sort_order: int = 0
+
+
+class AnnouncementUpdate(BaseModel):
+    category: Optional[str] = None
+    title: Optional[str] = None
+    body: Optional[str] = None
+    date: Optional[str] = None
+    color: Optional[str] = None
+    link_url: Optional[str] = None
+    active: Optional[bool] = None
+    show_in_ticker: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
+@router.get("/announcements")
+async def list_announcements_admin(request: Request, active: Optional[bool] = None):
+    await require_admin(request)
+    q: dict = {}
+    if active is not None:
+        q["active"] = active
+    items = await db.announcements.find(q, {"_id": 0}).sort([("sort_order", 1), ("created_at", -1)]).to_list(500)
+    return {"announcements": items, "total": len(items)}
+
+
+@router.post("/announcements")
+async def create_announcement(request: Request, body: AnnouncementCreate):
+    admin = await require_admin(request)
+    data = body.dict()
+    if data["category"] not in ANNOUNCEMENT_CATEGORIES:
+        # Allow custom categories but log
+        pass
+    now_iso = datetime.now(timezone.utc).isoformat()
+    data["id"] = f"ann_{uuid.uuid4().hex[:10]}"
+    data["created_at"] = now_iso
+    data["updated_at"] = now_iso
+    data["created_by"] = admin.get("user_id", "luna_hub")
+    await db.announcements.insert_one(data)
+    return {"success": True, "announcement": {k: v for k, v in data.items() if k != "_id"}}
+
+
+@router.put("/announcements/{announcement_id}")
+async def update_announcement(request: Request, announcement_id: str, body: AnnouncementUpdate):
+    await require_admin(request)
+    updates = {k: v for k, v in body.dict().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.announcements.update_one({"id": announcement_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    saved = await db.announcements.find_one({"id": announcement_id}, {"_id": 0})
+    return {"success": True, "announcement": saved}
+
+
+@router.delete("/announcements/{announcement_id}")
+async def delete_announcement(request: Request, announcement_id: str):
+    await require_admin(request)
+    result = await db.announcements.delete_one({"id": announcement_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    return {"success": True, "message": f"Announcement {announcement_id} deleted"}

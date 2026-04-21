@@ -1,6 +1,61 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Feb 22, 2026 - Session 16 (Home Screen Full Redesign)
+
+### COMPLETED: Editorial home screen redesign — Live Nation × luxury nightclub
+
+**Scope:** Full replacement of `/app/frontend/app/(tabs)/index.tsx` between the animated moon background (kept) and the bottom tab bar (kept). 8 distinct sections with varied layouts.
+
+**Sections implemented:**
+1. **Hero swipeable pager (55% screen height)** — full-width Eventfinda poster, gold FEATURED pill, gold venue caption, Chivo-Black 900-weight event title, date line, BUY TICKETS (Luna Red #E31837) + LEARN MORE (ghost border) CTAs, gold-accent page indicator dots.
+2. **News ticker (`db.announcements` → `/api/config/announcements?in_ticker=true`)** — height 36, Luna Red dot, gold "NEWS" label, horizontal auto-scrolling marquee of all active ticker items, loops forever (duration auto-scaled to text width).
+3. **For You** — 1 big horizontal card (image-dominant, AI PICK pill) + horizontal scroll of 4 smaller half-width cards.
+4. **Live Auctions** — pulsing red dot + "SEE ALL" red link. 70%-width commerce cards with LIVE red badge, dark image, bottom row "CURRENT BID" + animated number-tick bid + gold up-arrow.
+5. **VIP & Bottle Service banner** — full-width dark-red gradient (#1A0000 → #0A0000) with radial red glow, gold crown icon + "VIP BOOTHS from $95/night", BOTTLES pill + BOOK NOW red pill. BOOK NOW now tries `venue.sevenrooms_url` first, falls back to venue detail. BOTTLES → `/venue-menu?venue_id=eclipse`.
+6. **Our Venues** — 75%-width wide rectangular tiles with full-bleed image, colored left-edge accent (red for clubs/bars, gold for restaurants), bottom-left type caption + venue name in white Chivo-Black, arrow button in a translucent white circle bottom-right.
+7. **Trending this week** — ranked list (NOT a grid) with oversized semi-transparent watermark numerals ("01", "02") behind each row, 60×60 thumbnail, title + venue + gold date.
+8. **What's New** — editorial text-only cards (no images), dark `#1A1A1A` surface, colored category pill top-left (per-record color), bold headline, muted date bottom.
+
+**Global design rules applied:**
+- Luna Gold #FFD700, Luna Red #E31837, alternating surfaces #050505/#0F0F0F/#1A1A1A
+- All section headers: 13sp, 900 weight, letter-spacing 2, gold
+- Card radius: 14dp throughout
+- Revenue placements (Live Auctions, VIP Banner, Bottle Service) all above second scroll
+- Moon background preserved — bleeds through between sections
+- Bottom nav untouched
+- Pulsing red dot on Live Auctions section, animated bid-value ticker on auction cards
+
+**Backend additions:**
+- `db.announcements` collection with full CRUD under `/api/admin/announcements` (hub-key or admin JWT)
+- `GET /api/config/announcements?in_ticker=true|false` public endpoint — returns sensible defaults if collection is empty
+- `admin.py VenueOverrideUpdate` now accepts `sevenrooms_url` and `bottle_menu_url` — Lovable can wire each venue's VIP booking link and bottle menu override from the portal
+- New `api.ts` method: `api.getAnnouncements(inTicker?)`
+
+**Data wiring:**
+- Hero + For You + Trending pull from `api.getEventsFeed(30)` which returns `{tonight, tomorrow, featured, upcoming}` — sections merge & dedupe
+- Auctions: `api.getAuctions(undefined, 'active')`
+- Venues: `api.getVenues()` (filters `is_hidden`)
+- Announcements + ticker: both from `/api/config/announcements`
+- Field mapping handles both Eventfinda (`image`, `url`, `date`+`time`, `datetime_start`, `venue_name`) and our internal API (`image_url`, `title`, etc.)
+
+**Files touched this session:**
+- `/app/frontend/app/(tabs)/index.tsx` — full rewrite (~700 lines)
+- `/app/frontend/src/utils/api.ts` — `getAnnouncements`
+- `/app/backend/routes/admin.py` — Announcements CRUD + sevenrooms_url in venue model + public `/config/announcements`
+
+**Curl tests (all passing):**
+- `POST /api/admin/announcements` — creates rows
+- `GET /api/config/announcements?in_ticker=true` — filters correctly, returns `source: custom` once rows exist, `source: default` when empty
+- Ticker returning 4 seed rows as expected
+
+**Known / Pending:**
+- 🟡 (P1) On-device Expo Go verification — web preview showed auction/venue/trending sections without populated data even though API returned 200; suspect bundler cache or auth-header timing on web. On iOS Expo Go it should hydrate correctly since real events + venues + auctions all return 200.
+- 🟢 (P2) Chivo Black font not yet loaded — using `fontWeight: '900'` as system substitute. Wire `@expo-google-fonts/chivo` + `@expo-google-fonts/dm-sans` when going to App Store.
+- 🟢 (P2) Fade-in-on-section-enter animation noted in spec but not implemented — keep for polish pass
+- 🟢 (P2) Admin-side UI for announcements CRUD (currently Lovable-only)
+
+
 ## Latest Update: Feb 22, 2026 - Session 15 (Glass Cards + App Store Pack + Staff Gifting)
 
 ### COMPLETED
