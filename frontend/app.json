@@ -48,6 +48,9 @@
           "twitter"
         ]
       },
+      "associatedDomains": [
+        "applinks:lunagroup.com.au"
+      ],
       "entitlements": {
         "aps-environment": "production"
       }
