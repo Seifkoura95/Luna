@@ -771,8 +771,8 @@ class AppConfigUpdate(BaseModel):
 DEFAULT_APP_CONFIG = {
     "status_pill": {
         "open_text": "LIVE NOW",
-        "closed_text": "Opens Tonight at 8PM",
-        "opening_soon_text": "Opening Soon",
+        "closed_text": "Your Premium Nightlife Hub",
+        "opening_soon_text": "Your Premium Nightlife Hub",
         "force_mode": None,
         "custom_message": None,
     },

@@ -309,7 +309,7 @@ export default function HomeScreen() {
                 <PulsingFeaturedPill />
                 <View style={styles.heroContent}>
                   <Text style={styles.heroVenue}>{featuredEvent.venue_name || featuredEvent.location}</Text>
-                  <Text style={styles.heroTitle}>{featuredEvent.title}</Text>
+                  <Text style={styles.heroTitle} numberOfLines={2}>{featuredEvent.title}</Text>
                   <Text style={styles.heroMeta}>{formatDate(featuredEvent)} · {getTime(featuredEvent)}</Text>
                 </View>
               </LinearGradient>
@@ -349,8 +349,7 @@ export default function HomeScreen() {
                   >
                     {event.ai_recommended && (
                       <View style={styles.aiPickBadge}>
-                        <Icon name="sparkles" size={10} color={colors.accent} />
-                        <Text style={styles.aiPickBadgeText}>AI Pick</Text>
+                        <Text style={styles.aiPickBadgeText}>AI PICK</Text>
                       </View>
                     )}
                     <Text style={styles.tonightPickEventTitle} numberOfLines={2}>
@@ -606,7 +605,7 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   heroCardAnimated: {
-    height: 340,
+    height: 420,
     borderRadius: 20,
     overflow: 'hidden',
   },
@@ -620,6 +619,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     padding: 24,
+    paddingTop: 56,
   },
   heroBadge: {
     position: 'absolute',
