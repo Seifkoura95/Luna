@@ -138,22 +138,26 @@ async def get_milestones(request: Request):
         mid = t["milestone_id"]
         ticket_counts[mid] = ticket_counts.get(mid, 0) + 1
 
+    # Load custom milestones from DB if present; else fall back to hardcoded list
+    custom = await db.milestones_custom.find({}, {"_id": 0}).sort("points_required", 1).to_list(100)
+    source = custom if custom else MILESTONES
+
     result = []
-    for m in MILESTONES:
+    for m in source:
         unlocked = pts >= m["points_required"]
         claimed = m["id"] in claimed_ids
         active_tickets = ticket_counts.get(m["id"], 0)
-        total_rewards = len(m["rewards"])
+        total_rewards = len(m.get("rewards", []))
 
         result.append({
             "id": m["id"],
             "title": m["title"],
             "points_required": m["points_required"],
-            "icon": m["icon"],
-            "color": m["color"],
-            "description": m["description"],
+            "icon": m.get("icon", "trophy"),
+            "color": m.get("color", "#D4A832"),
+            "description": m.get("description", ""),
             "total_rewards": total_rewards,
-            "reward_summary": _reward_summary(m["rewards"]),
+            "reward_summary": _reward_summary(m.get("rewards", [])),
             "unlocked": unlocked,
             "claimed": claimed,
             "active_tickets": active_tickets,

@@ -1,0 +1,34 @@
+{
+  "summary": "Iteration 34 (Session 7): Backend-only test pass for the external Lovable 'Luna Hub' admin portal. Covered public /api/config/public, admin /api/admin/config CRUD + auth (hub-key and JWT), milestones CRUD with default→custom fallback and user-facing surfacing, bottle image overrides merged into /api/bookings/bottle-menu/{venue_id}, venue overrides (tagline/status/is_hidden) merged into GET /api/venues + /api/venues/{id}, plus regression for existing admin endpoints (missions/rewards/boosts/auctions) and public endpoints. 31/31 tests passed. Cleanup ran successfully — app_config reset to defaults, bottle_overrides cleared, venue_overrides cleared, milestones_custom empty (source='default', total=6).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST/PUT /api/admin/milestones", "issue": "On first write the endpoint auto-seeds db.milestones_custom with the 6 hardcoded defaults, then applies the caller's upsert. This means any subsequent DELETE only removes the custom id — the 6 seeded defaults remain as DB rows. Functionally equivalent (list returns the same 6 defaults, just now sourced from DB), but noteworthy: once any admin edit happens, the collection is never empty again and the 'source' flag flips to 'custom' permanently. Cleaning up requires deleting every default id explicitly."},
+      {"endpoint": "GET /api/admin/bottles", "issue": "Total returned is 28 (not 48 as the spec text claims). Eclipse alone has 20 bottles; other 8 venues share the remaining 8. If the spec of 48 is correct, BOTTLE_MENUS is under-populated for non-Eclipse venues. Not a regression — test asserted >=10 and passed — but flag for product review."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_luna_hub_admin_crud.py",
+    "/app/test_reports/pytest/pytest_luna_hub_admin_crud.xml"
+  ],
+  "action_items": [
+    "(optional) Verify with product whether GET /api/admin/bottles is expected to return 48 bottles across all 9 venues — current total is 28.",
+    "(optional) Consider not auto-seeding defaults into db.milestones_custom on first write — instead layer overrides on top of defaults so the admin can cleanly reset to 'pure default' without deleting every row."
+  ],
+  "critical_code_review_comments": [
+    "routes/admin.py is now 1122 lines and covers ~10 distinct domains (missions/rewards/boosts/auctions/config/milestones/bottles/venues/campaigns/seed). Recommend splitting into per-domain modules (admin/config.py, admin/milestones.py, etc.) — exceeds the 700-line file-size guideline.",
+    "require_admin() re-imports `os` inside every call. Minor perf nit — move to module-level import.",
+    "PUT /api/admin/config uses body.model_dump(exclude_unset=True) to support null-clearing, but nested StatusPillUpdate is dumped with its own defaults (not exclude_unset) inside the outer dump. Test proved it works for the explicit-null-clear case because the caller re-sends {custom_message: null}; however sending {status_pill: {closed_text: 'x'}} will also include ALL other status_pill keys as null in the dump unless Pydantic v2 recursively honours exclude_unset. Verified empirically it does (open_text stays 'LIVE NOW'), but worth adding a unit test if Pydantic is ever upgraded.",
+    "/api/admin/bottles merges overrides into BOTTLE_MENUS at runtime — no pagination or streaming. Fine for 28–48 items today, but any future catalog growth should paginate.",
+    "/api/admin/venues/{id} with is_hidden=true silently removes venue from public GET /api/venues list but still returns it on GET /api/venues/{id}. Intentional (admin deep-link / portal preview) and matches review spec, but worth documenting."
+  ],
+  "updated_files": ["/app/backend/tests/test_luna_hub_admin_crud.py", "/app/test_reports/iteration_34.json"],
+  "success_rate": {"backend": "100% (31/31)", "frontend": "N/A (frontend testing skipped per request)"},
+  "test_credentials": "Hub key header X-Luna-Hub-Key=luna_hub_live_682fbaaa19a6a4594f58618b803531ee6fad8016. User JWT via POST /api/auth/login {email: luna@test.com, password: test123}.",
+  "seed_data_creation": "Test run created and then deleted: 1 test milestone (test_milestone), 1 bottle override (ecl_belvedere_700), 1 venue override (eclipse), 1 app_config doc. Session-scoped teardown fixture clears all. Verified post-run: /api/config/public is at defaults, /api/admin/milestones source=default total=6, no bottle or venue overrides remaining.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 31 tests in /app/backend/tests/test_luna_hub_admin_crud.py pass. The file is idempotent — session fixture cleans up. If a future session leaves milestones_custom populated, run: for mid in vip_status luna_elite supernova newbie rising_star legend; do curl -X DELETE -H 'X-Luna-Hub-Key: luna_hub_live_...' $BASE/api/admin/milestones/$mid; done. Eclipse is the only venue with a full bottle catalog (20 items). Public endpoints /api/missions and /api/rewards return 200 (not auth-protected).",
+  "rca of the issue": "No bugs found — all 31 acceptance checks (6 public-config + auth, 2 app-config PUT, 6 milestones CRUD, 5 bottle overrides, 6 venue overrides, 4 admin regression, 4 public regression) passed on first run against the live preview URL https://birthday-rewards-1.preview.emergentagent.com."
+}

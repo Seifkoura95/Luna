@@ -111,12 +111,23 @@ BOTTLE_MENUS = {
 
 @router.get("/bottle-menu/{venue_id}")
 async def get_bottle_menu(venue_id: str):
-    """Get bottle service menu for a venue"""
+    """Get bottle service menu for a venue. Merges admin image overrides from db.bottle_overrides."""
     if venue_id not in LUNA_VENUES:
         raise HTTPException(status_code=404, detail="Venue not found")
 
-    menu = BOTTLE_MENUS.get(venue_id, [])
+    raw_menu = BOTTLE_MENUS.get(venue_id, [])
     venue = LUNA_VENUES[venue_id]
+
+    # Pull image overrides set by Lovable Hub
+    overrides_docs = await db.bottle_overrides.find({}, {"_id": 0}).to_list(500)
+    override_map = {o["bottle_id"]: o["image_url"] for o in overrides_docs}
+
+    menu = []
+    for item in raw_menu:
+        it = item.copy()
+        if it["id"] in override_map:
+            it["image_url"] = override_map[it["id"]]
+        menu.append(it)
 
     # Group by category
     categories = {}

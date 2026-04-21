@@ -746,3 +746,377 @@ async def get_geofence_analytics(request: Request):
             s["last_trigger"] = s["last_trigger"].isoformat()
     
     return {"stats": stats, "total_triggers": total}
+
+
+
+# ====== APP CONFIG (Home page status pill + dynamic text) ======
+# Collection: db.app_config  — stores a single doc per `key`.
+# Lovable Hub writes; the mobile app reads via the public endpoint.
+
+class StatusPillUpdate(BaseModel):
+    open_text: Optional[str] = None       # shown when venue open (default: "LIVE NOW")
+    closed_text: Optional[str] = None     # shown when closed (default: "Opens Tonight at 8PM")
+    opening_soon_text: Optional[str] = None  # shown between 5-8 PM (default: "Opening Soon")
+    force_mode: Optional[str] = None      # optional override: "open" | "closed" | "opening_soon" | None (auto)
+    custom_message: Optional[str] = None  # if set, replaces the auto message entirely
+
+
+class AppConfigUpdate(BaseModel):
+    status_pill: Optional[StatusPillUpdate] = None
+    hero_announcement: Optional[str] = None   # optional top banner text
+    maintenance_mode: Optional[bool] = None
+    maintenance_message: Optional[str] = None
+
+
+DEFAULT_APP_CONFIG = {
+    "status_pill": {
+        "open_text": "LIVE NOW",
+        "closed_text": "Opens Tonight at 8PM",
+        "opening_soon_text": "Opening Soon",
+        "force_mode": None,
+        "custom_message": None,
+    },
+    "hero_announcement": None,
+    "maintenance_mode": False,
+    "maintenance_message": None,
+}
+
+
+async def _load_app_config() -> dict:
+    doc = await db.app_config.find_one({"key": "main"}, {"_id": 0})
+    if not doc:
+        return DEFAULT_APP_CONFIG.copy()
+    # Merge with defaults so missing keys stay populated
+    merged = DEFAULT_APP_CONFIG.copy()
+    pill = DEFAULT_APP_CONFIG["status_pill"].copy()
+    pill.update(doc.get("status_pill") or {})
+    merged["status_pill"] = pill
+    for k in ("hero_announcement", "maintenance_mode", "maintenance_message"):
+        if k in doc:
+            merged[k] = doc[k]
+    return merged
+
+
+@router.get("/config")
+async def get_app_config_admin(request: Request):
+    """Admin view of the app config."""
+    await require_admin(request)
+    cfg = await _load_app_config()
+    return {"config": cfg}
+
+
+@router.put("/config")
+async def update_app_config(request: Request, body: AppConfigUpdate):
+    """Partial-update the app config (status pill, announcement, maintenance).
+    Use `exclude_unset` so Lovable can explicitly clear a field by passing `null`."""
+    await require_admin(request)
+    current = await _load_app_config()
+    payload = body.model_dump(exclude_unset=True)
+    if "status_pill" in payload:
+        sp_payload = payload["status_pill"] or {}
+        sp = current["status_pill"].copy()
+        # Only overwrite fields the caller explicitly included
+        for k, v in sp_payload.items():
+            sp[k] = v  # v may legitimately be None → clears the field
+        current["status_pill"] = sp
+    for k in ("hero_announcement", "maintenance_mode", "maintenance_message"):
+        if k in payload:
+            current[k] = payload[k]
+    current["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.app_config.update_one(
+        {"key": "main"},
+        {"$set": {"key": "main", **current}},
+        upsert=True,
+    )
+    return {"success": True, "config": current}
+
+
+# ====== MILESTONES CRUD ======
+# Backed by db.milestones_custom. If the collection is empty, the mobile app
+# falls back to the hardcoded MILESTONES list in routes/milestones.py.
+
+class MilestoneRewardItem(BaseModel):
+    id: str
+    type: str
+    label: str
+    description: str = ""
+
+
+class MilestoneCreate(BaseModel):
+    id: str  # e.g. "newbie" / "rising_star" — stable identifier
+    title: str
+    points_required: int
+    icon: str = "trophy"
+    color: str = "#D4A832"
+    description: str = ""
+    rewards: List[MilestoneRewardItem] = []
+
+
+class MilestoneUpdate(BaseModel):
+    title: Optional[str] = None
+    points_required: Optional[int] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    description: Optional[str] = None
+    rewards: Optional[List[MilestoneRewardItem]] = None
+
+
+def _default_milestones() -> list:
+    from routes.milestones import MILESTONES
+    return [m.copy() for m in MILESTONES]
+
+
+@router.get("/milestones")
+async def list_milestones_admin(request: Request):
+    """List milestones. Reads from db.milestones_custom, falls back to code defaults."""
+    await require_admin(request)
+    custom = await db.milestones_custom.find({}, {"_id": 0}).sort("points_required", 1).to_list(100)
+    if custom:
+        return {"milestones": custom, "total": len(custom), "source": "custom"}
+    return {"milestones": _default_milestones(), "total": len(_default_milestones()), "source": "default"}
+
+
+@router.post("/milestones")
+async def create_milestone(request: Request, milestone: MilestoneCreate):
+    """Create/override a milestone. If it's the first write, seeds the collection with defaults first."""
+    await require_admin(request)
+
+    # Seed defaults on first write so custom edits layer cleanly
+    existing_count = await db.milestones_custom.count_documents({})
+    if existing_count == 0:
+        seeds = _default_milestones()
+        for s in seeds:
+            s["created_at"] = datetime.now(timezone.utc).isoformat()
+        if seeds:
+            await db.milestones_custom.insert_many(seeds)
+
+    data = milestone.dict()
+    data["rewards"] = [r if isinstance(r, dict) else r.dict() for r in data.get("rewards", [])]
+    data["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    # Upsert by id
+    await db.milestones_custom.update_one(
+        {"id": data["id"]},
+        {"$set": data, "$setOnInsert": {"created_at": data["updated_at"]}},
+        upsert=True,
+    )
+    saved = await db.milestones_custom.find_one({"id": data["id"]}, {"_id": 0})
+    return {"success": True, "milestone": saved}
+
+
+@router.put("/milestones/{milestone_id}")
+async def update_milestone(request: Request, milestone_id: str, milestone: MilestoneUpdate):
+    """Update an existing milestone. Seeds collection on first edit."""
+    await require_admin(request)
+
+    existing_count = await db.milestones_custom.count_documents({})
+    if existing_count == 0:
+        seeds = _default_milestones()
+        for s in seeds:
+            s["created_at"] = datetime.now(timezone.utc).isoformat()
+        if seeds:
+            await db.milestones_custom.insert_many(seeds)
+
+    updates = {k: v for k, v in milestone.dict().items() if v is not None}
+    if "rewards" in updates:
+        updates["rewards"] = [r if isinstance(r, dict) else r.dict() for r in updates["rewards"]]
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    result = await db.milestones_custom.update_one({"id": milestone_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+    saved = await db.milestones_custom.find_one({"id": milestone_id}, {"_id": 0})
+    return {"success": True, "milestone": saved}
+
+
+@router.delete("/milestones/{milestone_id}")
+async def delete_milestone(request: Request, milestone_id: str):
+    """Delete a milestone from the custom overrides."""
+    await require_admin(request)
+    result = await db.milestones_custom.delete_one({"id": milestone_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+    return {"success": True, "message": f"Milestone {milestone_id} deleted"}
+
+
+# ====== BOTTLE IMAGE OVERRIDES ======
+# Collection: db.bottle_overrides  — { bottle_id, image_url, updated_at }
+# The bottle menu endpoint (routes/bookings.py) merges these overrides when serving menus.
+
+class BottleImageOverride(BaseModel):
+    image_url: str
+
+
+@router.get("/bottles")
+async def list_bottles_admin(request: Request, venue_id: Optional[str] = None):
+    """List all bottles with their current (potentially overridden) image URLs."""
+    await require_admin(request)
+    from routes.bookings import BOTTLE_MENUS
+    overrides = await db.bottle_overrides.find({}, {"_id": 0}).to_list(500)
+    override_map = {o["bottle_id"]: o["image_url"] for o in overrides}
+
+    result = []
+    for vid, items in BOTTLE_MENUS.items():
+        if venue_id and vid != venue_id:
+            continue
+        for item in items:
+            bottle = item.copy()
+            bottle["venue_id"] = vid
+            bottle["default_image_url"] = bottle.get("image_url")
+            if bottle["id"] in override_map:
+                bottle["image_url"] = override_map[bottle["id"]]
+                bottle["overridden"] = True
+            else:
+                bottle["overridden"] = False
+            result.append(bottle)
+    return {"bottles": result, "total": len(result)}
+
+
+@router.put("/bottles/{bottle_id}/image")
+async def override_bottle_image(request: Request, bottle_id: str, body: BottleImageOverride):
+    """Override the image URL for a specific bottle. Lovable portal uploads a URL and passes it here."""
+    await require_admin(request)
+    from routes.bookings import BOTTLE_MENUS
+    all_ids = {item["id"] for items in BOTTLE_MENUS.values() for item in items}
+    if bottle_id not in all_ids:
+        raise HTTPException(status_code=404, detail="Bottle not found")
+
+    await db.bottle_overrides.update_one(
+        {"bottle_id": bottle_id},
+        {"$set": {
+            "bottle_id": bottle_id,
+            "image_url": body.image_url,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+        upsert=True,
+    )
+    return {"success": True, "bottle_id": bottle_id, "image_url": body.image_url}
+
+
+@router.delete("/bottles/{bottle_id}/image")
+async def clear_bottle_image_override(request: Request, bottle_id: str):
+    """Remove the override and revert to the default AI-generated image."""
+    await require_admin(request)
+    result = await db.bottle_overrides.delete_one({"bottle_id": bottle_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="No override found for this bottle")
+    return {"success": True, "message": f"Override cleared for bottle {bottle_id}"}
+
+
+# ====== VENUE OVERRIDES ======
+# Collection: db.venue_overrides — partial field overrides keyed by venue_id.
+# Adds a lightweight way for Lovable to edit venue copy/hours/images without a full re-deploy.
+
+class VenueOverrideUpdate(BaseModel):
+    name: Optional[str] = None
+    tagline: Optional[str] = None
+    description: Optional[str] = None
+    long_description: Optional[str] = None
+    address: Optional[str] = None
+    image_url: Optional[str] = None
+    hero_image: Optional[str] = None
+    logo_url: Optional[str] = None
+    operating_hours: Optional[dict] = None
+    contact: Optional[dict] = None
+    social: Optional[dict] = None
+    accent_color: Optional[str] = None
+    status: Optional[str] = None  # open/closed/coming_soon
+    is_hidden: Optional[bool] = None
+
+
+@router.get("/venues")
+async def list_venues_admin(request: Request):
+    """List all venues with any overrides merged in."""
+    await require_admin(request)
+    from luna_venues_config import LUNA_VENUES
+    overrides = await db.venue_overrides.find({}, {"_id": 0}).to_list(100)
+    override_map = {o["venue_id"]: o for o in overrides}
+
+    result = []
+    for vid, venue in LUNA_VENUES.items():
+        merged = venue.copy()
+        if vid in override_map:
+            ov = override_map[vid].copy()
+            ov.pop("venue_id", None)
+            ov.pop("updated_at", None)
+            ov.pop("created_at", None)
+            merged.update({k: v for k, v in ov.items() if v is not None})
+            merged["overridden"] = True
+        else:
+            merged["overridden"] = False
+        result.append(merged)
+    return {"venues": result, "total": len(result)}
+
+
+@router.get("/venues/{venue_id}")
+async def get_venue_admin(request: Request, venue_id: str):
+    """Get a single venue with overrides merged."""
+    await require_admin(request)
+    from luna_venues_config import LUNA_VENUES
+    if venue_id not in LUNA_VENUES:
+        raise HTTPException(status_code=404, detail="Venue not found")
+    venue = LUNA_VENUES[venue_id].copy()
+    override = await db.venue_overrides.find_one({"venue_id": venue_id}, {"_id": 0})
+    if override:
+        ov = override.copy()
+        ov.pop("venue_id", None)
+        ov.pop("updated_at", None)
+        ov.pop("created_at", None)
+        venue.update({k: v for k, v in ov.items() if v is not None})
+        venue["overridden"] = True
+    else:
+        venue["overridden"] = False
+    return {"venue": venue}
+
+
+@router.put("/venues/{venue_id}")
+async def update_venue_override(request: Request, venue_id: str, body: VenueOverrideUpdate):
+    """Update venue overrides. Partial update — only fields you send are changed."""
+    await require_admin(request)
+    from luna_venues_config import LUNA_VENUES
+    if venue_id not in LUNA_VENUES:
+        raise HTTPException(status_code=404, detail="Venue not found")
+
+    updates = {k: v for k, v in body.dict().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    updates["venue_id"] = venue_id
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.venue_overrides.update_one(
+        {"venue_id": venue_id},
+        {"$set": updates, "$setOnInsert": {"created_at": updates["updated_at"]}},
+        upsert=True,
+    )
+    saved = await db.venue_overrides.find_one({"venue_id": venue_id}, {"_id": 0})
+    return {"success": True, "venue_override": saved}
+
+
+@router.delete("/venues/{venue_id}")
+async def clear_venue_override(request: Request, venue_id: str):
+    """Remove all overrides for a venue, reverting it to baseline config."""
+    await require_admin(request)
+    result = await db.venue_overrides.delete_one({"venue_id": venue_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="No override found for this venue")
+    return {"success": True, "message": f"Override cleared for venue {venue_id}"}
+
+
+# ====== PUBLIC CONFIG ENDPOINT (no auth required) ======
+# Mounted as a separate router so it's not under /admin and doesn't require an auth header.
+
+public_router = APIRouter(prefix="/config", tags=["public-config"])
+
+
+@public_router.get("/public")
+async def get_public_config():
+    """Public config consumed by the mobile app on every launch/foreground.
+    Exposes only safe, display-level data (never secrets)."""
+    cfg = await _load_app_config()
+    # Only expose the safe subset
+    return {
+        "status_pill": cfg.get("status_pill", DEFAULT_APP_CONFIG["status_pill"]),
+        "hero_announcement": cfg.get("hero_announcement"),
+        "maintenance_mode": cfg.get("maintenance_mode", False),
+        "maintenance_message": cfg.get("maintenance_message"),
+    }

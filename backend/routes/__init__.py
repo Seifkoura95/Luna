@@ -41,6 +41,7 @@ from routes.promo import router as promo_router
 from routes.vouchers import router as vouchers_router
 # Instagram integration removed — replaced by Social feed
 from routes.admin import router as admin_router
+from routes.admin import public_router as public_config_router
 from routes.users import router as users_router
 from routes.campaigns import router as campaigns_router
 from routes.loyalty import router as loyalty_router
@@ -131,4 +132,5 @@ ALL_ROUTERS = [
     engagement_tracking_router,
     social_router,
     venue_menus_router,
+    public_config_router,
 ]

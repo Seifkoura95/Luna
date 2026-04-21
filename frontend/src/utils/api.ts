@@ -43,6 +43,21 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
 }
 
 export const api = {
+  // Public App Config (status pill, maintenance, etc.)
+  getPublicConfig: () =>
+    apiFetch<{
+      status_pill: {
+        open_text: string;
+        closed_text: string;
+        opening_soon_text: string;
+        force_mode: string | null;
+        custom_message: string | null;
+      };
+      hero_announcement: string | null;
+      maintenance_mode: boolean;
+      maintenance_message: string | null;
+    }>(`/api/config/public`, { auth: false }),
+
   // Venues
   getVenues: (region?: string) => 
     apiFetch<any[]>(`/api/venues${region ? `?region=${region}` : ''}`, { auth: false }),

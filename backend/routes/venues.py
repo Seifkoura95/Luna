@@ -70,12 +70,36 @@ VENUE_OPERATING_DAYS = {
 }
 
 
+async def _get_venue_overrides_map() -> dict:
+    """Load all venue overrides keyed by venue_id."""
+    docs = await db.venue_overrides.find({}, {"_id": 0}).to_list(100)
+    return {d["venue_id"]: d for d in docs}
+
+
+def _merge_override(venue: dict, override: Optional[dict]) -> dict:
+    if not override:
+        return venue
+    merged = venue.copy()
+    skip = {"venue_id", "updated_at", "created_at"}
+    for k, v in override.items():
+        if k in skip or v is None:
+            continue
+        merged[k] = v
+    return merged
+
+
 @router.get("")
 async def get_venues(region: Optional[str] = None):
-    """Get all venues, optionally filtered by region"""
-    venues = list(LUNA_VENUES.values())
+    """Get all venues, optionally filtered by region. Merges Lovable Hub overrides."""
+    overrides = await _get_venue_overrides_map()
+    venues = []
+    for vid, v in LUNA_VENUES.items():
+        merged = _merge_override(v, overrides.get(vid))
+        if merged.get("is_hidden"):
+            continue
+        venues.append(merged)
     if region:
-        venues = [v for v in venues if v["region"] == region]
+        venues = [v for v in venues if v.get("region") == region]
     return venues
 
 
@@ -122,17 +146,20 @@ async def get_venue_tables(venue_id: str, date: Optional[str] = None):
 
 @router.get("/{venue_id}")
 async def get_venue(venue_id: str):
-    """Get a specific venue by ID with live status"""
+    """Get a specific venue by ID with live status. Merges Lovable Hub overrides."""
     if venue_id not in LUNA_VENUES:
         raise HTTPException(status_code=404, detail="Venue not found")
-    venue = LUNA_VENUES[venue_id].copy()
+    override = await db.venue_overrides.find_one({"venue_id": venue_id}, {"_id": 0})
+    venue = _merge_override(LUNA_VENUES[venue_id].copy(), override)
     now = datetime.now(timezone.utc)
     hour = now.hour
-    if venue["type"] in ["nightclub", "bar"]:
-        if 22 <= hour or hour < 3:
-            venue["status"] = "busy"
-        elif 20 <= hour < 22:
-            venue["status"] = "open"
-        else:
-            venue["status"] = "closed"
+    # If Lovable set an explicit status override, respect it; otherwise compute
+    if not (override and override.get("status")):
+        if venue["type"] in ["nightclub", "bar"]:
+            if 22 <= hour or hour < 3:
+                venue["status"] = "busy"
+            elif 20 <= hour < 22:
+                venue["status"] = "open"
+            else:
+                venue["status"] = "closed"
     return venue

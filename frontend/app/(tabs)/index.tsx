@@ -74,6 +74,7 @@ export default function HomeScreen() {
   const [tonightPicks, setTonightPicks] = useState<any[]>([]);
   const [activeAuctions, setActiveAuctions] = useState<any[]>([]);
   const [hotAuctions, setHotAuctions] = useState<Set<string>>(new Set());
+  const [publicConfig, setPublicConfig] = useState<any>(null);
 
   // Pulse animation for hot auctions
   const pulseAnim = useSharedValue(1);
@@ -97,11 +98,14 @@ export default function HomeScreen() {
     setLoading(true);
     try {
       // Fetch events feed from Eventfinda (real-time data)
-      const [eventsFeed, venuesData, auctionsData] = await Promise.all([
+      const [eventsFeed, venuesData, auctionsData, cfg] = await Promise.all([
         api.getEventsFeed(30),
         api.getVenues(),
         api.getAuctions(undefined, 'active'),
+        api.getPublicConfig().catch(() => null),
       ]);
+
+      if (cfg) setPublicConfig(cfg);
       
       // Safely access event arrays with fallback to empty arrays
       const tonightList = Array.isArray(eventsFeed?.tonight) ? eventsFeed.tonight : [];
@@ -228,30 +232,33 @@ export default function HomeScreen() {
     return '8:00 PM';
   };
 
-  const isOpen = () => {
-    // Use Brisbane timezone (AEST/AEDT)
+  const getStatusMode = (): 'open' | 'closed' | 'opening_soon' => {
+    // Lovable can force a mode from the portal (status_pill.force_mode)
+    const forced = publicConfig?.status_pill?.force_mode;
+    if (forced === 'open' || forced === 'closed' || forced === 'opening_soon') {
+      return forced;
+    }
     const brisbaneTime = new Date().toLocaleString('en-US', { timeZone: 'Australia/Brisbane' });
     const now = new Date(brisbaneTime);
     const hour = now.getHours();
-    // Open from 8PM (20:00) to 4AM
-    return hour >= 20 || hour < 4;
+    if (hour >= 20 || hour < 4) return 'open';
+    if (hour >= 17 && hour < 20) return 'opening_soon';
+    return 'closed';
   };
 
+  const isOpen = () => getStatusMode() === 'open';
+
   const getClosedMessage = () => {
-    const brisbaneTime = new Date().toLocaleString('en-US', { timeZone: 'Australia/Brisbane' });
-    const now = new Date(brisbaneTime);
-    const hour = now.getHours();
-    
-    if (hour >= 4 && hour < 12) {
-      return 'Opens Tonight at 8PM';
-    } else if (hour >= 12 && hour < 17) {
-      return 'Opens Tonight at 8PM';
-    } else if (hour >= 17 && hour < 20) {
-      return 'Opening Soon';
-    } else {
-      return 'Opens Tonight at 8PM';
-    }
+    // If Lovable set a custom_message, always prefer it
+    const custom = publicConfig?.status_pill?.custom_message;
+    if (custom && typeof custom === 'string' && custom.trim()) return custom;
+    const mode = getStatusMode();
+    const sp = publicConfig?.status_pill;
+    if (mode === 'opening_soon') return sp?.opening_soon_text || 'Opening Soon';
+    return sp?.closed_text || 'Opens Tonight at 8PM';
   };
+
+  const getOpenText = () => publicConfig?.status_pill?.open_text || 'LIVE NOW';
 
   return (
     <View style={styles.container}>
@@ -274,7 +281,7 @@ export default function HomeScreen() {
             {isOpen() ? (
               <View style={styles.liveStatus}>
                 <Animated.View style={[styles.liveDot, pulseStyle]} />
-                <Text style={styles.liveText}>LIVE NOW</Text>
+                <Text style={styles.liveText}>{getOpenText()}</Text>
               </View>
             ) : (
               <View style={styles.closedStatus}>
