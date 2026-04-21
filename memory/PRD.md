@@ -1,6 +1,68 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Feb 22, 2026 - Session 13 (Roles + Gift Entries + Artist Points)
+
+### COMPLETED: 5-role account system with points earn-guard, entry-ticket gifting, artist point allocation
+
+**Role system (stored as `users.role`):**
+- `user` / `customer` (default) — full earning
+- `artist` — cannot auto-earn; admins can allocate points via gift-points
+- `staff` — cannot auto-earn; redirected to `/staff-portal` on login
+- `manager` — cannot auto-earn; redirected to `/staff-portal` on login
+- `admin` — cannot auto-earn; redirected to `/staff-portal` on login
+
+**Earn-guard (`/app/backend/utils/points_guard.py`):**
+- `can_earn_points(user_id)` returns False for roles in `NON_EARNING_ROLES = {admin, manager, staff, artist}`
+- Wired into: `points.award_points`, `subscriptions.award_points`, `routes/bookings.py` (bottle orders + guestlist), `routes/tickets.py`, `routes/missions.py` (403 error if blocked role tries to claim), `routes/referrals.py`
+- Not wired into: `admin.py /grant-points` (bypasses — so artists CAN be gifted points), `rewards.py` (spending, not earning)
+
+**New admin endpoints (all accept X-Luna-Hub-Key OR admin JWT):**
+- `GET /api/admin/users` with `?q=<email/name>` (case-insensitive) + `?role=` filter + pagination
+- `GET /api/admin/users/{id}`
+- `PUT /api/admin/users/{id}` — name, email, role (validated against ALLOWED_ROLES), tier, assigned_venue_id, phone, notes, is_active
+- `POST /api/admin/users/{id}/grant-points` — gift/deduct arbitrary points, writes `points_transactions` row with source='admin_grant'. Works for any role (bypasses earn-guard).
+- `POST /api/admin/users/{id}/gift-entry` — gift free-entry QR ticket. Body: `{venue_id, scheduled_for?, note?}`
+  - No `scheduled_for` → valid from now → now + 24h
+  - With `scheduled_for` (YYYY-MM-DD) → valid from Brisbane midnight that day → next midnight (24h window, UTC+10 year-round)
+- `GET /api/admin/entry-tickets` with `?user_id= &venue_id= &status=`
+- `DELETE /api/admin/entry-tickets/{id}` — revokes unused tickets (400 if already used)
+- `GET /api/admin/users/{id}/points-transactions` — view a user's recent ledger
+
+**New user-facing endpoints (`/app/backend/routes/entry_tickets.py`):**
+- `GET /api/entry-tickets/my` — list caller's entries. Each has computed `live_status`: active / scheduled / used / expired / revoked
+- `GET /api/entry-tickets/{id}` — single ticket (403 if not owner)
+- `POST /api/entry-tickets/validate-qr` — staff/manager/admin scan to consume. Body: `{qr_code, venue_id}`. Returns descriptive reasons: invalid_qr / wrong_venue / already_used / revoked / expired / not_yet_active
+
+**Mobile changes:**
+- `/app/frontend/app/my-entry-tickets.tsx` — new screen: empty state, ticket cards with status pills, countdown timers ("12h 34m remaining" for active, "Starts in 3d 4h" for scheduled), QR modal with live HMAC-signed code.
+- `/app/frontend/app/(tabs)/wallet.tsx` — added "My Free Entries" card linking to new screen (beneath "Claim a Reward")
+- `/app/frontend/app/login.tsx` — role-based routing: admin/manager/staff → `/staff-portal`. Artists and users → `/(tabs)`
+- `/app/frontend/src/utils/api.ts` — `getMyEntryTickets`, `getEntryTicket`, `validateEntryQR`
+
+**Collections:**
+- `entry_tickets` — {id, user_id, venue_id, qr_code, status, valid_from, valid_until, used_at, ...}
+- `points_transactions` — now records `source='admin_grant'` rows
+
+**Testing:** `iteration_35.json` — **35/35 backend tests PASSED (100%)**. Covers user search, role CRUD, grant-points for artists, gift-entry immediate + scheduled, QR validation (wrong venue / already used / revoked / not yet active), earn-guard on missions (403) + user-regression (still works), and full regression of iteration 34's 31 tests.
+
+**Minor advisories (non-blocking):**
+- `grant-points` also increments `total_points_earned` even on negative/correction grants
+- `gift-entry` scheduled_for doesn't reject past dates (valid-but-immediately-expired tickets)
+- `entry_tickets.status` field isn't auto-flipped to 'expired' when time passes; `live_status` handles it at read time
+
+**Credentials (unchanged):**
+- User: luna@test.com / test123 (role=user)
+- Admin: admin@lunagroup.com.au / Trent69!
+- Luna Hub: header `X-Luna-Hub-Key: luna_hub_live_682fbaaa19a6a4594f58618b803531ee6fad8016`
+
+**Pending (next session):**
+- 🟡 In-app "Venue Portal" screen polish — scan QR, allocate points, view bookings (the `/staff-portal` route already exists but may need wiring to the new validate-qr endpoint)
+- 🟡 App Store listing copy + Privacy Nutrition Label answers
+- 🟡 Hero UI tweaks you flagged — verify on-device
+- 🟢 Sentry for production crash reporting
+
+
 ## Latest Update: Feb 22, 2026 - Session 12 (Lovable Hub Full CRUD)
 
 ### COMPLETED: Finished Lovable "Luna Hub" portal — every content surface now DB-driven
