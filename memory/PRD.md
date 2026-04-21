@@ -1,6 +1,48 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Feb 22, 2026 - Session 15 (Glass Cards + App Store Pack + Staff Gifting)
+
+### COMPLETED
+
+**Global glass-card unification** (`/app/frontend/src/theme/colors.ts`):
+- `colors.glass` : `rgba(255,255,255,0.06)` → `rgba(0,0,0,0.40)` — matches leaderboard
+- `colors.glassMid` : `rgba(255,255,255,0.09)` → `rgba(0,0,0,0.30)`
+- `colors.glassBorderSubtle` : `0.08` → `0.10` — matches leaderboard border
+- All cards that reference these tokens (wallet points card, mission cards, milestone cards, profile stat cards, countless buttons) now match the leaderboard's signature look in one shot.
+
+**Staff Portal — Gift Points UI** (`/app/frontend/app/staff-portal.tsx`):
+- New "Gift Points" quick-perk with gift icon (#FFD700). Opens modal with amount input + 100/500/1000/2500 quick-pick pills + optional reason field.
+- Calls `POST /api/admin/users/{id}/grant-points` (bypasses earn-guard — works for ANY role incl. artists). Staff auth accepted alongside hub-key.
+- Success alert shows "N pts added. New balance: X".
+
+**App Store submission pack** (`/app/APP_STORE_LISTING.md`):
+- App name, subtitle, category, age rating (17+) with questionnaire answers
+- Full 4000-char description + 170-char promo text + keywords
+- 10 sections covering Privacy Nutrition Label (all data types mapped to Apple categories, "Data Not Used to Track You"), IAP strategy for Stripe external subscriptions (Reader App exception), reviewer demo account instructions, Google Play condensed copy, rejection-defense templates, and a submission checklist.
+
+**Backend — total_points_earned** (`/app/backend/routes/admin.py`):
+- `grant-points` now only increments `total_points_earned` when `amount > 0`. Negative corrections no longer inflate lifetime totals. Confirmed via manual curl test: +100 bumps the counter, -100 leaves it untouched.
+
+**Testing:** `iteration_36.json` — **50/50 backend tests PASSED** (15 new + 35 regression from iteration_35). 3 minor advisories only:
+- `admin_deduct` txns store source='admin_grant' (cosmetic — consider a distinct source for clean reports)
+- No `DELETE /admin/users/{id}` yet — test data accumulates
+- No balance floor on negative grants (can drive points < 0) — possibly intentional for reversals
+
+### Files touched this session
+- `/app/frontend/src/theme/colors.ts` — global glass card tokens
+- `/app/frontend/app/staff-portal.tsx` — Gift Points button, modal, handleGiftPoints
+- `/app/backend/routes/admin.py` — conditional total_points_earned
+- `/app/APP_STORE_LISTING.md` — NEW full submission pack
+
+### Pending (next session)
+- 🟡 Verify Expo Go iOS build: keyboard gap, haptics, scanner work on-device
+- 🟡 Generate the 6 App Store screenshots (1290 × 2796) — needs a real device or Xcode simulator
+- 🟢 Consider `DELETE /admin/users/{id}` for GDPR + test hygiene
+- 🟢 Consider `admin_deduct` as a distinct transaction source
+- 🟢 Sentry crash reporting (DSN + `@sentry/react-native`)
+
+
 ## Latest Update: Feb 22, 2026 - Session 14 (UI Polish + Luna AI Revamp + Advisories)
 
 ### COMPLETED this session
