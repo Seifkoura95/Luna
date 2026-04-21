@@ -37,7 +37,6 @@ from routes.scheduled_jobs import router as scheduled_jobs_router
 from routes.crews import router as crews_router
 from routes.safety import router as safety_router
 from routes.location import router as location_router
-from routes.cherryhub import router as cherryhub_router
 from routes.promo import router as promo_router
 from routes.vouchers import router as vouchers_router
 # Instagram integration removed — replaced by Social feed
@@ -119,7 +118,6 @@ ALL_ROUTERS = [
     crews_router,
     safety_router,
     location_router,
-    cherryhub_router,
     promo_router,
     vouchers_router,
     # instagram_router removed

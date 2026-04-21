@@ -25,7 +25,6 @@ import { AppBackground } from '../../src/components/AppBackground';
 import { SafetyAlert } from '../../src/components/SafetyAlert';
 import { CrewMap } from '../../src/components/CrewMap';
 import { PageHeader } from '../../src/components/PageHeader';
-import { MembershipCard } from '../../src/components/MembershipCard';
 import { SectionTitle } from '../../src/components/SectionTitle';
 import { LunaIcon } from '../../src/components/LunaIcons';
 import { ActivityIndicator } from 'react-native';
@@ -76,11 +75,6 @@ export default function ProfileScreen() {
   const [isInviting, setIsInviting] = useState(false);
   const [showCrewDetails, setShowCrewDetails] = useState(false);
   const [selectedCrewForDetails, setSelectedCrewForDetails] = useState<any>(null);
-  // CherryHub state
-  const [cherryHubStatus, setCherryHubStatus] = useState<{registered: boolean, member_key: string | null}>({registered: false, member_key: null});
-  const [cherryHubPoints, setCherryHubPoints] = useState<number>(0);
-  const [walletPassLoading, setWalletPassLoading] = useState(false);
-  const [linkingCherryHub, setLinkingCherryHub] = useState(false);
   const [pointsData, setPointsData] = useState<any>(null);
 
   // Helper function to capitalize name properly
@@ -98,7 +92,6 @@ export default function ProfileScreen() {
       if (cached) {
         setCrews(cached.crews);
         setStats(cached.userStats);
-        setCherryHubStatus(cached.cherryHubStatus);
         if (cached.pointsData) {
           setPointsData(cached.pointsData);
         }
@@ -107,13 +100,12 @@ export default function ProfileScreen() {
     }
     
     try {
-      const [statsData, reservationsData, crewsData, subData, venuesData, cherryStatus, pointsRes] = await Promise.all([
+      const [statsData, reservationsData, crewsData, subData, venuesData, lunaStatus, pointsRes] = await Promise.all([
         api.getUserStats().catch(() => null),
         api.getMyReservations().catch(() => null),
         api.getCrews().catch(() => []),
         api.getMySubscription().catch(() => null),
         api.getVenues().catch(() => []),
-        api.cherryHubStatus().catch(() => ({registered: false, member_key: null})),
         api.getPointsBalance().catch(() => null),
       ]);
       setStats(statsData);
@@ -121,7 +113,6 @@ export default function ProfileScreen() {
       setCrews(crewsData || []);
       setSubscriptionData(subData);
       setVenues(venuesData || []);
-      setCherryHubStatus(cherryStatus);
       setPointsData(pointsRes);
       
       // Cache the data
@@ -129,7 +120,6 @@ export default function ProfileScreen() {
         crews: crewsData || [],
         reservations: reservationsData,
         userStats: statsData,
-        cherryHubStatus: cherryStatus,
         pointsData: pointsRes,
       });
     } catch (e) {
@@ -175,10 +165,10 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleCherryHubLogout = () => {
+  const handleLunaLogout = () => {
     Alert.alert(
-      'Disconnect Cherry Hub',
-      'Are you sure you want to disconnect your Cherry Hub membership? You can reconnect anytime.',
+      'Disconnect Luna',
+      'Are you sure you want to disconnect your Luna membership? You can reconnect anytime.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -186,60 +176,35 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Reset local Cherry Hub status
-              setCherryHubStatus({ registered: false, member_key: null });
-              setCherryHubPoints(0);
+              // Reset local Luna status
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('Disconnected', 'Your Cherry Hub membership has been disconnected from this app.');
+              Alert.alert('Disconnected', 'Your Luna membership has been disconnected from this app.');
             } catch (e) {
-              Alert.alert('Error', 'Failed to disconnect Cherry Hub membership');
+              Alert.alert('Error', 'Failed to disconnect Luna membership');
             }
           },
         },
       ]
     );
   };
-
-  // Handle linking CherryHub account
-  const handleLinkCherryHub = async () => {
-    setLinkingCherryHub(true);
-    try {
-      const result = await api.cherryHubRegister(false);
-      if (result.status === 'success' || result.status === 'already_registered') {
-        setCherryHubStatus({ registered: true, member_key: result.member_key });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        if (result.status === 'success') {
-          Alert.alert('Account Created!', 'Your CherryHub membership has been created and linked.');
-        } else {
-          Alert.alert('Linked!', 'Your existing CherryHub account has been linked.');
-        }
-      }
-    } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to link CherryHub account');
-    }
-    setLinkingCherryHub(false);
-  };
-
   const handleGetQR = async () => {
-    // Check if user is connected to CherryHub
-    if (!cherryHubStatus.registered) {
+    // Check if user is connected to Luna
+    if (!false) {
       Alert.alert(
-        'Connect CherryHub',
-        'You need to activate your Cherry Hub membership to get your digital pass.',
+        'Luna Pass',
+        'You need to activate your Luna membership to get your digital pass.',
         [
           { text: 'Cancel', style: 'cancel' },
           { 
             text: 'Activate Now', 
             onPress: async () => {
               try {
-                const result = await api.cherryHubRegister(false);
                 if (result.status === 'success' || result.status === 'already_registered') {
-                  setCherryHubStatus({registered: true, member_key: result.member_key});
                   // Now show the pass
                   setShowQRPass(true);
                 }
               } catch (e: any) {
-                Alert.alert('Error', e.message || 'Failed to activate Cherry Hub membership');
+                Alert.alert('Error', e.message || 'Failed to activate Luna membership');
               }
             }
           }
@@ -251,8 +216,8 @@ export default function ProfileScreen() {
   };
 
   const handleAddToWallet = async () => {
-    if (!cherryHubStatus.registered) {
-      Alert.alert('Error', 'Please activate your Cherry Hub membership first');
+    if (!false) {
+      Alert.alert('Error', 'Please activate your Luna membership first');
       return;
     }
     
@@ -264,12 +229,11 @@ export default function ProfileScreen() {
     
     try {
       setWalletPassLoading(true);
-      const result = await api.cherryHubGetWalletPass(platform);
       
       if (platform === 'ios' && result.pass_content_base64) {
         Alert.alert(
           'Apple Wallet',
-          'Your Cherry Hub membership pass is ready to be added to Apple Wallet.',
+          'Your Luna membership pass is ready to be added to Apple Wallet.',
           [{ text: 'OK' }]
         );
       } else if (result.google_wallet_url) {
@@ -279,7 +243,7 @@ export default function ProfileScreen() {
         } else {
           Alert.alert(
             'Google Wallet',
-            'Please install Google Wallet to add your Cherry Hub membership card.',
+            'Please install Google Wallet to add your Luna membership card.',
             [{ text: 'OK' }]
           );
         }
@@ -396,7 +360,7 @@ export default function ProfileScreen() {
   // Safe tier config - always defaults to bronze if user or tier is missing
   const userTier = user?.tier?.toLowerCase();
   const tierConfig = (userTier && TIER_CONFIG[userTier]) ? TIER_CONFIG[userTier] : TIER_CONFIG.bronze;
-  // Use CherryHub points if available, otherwise fall back to local points
+  // Use Luna points if available, otherwise fall back to local points
   const currentPoints = pointsData?.points_balance || user?.points_balance || user?.points || 0;
   const progressToNext = tierConfig ? Math.min((currentPoints / tierConfig.pointsNeeded) * 100, 100) : 0;
 
@@ -591,49 +555,6 @@ export default function ProfileScreen() {
             </LinearGradient>
           </View>
           
-          {/* CherryHub Status */}
-          {cherryHubStatus.registered ? (
-            <View style={styles.cherryHubConnected}>
-              <View style={styles.cherryHubConnectedLeft}>
-                <View style={styles.cherryHubStatusDot} />
-                <View>
-                  <Text style={styles.cherryHubConnectedTitle}>CherryHub Linked</Text>
-                  <Text style={styles.cherryHubConnectedSub}>Member #{cherryHubStatus.member_key?.slice(-8)}</Text>
-                </View>
-              </View>
-              <TouchableOpacity 
-                style={styles.cherryHubDisconnectBtn}
-                onPress={handleCherryHubLogout}
-              >
-                <Icon name="unlink" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity 
-              style={styles.linkCherryHubBtn}
-              onPress={handleLinkCherryHub}
-              disabled={linkingCherryHub}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={[colors.accentDim, 'rgba(37, 99, 235, 0.15)']}
-                style={styles.linkCherryHubGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                {linkingCherryHub ? (
-                  <ActivityIndicator size="small" color={colors.accent} />
-                ) : (
-                  <>
-                    <Icon name="link" size={18} color={colors.accent} />
-                    <Text style={styles.linkCherryHubText}>Link CherryHub Account</Text>
-                    <Icon name="chevron-forward" size={16} color={colors.accent} />
-                  </>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-          )}
-          
           {/* Subscription/Upgrade Button */}
           <TouchableOpacity 
             style={styles.upgradeBtn}
@@ -777,7 +698,7 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      {/* CherryHub Digital Pass Modal */}
+      {/* Luna Digital Pass Modal */}
       <Modal
         visible={showQRPass}
         transparent
@@ -801,7 +722,7 @@ export default function ProfileScreen() {
               </View>
 
               <View style={styles.qrSection}>
-                {cherryHubStatus.registered ? (
+                {false ? (
                   <>
                     {/* Member Card Display */}
                     <View style={styles.digitalPassCard}>
@@ -813,7 +734,7 @@ export default function ProfileScreen() {
                           <Icon name="checkmark-circle" size={24} color={colors.gold} />
                           <Text style={styles.passTitle}>LUNA GROUP MEMBER</Text>
                         </View>
-                        <Text style={styles.passMemberKey}>#{cherryHubStatus.member_key}</Text>
+                        <Text style={styles.passMemberKey}>#{null}</Text>
                         <Text style={styles.passName}>{user?.name || 'Member'}</Text>
                       </LinearGradient>
                     </View>
@@ -850,7 +771,7 @@ export default function ProfileScreen() {
                       <Icon name="card-outline" size={80} color={colors.textMuted} />
                       <Text style={styles.notConnectedTitle}>No Pass Connected</Text>
                       <Text style={styles.notConnectedSubtitle}>
-                        Activate your Cherry Hub membership to get your digital pass
+                        Activate your Luna membership to get your digital pass
                       </Text>
                     </View>
                   </>
@@ -1518,14 +1439,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  cherryHubLogoutBtn: {
+  legacyLogoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
-  cherryHubLogoutText: {
+  legacyLogoutText: {
     fontSize: 12,
     color: colors.textMuted,
   },
@@ -2466,8 +2387,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.gold,
   },
-  // CherryHub Status Styles
-  cherryHubConnected: {
+  // Luna Status Styles
+  legacyConnected: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -2478,36 +2399,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.glassBorder,
   },
-  cherryHubConnectedLeft: {
+  legacyConnectedLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
-  cherryHubStatusDot: {
+  legacyStatusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.success,
   },
-  cherryHubConnectedTitle: {
+  legacyConnectedTitle: {
     fontSize: 13,
     fontWeight: '600',
     color: colors.textPrimary,
   },
-  cherryHubConnectedSub: {
+  legacyConnectedSub: {
     fontSize: 11,
     color: colors.textMuted,
   },
-  cherryHubDisconnectBtn: {
+  legacyDisconnectBtn: {
     padding: spacing.xs,
   },
-  linkCherryHubBtn: {
+  linkLunaBtn: {
     borderRadius: radius.md,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.accent + '30',
   },
-  linkCherryHubGradient: {
+  linkLunaGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2515,7 +2436,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
-  linkCherryHubText: {
+  linkLunaText: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.accent,

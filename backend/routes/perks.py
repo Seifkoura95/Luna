@@ -1145,10 +1145,7 @@ async def handle_swiftpos_sale(request: Request, data: SwiftPOSSaleWebhook):
     member = None
     if data.member_key:
         member = await db.users.find_one(
-            {"$or": [
-                {"cherryhub_member_key": data.member_key},
-                {"swiftpos_member_key": data.member_key},
-            ]},
+            {"swiftpos_member_key": data.member_key},
             {"_id": 0, "password": 0}
         )
     if not member and data.member_email:

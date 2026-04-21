@@ -73,46 +73,6 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ email, password }), auth: false }
     ),
   
-  // CherryHub Login (dual auth)
-  cherryHubLogin: (email: string) =>
-    apiFetch<{ user: any; token: string; cherryhub_login: boolean; new_user?: boolean; newly_linked?: boolean; mock?: boolean }>(
-      '/api/cherryhub/login',
-      { method: 'POST', body: JSON.stringify({ email }), auth: false }
-    ),
-  
-  // CherryHub Link Account (for existing users)
-  cherryHubLink: (email?: string, createIfNotExists: boolean = true) =>
-    apiFetch<{ success: boolean; member_key: string; message: string; new_account?: boolean; existing_account?: boolean }>(
-      '/api/cherryhub/link',
-      { method: 'POST', body: JSON.stringify({ email, create_if_not_exists: createIfNotExists }) }
-    ),
-  
-  // CherryHub Points Operations
-  cherryHubAwardPoints: (points: number, reason: string, source: string = 'app_reward') =>
-    apiFetch<{ success: boolean; points_awarded: number; cherryhub_synced: boolean }>(
-      '/api/cherryhub/points/award',
-      { method: 'POST', body: JSON.stringify({ points, reason, source }) }
-    ),
-  
-  cherryHubRedeemPoints: (points: number, reason: string, redemptionType: string = 'reward') =>
-    apiFetch<{ success: boolean; points_redeemed: number; new_balance: number; cherryhub_synced: boolean }>(
-      '/api/cherryhub/points/redeem',
-      { method: 'POST', body: JSON.stringify({ points, reason, redemption_type: redemptionType }) }
-    ),
-  
-  // CherryHub Wallet Pass
-  cherryHubGetWalletPass: (platform: 'ios' | 'android') =>
-    apiFetch<{ success: boolean; platform: string; pass_data?: string; pass_url?: string }>(
-      '/api/cherryhub/wallet-pass',
-      { method: 'POST', body: JSON.stringify({ platform }) }
-    ),
-  
-  // CherryHub Transactions
-  cherryHubGetTransactions: (limit: number = 20) =>
-    apiFetch<{ transactions: any[]; count: number }>(
-      `/api/cherryhub/transactions?limit=${limit}`
-    ),
-  
   getMe: () => apiFetch<any>('/api/auth/me'),
   
   // Profile Management
@@ -737,50 +697,6 @@ export const api = {
       { method: 'POST' }
     ),
 
-  // ====== CHERRYHUB INTEGRATION ======
-  // Register user with CherryHub membership system
-  cherryHubRegister: (syncExisting: boolean = false) =>
-    apiFetch<{
-      status: string;
-      member_key: string | null;
-      cherryhub_data?: any;
-      message: string;
-    }>('/api/cherryhub/register', {
-      method: 'POST',
-      body: JSON.stringify({ sync_existing: syncExisting })
-    }),
-
-  // Get CherryHub membership status
-  cherryHubStatus: () =>
-    apiFetch<{
-      registered: boolean;
-      member_key: string | null;
-      registered_at?: string;
-      member_data?: any;
-      message: string;
-    }>('/api/cherryhub/status'),
-
-  // Get digital wallet pass (Apple Wallet or Google Wallet)
-  cherryHubGetWalletPass: (platform: 'ios' | 'android') =>
-    apiFetch<{
-      platform: string;
-      pass_type: string;
-      pass_content_base64?: string;  // For iOS
-      google_wallet_url?: string;    // For Android
-      message: string;
-    }>('/api/cherryhub/wallet-pass', {
-      method: 'POST',
-      body: JSON.stringify({ platform })
-    }),
-
-  // Get CherryHub loyalty points balance
-  cherryHubGetPoints: () =>
-    apiFetch<{
-      member_key: string;
-      points: number;
-      points_data?: any;
-    }>('/api/cherryhub/points'),
-
   // ====== ACCOUNT MANAGEMENT ======
   // Delete user account (App Store requirement)
   deleteAccount: () =>
@@ -790,27 +706,6 @@ export const api = {
       deletion_summary: Record<string, number>;
     }>('/api/user/delete', {
       method: 'DELETE'
-    }),
-
-  // ====== POINTS PURCHASE API ======
-  buyPoints: (packageId: string, points: number, price: number, bonus: number = 0, paymentMethod: string = 'card') =>
-    apiFetch<{
-      success: boolean;
-      transaction_id: string;
-      points_added: number;
-      base_points: number;
-      bonus_points: number;
-      new_balance: number;
-      message: string;
-    }>('/api/cherryhub/buy-points', {
-      method: 'POST',
-      body: JSON.stringify({
-        package_id: packageId,
-        points,
-        price,
-        bonus,
-        payment_method: paymentMethod
-      })
     }),
 
   // ====== PROMO CODE API ======

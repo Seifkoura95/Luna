@@ -27,7 +27,6 @@ import { PageHeader } from '../../src/components/PageHeader';
 import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';
 import { FierySun } from '../../src/components/FierySun';
 import { LunaIcon } from '../../src/components/LunaIcons';
-import { MembershipCard } from '../../src/components/MembershipCard';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import QRCode from 'react-native-qrcode-svg';
@@ -145,11 +144,6 @@ export default function WalletScreen() {
   // Points & Subscription state
   const [pointsData, setPointsData] = useState<any>(null);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
-  // CherryHub state
-  const [cherryHubStatus, setCherryHubStatus] = useState<{registered: boolean, member_key: string | null}>({registered: false, member_key: null});
-  const [cherryHubPoints, setCherryHubPoints] = useState<number>(0);
-  const [walletPassLoading, setWalletPassLoading] = useState(false);
-  const [linkingCherryHub, setLinkingCherryHub] = useState(false);
   // Leaderboard state
   const [leaderboardData, setLeaderboardData] = useState<any>(null);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
@@ -178,12 +172,11 @@ export default function WalletScreen() {
     }
     
     try {
-      const [ticketsData, eventsData, pointsRes, subRes, cherryStatus] = await Promise.all([
+      const [ticketsData, eventsData, pointsRes, subRes] = await Promise.all([
         api.getTickets().catch(() => null),
         api.getEvents(),
         api.getPointsBalance().catch(() => null),
         api.getMySubscription().catch(() => null),
-        api.cherryHubStatus().catch(() => ({registered: false, member_key: null})),
       ]);
       // Merge mock data with API data for demonstration
       if (ticketsData && (ticketsData.active?.length > 0 || ticketsData.upcoming?.length > 0 || ticketsData.history?.length > 0)) {
@@ -195,17 +188,6 @@ export default function WalletScreen() {
       setEvents(eventsData || []);
       setPointsData(pointsRes);
       setSubscriptionData(subRes);
-      setCherryHubStatus(cherryStatus);
-      
-      // Fetch CherryHub points if registered
-      if (cherryStatus?.registered) {
-        try {
-          const chPoints = await api.cherryHubGetPoints();
-          setCherryHubPoints(chPoints.points || 0);
-        } catch (e) {
-          console.log('Failed to fetch CherryHub points');
-        }
-      }
       
       // Fetch leaderboard data
       let leaderboard: any[] = [];
@@ -261,97 +243,13 @@ export default function WalletScreen() {
     setRefreshing(false);
   };
 
-  const handleCherryHubLogout = () => {
+  // Apple/Google Wallet integration — handled by loyalty.member-card endpoint (not yet wired)
+  const handleAddToWallet = async () => {
     Alert.alert(
-      'Disconnect Cherry Hub',
-      'Are you sure you want to disconnect your Cherry Hub membership? You can reconnect anytime.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Disconnect',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setCherryHubStatus({ registered: false, member_key: null });
-              setCherryHubPoints(0);
-              if (Platform.OS !== 'web') {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              }
-              Alert.alert('Disconnected', 'Your Cherry Hub membership has been disconnected from this app.');
-            } catch (e) {
-              Alert.alert('Error', 'Failed to disconnect Cherry Hub membership');
-            }
-          },
-        },
-      ]
+      'Coming Soon',
+      'Adding your Luna Pass to Apple/Google Wallet will be available in the next update.'
     );
   };
-
-  // Handle adding to digital wallet (Apple/Google)
-  const handleAddToWallet = async () => {
-    if (!cherryHubStatus.member_key) {
-      Alert.alert('Not Connected', 'Please link your CherryHub account first.');
-      return;
-    }
-
-    setWalletPassLoading(true);
-    try {
-      const platform = Platform.OS === 'ios' ? 'ios' : 'android';
-      const result = await api.cherryHubGetWalletPass(platform);
-      
-      if (Platform.OS === 'ios' && result.pass_data) {
-        // For iOS, we'd need to handle the pkpass file
-        // This would typically require native modules to add to Apple Wallet
-        Alert.alert('Apple Wallet', 'Apple Wallet pass generated! In a production app, this would be automatically added to your Apple Wallet.');
-      } else if (result.pass_url) {
-        const canOpen = await Linking.canOpenURL(result.pass_url);
-        if (canOpen) {
-          await Linking.openURL(result.pass_url);
-        } else {
-          Alert.alert('Error', 'Cannot open Google Wallet on this device');
-        }
-      } else {
-        Alert.alert('Info', 'Wallet pass feature is currently in mock mode. When CherryHub credentials are configured, your digital membership card will be available.');
-      }
-      
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-    } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to get wallet pass');
-    } finally {
-      setWalletPassLoading(false);
-    }
-  };
-
-  // Handle linking CherryHub account
-  const handleLinkCherryHub = async () => {
-    setLinkingCherryHub(true);
-    try {
-      const result = await api.cherryHubLink(undefined, true);
-      
-      if (result.success) {
-        setCherryHubStatus({ registered: true, member_key: result.member_key });
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-        
-        if (result.new_account) {
-          Alert.alert('Account Created!', 'Your CherryHub membership has been created and linked.');
-        } else {
-          Alert.alert('Linked!', 'Your existing CherryHub account has been linked.');
-        }
-        
-        // Refresh data
-        fetchData(true);
-      }
-    } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to link CherryHub account');
-    } finally {
-      setLinkingCherryHub(false);
-    }
-  };
-
   const formatEventDate = (dateString: string) => {
     try {
       const date = parseISO(dateString);
@@ -1176,14 +1074,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  cherryHubLogoutBtn: {
+  legacyLogoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
-  cherryHubLogoutText: {
+  legacyLogoutText: {
     fontSize: 12,
     color: colors.textMuted,
   },
@@ -1823,7 +1721,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     overflow: 'hidden',
   },
-  linkCherryHubButton: {
+  linkLunaButton: {
     borderRadius: radius.md,
     overflow: 'hidden',
   },

@@ -12,7 +12,7 @@ interface ProfileData {
   crews: any[];
   reservations: any[];
   userStats: any;
-  cherryHubStatus: any;
+  // lunaPassStatus moved to on-demand API call;
   pointsBalance: number;
 }
 
