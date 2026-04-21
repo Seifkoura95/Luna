@@ -91,14 +91,14 @@ All strings are now user-facing, concrete, non-generic — Apple will accept the
 - **Keywords** (100 chars max): `nightlife,brisbane,club,eclipse,venue,vip,bottle,event,rsvp,rewards`
 - **Primary category**: Entertainment
 - **Secondary category**: Lifestyle
-- **Age rating**: 17+ (alcohol, nightlife, social features)
+- **Age rating**: 17+ (Apple's max tier for alcohol/nightlife content) — **note**: actual user eligibility is **18+ per our Terms of Service** (Qld legal drinking age). Enforced via in-app age-gate on first launch.
 - **Promotional text**: changes per update
 - **Description** (4000 chars): will draft
 
 ### Google Play
 - **Short description** (80 chars)
 - **Full description** (4000 chars): will draft
-- **Content rating**: fill IARC questionnaire — will answer Yes to Alcohol References → Mature 17+
+- **Content rating**: fill IARC questionnaire — will answer Yes to Alcohol References → Mature 17+. User-facing eligibility is **18+** per Terms of Service (Qld legal drinking age).
 
 ---
 

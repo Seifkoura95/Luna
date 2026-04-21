@@ -40,13 +40,18 @@
 - Modified: `/app/frontend/app/subscriptions.tsx` (weekly display, new Stripe links, info copy)
 
 **Pending (next session):**
-- Add Privacy Policy + Terms of Service pages to `/app/public-site/` (Apple App Store requires)
 - Archive old $29/$79 Stripe Payment Links from dashboard (manual user task)
-- Age-gating (17+) modal on first launch
+- Age-gating (18+) modal on first launch — code implementation still pending
 - "Claim My Reward" QR generator screen for 10 rewards shop items
 - Draft App Store listing copy + Privacy Nutrition Label answers
 - Sentry for production crash reporting
 - Create Stripe Payment Links for all 48 Eclipse bottle items as static fallbacks
+
+### COMPLETED (Session 11b — same day): Privacy Policy + Terms of Service pages
+- `/app/public-site/privacy/index.html` (248 lines) — Australian Privacy Principles compliant. Covers: what we collect (given/auto/third-party), purpose + legal basis table, third-party list (Stripe, MongoDB Atlas Sydney, APNS/FCM, Apple/Google Wallet, OpenAI/Anthropic via Emergent), data retention (30d after deletion; 7y payments; 2y check-ins), user rights (access/correct/delete/complain to OAIC), security (TLS, bcrypt, HMAC-signed QRs), NDB scheme commitment, strict 18+ eligibility, AU data residency.
+- `/app/public-site/terms/index.html` (277 lines) — Full ToS. Covers: 18+ eligibility (Qld legal drinking age), Luna+ tier table ($39.99/$79.99 with weekly display), auto-renewal + cancellation, points rules (non-transferable, no cash value, expiry rules per tier), reward/milestone/QR single-use security, bottle-service deposit rules (max($50,10%), non-refundable within 24h, 90-min no-show forfeit), acceptable use, RSA/venue staff discretion, 3rd-party services, IP, AU Consumer Law disclaimer, liability cap (greater of 12mo fees or AU$200), termination, governing law Queensland.
+- `STORE_SUBMISSION.md` updated: Apple rating stays at 17+ (Apple's maximum age tier for alcohol content) with explicit note that user eligibility is enforced at 18+ via in-app age-gate modal + Terms of Service.
+- Both pages match the dark/gold design language of `/subscribe` and `/how-points-work`.
 
 ## Latest Update: April 21, 2026 - Session 10
 
