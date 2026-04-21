@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Luna Group · Full App Map</title>
+<style>
+  :root{
+    --bg:#0a0a12;
+    --panel:#12121c;
+    --gold:#D4AF5A;
+    --gold-bright:#F5D77A;
+    --muted:#7A7A85;
+    --text:#F0F0F5;
+    --border:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Inter",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  body{
+    background-image:
+      radial-gradient(ellipse at 50% 0%,rgba(212,175,90,0.08) 0%,transparent 60%),
+      linear-gradient(180deg,#0a0a12 0%,#050508 100%);
+    background-attachment:fixed;
+    padding:56px 48px 120px;
+  }
+
+  .header{max-width:1640px;margin:0 auto 64px;}
+  .eyebrow{font-size:11px;letter-spacing:5px;color:var(--gold);font-weight:800;margin-bottom:14px;}
+  h1{font-size:48px;font-weight:900;letter-spacing:-1.5px;line-height:1;margin-bottom:12px;}
+  h1 span{color:var(--gold);}
+  .sub{color:var(--muted);font-size:15px;max-width:620px;line-height:1.55;}
+  .stats{display:flex;gap:32px;margin-top:28px;flex-wrap:wrap;}
+  .stat{background:rgba(18,18,28,0.6);border:1px solid var(--border);padding:12px 18px;border-radius:10px;}
+  .stat .k{font-size:10px;letter-spacing:3px;color:var(--muted);font-weight:800;}
+  .stat .v{font-size:22px;font-weight:900;color:var(--text);margin-top:4px;}
+  .stat .v b{color:var(--gold);}
+
+  .section{max-width:1640px;margin:0 auto 72px;}
+  .section-head{display:flex;align-items:baseline;gap:18px;margin-bottom:28px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .section-num{font-size:11px;color:var(--gold);font-weight:800;letter-spacing:3px;}
+  .section-title{font-size:22px;font-weight:800;letter-spacing:-0.3px;}
+  .section-caption{font-size:13px;color:var(--muted);margin-left:auto;}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:36px 28px;
+  }
+  .card{
+    display:flex;flex-direction:column;gap:10px;
+    transition:transform 0.15s ease;
+  }
+  .card:hover{transform:translateY(-4px);}
+  .frame{
+    width:100%;
+    aspect-ratio:390 / 844;
+    background:#000;
+    border-radius:22px;
+    overflow:hidden;
+    position:relative;
+    border:1px solid var(--border);
+    box-shadow:0 8px 32px -8px rgba(0,0,0,0.8),0 0 0 1px rgba(255,255,255,0.03) inset;
+    /* center the image; if full-page is taller, we show the top */
+  }
+  .frame img{
+    width:100%;
+    display:block;
+    object-fit:cover;
+    object-position:top center;
+    height:100%;
+  }
+  .frame::after{
+    content:'';
+    position:absolute;inset:0;
+    border-radius:22px;
+    background:linear-gradient(180deg,transparent 85%,rgba(0,0,0,0.4) 100%);
+    pointer-events:none;
+  }
+  .meta{display:flex;align-items:center;gap:10px;padding:0 6px;}
+  .dot{width:6px;height:6px;border-radius:3px;background:var(--gold);flex-shrink:0;}
+  .meta .n{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;}
+  .meta .t{font-size:13px;color:var(--text);font-weight:700;letter-spacing:-0.1px;}
+  .path{font-size:10px;color:var(--muted);font-family:"SF Mono",ui-monospace,Menlo,monospace;padding:0 6px;letter-spacing:0.3px;}
+
+  /* Section color accents */
+  .sec-auth   .dot,.sec-auth   .section-num{background:#60A5FA;color:#60A5FA;}
+  .sec-tabs   .dot,.sec-tabs   .section-num{background:var(--gold);color:var(--gold);}
+  .sec-rewards .dot,.sec-rewards .section-num{background:#A78BFA;color:#A78BFA;}
+  .sec-venue  .dot,.sec-venue  .section-num{background:#2A9D8F;color:#2A9D8F;}
+  .sec-settings .dot,.sec-settings .section-num{background:#F5A623;color:#F5A623;}
+  .sec-staff  .dot,.sec-staff  .section-num{background:#E76F51;color:#E76F51;}
+  .sec-legal  .dot,.sec-legal  .section-num{background:#7A7A85;color:#7A7A85;}
+
+  .footer{max-width:1640px;margin:96px auto 0;padding-top:40px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;text-align:center;letter-spacing:0.5px;}
+  .footer b{color:var(--gold);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="eyebrow">PRODUCT MAP · FEB 2026</div>
+  <h1>Luna Group · <span>Every Screen</span></h1>
+  <p class="sub">Complete map of the Luna Group mobile app — every route, every modal, every flow state. Captured at 390 × 844 (iPhone-standard viewport). Full-page screenshots showing scrollable content.</p>
+  <div class="stats">
+    <div class="stat"><div class="k">TOTAL SCREENS</div><div class="v"><b>46</b></div></div>
+    <div class="stat"><div class="k">MAIN TABS</div><div class="v"><b>8</b></div></div>
+    <div class="stat"><div class="k">FLOWS MAPPED</div><div class="v"><b>7</b> groups</div></div>
+    <div class="stat"><div class="k">BUILT WITH</div><div class="v">Expo · RN · FastAPI</div></div>
+  </div>
+</div>
+
+<div class="section sec-auth">
+  <div class="section-head">
+    <div class="section-num">01 /</div>
+    <div class="section-title">Auth &amp; First-Launch Flow</div>
+    <div class="section-caption">splash → age verification → onboarding → login / signup</div>
+  </div>
+  <div class="grid">
+    
+    <div class="card">
+      <div class="frame"><img src="01_splash.jpeg" alt="Splash / Boot" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">01</span><span class="t">Splash / Boot</span></div>
+      <div class="path">/ · router decides next</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="02_age_gate.jpeg" alt="Age Gate" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">02</span><span class="t">Age Gate</span></div>
+      <div class="path">/age-gate · 18+ check</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="03_age_gate_blocked.jpeg" alt="Age Gate · Blocked" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">03</span><span class="t">Age Gate · Blocked</span></div>
+      <div class="path">/age-gate · under-18 state</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="04_onboarding.jpeg" alt="Onboarding Carousel" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">04</span><span class="t">Onboarding Carousel</span></div>
+      <div class="path">/onboarding · 6 slides · auto-advance</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="05_login_signin.jpeg" alt="Login · Sign In" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">05</span><span class="t">Login · Sign In</span></div>
+      <div class="path">/login · email + password</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="06_login_signup.jpeg" alt="Login · Join Luna" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">06</span><span class="t">Login · Join Luna</span></div>
+      <div class="path">/login · name + DOB + email</div>
+    </div>
+  </div>
+</div>
+
+<div class="section sec-tabs">
+  <div class="section-head">
+    <div class="section-num">02 /</div>
+    <div class="section-title">Main Tabs (Tab Bar)</div>
+    <div class="section-caption">8 primary destinations · Home · Explore · Wallet · Luna AI · Auctions · Leaderboard · Photos · Profile</div>
+  </div>
+  <div class="grid">
+    
+    <div class="card">
+      <div class="frame"><img src="07_home.jpeg" alt="Home" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">07</span><span class="t">Home</span></div>
+      <div class="path">/(tabs) · hero + feed</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="08_explore.jpeg" alt="Explore" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">08</span><span class="t">Explore</span></div>
+      <div class="path">/(tabs)/explore · venues + events</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="09_wallet.jpeg" alt="Wallet" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">09</span><span class="t">Wallet</span></div>
+      <div class="path">/(tabs)/wallet · points + tickets</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="10_luna_ai.jpeg" alt="Luna AI" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">10</span><span class="t">Luna AI</span></div>
+      <div class="path">/(tabs)/luna-ai · concierge chat</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="11_auctions.jpeg" alt="Auctions" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">11</span><span class="t">Auctions</span></div>
+      <div class="path">/(tabs)/auctions · live bidding</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="12_leaderboard.jpeg" alt="Leaderboard" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">12</span><span class="t">Leaderboard</span></div>
+      <div class="path">/(tabs)/leaderboard · top spenders</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="13_photos_tab.jpeg" alt="Photos" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">13</span><span class="t">Photos</span></div>
+      <div class="path">/(tabs)/photos · venue gallery</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="14_profile.jpeg" alt="Profile" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">14</span><span class="t">Profile</span></div>
+      <div class="path">/(tabs)/profile · tier + settings</div>
+    </div>
+  </div>
+</div>
+
+<div class="section sec-rewards">
+  <div class="section-head">
+    <div class="section-num">03 /</div>
+    <div class="section-title">Rewards, Membership &amp; AI</div>
+    <div class="section-caption">subscriptions · claim reward · shop · missions · milestones · member card · birthday · AI concierge · how points work</div>
+  </div>
+  <div class="grid">
+    
+    <div class="card">
+      <div class="frame"><img src="15_subscriptions.jpeg" alt="Luna+ Plans" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">15</span><span class="t">Luna+ Plans</span></div>
+      <div class="path">/subscriptions · $9.23 / $18.46 weekly</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="16_claim_reward.jpeg" alt="Claim a Reward" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">16</span><span class="t">Claim a Reward</span></div>
+      <div class="path">/claim-reward · 10 shop items + QR</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="17_rewards_shop.jpeg" alt="Rewards Shop" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">17</span><span class="t">Rewards Shop</span></div>
+      <div class="path">/rewards-shop · gift-cards + credits</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="18_missions.jpeg" alt="Missions" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">18</span><span class="t">Missions</span></div>
+      <div class="path">/missions · 6 challenges</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="19_milestones.jpeg" alt="Milestones" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">19</span><span class="t">Milestones</span></div>
+      <div class="path">/milestones · lifetime tiers</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="20_member_card.jpeg" alt="Member Card" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">20</span><span class="t">Member Card</span></div>
+      <div class="path">/member-card · wallet pass</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="22_ai_concierge.jpeg" alt="AI Concierge" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">22</span><span class="t">AI Concierge</span></div>
+      <div class="path">/ai-concierge · deep chat</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="24_birthday_club.jpeg" alt="Birthday Club" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">24</span><span class="t">Birthday Club</span></div>
+      <div class="path">/birthday-club · annual rewards</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="25_how_points_work.jpeg" alt="How Points Work" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">25</span><span class="t">How Points Work</span></div>
+      <div class="path">/how-points-work · explainer</div>
+    </div>
+  </div>
+</div>
+
+<div class="section sec-venue">
+  <div class="section-head">
+    <div class="section-num">04 /</div>
+    <div class="section-title">Venues &amp; Experiences</div>
+    <div class="section-caption">events · bottle service · venue menus</div>
+  </div>
+  <div class="grid">
+    
+    <div class="card">
+      <div class="frame"><img src="21_events.jpeg" alt="Events" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">21</span><span class="t">Events</span></div>
+      <div class="path">/events · ticketed + free</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="23_bottle_service.jpeg" alt="Bottle Service" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">23</span><span class="t">Bottle Service</span></div>
+      <div class="path">/bottle-service · Eclipse 48 bottles</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="26_venue_menu.jpeg" alt="Venue Menu" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">26</span><span class="t">Venue Menu</span></div>
+      <div class="path">/venue-menu · food + drinks</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="39_photos.jpeg" alt="Photos Grid" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">39</span><span class="t">Photos Grid</span></div>
+      <div class="path">/photos · venue galleries</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="40_stories.jpeg" alt="Stories" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">40</span><span class="t">Stories</span></div>
+      <div class="path">/stories · social feed</div>
+    </div>
+  </div>
+</div>
+
+<div class="section sec-settings">
+  <div class="section-head">
+    <div class="section-num">05 /</div>
+    <div class="section-title">Profile &amp; Settings</div>
+    <div class="section-caption">edit profile · notifications · location · safety · payments · referrals · help · about · photos · stories</div>
+  </div>
+  <div class="grid">
+    
+    <div class="card">
+      <div class="frame"><img src="27_settings.jpeg" alt="Settings" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">27</span><span class="t">Settings</span></div>
+      <div class="path">/settings · root</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="28_edit_profile.jpeg" alt="Edit Profile" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">28</span><span class="t">Edit Profile</span></div>
+      <div class="path">/edit-profile · PII update</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="29_notifications.jpeg" alt="Notifications" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">29</span><span class="t">Notifications</span></div>
+      <div class="path">/notifications · inbox</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="30_notification_settings.jpeg" alt="Push Settings" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">30</span><span class="t">Push Settings</span></div>
+      <div class="path">/notification-settings · toggles</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="31_location_settings.jpeg" alt="Location" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">31</span><span class="t">Location</span></div>
+      <div class="path">/location-settings · geofences</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="32_safety_settings.jpeg" alt="Safety Settings" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">32</span><span class="t">Safety Settings</span></div>
+      <div class="path">/safety-settings · alert config</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="33_payment_methods.jpeg" alt="Payment Methods" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">33</span><span class="t">Payment Methods</span></div>
+      <div class="path">/payment-methods · Stripe cards</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="34_refer_friend.jpeg" alt="Refer a Friend" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">34</span><span class="t">Refer a Friend</span></div>
+      <div class="path">/refer-friend · bonus points</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="35_help_support.jpeg" alt="Help &amp; Support" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">35</span><span class="t">Help &amp; Support</span></div>
+      <div class="path">/help-support · FAQ + contact</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="36_about.jpeg" alt="About Luna" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">36</span><span class="t">About Luna</span></div>
+      <div class="path">/about · brand + venues</div>
+    </div>
+  </div>
+</div>
+
+<div class="section sec-staff">
+  <div class="section-head">
+    <div class="section-num">06 /</div>
+    <div class="section-title">Staff &amp; Payment States</div>
+    <div class="section-caption">staff portal · venue dashboard · Stripe success &amp; cancel states</div>
+  </div>
+  <div class="grid">
+    
+    <div class="card">
+      <div class="frame"><img src="43_staff_portal.jpeg" alt="Staff Portal" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">43</span><span class="t">Staff Portal</span></div>
+      <div class="path">/staff-portal · validate QRs</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="44_venue_dashboard.jpeg" alt="Venue Dashboard" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">44</span><span class="t">Venue Dashboard</span></div>
+      <div class="path">/venue-dashboard · live metrics</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="45_payment_success.jpeg" alt="Payment Success" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">45</span><span class="t">Payment Success</span></div>
+      <div class="path">/payment-success · Stripe return</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="46_payment_cancelled.jpeg" alt="Payment Cancelled" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">46</span><span class="t">Payment Cancelled</span></div>
+      <div class="path">/payment-cancelled · back flow</div>
+    </div>
+  </div>
+</div>
+
+<div class="section sec-legal">
+  <div class="section-head">
+    <div class="section-num">07 /</div>
+    <div class="section-title">Legal &amp; Support</div>
+    <div class="section-caption">privacy policy · terms of service · lost &amp; found · safety alert</div>
+  </div>
+  <div class="grid">
+    
+    <div class="card">
+      <div class="frame"><img src="41_privacy_policy.jpeg" alt="Privacy Policy" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">41</span><span class="t">Privacy Policy</span></div>
+      <div class="path">/privacy-policy · APP compliant</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="42_terms_of_service.jpeg" alt="Terms of Service" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">42</span><span class="t">Terms of Service</span></div>
+      <div class="path">/terms-of-service · 18+ rules</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="37_safety.jpeg" alt="Safety Alert" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">37</span><span class="t">Safety Alert</span></div>
+      <div class="path">/safety · SOS + alert</div>
+    </div>
+
+    <div class="card">
+      <div class="frame"><img src="38_lost_found.jpeg" alt="Lost &amp; Found" loading="lazy" /></div>
+      <div class="meta"><span class="dot"></span><span class="n">38</span><span class="t">Lost &amp; Found</span></div>
+      <div class="path">/lost-found · report item</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <b>Luna Group</b> · Brisbane · Gold Coast · Expo React Native + FastAPI · Captured Feb 2026
+</div>
+
+</body>
+</html>
