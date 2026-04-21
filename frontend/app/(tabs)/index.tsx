@@ -373,6 +373,7 @@ export default function HomeScreen() {
               onSeeAll={() => router.push('/auctions')}
               icon="flash"
               iconColor={colors.gold}
+              liveDot
             />
             
             <ScrollView 
@@ -442,37 +443,41 @@ export default function HomeScreen() {
           />
 
           {loading ? (
-            <View style={styles.trendingGrid}>
+            <View>
               {[1, 2, 3, 4].map((i) => (
-                <View key={i} style={styles.trendingCard}>
-                  <CardSkeleton style={{ marginBottom: 0, height: 140 }} />
+                <View key={i} style={styles.trendingListRow}>
+                  <CardSkeleton style={{ marginBottom: 0, height: 72 }} />
                 </View>
               ))}
             </View>
           ) : events.length > 0 ? (
-            <View style={styles.trendingGrid}>
+            <View style={styles.trendingList}>
               {events.slice(0, 6).map((event, index) => (
-                <View key={event.id} style={styles.trendingCard}>
-                  <TouchableOpacity
-                    style={styles.trendingCardInner}
-                    onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
-                    activeOpacity={0.85}
-                    data-testid={`trending-event-${index}`}
-                  >
-                    <Image source={{ uri: event.image || event.image_url }} style={styles.trendingImage} contentFit="cover" />
-                    <LinearGradient 
-                      colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} 
-                      locations={[0, 0.4, 1]}
-                      style={styles.trendingOverlay}
-                    >
-                      <View style={styles.trendingRank}>
-                        <Text style={styles.trendingRankText}>{index + 1}</Text>
-                      </View>
-                      <Text style={styles.trendingTitle} numberOfLines={2}>{event.title}</Text>
-                      <Text style={styles.trendingVenue}>{event.venue_name || event.location}</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  key={event.id}
+                  style={styles.trendingListRow}
+                  onPress={() => { handleHaptic(); router.push(`/event/${event.id}`); }}
+                  activeOpacity={0.75}
+                  data-testid={`trending-event-${index}`}
+                >
+                  <Text style={styles.trendingListRank}>
+                    {String(index + 1).padStart(2, '0')}
+                  </Text>
+                  <Image
+                    source={{ uri: event.image || event.image_url }}
+                    style={styles.trendingListImage}
+                    contentFit="cover"
+                  />
+                  <View style={styles.trendingListText}>
+                    <Text style={styles.trendingListTitle} numberOfLines={2}>
+                      {event.title}
+                    </Text>
+                    <Text style={styles.trendingListVenue} numberOfLines={1}>
+                      {event.venue_name || event.location}
+                    </Text>
+                  </View>
+                  <Icon name="chevron-forward" size={16} color={colors.textMuted} />
+                </TouchableOpacity>
               ))}
             </View>
           ) : (
@@ -485,43 +490,6 @@ export default function HomeScreen() {
               iconColor={colors.accent}
             />
           )}
-        </Animated.View>
-
-        {/* Venues */}
-        <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.section}>
-          <SectionTitle 
-            title="Our Venues" 
-            icon="location"
-            iconColor={colors.gold}
-          />
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.venueScroll}
-            decelerationRate="fast"
-            snapToInterval={VENUE_CARD_WIDTH + 16}
-          >
-            {venues.map((venue) => (
-              <TouchableOpacity
-                key={venue.id}
-                style={styles.venueCard}
-                onPress={() => { handleHaptic(); router.push(`/venue/${venue.id}`); }}
-                activeOpacity={0.9}
-              >
-                <Image source={{ uri: venue.image_url }} style={styles.venueImage} contentFit="cover" />
-                <LinearGradient 
-                  colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.95)']} 
-                  locations={[0, 0.3, 1]}
-                  style={styles.venueOverlay}
-                >
-                  <Text style={styles.venueType}>{venue.type?.toUpperCase()}</Text>
-                  <Text style={styles.venueName}>{venue.name}</Text>
-                  <Text style={styles.venueLocation}>{venue.location}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
         </Animated.View>
 
         <View style={{ height: 20 }} />
@@ -775,6 +743,45 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
+  // Trending - List style (ranked chart, watermark numbers)
+  trendingList: {
+    marginTop: spacing.xs,
+  },
+  trendingListRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+    gap: spacing.md,
+  },
+  trendingListRank: {
+    width: 34,
+    fontSize: 26,
+    fontWeight: '900',
+    color: 'rgba(255,255,255,0.12)',
+    letterSpacing: -1,
+    textAlign: 'left',
+  },
+  trendingListImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 10,
+  },
+  trendingListText: {
+    flex: 1,
+  },
+  trendingListTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+    lineHeight: 18,
+  },
+  trendingListVenue: {
+    color: 'rgba(240,240,248,0.55)',
+    fontSize: 12,
+    marginTop: 3,
+  },
   // Trending - Clean, borderless cards
   trendingGrid: {
     flexDirection: 'row',
