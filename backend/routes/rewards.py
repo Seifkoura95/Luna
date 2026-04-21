@@ -252,8 +252,12 @@ async def validate_and_redeem_qr(request: Request, qr_code: str):
         if redemption.get("status") == "redeemed":
             raise HTTPException(status_code=400, detail="This QR code has already been used")
         
-        if redemption.get("expires_at") and datetime.now(timezone.utc) > redemption.get("expires_at"):
-            raise HTTPException(status_code=400, detail="This QR code has expired")
+        exp = redemption.get("expires_at")
+        if exp and isinstance(exp, datetime):
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) > exp:
+                raise HTTPException(status_code=400, detail="This QR code has expired")
         
         # Mark as redeemed
         await db.redemptions.update_one(
@@ -288,8 +292,12 @@ async def validate_and_redeem_qr(request: Request, qr_code: str):
         if wallet_pass.get("redeemed"):
             raise HTTPException(status_code=400, detail="This QR code has already been used")
         
-        if wallet_pass.get("expires_at") and datetime.now(timezone.utc) > wallet_pass.get("expires_at"):
-            raise HTTPException(status_code=400, detail="This QR code has expired")
+        exp = wallet_pass.get("expires_at")
+        if exp and isinstance(exp, datetime):
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) > exp:
+                raise HTTPException(status_code=400, detail="This QR code has expired")
         
         # Mark wallet pass as redeemed
         await db.wallet_passes.update_one(

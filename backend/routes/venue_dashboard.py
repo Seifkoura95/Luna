@@ -76,12 +76,16 @@ async def venue_scan_qr(request: Request, scan_req: ScanQRRequest):
     if redemption["status"] == "expired":
         raise HTTPException(status_code=400, detail="QR code has expired")
     
-    if redemption.get("expires_at") and redemption["expires_at"] < datetime.now(timezone.utc):
-        await db.redemptions.update_one(
-            {"id": redemption["id"]},
-            {"$set": {"status": "expired"}}
-        )
-        raise HTTPException(status_code=400, detail="QR code has expired")
+    exp = redemption.get("expires_at")
+    if exp and isinstance(exp, datetime):
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        if exp < datetime.now(timezone.utc):
+            await db.redemptions.update_one(
+                {"id": redemption["id"]},
+                {"$set": {"status": "expired"}}
+            )
+            raise HTTPException(status_code=400, detail="QR code has expired")
     
     await db.redemptions.update_one(
         {"id": redemption["id"]},

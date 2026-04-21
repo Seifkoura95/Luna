@@ -978,11 +978,14 @@ async def validate_reward_qr(request: Request, data: ValidateRewardQRRequest):
     if redemption.get("status") == "expired":
         raise HTTPException(status_code=400, detail="This reward has expired")
 
-    # Check expiry
+    # Check expiry (handle naive datetimes stored by legacy writes)
     expires_at = redemption.get("expires_at")
-    if expires_at and isinstance(expires_at, datetime) and expires_at < datetime.now(timezone.utc):
-        await db.redemptions.update_one({"qr_code": data.qr_code}, {"$set": {"status": "expired"}})
-        raise HTTPException(status_code=400, detail="This reward has expired")
+    if expires_at and isinstance(expires_at, datetime):
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at < datetime.now(timezone.utc):
+            await db.redemptions.update_one({"qr_code": data.qr_code}, {"$set": {"status": "expired"}})
+            raise HTTPException(status_code=400, detail="This reward has expired")
 
     # Mark as used
     await db.redemptions.update_one(

@@ -311,8 +311,12 @@ async def redeem_birthday_reward(reward_claim_id: str, authorization: str = Head
     if claim.get("redeemed"):
         raise HTTPException(status_code=400, detail="Reward already redeemed")
     
-    if claim.get("expires_at") and datetime.now(timezone.utc) > claim.get("expires_at"):
-        raise HTTPException(status_code=400, detail="Reward has expired")
+    exp = claim.get("expires_at")
+    if exp and isinstance(exp, datetime):
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > exp:
+            raise HTTPException(status_code=400, detail="Reward has expired")
     
     # Mark birthday reward as redeemed
     await db.birthday_rewards.update_one(
