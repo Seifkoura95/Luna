@@ -91,17 +91,18 @@ export default function SubscriptionsScreen() {
     // Paid subscriptions happen OUTSIDE the app on our web portal to
     // comply with Apple IAP rules. The app only supports free tier switches.
     if (tier.price > 0) {
+      const weekly = (tier.price * 12 / 52).toFixed(2);
       Alert.alert(
         `Subscribe to ${tier.name}`,
-        `${tier.name} is $${tier.price}/month. You'll be redirected to our secure subscription portal to complete payment.`,
+        `${tier.name} is $${weekly}/week (billed monthly at $${tier.price.toFixed(2)}). You'll be redirected to our secure subscription portal to complete payment.`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Continue in Browser',
             onPress: async () => {
               const STRIPE_LINKS: Record<string, string> = {
-                silver: 'https://buy.stripe.com/7sY8wP03ugUIeLE3O3aVa00',
-                gold: 'https://buy.stripe.com/14A28r4jK1ZO5b43O3aVa01',
+                silver: 'https://buy.stripe.com/3cIaEX6rS8oc0UObgvaVa02',
+                gold: 'https://buy.stripe.com/dRm7sLg2s9sgfPIdoDaVa03',
               };
               const portalUrl = STRIPE_LINKS[tierId]
                 || `https://lunagroupapp.com.au/subscribe?tier=${encodeURIComponent(tierId)}`;
@@ -193,11 +194,16 @@ export default function SubscriptionsScreen() {
             ) : (
               <>
                 <Text style={styles.priceCurrency}>$</Text>
-                <Text style={styles.priceText}>{tier.price.toFixed(2)}</Text>
-                <Text style={styles.pricePeriod}>/month</Text>
+                <Text style={styles.priceText}>{(tier.price * 12 / 52).toFixed(2)}</Text>
+                <Text style={styles.pricePeriod}>/week</Text>
               </>
             )}
           </View>
+          {tier.price > 0 && (
+            <Text style={styles.billedMonthlyText} data-testid={`billed-monthly-${tier.id}`}>
+              Billed monthly at ${tier.price.toFixed(2)} AUD
+            </Text>
+          )}
 
           {/* Points Multiplier Badge */}
           <View style={[styles.multiplierBadge, { backgroundColor: tier.color + '20' }]}>
@@ -260,7 +266,7 @@ export default function SubscriptionsScreen() {
 
     // Key features to compare
     const keyFeatures = [
-      { key: 'price', label: 'Monthly Price' },
+      { key: 'price', label: 'Weekly Price' },
       { key: 'points_multiplier', label: 'Points Multiplier' },
       { key: 'free_entry', label: 'Free Entry' },
       { key: 'skip_line', label: 'Skip the Line' },
@@ -276,7 +282,7 @@ export default function SubscriptionsScreen() {
       const benefits = tier.benefits || {};
       switch (key) {
         case 'price':
-          return tier.price === 0 ? 'FREE' : `$${tier.price}/mo`;
+          return tier.price === 0 ? 'FREE' : `$${(tier.price * 12 / 52).toFixed(2)}/wk`;
         case 'points_multiplier':
           return `${tier.points_multiplier}x`;
         case 'free_entry':
@@ -486,8 +492,7 @@ export default function SubscriptionsScreen() {
         <View style={styles.infoSection}>
           <Icon name="information-circle" size={20} color={colors.textMuted} />
           <Text style={styles.infoText}>
-            All subscriptions are billed monthly. Cancel anytime from your profile settings.
-            Demo mode - no real payments processed.
+            Prices shown as weekly, billed monthly ($39.99 Silver / $79.99 Gold AUD). Cancel anytime from Profile → Subscription or via the link in your Stripe receipt email.
           </Text>
         </View>
 

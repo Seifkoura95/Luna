@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Subscribe — Luna Group</title>
-  <meta name="description" content="Join Luna+ for priority entry, venue perks, and exclusive VIP access at Eclipse, Kenjin, JuJu's, Night Market, Ember & Ash and more." />
+  <meta name="description" content="Join Luna+ for priority entry, complimentary drinks, reserved tables and exclusive VIP access at Eclipse, Kenjin, JuJu's, Night Market, Ember & Ash and more." />
   <meta property="og:title" content="Subscribe to Luna+" />
-  <meta property="og:description" content="Brisbane's premier nightlife membership." />
+  <meta property="og:description" content="Brisbane's premier nightlife membership. From $9.23/week." />
   <meta property="og:image" content="https://lunagroupapp.com.au/luna-og.jpg" />
   <meta property="og:url" content="https://lunagroupapp.com.au/subscribe" />
   <link rel="icon" type="image/png" href="/favicon.png" />
@@ -92,6 +92,7 @@
     .tier-price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
     .tier-price .amt { font-size: 48px; font-weight: 900; letter-spacing: -1.5px; }
     .tier-price .per { font-size: 14px; color: var(--muted); }
+    .billed-line { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
     .tier-desc { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
 
     .perks { list-style: none; margin: 0 0 28px 0; padding: 0; }
@@ -156,7 +157,7 @@
     </header>
 
     <section class="hero">
-      <div class="eyebrow">MEMBERSHIP</div>
+      <div class="eyebrow">MEMBERSHIP · FROM $9.23/WK</div>
       <h1>Join <span>Luna+</span></h1>
       <p class="sub">Priority entry, complimentary drinks, reserved tables and exclusive events across Eclipse, Kenjin, JuJu's, Night Market and Ember &amp; Ash.</p>
     </section>
@@ -164,68 +165,86 @@
     <div class="tiers">
 
       <!-- BRONZE (FREE) -->
-      <div class="tier">
+      <div class="tier" data-testid="tier-bronze">
         <div class="tier-name">BRONZE · FREE</div>
         <div class="tier-price">
           <span class="amt">$0</span>
           <span class="per">/ forever</span>
         </div>
-        <div class="tier-desc">The starter tier. Earn Luna Points on every check-in.</div>
+        <div class="billed-line">&nbsp;</div>
+        <div class="tier-desc">The starter tier. Earn Luna Points on every spend.</div>
         <ul class="perks">
-          <li><span class="check">✓</span> 10 Luna Points per $1 spent at any venue</li>
-          <li><span class="check">✓</span> Free entry on Wednesdays &amp; Thursdays</li>
-          <li><span class="check">✓</span> Birthday week bonus points (+500)</li>
-          <li><span class="check">✓</span> Event RSVPs + push alerts</li>
+          <li><span class="check">✓</span> 10 Luna Points per $1 spent at any venue (1× multiplier)</li>
+          <li><span class="check">✓</span> Free entry before 10pm (excludes ticketed events)</li>
+          <li><span class="check">✓</span> 5% off food on weeknights (Sun–Thu)</li>
+          <li><span class="check">✓</span> Birthday surprise + complimentary birthday dessert</li>
+          <li><span class="check">✓</span> Early access to event announcements</li>
+          <li><span class="check">✓</span> Access to member pre-sale tickets</li>
+          <li><span class="check">✓</span> Bronze members-only parties</li>
         </ul>
-        <a href="#" class="btn btn-outline">Included by default</a>
+        <a href="#" class="btn btn-outline" data-testid="btn-bronze">INCLUDED BY DEFAULT</a>
       </div>
 
       <!-- SILVER -->
-      <div class="tier featured">
+      <div class="tier featured" data-testid="tier-silver">
         <div class="tier-badge">MOST POPULAR</div>
         <div class="tier-name">SILVER</div>
         <div class="tier-price">
-          <span class="amt">$29</span>
-          <span class="per">/ month</span>
+          <span class="amt">$9.23</span>
+          <span class="per">/ week</span>
         </div>
+        <div class="billed-line">Billed monthly at $39.99 AUD</div>
         <div class="tier-desc">Weekly regulars — priority queue + perks stack.</div>
         <ul class="perks">
-          <li><span class="check">✓</span> Everything in Bronze</li>
-          <li><span class="check">✓</span> 2 free entries per month (any venue)</li>
-          <li><span class="check">✓</span> 1 complimentary drink per visit</li>
-          <li><span class="check">✓</span> 2× Luna Points multiplier (20 pts per $1)</li>
-          <li><span class="check">✓</span> Priority queue at Eclipse, Kenjin, After Dark</li>
-          <li><span class="check">✓</span> Silver tier exclusive events</li>
+          <li><span class="check">✓</span> Everything in Bronze, plus:</li>
+          <li><span class="check">✓</span> Express entry — skip the queue every visit</li>
+          <li><span class="check">✓</span> Free entry before 11pm (excludes ticketed events)</li>
+          <li><span class="check">✓</span> Complimentary beverage every night (except Saturdays)</li>
+          <li><span class="check">✓</span> 1.5× Luna Points (15 pts per $1) — <strong>points never expire</strong></li>
+          <li><span class="check">✓</span> 10% off total bill at restaurants, any day</li>
+          <li><span class="check">✓</span> Complimentary welcome drink on arrival</li>
+          <li><span class="check">✓</span> Priority table reservation (48hr advance)</li>
+          <li><span class="check">✓</span> Complimentary Silver Eclipse wristband</li>
+          <li><span class="check">✓</span> Silver/Gold-only events &amp; themed nights</li>
+          <li><span class="check">✓</span> Dedicated member contact line</li>
         </ul>
-        <!-- Silver Payment Link (live) -->
-        <a href="https://buy.stripe.com/7sY8wP03ugUIeLE3O3aVa00" class="btn btn-gold">SUBSCRIBE — $29/MO</a>
+        <!-- Silver Payment Link (LIVE · $39.99/mo) -->
+        <a href="https://buy.stripe.com/3cIaEX6rS8oc0UObgvaVa02" class="btn btn-gold" data-testid="btn-subscribe-silver">SUBSCRIBE — $9.23/WK</a>
       </div>
 
       <!-- GOLD -->
-      <div class="tier">
+      <div class="tier" data-testid="tier-gold">
         <div class="tier-name">GOLD</div>
         <div class="tier-price">
-          <span class="amt">$79</span>
-          <span class="per">/ month</span>
+          <span class="amt">$18.46</span>
+          <span class="per">/ week</span>
         </div>
-        <div class="tier-desc">VIPs — reserved tables, host assigned, no queues.</div>
+        <div class="billed-line">Billed monthly at $79.99 AUD</div>
+        <div class="tier-desc">VIPs — reserved tables, guest passes, no queues.</div>
         <ul class="perks">
-          <li><span class="check">✓</span> Everything in Silver</li>
-          <li><span class="check">✓</span> 5 free entries per month</li>
-          <li><span class="check">✓</span> Free Luna Wallet upgrades (Apple/Google)</li>
-          <li><span class="check">✓</span> 3× Luna Points multiplier (30 pts per $1)</li>
-          <li><span class="check">✓</span> Dedicated VIP host at every visit</li>
-          <li><span class="check">✓</span> 20% off bottle service deposits</li>
-          <li><span class="check">✓</span> Annual Luna Gold gift box</li>
+          <li><span class="check">✓</span> Everything in Silver, plus:</li>
+          <li><span class="check">✓</span> Unlimited free entry every night (subject to availability)</li>
+          <li><span class="check">✓</span> Complimentary Sky Lounge access at Eclipse</li>
+          <li><span class="check">✓</span> Reserved section / booth access (guaranteed with booking)</li>
+          <li><span class="check">✓</span> Complimentary entry for 1 guest per visit</li>
+          <li><span class="check">✓</span> Complimentary beverage at each venue every night</li>
+          <li><span class="check">✓</span> 2× Luna Points (20 pts per $1) — <strong>50% effective cashback</strong></li>
+          <li><span class="check">✓</span> 15% off total bill at restaurants, any time</li>
+          <li><span class="check">✓</span> Guaranteed table reservation — no waitlist</li>
+          <li><span class="check">✓</span> First access to artist / DJ bookings</li>
+          <li><span class="check">✓</span> Annual bonus points on membership anniversary</li>
+          <li><span class="check">✓</span> Personalised premium member card</li>
+          <li><span class="check">✓</span> Direct WhatsApp / concierge line</li>
+          <li><span class="check">✓</span> Early access to NYE &amp; holiday bookings</li>
         </ul>
-        <!-- Gold Payment Link (live) -->
-        <a href="https://buy.stripe.com/14A28r4jK1ZO5b43O3aVa01" class="btn btn-gold">SUBSCRIBE — $79/MO</a>
+        <!-- Gold Payment Link (LIVE · $79.99/mo) -->
+        <a href="https://buy.stripe.com/dRm7sLg2s9sgfPIdoDaVa03" class="btn btn-gold" data-testid="btn-subscribe-gold">SUBSCRIBE — $18.46/WK</a>
       </div>
 
     </div>
 
     <p class="fine">
-      Luna+ is a recurring monthly subscription. You can cancel anytime from your Stripe customer portal (link in the confirmation email). No refunds for partial months. Benefits apply from the first day of each billing cycle. Luna Group reserves the right to modify perks with 30 days notice.
+      Luna+ is a recurring monthly subscription. Weekly pricing is displayed for comparison and is billed monthly ($39.99 Silver / $79.99 Gold AUD). Weekly figure = monthly × 12 ÷ 52. You can cancel anytime from your Stripe customer portal (link in the confirmation email). No refunds for partial months. Benefits apply from the first day of each billing cycle. Luna Group reserves the right to modify perks with 30 days notice.
     </p>
 
     <footer class="footer">
@@ -237,17 +256,5 @@
       </p>
     </footer>
   </div>
-
-  <script>
-    // Simple tap analytics (optional — swap with plausible/umami if you want)
-    document.querySelectorAll('.btn-gold').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        if (btn.href.includes('PASTE_')) {
-          e.preventDefault();
-          alert('Stripe Payment Link not yet configured. See README.md.');
-        }
-      });
-    });
-  </script>
 </body>
 </html>

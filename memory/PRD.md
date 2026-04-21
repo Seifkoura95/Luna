@@ -1,5 +1,53 @@
 # Luna Group VIP App - Product Requirements Document
 
+
+## Latest Update: Feb 21, 2026 - Session 11
+
+### COMPLETED: Exhaustive Rewards Doc + Weekly-Billing Display + Stripe Price Fix
+
+**Exhaustive master reference (`/app/LUNA_REWARDS_REFERENCE.md`):**
+- Rewrote from scratch with every source-of-truth data point enumerated
+- All 3 tiers with every `benefits` flag + all 4 perk lists (`perks_list`, `nightclub_perks`, `restaurant_perks`, `general_perks`)
+- All 6 missions (icon, reward, requirement value, mission type, venue restrictions, verification logic)
+- All 6 milestones with **every individual reward ticket ID listed** (109 tickets total across lifetime)
+- All 10 rewards shop items (cost, category, venue restriction, description)
+- All 48 Eclipse bottle service items across 9 categories
+- Points math (formulas from `subscriptions.award_points`, cashback table, constants from `config.py`)
+- 11-row anti-abuse & QR security summary
+- How points get credited — 8 sources mapped to timing + verification mechanism
+
+**Pricing decision resolved (user confirmed $39.99 / $79.99):**
+- Created NEW live Stripe Products + Payment Links at correct monthly prices:
+  - Silver: `https://buy.stripe.com/3cIaEX6rS8oc0UObgvaVa02` ($39.99 AUD/mo)
+  - Gold:   `https://buy.stripe.com/dRm7sLg2s9sgfPIdoDaVa03` ($79.99 AUD/mo)
+- Old $29 Silver / $79 Gold links should be archived manually in Stripe dashboard
+- `backend/config.py` SUBSCRIPTION_TIERS already at correct $39.99 / $79.99
+
+**Weekly advertising, monthly billing (user requirement):**
+- Weekly math: `monthly × 12 ÷ 52` → Silver $9.23/wk, Gold $18.46/wk
+- `/app/frontend/app/subscriptions.tsx`: tier cards now show `$9.23 /week` with "Billed monthly at $39.99 AUD" sub-line. Subscribe alert also shows weekly + monthly.
+- `/app/public-site/subscribe/index.html`: rewritten with correct weekly prices, new Stripe links, corrected perk lists (previous copy had wrong multipliers), Hero eyebrow now reads "MEMBERSHIP · FROM $9.23/WK"
+- Compare view in mobile app updated: column header now "Weekly Price" showing `$9.23/wk`, `$18.46/wk`
+
+**Verified (smoke test screenshot):**
+- Subscriptions screen renders `$9.23 /week` + "Billed monthly at $39.99 AUD" for Silver
+- Subscriptions screen renders `$18.46 /week` + "Billed monthly at $79.99 AUD" for Gold
+- Backend `/api/subscriptions/tiers` returns correct `price: 39.99 / 79.99` monthly amounts
+
+**Files modified this session:**
+- Rewritten: `/app/LUNA_REWARDS_REFERENCE.md`
+- Rewritten: `/app/public-site/subscribe/index.html`
+- Modified: `/app/frontend/app/subscriptions.tsx` (weekly display, new Stripe links, info copy)
+
+**Pending (next session):**
+- Add Privacy Policy + Terms of Service pages to `/app/public-site/` (Apple App Store requires)
+- Archive old $29/$79 Stripe Payment Links from dashboard (manual user task)
+- Age-gating (17+) modal on first launch
+- "Claim My Reward" QR generator screen for 10 rewards shop items
+- Draft App Store listing copy + Privacy Nutrition Label answers
+- Sentry for production crash reporting
+- Create Stripe Payment Links for all 48 Eclipse bottle items as static fallbacks
+
 ## Latest Update: April 21, 2026 - Session 10
 
 ### COMPLETED: Marketing Site + Points System Documentation
