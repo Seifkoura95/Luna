@@ -145,7 +145,20 @@ class AuctionUpdate(BaseModel):
 
 
 async def require_admin(request: Request):
-    """Helper to verify admin access"""
+    """Verify admin access.
+    Accepts EITHER:
+      (a) a JWT Bearer token whose user has role in {admin, staff, manager}, OR
+      (b) a static `X-Luna-Hub-Key` header equal to env LUNA_HUB_API_KEY
+         — used by the external Lovable admin portal for server-to-server CRUD.
+    """
+    import os
+    # Option B — Lovable Hub API key header (server-to-server)
+    hub_key = request.headers.get("X-Luna-Hub-Key") or request.headers.get("x-luna-hub-key")
+    expected = os.environ.get("LUNA_HUB_API_KEY", "")
+    if hub_key and expected and hub_key == expected:
+        return {"user_id": "luna_hub", "role": "admin", "via": "hub_key"}
+
+    # Option A — user JWT
     auth_header = request.headers.get("Authorization")
     if not auth_header:
         raise HTTPException(status_code=401, detail="Not authenticated")
