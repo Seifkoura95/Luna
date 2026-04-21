@@ -1,6 +1,57 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Feb 22, 2026 - Session 12 (Lovable Hub Full CRUD)
+
+### COMPLETED: Finished Lovable "Luna Hub" portal — every content surface now DB-driven
+
+**All admin endpoints accept EITHER:**
+- a JWT from an admin user, OR
+- a static header `X-Luna-Hub-Key: luna_hub_live_682fbaaa19a6a4594f58618b803531ee6fad8016` (server-to-server)
+
+**NEW collections:**
+- `db.app_config` — singleton (key='main') for status-pill / announcement / maintenance mode
+- `db.milestones_custom` — full milestone overrides (auto-seeds on first edit)
+- `db.bottle_overrides` — `{bottle_id, image_url}` rows, merged into bottle menus
+- `db.venue_overrides` — partial-field overrides keyed by venue_id (incl. `is_hidden`)
+
+**NEW backend endpoints (`/app/backend/routes/admin.py`):**
+- `GET /api/config/public` — **no-auth** endpoint the mobile app hits on every launch. Returns status_pill, hero_announcement, maintenance flags.
+- `GET /api/admin/config` / `PUT /api/admin/config` — admin CRUD for config (supports explicit-null clearing via Pydantic v2 `model_dump(exclude_unset=True)`)
+- `GET /api/admin/milestones` / `POST` / `PUT /{id}` / `DELETE /{id}` — full milestones CRUD. Lists return default hardcoded list until first write, then DB-backed.
+- `GET /api/admin/bottles` (with optional `?venue_id=`) — lists all 48 Eclipse bottles with `default_image_url` + `overridden` flag
+- `PUT /api/admin/bottles/{bottle_id}/image` / `DELETE` — override/clear bottle image URL
+- `GET /api/admin/venues` / `GET /api/admin/venues/{id}` — merged baseline + overrides
+- `PUT /api/admin/venues/{id}` / `DELETE` — partial-field override (tagline, status, hero_image, is_hidden, etc.)
+
+**Public-facing integrations:**
+- `GET /api/bookings/bottle-menu/{venue_id}` now merges `db.bottle_overrides` — Lovable image swaps appear instantly
+- `GET /api/venues` and `GET /api/venues/{id}` now merge `db.venue_overrides`; `is_hidden=true` removes venue from the public list
+- `GET /api/milestones` (user-facing) reads `db.milestones_custom` if populated, else falls back to hardcoded MILESTONES — Lovable edits propagate immediately
+- Home tab (`/app/frontend/app/(tabs)/index.tsx`) fetches `/api/config/public` on every load + refresh. Status pill text, "LIVE NOW" label, and force_mode are all driven by DB. `status_pill.custom_message` replaces the auto text when set.
+
+**New api.ts method:**
+- `api.getPublicConfig()` — typed wrapper around `/api/config/public`
+
+**Testing:** iteration_34.json — **31/31 backend tests PASSED (100%)**. Covered auth (hub-key + JWT + reject-bogus), config CRUD with null-clearing, milestones CRUD with user-facing surfacing, bottle override + bottle-menu merge, venue override including `is_hidden` list-filter, regressions on missions/rewards/boosts/auctions.
+
+**Minor follow-ups logged (non-blocking):**
+- `admin.py` is 1122 lines; consider splitting into `routes/admin/*.py` per-domain modules
+- Milestones CRUD auto-seeds defaults into the custom collection on first write — makes "revert to pure defaults" require deleting every id
+- No pagination on `/api/admin/bottles` — OK for 48 items
+
+**Credentials (unchanged):**
+- User: luna@test.com / test123
+- Admin: admin@lunagroup.com.au / Trent69!
+- Luna Hub: header `X-Luna-Hub-Key: luna_hub_live_682fbaaa19a6a4594f58618b803531ee6fad8016`
+
+**Pending (next session priority):**
+- 🟡 In-app admin "Snap a bottle photo" camera upload flow (Lovable already has URL override — this is for venue staff on iPhone)
+- 🟡 App Store listing copy + Privacy Nutrition Label answers
+- 🟢 Sentry for production crash reporting
+- 🟢 Refactor `routes/admin.py` into per-domain modules
+
+
 ## Latest Update: Feb 21, 2026 - Session 11e
 
 ### COMPLETED: Header consistency + UX polish batch
