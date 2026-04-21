@@ -88,9 +88,6 @@ export default function SubscriptionsScreen() {
       return;
     }
 
-    const tier = tiers.find(t => t.id === tierId);
-    if (!tier) return;
-
     // Paid subscriptions happen OUTSIDE the app on our web portal to
     // comply with Apple IAP rules. The app only supports free tier switches.
     if (tier.price > 0) {
