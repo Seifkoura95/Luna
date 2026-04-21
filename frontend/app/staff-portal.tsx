@@ -115,14 +115,25 @@ export default function StaffPortal() {
     setScanning(true);
     if (isNative) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setShowScanner(false);
-    const userId = data.replace('LUNA-MEMBER:', '').replace('LUNA-', '').trim();
+
+    // CRITICAL: Do NOT mutate the scanned payload for reward validation.
+    // Every Luna QR starts with "LUNA-" (LUNA-ENT-, LUNA-TKT-, LUNA-BDAY-,
+    // LUNA-DRINK-, and reward QRs like LUNA-<uuid8>-<user12>). Stripping the
+    // prefix turns a valid reward QR into a random string the backend can't match.
+    const raw = (data || '').trim();
 
     if (activeTab === 'validate') {
-      setQrInput(userId);
+      setQrInput(raw);
       setScanning(false);
-      handleValidateReward(userId);
+      handleValidateReward(raw);
       return;
     }
+
+    // Member-lookup scan (Award tab): member QR is either "LUNA-MEMBER:<uid>"
+    // or a bare user_id. Strip ONLY the explicit member marker.
+    const userId = raw.startsWith('LUNA-MEMBER:')
+      ? raw.slice('LUNA-MEMBER:'.length).trim()
+      : raw;
 
     try {
       const profile = await api.getMemberProfile(userId);
