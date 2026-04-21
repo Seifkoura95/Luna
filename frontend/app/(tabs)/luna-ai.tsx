@@ -403,7 +403,7 @@ export default function LunaAIScreen() {
       <KeyboardAvoidingView 
         style={styles.chatContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 72 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {/* Messages */}
         <FlatList

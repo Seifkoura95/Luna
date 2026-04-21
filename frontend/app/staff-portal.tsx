@@ -84,8 +84,8 @@ export default function StaffPortal() {
     if (isNative) {
       (async () => {
         try {
-          const { BarCodeScanner: BCS } = require('expo-barcode-scanner');
-          const { status } = await BCS.requestPermissionsAsync();
+          const { Camera } = require('expo-camera');
+          const { status } = await Camera.requestCameraPermissionsAsync();
           setHasPermission(status === 'granted');
         } catch {}
       })();
@@ -330,11 +330,22 @@ export default function StaffPortal() {
               </View>
 
               {showScanner && (
-                <View style={styles.scannerWrap}>
+                <View style={[styles.scannerWrap, { height: 240 }]}>
                   {Platform.OS === 'web' ? (
                     <View style={styles.scannerMsg}><Icon name="phone-portrait" size={28} color={colors.textMuted} /><Text style={styles.scannerMsgText}>QR scanning on mobile only</Text></View>
+                  ) : hasPermission === false ? (
+                    <View style={styles.scannerMsg}><Icon name="lock-closed" size={28} color={colors.textMuted} /><Text style={styles.scannerMsgText}>Camera permission denied. Enable in Settings.</Text></View>
                   ) : (
-                    <View style={styles.scannerMsg}><Text style={styles.scannerMsgText}>Camera scanner active on device</Text></View>
+                    (() => {
+                      const { CameraView } = require('expo-camera');
+                      return (
+                        <CameraView
+                          style={StyleSheet.absoluteFillObject}
+                          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                          onBarcodeScanned={scanning ? undefined : handleBarCodeScanned}
+                        />
+                      );
+                    })()
                   )}
                 </View>
               )}
@@ -458,11 +469,22 @@ export default function StaffPortal() {
             </View>
 
             {showScanner && (
-              <View style={styles.scannerWrap}>
+              <View style={[styles.scannerWrap, { height: 240 }]}>
                 {Platform.OS === 'web' ? (
                   <View style={styles.scannerMsg}><Text style={styles.scannerMsgText}>QR scanning on mobile only</Text></View>
+                ) : hasPermission === false ? (
+                  <View style={styles.scannerMsg}><Text style={styles.scannerMsgText}>Camera permission denied</Text></View>
                 ) : (
-                  <View style={styles.scannerMsg}><Text style={styles.scannerMsgText}>Camera active</Text></View>
+                  (() => {
+                    const { CameraView } = require('expo-camera');
+                    return (
+                      <CameraView
+                        style={StyleSheet.absoluteFillObject}
+                        barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                        onBarcodeScanned={scanning ? undefined : handleBarCodeScanned}
+                      />
+                    );
+                  })()
                 )}
               </View>
             )}

@@ -141,10 +141,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           // Re-initialize geofencing on app restart (only on native)
           if (Platform.OS !== 'web') {
             try {
-              await saveAuthTokenForGeofencing(token);
+              const geo = await getGeofencingModule();
+              await geo.saveAuthTokenForGeofencing(token);
               const locationEnabled = await AsyncStorage.getItem('@luna_location_alerts');
               if (locationEnabled !== 'false') {
-                await startBackgroundLocationTracking();
+                await geo.startBackgroundLocationTracking();
               }
             } catch (e) {
               console.error('Failed to reinitialize geofencing:', e);

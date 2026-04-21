@@ -135,7 +135,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "_projectId_savedForEasBuild": "70fc7d51-2dd0-447d-b040-8cba149152a6"
+        "projectId": "70fc7d51-2dd0-447d-b040-8cba149152a6"
       }
     }
   }
