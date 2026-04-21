@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import { StyleSheet, View, Dimensions, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -10,6 +10,8 @@ import Animated, {
   Easing,
   interpolate,
 } from 'react-native-reanimated';
+
+const MOON_BG = require('../../assets/images/moon-bg.jpg');
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -152,44 +154,25 @@ export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
 
   return (
     <View style={styles.container}>
-      {/* Base dark background - Luna UI Kit color with subtle brightness */}
-      <LinearGradient
-        colors={['#101018', '#0A0A10', '#101018']}
+      {/* Base pure black — matches moon image background */}
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000000' }]} />
+
+      {/* Moon image — fixed full-bleed, subtle so content stays legible */}
+      <ImageBackground
+        source={MOON_BG}
+        resizeMode="cover"
         style={StyleSheet.absoluteFillObject}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        imageStyle={styles.moonImage}
       />
 
-      {/* Subtle ambient glows for depth */}
+      {/* Soft darkening overlay for content contrast */}
       <LinearGradient
-        colors={['rgba(59, 130, 246, 0.25)', 'transparent']}
-        style={styles.topLeftGlow}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-      
-      <LinearGradient
-        colors={['rgba(212, 175, 90, 0.15)', 'transparent']}
-        style={styles.topRightGlow}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.55)']}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
       />
 
-      <LinearGradient
-        colors={['rgba(139, 92, 246, 0.12)', 'transparent']}
-        style={styles.bottomLeftGlow}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 1, y: 0 }}
-      />
-
-      <LinearGradient
-        colors={['rgba(212, 175, 90, 0.10)', 'transparent']}
-        style={styles.centerGlow}
-        start={{ x: 0.5, y: 0.5 }}
-        end={{ x: 0, y: 0 }}
-      />
-
-      {/* Floating particles/stars */}
+      {/* Floating particles/orbs */}
       <View style={styles.particlesContainer} pointerEvents="none">
         {particles.map((particle) => (
           <Particle
@@ -205,7 +188,7 @@ export const AppBackground: React.FC<BackgroundProps> = ({ children }) => {
         ))}
       </View>
 
-      {/* Vignette effect */}
+      {/* Vignette */}
       <LinearGradient
         colors={['transparent', 'transparent', 'rgba(0,0,0,0.4)']}
         style={styles.vignette}
@@ -224,40 +207,11 @@ export default AppBackground;
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#101018',
+    backgroundColor: '#000000',
     overflow: 'hidden',
   },
-  topLeftGlow: {
-    position: 'absolute',
-    top: -100,
-    left: -100,
-    width: 350,
-    height: 350,
-    borderRadius: 175,
-  },
-  topRightGlow: {
-    position: 'absolute',
-    top: -80,
-    right: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-  },
-  bottomLeftGlow: {
-    position: 'absolute',
-    bottom: -50,
-    left: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-  },
-  centerGlow: {
-    position: 'absolute',
-    top: SCREEN_HEIGHT * 0.35,
-    left: SCREEN_WIDTH * 0.2,
-    width: 250,
-    height: 250,
-    borderRadius: 125,
+  moonImage: {
+    opacity: 0.85,
   },
   particlesContainer: {
     ...StyleSheet.absoluteFillObject,
