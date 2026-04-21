@@ -34,7 +34,8 @@ import { AppBackground } from '../../src/components/AppBackground';
 import { api } from '../../src/utils/api';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-const HERO_H = Math.round(SCREEN_H * 0.55);
+// Cap hero at 560 for big tablets, keep a phone-friendly 50% on small screens
+const HERO_H = Math.min(Math.round(SCREEN_H * 0.5), 560);
 
 const LUNA_GOLD = '#FFD700';
 const LUNA_RED = '#E31837';
@@ -99,7 +100,7 @@ function BidTicker({ value }: { value: number }) {
 // --- Marquee ticker (Section 2) --------------------------------------------
 
 function MarqueeTicker({ items }: { items: string[] }) {
-  const text = items.join('   ·   ') + '   ·   ';
+  const text = items.join('        •        ') + '        •        ';
   const anim = useRef(new Animated.Value(0)).current;
   const [containerW, setContainerW] = useState(SCREEN_W);
   const [textW, setTextW] = useState(0);
@@ -179,24 +180,38 @@ function HeroPager({
           const img = item?.image_url || item?.image || SAMPLE_HERO_IMG;
           const venue = (item?.venue_name || item?.venue || 'ECLIPSE BRISBANE').toUpperCase();
           const title = item?.title || item?.name || 'Tonight at Eclipse';
-          const when = item?.date_start || item?.starts_at || item?.date;
           return (
-            <View style={{ width: SCREEN_W, height: HERO_H }}>
-              <Image source={{ uri: img }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+            <View style={{ width: SCREEN_W, height: HERO_H, backgroundColor: BG_1 }}>
+              {/* Blurred backdrop to fill the frame without distorting the poster */}
+              <Image
+                source={{ uri: img }}
+                style={[StyleSheet.absoluteFillObject, { opacity: 0.45 }]}
+                resizeMode="cover"
+                blurRadius={28}
+              />
+              {/* Dark wash over the blur so text stays readable */}
+              <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.35)' }]} />
+              {/* Actual poster — contained so portrait posters show in full */}
+              <Image
+                source={{ uri: img }}
+                style={styles.heroPoster}
+                resizeMode="contain"
+              />
+              {/* Strong bottom gradient for CTA legibility */}
               <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.55)', 'rgba(0,0,0,0.92)']}
-                locations={[0, 0.55, 1]}
+                colors={['transparent', 'rgba(0,0,0,0.70)', 'rgba(0,0,0,0.95)']}
+                locations={[0.35, 0.75, 1]}
                 style={StyleSheet.absoluteFillObject}
               />
               {/* FEATURED pill */}
-              <View style={[styles.featuredPill, { top: insetTop + 16 }]} data-testid="hero-featured-pill">
+              <View style={[styles.featuredPill, { top: (insetTop || 16) + 12 }]} data-testid="hero-featured-pill">
                 <Text style={styles.featuredPillText}>FEATURED</Text>
               </View>
               {/* Content */}
               <View style={styles.heroContent}>
-                <Text style={styles.heroVenue}>{venue}</Text>
+                <Text style={styles.heroVenue} numberOfLines={1}>{venue}</Text>
                 <Text style={styles.heroTitle} numberOfLines={2}>{title}</Text>
-                {!!when && <Text style={styles.heroDate}>{fmtEventDate(item)}</Text>}
+                {!!fmtEventDate(item) && <Text style={styles.heroDate}>{fmtEventDate(item)}</Text>}
                 <View style={styles.heroCtaRow}>
                   <TouchableOpacity
                     style={styles.ctaPrimary}
@@ -326,8 +341,16 @@ export default function HomeScreen() {
       });
 
       setFeatured((featuredEvents.length ? featuredEvents : uniqueAll).slice(0, 5));
-      setForYou(uniqueAll.slice(0, 8));
-      setTrending(uniqueAll.slice(0, 5));
+
+      // Dedupe For You / Trending from Hero so the same event never appears twice on screen
+      const heroIds = new Set(
+        (featuredEvents.length ? featuredEvents : uniqueAll).slice(0, 5).map((e: any) => e.id || e.eventfinda_id)
+      );
+      const nonHero = uniqueAll.filter((e: any) => !heroIds.has(e.id || e.eventfinda_id));
+      // If we have fewer than 5 non-hero events, fall back to the full list so the sections aren't empty
+      const forYouSrc = nonHero.length >= 5 ? nonHero : uniqueAll;
+      setForYou(forYouSrc.slice(0, 8));
+      setTrending(forYouSrc.slice(0, 5));
 
       setVenues((venuesData as any[]) || []);
       const auctionList = (auctionsData as any).auctions || auctionsData || [];
@@ -414,19 +437,26 @@ export default function HomeScreen() {
             >
               <Image
                 source={{ uri: largeForYou.image_url || largeForYou.image || SAMPLE_HERO_IMG }}
-                style={StyleSheet.absoluteFillObject}
+                style={[StyleSheet.absoluteFillObject, { opacity: 0.5 }]}
                 resizeMode="cover"
+                blurRadius={22}
+              />
+              <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
+              <Image
+                source={{ uri: largeForYou.image_url || largeForYou.image || SAMPLE_HERO_IMG }}
+                style={styles.forYouLargePoster}
+                resizeMode="contain"
               />
               <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.85)']}
-                locations={[0.3, 1]}
+                colors={['transparent', 'rgba(0,0,0,0.88)']}
+                locations={[0.35, 1]}
                 style={StyleSheet.absoluteFillObject}
               />
               <View style={styles.forYouLargeBadge}>
                 <Text style={styles.forYouLargeBadgeText}>AI PICK</Text>
               </View>
               <View style={styles.forYouLargeContent}>
-                <Text style={styles.forYouLargeVenue}>
+                <Text style={styles.forYouLargeVenue} numberOfLines={1}>
                   {(largeForYou.venue_name || largeForYou.venue || 'ECLIPSE').toUpperCase()}
                 </Text>
                 <Text style={styles.forYouLargeTitle} numberOfLines={2}>
@@ -452,12 +482,19 @@ export default function HomeScreen() {
               >
                 <Image
                   source={{ uri: item.image_url || item.image || SAMPLE_HERO_IMG }}
-                  style={StyleSheet.absoluteFillObject}
+                  style={[StyleSheet.absoluteFillObject, { opacity: 0.5 }]}
                   resizeMode="cover"
+                  blurRadius={18}
+                />
+                <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
+                <Image
+                  source={{ uri: item.image_url || item.image || SAMPLE_HERO_IMG }}
+                  style={styles.forYouSmallPoster}
+                  resizeMode="contain"
                 />
                 <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.9)']}
-                  locations={[0.3, 1]}
+                  colors={['transparent', 'rgba(0,0,0,0.95)']}
+                  locations={[0.4, 1]}
                   style={StyleSheet.absoluteFillObject}
                 />
                 <View style={styles.forYouSmallContent}>
@@ -705,6 +742,14 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 2,
   },
+  heroPoster: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    top: 50,
+    // Leaves room for CTAs at the bottom
+    bottom: 220,
+  },
   heroContent: {
     position: 'absolute',
     left: 20,
@@ -857,6 +902,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
   },
+  forYouLargePoster: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    top: 12,
+    bottom: 80,
+  },
   forYouLargeBadge: {
     position: 'absolute',
     top: 14,
@@ -874,9 +926,16 @@ const styles = StyleSheet.create({
 
   forYouSmall: {
     width: SCREEN_W * 0.55,
-    height: 150,
+    height: 160,
     borderRadius: 14,
     overflow: 'hidden',
+  },
+  forYouSmallPoster: {
+    position: 'absolute',
+    left: 8,
+    right: 8,
+    top: 8,
+    bottom: 60,
   },
   forYouSmallContent: { position: 'absolute', left: 12, right: 12, bottom: 12 },
   forYouSmallTitle: { color: WHITE, fontSize: 15, fontWeight: '900', lineHeight: 18 },
