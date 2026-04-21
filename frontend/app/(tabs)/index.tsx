@@ -36,43 +36,19 @@ import { CardSkeleton, ListSkeleton } from '../../src/components/Shimmer';
 const { width } = Dimensions.get('window');
 const VENUE_CARD_WIDTH = width * 0.72;
 
-// ─── HeroCardWithGoldPulse: featured card with gold border pulsing brightness ─
-const HeroCardWithGoldPulse: React.FC<{
-  onPress: () => void;
-  children: React.ReactNode;
-}> = ({ onPress, children }) => {
+// ─── PulsingFeaturedPill: subtle glow on the FEATURED pill ─
+const PulsingFeaturedPill: React.FC = () => {
   const pulse = useSharedValue(0);
-
   React.useEffect(() => {
-    pulse.value = withRepeat(
-      withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.quad) }),
-      -1,
-      true,
-    );
+    pulse.value = withRepeat(withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.quad) }), -1, true);
   }, []);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    // Dim → Bright gold. Interpolate individual RGB channels.
-    // Dim  rgba(212,168,50,0.35) → Bright rgba(245,215,122,1)
-    const r = interpolate(pulse.value, [0, 1], [212, 245]);
-    const g = interpolate(pulse.value, [0, 1], [168, 215]);
-    const b = interpolate(pulse.value, [0, 1], [50, 122]);
-    const a = interpolate(pulse.value, [0, 1], [0.35, 1]);
-    return {
-      borderColor: `rgba(${r}, ${g}, ${b}, ${a})`,
-      shadowOpacity: interpolate(pulse.value, [0, 1], [0.15, 0.55]),
-    };
-  });
-
+  const pillStyle = useAnimatedStyle(() => ({
+    shadowOpacity: interpolate(pulse.value, [0, 1], [0.25, 0.7]),
+    transform: [{ scale: interpolate(pulse.value, [0, 1], [1, 1.04]) }],
+  }));
   return (
-    <Animated.View style={[styles.heroCardAnimated, animatedStyle]}>
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.9}
-        style={styles.heroCardInner}
-      >
-        {children}
-      </TouchableOpacity>
+    <Animated.View style={[styles.heroBadge, pillStyle]}>
+      <Text style={styles.heroBadgeText}>FEATURED</Text>
     </Animated.View>
   );
 };
@@ -312,8 +288,10 @@ export default function HomeScreen() {
         {/* Hero Event */}
         {featuredEvent && (
           <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.heroWrapper}>
-            <HeroCardWithGoldPulse
+            <TouchableOpacity
               onPress={() => { handleHaptic(); router.push(`/event/${featuredEvent.id}`); }}
+              activeOpacity={0.9}
+              style={[styles.heroCardAnimated, styles.heroCardInner]}
             >
               <Image source={{ uri: featuredEvent.image || featuredEvent.image_url }} style={styles.heroImage} contentFit="cover" />
               <LinearGradient 
@@ -321,16 +299,14 @@ export default function HomeScreen() {
                 locations={[0, 0.4, 1]}
                 style={styles.heroOverlay}
               >
-                <View style={styles.heroBadge}>
-                  <Text style={styles.heroBadgeText}>FEATURED</Text>
-                </View>
+                <PulsingFeaturedPill />
                 <View style={styles.heroContent}>
                   <Text style={styles.heroVenue}>{featuredEvent.venue_name || featuredEvent.location}</Text>
                   <Text style={styles.heroTitle}>{featuredEvent.title}</Text>
                   <Text style={styles.heroMeta}>{formatDate(featuredEvent)} · {getTime(featuredEvent)}</Text>
                 </View>
               </LinearGradient>
-            </HeroCardWithGoldPulse>
+            </TouchableOpacity>
           </Animated.View>
         )}
 
@@ -338,18 +314,8 @@ export default function HomeScreen() {
         {tonightPicks.length > 0 && (
           <Animated.View entering={FadeInDown.delay(150).duration(400)} style={styles.section}>
             <View style={styles.tonightPickHeader}>
-              <View style={styles.tonightPickTitle}>
-                <LinearGradient
-                  colors={[colors.accent, colors.accentDark]}
-                  style={styles.tonightPickIcon}
-                >
-                  <Icon name="sparkles" size={14} color="#fff" />
-                </LinearGradient>
-                <View>
-                  <Text style={styles.tonightPickLabel}>FOR YOU</Text>
-                  <Text style={styles.tonightPickSub}>Personalized picks</Text>
-                </View>
-              </View>
+              <Text style={styles.tonightPickLabel}>FOR YOU</Text>
+              <Text style={styles.tonightPickSub}>Personalized picks</Text>
             </View>
             
             <ScrollView 
@@ -635,16 +601,10 @@ const styles = StyleSheet.create({
   heroCardAnimated: {
     height: 340,
     borderRadius: 20,
-    borderWidth: 2,
-    shadowColor: '#D4A832',
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 16,
-    elevation: 10,
+    overflow: 'hidden',
   },
   heroCardInner: {
     flex: 1,
-    borderRadius: 18,
-    overflow: 'hidden',
   },
   heroImage: {
     ...StyleSheet.absoluteFillObject,
@@ -658,10 +618,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     left: 20,
-    backgroundColor: 'rgba(212, 175, 90, 0.90)',
+    backgroundColor: 'rgba(212, 175, 90, 0.92)',
     paddingHorizontal: 14,
     paddingVertical: 5,
     borderRadius: 6,
+    shadowColor: '#D4AF5A',
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 14,
   },
   heroBadgeText: {
     fontSize: 10,
@@ -865,22 +828,7 @@ const styles = StyleSheet.create({
 
   // Tonight's Pick styles
   tonightPickHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: spacing.md,
-  },
-  tonightPickTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  tonightPickIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   tonightPickLabel: {
     fontSize: 11,
@@ -891,7 +839,7 @@ const styles = StyleSheet.create({
   tonightPickSub: {
     fontSize: 11,
     color: colors.textSecondary,
-    marginTop: 1,
+    marginTop: 3,
   },
   tonightPickScroll: {
     paddingRight: spacing.lg,
@@ -919,20 +867,18 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
   },
   aiPickBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.full,
+    backgroundColor: 'rgba(212, 175, 90, 0.92)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
     alignSelf: 'flex-start',
     marginBottom: spacing.xs,
   },
   aiPickBadgeText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontWeight: '800',
+    color: '#08080E',
+    letterSpacing: 1.5,
   },
   tonightPickEventTitle: {
     fontSize: 14,

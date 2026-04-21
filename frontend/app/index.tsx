@@ -7,7 +7,6 @@ import { useAuthStore } from '../src/store/authStore';
 import { api } from '../src/utils/api';
 import { colors } from '../src/theme/colors';
 import { ONBOARDING_KEY } from './onboarding';
-import { AGE_GATE_KEY } from './age-gate';
 
 const LUNA_SPLASH = require('../assets/images/luna-splash.png');
 
@@ -28,13 +27,11 @@ export default function Index() {
       return;
     }
 
-    // Route sequence for unauth'd users: age-gate -> onboarding -> login
+    // Route sequence for unauth'd users: onboarding -> login (age is collected at signup)
     let cancelled = false;
     const routeUnauthed = async () => {
-      let agePassed: string | null = null;
       let seenOnboarding: string | null = null;
       try {
-        agePassed = await AsyncStorage.getItem(AGE_GATE_KEY);
         seenOnboarding = await AsyncStorage.getItem(ONBOARDING_KEY);
       } catch {
         // fall through and show login if storage broken
@@ -43,13 +40,7 @@ export default function Index() {
       // brief splash
       setTimeout(() => {
         if (cancelled) return;
-        if (!agePassed) {
-          router.replace('/age-gate');
-        } else if (!seenOnboarding) {
-          router.replace('/onboarding');
-        } else {
-          router.replace('/login');
-        }
+        router.replace(seenOnboarding ? '/login' : '/onboarding');
       }, 1200);
     };
     routeUnauthed();

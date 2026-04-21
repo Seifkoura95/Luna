@@ -366,11 +366,8 @@ export default function LunaAIScreen() {
       <View style={styles.container}>
         <AppBackground />
 
-        {/* Unified header — same logo & spacing as Home */}
-        <PageHeader title="LUNA AI" showAccent={false} />
-
-        {/* New Chat action */}
-        <View style={styles.subHeaderRow}>
+        {/* New Chat action (no logo header per design) */}
+        <View style={[styles.subHeaderRow, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity
             style={styles.newChatBtn}
             onPress={async () => {
@@ -391,8 +388,8 @@ export default function LunaAIScreen() {
 
       <KeyboardAvoidingView 
         style={styles.chatContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.bottom > 0 ? 85 : 70) : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.bottom + 50 : 0}
       >
         {/* Messages */}
         <FlatList

@@ -61,6 +61,7 @@ export default function LeaderboardPage() {
   const [quickWins, setQuickWins] = useState<Strategy[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [rankingsPage, setRankingsPage] = useState(0);
 
   const fetchLeaderboard = useCallback(async () => {
     try {
@@ -260,11 +261,11 @@ export default function LeaderboardPage() {
               </View>
             )}
 
-            {/* Full Rankings List */}
+            {/* Full Rankings List — paginated 5 per page */}
             <View style={styles.rankingsSection}>
               <Text style={styles.sectionTitle}>RANKINGS</Text>
-              
-              {leaders.slice(3).map((leader) => {
+
+              {leaders.slice(3).slice(rankingsPage * 5, rankingsPage * 5 + 5).map((leader) => {
                 const badge = getRankBadge(leader.rank);
                 return (
                   <View 
@@ -277,16 +278,39 @@ export default function LeaderboardPage() {
                     </View>
                     <View style={styles.rankInfo}>
                       <Text style={styles.rankName}>{leader.display_name}</Text>
-                      {leader.subscription_tier && (
-                        <View style={styles.tierBadge}>
-                          <Text style={styles.tierText}>{leader.subscription_tier}</Text>
-                        </View>
-                      )}
                     </View>
                     <Text style={styles.rankScore}>{getScoreValue(leader)} {getCategoryLabel()}</Text>
                   </View>
                 );
               })}
+
+              {leaders.slice(3).length > 5 && (
+                <View style={styles.paginationRow}>
+                  <TouchableOpacity
+                    style={[styles.paginationBtn, rankingsPage === 0 && styles.paginationBtnDisabled]}
+                    onPress={() => setRankingsPage(Math.max(0, rankingsPage - 1))}
+                    disabled={rankingsPage === 0}
+                    data-testid="leaderboard-prev-page"
+                  >
+                    <Icon name="chevron-back" size={16} color={rankingsPage === 0 ? colors.textMuted : colors.textPrimary} />
+                    <Text style={[styles.paginationBtnText, rankingsPage === 0 && { color: colors.textMuted }]}>Back</Text>
+                  </TouchableOpacity>
+
+                  <Text style={styles.paginationLabel}>
+                    Page {rankingsPage + 1} of {Math.max(1, Math.ceil(leaders.slice(3).length / 5))}
+                  </Text>
+
+                  <TouchableOpacity
+                    style={[styles.paginationBtn, (rankingsPage + 1) * 5 >= leaders.slice(3).length && styles.paginationBtnDisabled]}
+                    onPress={() => setRankingsPage(rankingsPage + 1)}
+                    disabled={(rankingsPage + 1) * 5 >= leaders.slice(3).length}
+                    data-testid="leaderboard-next-page"
+                  >
+                    <Text style={[styles.paginationBtnText, (rankingsPage + 1) * 5 >= leaders.slice(3).length && { color: colors.textMuted }]}>Next</Text>
+                    <Icon name="chevron-forward" size={16} color={(rankingsPage + 1) * 5 >= leaders.slice(3).length ? colors.textMuted : colors.textPrimary} />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
 
             {/* Your Position Card */}
@@ -638,16 +662,45 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   tierBadge: {
-    backgroundColor: colors.gold + '20',
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: radius.xs,
+    display: 'none',
   },
   tierText: {
-    fontSize: 9,
+    display: 'none',
+  },
+  paginationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.sm,
+  },
+  paginationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    minWidth: 86,
+    justifyContent: 'center',
+  },
+  paginationBtnDisabled: {
+    opacity: 0.45,
+  },
+  paginationBtnText: {
+    fontSize: 12,
     fontWeight: '700',
-    color: colors.gold,
-    textTransform: 'uppercase',
+    color: colors.textPrimary,
+    letterSpacing: 0.5,
+  },
+  paginationLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 1,
   },
   rankScore: {
     fontSize: 13,

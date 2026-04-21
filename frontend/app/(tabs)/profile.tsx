@@ -481,14 +481,6 @@ export default function ProfileScreen() {
       color: '#FF6B35',
       onPress: () => router.push('/bottle-service'),
     },
-    {
-      id: 'how-points',
-      icon: 'star',
-      title: 'How Points Work',
-      subtitle: '25% back — verified & fair',
-      color: colors.gold,
-      onPress: () => router.push('/how-points-work'),
-    },
   ];
 
   const settingsItems = [

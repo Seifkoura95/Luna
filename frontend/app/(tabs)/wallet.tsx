@@ -677,14 +677,15 @@ export default function WalletScreen() {
               </View>
               <TouchableOpacity 
                 style={styles.redeemNowBtn}
-                onPress={() => router.push('/rewards-shop')}
+                onPress={() => router.push('/how-points-work')}
+                data-testid="wallet-how-points-btn"
               >
                 <LinearGradient
                   colors={[colors.gold, '#B8960D']}
                   style={styles.redeemNowGradient}
                 >
-                  <Icon name="gift-outline" size={16} color={colors.bg} />
-                  <Text style={styles.redeemNowText}>Redeem Now</Text>
+                  <Icon name="information-circle-outline" size={16} color={colors.bg} />
+                  <Text style={styles.redeemNowText}>How Points Work</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </LinearGradient>

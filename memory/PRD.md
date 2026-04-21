@@ -1,6 +1,59 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Feb 21, 2026 - Session 11e
+
+### COMPLETED: Header consistency + UX polish batch
+
+**Luna AI tab**
+- Removed PageHeader (no logo) per design; just a "New Chat" pill sits at top
+- Fixed chat-input keyboard gap: `keyboardVerticalOffset` changed from `85/70` to `insets.bottom + 50` (consistent math on iOS)
+
+**Home tab**
+- Removed gold glow/border-pulse animation around featured hero card (replaced with a static rounded hero)
+- NEW `PulsingFeaturedPill` component — only the "FEATURED" pill gently pulses (shadow opacity + subtle scale) to draw attention without overwhelming the card
+- FOR YOU section header no longer has a gradient icon; label and "Personalized picks" subtitle now use the same minimal style as other section headers
+- "AI PICK" pill redesigned: gold background, no sparkle icon, bold dark text — matches the FEATURED pill
+
+**Wallet tab**
+- The "Redeem Now" pill next to Your Points swapped to **"How Points Work"** with an info icon; tapping it routes to `/how-points-work`
+- Removed "How Points Work" as a profile quick-action (no longer needed)
+
+**Leaderboard tab**
+- Switched to shared `PageHeader` (identical logo+spacing as Home)
+- Removed the tier pill next to each name
+- Paginated the RANKINGS list at **5 per page** with back/next buttons; shows "Page X of Y" label
+- Pagination only appears when there are > 5 entries below the top-3 podium
+
+**Age gate removed**
+- Deleted `/app/frontend/app/age-gate.tsx`
+- Removed the age-gate step from `index.tsx` routing (splash now goes directly to onboarding → login)
+- Age-verification remains enforced at signup: DOB field required on the register form, backend `POST /api/auth/register` rejects DOB < 18 with 403
+- Removed `Stack.Screen name="age-gate"` from `_layout.tsx`
+
+**CherryHub teardown (readiness audit only — not yet removed)**
+- Confirmed every Luna account auto-creates a full Luna Pass: `POST /api/auth/register` inserts complete user record (tier, points, wallet, DOB, etc.) and `GET /api/loyalty/member-card` serves the pass on demand
+- Metrics, spend history, points, and subscriptions all live in Luna's MongoDB — nothing is CherryHub-dependent
+- Your Lovable Luna Hub portal can query `db.users`, `db.points_transactions`, `db.redemptions`, `db.subscriptions`, `db.milestone_claims`, `db.bookings` directly
+- FOLLOW-UP: delete `backend/routes/cherryhub.py`, remove CherryHub include from `server.py`, strip CherryHub calls from `frontend/src/utils/api.ts`, remove any CherryHub UI blocks (shown as pending P0 in Roadmap)
+
+**Files touched:**
+- `/app/frontend/app/(tabs)/luna-ai.tsx` — removed PageHeader import + usage, fixed KeyboardAvoidingView offset
+- `/app/frontend/app/(tabs)/index.tsx` — replaced HeroCardWithGoldPulse with PulsingFeaturedPill, cleaned FOR YOU header, gold AI PICK pill
+- `/app/frontend/app/(tabs)/wallet.tsx` — Redeem Now → How Points Work
+- `/app/frontend/app/(tabs)/leaderboard.tsx` — PageHeader + pagination + removed tier pill
+- `/app/frontend/app/(tabs)/profile.tsx` — removed How Points Work quick-action
+- `/app/frontend/app/index.tsx` — removed age-gate from routing
+- `/app/frontend/app/_layout.tsx` — removed age-gate screen registration
+- `/app/frontend/app/age-gate.tsx` — DELETED
+
+**Known pending (next session priority):**
+- 🔴 Full CherryHub removal (backend route + server.py include + frontend api calls + UI)
+- 🟡 Replace all 48 Eclipse bottle service images with real brand product photos (no stock)
+- 🟡 "Download My Data" button in Profile → Settings (backend ready)
+
+
+
 ## Latest Update: Feb 21, 2026 - Session 11d
 
 ### COMPLETED: Moon Centering + DOB Required + Stripe Cleanup + Claim Reward QR Screen
