@@ -325,6 +325,19 @@ export default function StaffPortal() {
           ))}
         </ScrollView>
 
+        {/* Admin-only quick access to CherryHub Sync panel */}
+        {((user as any)?.role || '').toLowerCase() === 'admin' && (
+          <TouchableOpacity
+            style={styles.cherryAdminBtn}
+            onPress={() => router.push('/cherryhub-admin')}
+            data-testid="staff-cherryhub-admin-btn"
+          >
+            <Icon name="ribbon" size={16} color="#fff" />
+            <Text style={styles.cherryAdminBtnText}>CherryHub Sync Admin</Text>
+            <Icon name="chevron-forward" size={14} color="#FFFFFF99" />
+          </TouchableOpacity>
+        )}
+
         {/* Tab Switcher */}
         <View style={styles.tabs} data-testid="staff-tabs">
           {([['award', 'Award Points'], ['validate', 'Validate Reward'], ['history', 'History']] as [PortalTab, string][]).map(([id, label]) => (
