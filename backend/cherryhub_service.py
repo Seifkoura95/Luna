@@ -29,7 +29,7 @@ CHERRYHUB_MOCK_MODE = os.environ.get('CHERRYHUB_MOCK_MODE', 'false').lower() == 
 # CherryHub API Base URLs
 # Staging/Test environment - use test.api.cherryhub.com.au
 # Production environment - use api.cherryhub.com.au (when ready)
-CHERRYHUB_API_BASE_URL = os.environ.get('CHERRYHUB_API_URL', 'https://test.api.cherryhub.com.au')
+CHERRYHUB_API_BASE_URL = os.environ.get('CHERRYHUB_API_URL', 'https://api.cherryhub.com.au')
 CHERRYHUB_AUTH_URL = f"{CHERRYHUB_API_BASE_URL}/oauth2/v2.0/token"
 CHERRYHUB_DATA_API_VERSION = "v1"
 
@@ -76,7 +76,7 @@ class CherryHubTokenManager:
                         "grant_type": "client_credentials",
                         "client_id": CHERRYHUB_CLIENT_ID,
                         "client_secret": CHERRYHUB_CLIENT_SECRET,
-                        "scope": "Members-Points.Manage Members.Read api",
+                        "scope": "Members-Points.Manage Members-Points.Read Members.Read",
                     },
                     headers={
                         "Content-Type": "application/x-www-form-urlencoded"

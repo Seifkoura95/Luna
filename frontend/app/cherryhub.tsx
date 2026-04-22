@@ -6,7 +6,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../src/context/AuthContext';
+import { useAuthStore } from '../src/store/authStore';
 
 const colors = {
   bg: '#0A0A0A',
@@ -39,7 +39,8 @@ interface PointsResp {
 
 export default function CherryHubScreen() {
   const router = useRouter();
-  const { token, user } = useAuth();
+  const token = useAuthStore((s) => s.token);
+  const user = useAuthStore((s) => s.user);
   const BACKEND = process.env.EXPO_PUBLIC_BACKEND_URL;
 
   const [status, setStatus] = useState<StatusResp | null>(null);
