@@ -653,15 +653,17 @@ async def forgot_password(request: Request):
         }
     )
     
-    # In production, send email here
-    # For now, we'll log it and also return it for testing
-    logger.info(f"Password reset token generated for {email}: {reset_token}")
-    
-    # NOTE: In production, remove the token from response and send via email
+    # Send password reset email via Resend (branded sender)
+    from utils.email_service import send_password_reset_email
+    try:
+        await send_password_reset_email(email, user.get("name", ""), reset_token)
+    except Exception as exc:  # never leak email send failures to the client
+        logger.error(f"Password reset email failed for {email[:3]}***: {exc}")
+
+    # Generic success response — do NOT leak the token. Email enumeration safe.
     return {
         "success": True,
         "message": "If an account exists with this email, a reset link has been sent.",
-        "reset_token": reset_token,  # REMOVE IN PRODUCTION - only for testing
         "expires_in": "1 hour"
     }
 

@@ -286,6 +286,20 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
                         logger.info(f"Sent outbid push notification to {previous_winner_id}")
                     except Exception as e:
                         logger.error(f"Failed to send push notification: {e}")
+
+            # Branded outbid email via Resend (fire-and-forget, never blocks bid response)
+            if prev_user and prev_user.get("email"):
+                try:
+                    from utils.email_service import send_auction_outbid_email
+                    asyncio.create_task(send_auction_outbid_email(
+                        prev_user["email"],
+                        prev_user.get("name", ""),
+                        auction["title"],
+                        float(final_bid_amount),
+                        bid_request.auction_id,
+                    ))
+                except Exception as e:
+                    logger.error(f"Failed to queue outbid email: {e}")
     
     # Notify watchlist users about bidding activity
     asyncio.create_task(notify_watchlist_users(bid_request.auction_id, final_bid_amount, final_winner_name))

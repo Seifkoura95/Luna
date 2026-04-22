@@ -63,22 +63,11 @@ def generate_verification_token() -> str:
 
 async def send_verification_email(email: str, name: str, token: str) -> str:
     """
-    Send verification email to user.
-    In production, this would use SendGrid, AWS SES, or similar service.
-    For now, we log the verification link.
-    
+    Send verification email via Resend (branded lunagroup.com.au sender).
+    Falls back to logging-only if RESEND_API_KEY is missing.
+
     Returns:
-        str: Verification link (for demo purposes)
+        str: Verification link (for logging / testing callers).
     """
-    verification_link = f"https://lunagroup.app/verify-email?token={token}"
-    logging.info(f"📧 Verification email for {email}:")
-    logging.info(f"   Link: {verification_link}")
-    
-    # In production, integrate with email service:
-    # await sendgrid.send_email(
-    #     to=email,
-    #     subject="Verify your Luna Group account",
-    #     html=f"Hi {name}, click here to verify: {verification_link}"
-    # )
-    
-    return verification_link
+    from utils.email_service import send_verification_email as _send
+    return await _send(email, name, token)

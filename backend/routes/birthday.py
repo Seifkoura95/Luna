@@ -267,9 +267,20 @@ async def claim_birthday_reward(reward_id: str, authorization: str = Header(None
     
     # Remove _id for response
     claim_record.pop("_id", None)
-    
+
     logger.info(f"User {user_id} claimed birthday reward: {reward['name']}")
-    
+
+    # Branded birthday email via Resend (fire-and-forget, never blocks claim response)
+    if user.get("email"):
+        try:
+            import asyncio as _asyncio
+            from utils.email_service import send_birthday_reward_email
+            _asyncio.create_task(send_birthday_reward_email(
+                user["email"], user.get("name", ""), reward["name"]
+            ))
+        except Exception as e:
+            logger.error(f"Failed to queue birthday email: {e}")
+
     return {
         "success": True,
         "message": f"🎉 {reward['name']} claimed! {reward['description']}",
