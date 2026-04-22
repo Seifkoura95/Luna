@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../src/components/Icon';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { CameraView, Camera } from 'expo-camera';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api } from '../src/utils/api';
 import { useAuthStore } from '../src/store/authStore';
@@ -69,7 +69,7 @@ export default function VenueDashboard() {
 
   useEffect(() => {
     (async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
+      const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === 'granted');
     })();
   }, []);
@@ -253,8 +253,9 @@ export default function VenueDashboard() {
       ) : (
         <>
           <View style={styles.scannerWrapper}>
-            <BarCodeScanner
-              onBarCodeScanned={scanning ? undefined : handleBarCodeScanned}
+            <CameraView
+              onBarcodeScanned={scanning ? undefined : handleBarCodeScanned}
+              barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
               style={styles.scanner}
             />
             <View style={styles.scannerOverlay}>
@@ -577,3 +578,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+);
