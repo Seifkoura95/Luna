@@ -681,6 +681,30 @@ Tonight | Venues | Wallet | **Social** | Profile
 **Known constraint:**
 - `CHERRYHUB_MOCK_MODE=true` while on Emergent (container DNS can't resolve CherryHub hosts). Flip to `false` on Railway where DNS is unrestricted.
 
+
+## Latest Update: Feb 22, 2026 — Member Card → CherryHub-Branded + Wallet Pass
+
+**What was done:**
+- Rewrote `frontend/app/member-card.tsx` with full CherryHub branding:
+  - Dark card with cherry-red gradient (`#0A0308` → `#6E0A1E` → `#0A0308`)
+  - `CHERRYHUB × LUNA GROUP` header wordmark
+  - Cherry-red glow border + elevated shadow
+  - Card ID now shows `CH: <member_key>` when linked (falls back to Luna user_id slice when not linked)
+- Wired Apple + Google Wallet buttons to the CherryHub DMC (Digital Member Card) endpoint:
+  - `POST /api/cherryhub/wallet-pass` → backend calls CherryHub's `/members/{composite_id}/dmc?passType={IosPassKit|GooglePayPass}`
+  - Android: opens `GooglePassUrl` directly
+  - iOS: decodes `IosPassContentBase64`, writes `.pkpass` to cache dir via `expo-file-system`, opens with `Linking.openURL` so iOS hands it to the Wallet app
+- Sandbox banner shown whenever `CHERRYHUB_MOCK_MODE=true` (reminds user real pass activates in production)
+- If user isn't linked to CherryHub yet → in-card CTA button auto-links them (calls `/api/cherryhub/link`)
+- Wallet buttons disabled until linked
+
+**Tested:**
+- `POST /api/cherryhub/wallet-pass` both `pass_type=apple` and `pass_type=google` return correct mock payloads
+- Bundle rebuilt clean (1839 modules, no errors)
+
+**Known:**
+- Real `.pkpass` download/install only works on native iOS build + production env (CherryHub DNS reachable + `CHERRYHUB_MOCK_MODE=false`). Mock mode shows sandbox alert instead.
+
 **For Railway deploy:**
 - Add `CHERRYHUB_CLIENT_ID`, `CHERRYHUB_CLIENT_SECRET`, `CHERRYHUB_BUSINESS_ID`, `CHERRYHUB_INTEGRATION_ID`, `CHERRYHUB_REFRESH_TOKEN`, `CHERRYHUB_API_URL`, `CHERRYHUB_MOCK_MODE=false`, `CHERRYHUB_READ_API_KEY` to Railway env vars
 - Give `CHERRYHUB_READ_API_KEY` to CherryHub so they can poll our public endpoints
