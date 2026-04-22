@@ -76,7 +76,9 @@
   },
   "expo": {
     "autolinking": {
-      "exclude": ["expo-barcode-scanner"]
+      "exclude": [
+        "expo-barcode-scanner"
+      ]
     }
   },
   "private": true,

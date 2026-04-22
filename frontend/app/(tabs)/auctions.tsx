@@ -265,18 +265,44 @@ export default function AuctionsScreen() {
     }
   };
 
+  // Derive the effective status from end_time so the UI never shows
+  // "ACTIVE/LIVE" and "ENDED" at the same time. The backend's scheduler
+  // may not have swept a just-expired auction yet, so we trust the clock.
+  const getEffectiveStatus = (auction: Auction): string => {
+    if (auction.status === 'upcoming') {
+      if (new Date(auction.start_time).getTime() > Date.now()) return 'upcoming';
+      // Start time has passed but still marked upcoming — treat as active
+      if (new Date(auction.end_time).getTime() > Date.now()) return 'active';
+      return 'ended';
+    }
+    if (auction.status === 'active') {
+      if (new Date(auction.end_time).getTime() <= Date.now()) return 'ended';
+      return 'active';
+    }
+    return auction.status; // 'ended' or anything else passes through
+  };
+
   const renderAuctionCard = (auction: Auction) => {
     const isHot = hotAuctions.has(auction.id);
     const isWatched = watchlist.has(auction.id);
-    
+    const effectiveStatus = getEffectiveStatus(auction);
+    const isActive = effectiveStatus === 'active';
+    const isEnded = effectiveStatus === 'ended';
+    const statusLabel = isActive ? 'LIVE' : effectiveStatus.toUpperCase();
+
     return (
       <TouchableOpacity
         key={auction.id}
+        testID={`auction-card-${auction.id}`}
         style={[styles.auctionCard, isHot && styles.auctionCardHot]}
         onPress={() => openAuctionDetail(auction)}
         activeOpacity={0.8}
       >
-        <Image source={{ uri: auction.image_url }} style={styles.auctionImage} />
+        <Image
+          source={{ uri: auction.image_url }}
+          style={styles.auctionImage}
+          resizeMode="cover"
+        />
         {isHot && <View style={styles.hotGlow} />}
         
         {/* Watchlist Button - Using Pressable for better web support */}
@@ -296,21 +322,22 @@ export default function AuctionsScreen() {
         </Pressable>
         
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.95)']}
+          colors={['transparent', 'transparent', 'rgba(0,0,0,0.95)']}
+          locations={[0, 0.45, 1]}
           style={styles.auctionOverlay}
         >
           {/* Badge Row */}
           <View style={styles.badgeRow}>
             {/* Status Badge */}
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(auction.status) + '30' }]}>
-              <View style={[styles.statusDot, { backgroundColor: getStatusColor(auction.status) }]} />
-              <Text style={[styles.statusText, { color: getStatusColor(auction.status) }]}>
-                {auction.status.toUpperCase()}
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(effectiveStatus) + '30' }]}>
+              <View style={[styles.statusDot, { backgroundColor: getStatusColor(effectiveStatus) }]} />
+              <Text style={[styles.statusText, { color: getStatusColor(effectiveStatus) }]}>
+                {statusLabel}
               </Text>
             </View>
             
             {/* Hot Badge */}
-            {isHot && (
+            {isHot && isActive && (
               <View style={styles.hotBadge}>
                 <Icon name="flame" size={14} color="#FF6B35" />
                 <Text style={styles.hotText}>BIDDING WAR!</Text>
@@ -318,8 +345,8 @@ export default function AuctionsScreen() {
             )}
           </View>
 
-          {/* Timer */}
-          {auction.status === 'active' && (
+          {/* Timer — only shown while auction is still live */}
+          {isActive && (
             <View style={styles.timerBadge}>
               <Icon name="time" size={14} color={colors.accent} />
               <Text style={styles.timerText}>{timeLeft[auction.id] || 'Loading...'}</Text>
@@ -395,10 +422,10 @@ export default function AuctionsScreen() {
             </View>
           )}
           
-          {/* Auction Cards */}
-          {!isLoading && auctions.filter(a => a.status === 'active').map(renderAuctionCard)}
+          {/* Auction Cards — filter by effective status (client clock aware) */}
+          {!isLoading && auctions.filter(a => getEffectiveStatus(a) === 'active').map(renderAuctionCard)}
           
-          {!isLoading && auctions.filter(a => a.status === 'active').length === 0 && (
+          {!isLoading && auctions.filter(a => getEffectiveStatus(a) === 'active').length === 0 && (
             <View style={styles.emptyState}>
               <Icon name="flash-off" size={48} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>No active auctions</Text>
@@ -408,10 +435,18 @@ export default function AuctionsScreen() {
         </View>
 
         {/* Upcoming Auctions */}
-        {!isLoading && auctions.filter(a => a.status === 'upcoming').length > 0 && (
+        {!isLoading && auctions.filter(a => getEffectiveStatus(a) === 'upcoming').length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>COMING SOON</Text>
-            {auctions.filter(a => a.status === 'upcoming').map(renderAuctionCard)}
+            {auctions.filter(a => getEffectiveStatus(a) === 'upcoming').map(renderAuctionCard)}
+          </View>
+        )}
+
+        {/* Recently Ended */}
+        {!isLoading && auctions.filter(a => getEffectiveStatus(a) === 'ended').length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>RECENTLY ENDED</Text>
+            {auctions.filter(a => getEffectiveStatus(a) === 'ended').map(renderAuctionCard)}
           </View>
         )}
 
@@ -455,9 +490,9 @@ export default function AuctionsScreen() {
                   <View style={styles.timerBadgeOnImage}>
                     <Icon name="time" size={14} color={colors.accent} />
                     <Text style={styles.timerBadgeText}>
-                      {selectedAuction.status === 'active' 
+                      {getEffectiveStatus(selectedAuction) === 'active'
                         ? timeLeft[selectedAuction.id] || 'Loading...'
-                        : selectedAuction.status.toUpperCase()
+                        : getEffectiveStatus(selectedAuction).toUpperCase()
                       }
                     </Text>
                   </View>
@@ -531,7 +566,7 @@ export default function AuctionsScreen() {
                   )}
 
                   {/* Bid Controls */}
-                  {selectedAuction.status === 'active' && (
+                  {getEffectiveStatus(selectedAuction) === 'active' && (
                     <>
                       {/* Your Bid Input */}
                       <View style={styles.premiumBidInputContainer}>
@@ -665,7 +700,7 @@ export default function AuctionsScreen() {
                   )}
 
                   {/* Won State */}
-                  {selectedAuction.status === 'ended' && isWinning(selectedAuction) && (
+                  {getEffectiveStatus(selectedAuction) === 'ended' && isWinning(selectedAuction) && (
                     <View style={styles.premiumWonContainer}>
                       <LinearGradient
                         colors={[colors.gold + '30', colors.gold + '10', 'transparent']}
@@ -746,7 +781,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   auctionCard: {
-    height: 280,
+    height: 220,
     borderRadius: radius.xl,
     overflow: 'hidden',
     marginBottom: spacing.md,
@@ -756,6 +791,9 @@ const styles = StyleSheet.create({
   auctionImage: {
     width: '100%',
     height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   auctionOverlay: {
     position: 'absolute',
