@@ -744,15 +744,15 @@ export const api = {
       method: 'POST'
     }),
 
-  // ====== EMAIL VERIFICATION ======
-  verifyEmail: (token: string) =>
-    apiFetch<{ success: boolean; message: string; referral_bonus?: string }>(
-      `/api/auth/verify-email?token=${token}`,
-      { method: 'POST', auth: false }
+  // ====== EMAIL VERIFICATION (6-digit OTP flow) ======
+  verifyEmail: (code: string) =>
+    apiFetch<{ success: boolean; message: string; referral_bonus?: string; user_id?: string }>(
+      '/api/auth/verify-email',
+      { method: 'POST', body: JSON.stringify({ code }) }
     ),
-  
+
   resendVerificationEmail: () =>
-    apiFetch<{ success: boolean; message: string; demo_verification_link?: string }>(
+    apiFetch<{ success: boolean; message: string }>(
       '/api/auth/resend-verification',
       { method: 'POST' }
     ),

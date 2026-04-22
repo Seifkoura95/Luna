@@ -177,6 +177,18 @@ export default function LoginScreen() {
         const result = await api.register(email, password, name, referralCode || undefined, dobIso);
         useAuthStore.getState().login(result.user, result.token);
 
+        // NEW: 6-digit email OTP flow. If the backend asks for verification,
+        // route to the dedicated OTP screen instead of dropping straight into
+        // the app (previously the link-based flow let users skip verification
+        // entirely).
+        if ((result as any).verification_required) {
+          if (Platform.OS !== 'web') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }
+          router.replace({ pathname: '/verify-email', params: { email } });
+          return;
+        }
+
         // Show referral bonus message if applicable
         if (result.referral_bonus) {
           setTimeout(() => {

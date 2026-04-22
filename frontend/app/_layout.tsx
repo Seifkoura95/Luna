@@ -90,6 +90,7 @@ export default function RootLayout() {
         <Stack.Screen name="safety-settings" />
         <Stack.Screen name="staff-portal" />
         <Stack.Screen name="member-card" />
+        <Stack.Screen name="verify-email" options={{ gestureEnabled: false }} />
       </Stack>
     </>
   );

@@ -120,8 +120,37 @@ def _button(label: str, href: str) -> str:
 # ------------------------------------------------------------------ flows
 
 
+async def send_verification_email_otp(email: str, name: str, code: str) -> None:
+    """Sign-up verification via 6-digit OTP code (not a link).
+
+    Args:
+        email: Recipient email.
+        name: User's full name (only first name is displayed).
+        code: 6-digit numeric string to display prominently.
+    """
+    first = name.split(' ')[0] if name else 'there'
+    # Large, copy-friendly code display with letter-spacing for readability
+    content = f"""
+    <h1 style="font-size:24px;font-weight:800;color:#FFF;margin:0 0 12px 0;">Welcome to Luna Group, {first}</h1>
+    <p style="font-size:15px;line-height:1.6;color:#C0C0C0;margin:0 0 8px 0;">
+      You're one step away from unlocking VIP booths, auctions, birthday rewards and points on every visit.
+    </p>
+    <p style="font-size:15px;line-height:1.6;color:#C0C0C0;margin:0;">
+      Enter the verification code below in the app to activate your account.
+    </p>
+    <div style="margin:28px 0;padding:24px;background:#1A1A1A;border-radius:12px;text-align:center;border:1px solid {_BRAND_GOLD}40;">
+      <div style="font-size:11px;letter-spacing:2px;color:#6A6A6A;text-transform:uppercase;margin-bottom:8px;">Your verification code</div>
+      <div style="font-family:ui-monospace,'SF Mono',Menlo,Monaco,Consolas,monospace;font-size:40px;font-weight:900;color:{_BRAND_GOLD};letter-spacing:12px;">{code}</div>
+    </div>
+    <p style="font-size:12px;line-height:1.6;color:#6A6A6A;margin:0;text-align:center;">
+      This code expires in 15 minutes. If you didn't sign up, you can safely ignore this email.
+    </p>
+    """
+    await _send(email, f"Your Luna Group verification code: {code}", _wrap(content, f"Your verification code is {code}. Expires in 15 min."))
+
+
 async def send_verification_email(email: str, name: str, token: str) -> str:
-    """Sign-up verification link. Returns the verification link for logging."""
+    """Legacy link-based verification. Kept for backwards-compat callers."""
     link = f"{APP_URL}/verify-email?token={token}"
     content = f"""
     <h1 style="font-size:24px;font-weight:800;color:#FFF;margin:0 0 12px 0;">Welcome to Luna Group, {name.split(' ')[0] if name else 'there'}</h1>

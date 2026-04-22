@@ -6,6 +6,7 @@ import uuid
 import bcrypt
 import jwt
 import logging
+import secrets
 from datetime import datetime, timezone, timedelta
 
 from database import db
@@ -83,9 +84,12 @@ async def register(request: RegisterRequest):
     hashed = bcrypt.hashpw(request.password.encode(), bcrypt.gensalt())
     user_id = str(uuid.uuid4())
     
-    # Generate email verification token
-    verification_token = generate_verification_token()
-    verification_expiry = datetime.now(timezone.utc) + timedelta(hours=EMAIL_VERIFICATION_EXPIRY_HOURS)
+    # Generate 6-digit email OTP (valid for 15 minutes). The OTP itself is
+    # stored hashed in the DB so a stolen DB snapshot can't be used to verify
+    # accounts; only the user has the plain-text code in their inbox.
+    otp_code = f"{secrets.randbelow(1_000_000):06d}"
+    otp_hash = bcrypt.hashpw(otp_code.encode(), bcrypt.gensalt()).decode()
+    otp_expiry = datetime.now(timezone.utc) + timedelta(minutes=15)
     
     # Calculate age (DOB required for age-verification — 18+ enforced per ToS §2)
     age = None
@@ -119,8 +123,9 @@ async def register(request: RegisterRequest):
         "favorite_venues": [],
         "referred_by": referrer["user_id"] if referrer else None,
         "email_verified": False,
-        "email_verification_token": verification_token,
-        "email_verification_expiry": verification_expiry,
+        "email_otp_hash": otp_hash,
+        "email_otp_expiry": otp_expiry,
+        "email_otp_attempts": 0,
         "push_token": None,
         "total_visits": 0,
         "total_spend": 0,
@@ -144,8 +149,13 @@ async def register(request: RegisterRequest):
         }
         await db.referrals.insert_one(referral)
     
-    # Send verification email
-    verification_link = await send_verification_email(request.email, request.name, verification_token)
+    # Send verification OTP email (fire-and-forget; swallow errors so a
+    # transient Resend outage can't block the signup response)
+    try:
+        from utils.email_service import send_verification_email_otp
+        await send_verification_email_otp(request.email, request.name, otp_code)
+    except Exception as exc:
+        logger.error(f"Signup OTP email failed for {request.email[:3]}***: {exc}")
     
     token_payload = {
         "user_id": user_id,
@@ -154,35 +164,65 @@ async def register(request: RegisterRequest):
     }
     token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     
-    # Remove sensitive fields
-    user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id", "email_verification_token"]}
+    # Remove sensitive fields (including OTP hash — never leak to client)
+    user_copy = {k: v for k, v in user.items() if k not in ["hashed_password", "_id", "email_otp_hash"]}
     
     return {
         "user": user_copy,
         "token": token,
         "verification_required": True,
-        "message": "Please check your email to verify your account",
-        "demo_verification_link": verification_link
+        "message": "We've sent a 6-digit code to your email. Enter it to verify your account.",
     }
 
 
 @router.post("/verify-email")
-async def verify_email(token: str):
-    """Verify user's email address using the token sent via email"""
-    user = await db.users.find_one({"email_verification_token": token})
-    
+async def verify_email(request: Request):
+    """
+    Verify user's email address by submitting the 6-digit OTP sent via email.
+
+    Body: {"code": "123456"}
+    Auth: Bearer token required (issued at /register).
+
+    Rate limiting: after 5 failed attempts for a given OTP, the OTP is
+    invalidated and the user must request a new one via /resend-verification.
+    """
+    body = await request.json()
+    code = str(body.get("code", "")).strip()
+    if not code or len(code) != 6 or not code.isdigit():
+        raise HTTPException(status_code=400, detail="Enter the 6-digit code from your email.")
+
+    # Identify the current user via JWT
+    auth_header = request.headers.get("authorization")
+    current = get_current_user(auth_header)
+    user = await db.users.find_one({"user_id": current["user_id"]})
     if not user:
-        raise HTTPException(status_code=400, detail="Invalid verification token")
-    
-    # Check if token has expired
-    expiry = user.get("email_verification_expiry")
-    if expiry and datetime.now(timezone.utc) > expiry:
-        raise HTTPException(status_code=400, detail="Verification token has expired. Please request a new one.")
-    
+        raise HTTPException(status_code=404, detail="User not found")
+
     if user.get("email_verified"):
-        return {"success": True, "message": "Email already verified"}
-    
-    # Mark email as verified
+        return {"success": True, "message": "Email already verified", "user_id": user["user_id"]}
+
+    # Expiry check — Mongo may round-trip datetimes as naive UTC; normalize
+    expiry = user.get("email_otp_expiry")
+    if expiry and expiry.tzinfo is None:
+        expiry = expiry.replace(tzinfo=timezone.utc)
+    if not expiry or datetime.now(timezone.utc) > expiry:
+        raise HTTPException(status_code=400, detail="This code has expired. Tap 'Resend code' to get a new one.")
+
+    # Attempt-limit check (prevents brute-forcing the 6-digit space)
+    attempts = int(user.get("email_otp_attempts", 0))
+    if attempts >= 5:
+        raise HTTPException(status_code=429, detail="Too many incorrect attempts. Tap 'Resend code' to get a new one.")
+
+    stored_hash = user.get("email_otp_hash", "")
+    if not stored_hash or not bcrypt.checkpw(code.encode(), stored_hash.encode()):
+        await db.users.update_one(
+            {"user_id": user["user_id"]},
+            {"$inc": {"email_otp_attempts": 1}}
+        )
+        remaining = max(0, 4 - attempts)
+        raise HTTPException(status_code=400, detail=f"Incorrect code. {remaining} attempt{'s' if remaining != 1 else ''} remaining.")
+
+    # Success — mark verified and scrub OTP fields
     await db.users.update_one(
         {"user_id": user["user_id"]},
         {
@@ -191,30 +231,32 @@ async def verify_email(token: str):
                 "email_verified_at": datetime.now(timezone.utc)
             },
             "$unset": {
+                "email_otp_hash": "",
+                "email_otp_expiry": "",
+                "email_otp_attempts": "",
+                # Legacy fields from the previous link-based flow
                 "email_verification_token": "",
                 "email_verification_expiry": ""
             }
         }
     )
-    
+
     # Complete any pending referral
     referral_completed = await complete_referral(user["user_id"])
-    
+
     response = {
         "success": True,
         "message": "Email verified successfully! Welcome to Luna Group.",
         "user_id": user["user_id"]
     }
-    
     if referral_completed:
         response["referral_bonus"] = f"You and your friend each earned {REFERRAL_POINTS_REWARD} points!"
-    
     return response
 
 
 @router.post("/resend-verification")
 async def resend_verification_email_endpoint(request: Request):
-    """Resend verification email for unverified users"""
+    """Resend a fresh 6-digit OTP email for unverified users."""
     auth_header = request.headers.get("authorization")
     current_user = get_current_user(auth_header)
     
@@ -225,24 +267,29 @@ async def resend_verification_email_endpoint(request: Request):
     if user.get("email_verified"):
         return {"success": True, "message": "Email already verified"}
     
-    # Generate new verification token
-    verification_token = generate_verification_token()
-    verification_expiry = datetime.now(timezone.utc) + timedelta(hours=EMAIL_VERIFICATION_EXPIRY_HOURS)
+    # Generate new 6-digit OTP (15 min expiry, resets attempt counter)
+    otp_code = f"{secrets.randbelow(1_000_000):06d}"
+    otp_hash = bcrypt.hashpw(otp_code.encode(), bcrypt.gensalt()).decode()
+    otp_expiry = datetime.now(timezone.utc) + timedelta(minutes=15)
     
     await db.users.update_one(
         {"user_id": user["user_id"]},
         {"$set": {
-            "email_verification_token": verification_token,
-            "email_verification_expiry": verification_expiry
+            "email_otp_hash": otp_hash,
+            "email_otp_expiry": otp_expiry,
+            "email_otp_attempts": 0,
         }}
     )
     
-    # Send new verification email
-    verification_link = await send_verification_email(user["email"], user["name"], verification_token)
+    try:
+        from utils.email_service import send_verification_email_otp
+        await send_verification_email_otp(user["email"], user.get("name", ""), otp_code)
+    except Exception as exc:
+        logger.error(f"Resend OTP email failed for {user['email'][:3]}***: {exc}")
     
     return {
         "success": True,
-        "message": "Verification email sent",
+        "message": "A new 6-digit code has been sent to your email.",
         "demo_verification_link": verification_link
     }
 
