@@ -1,9 +1,12 @@
 """
-Database connection and initialization for Luna Group VIP API
+Database connection for Luna Group VIP API.
 
-Uses `certifi` CA bundle explicitly for TLS — fixes Atlas TLS handshake
-failures on Railway / Nixpacks containers that ship an old/incomplete
-system trust store.
+TLS workarounds for Atlas M0 + Railway Nixpacks (OpenSSL 3.x):
+- tlsCAFile: use certifi's up-to-date CA bundle instead of OS trust store.
+- tlsDisableOCSPEndpointCheck: Atlas's OCSP responder sometimes times out
+  behind Railway's egress, which OpenSSL 3.x interprets as a handshake
+  failure (alert 80). Disabling the OCSP check sidesteps this.
+- serverSelectionTimeoutMS: fail fast on connection issues.
 """
 
 import os
@@ -17,10 +20,16 @@ load_dotenv(ROOT_DIR / '.env')
 
 mongo_url = os.environ['MONGO_URL']
 
-# Only pass tlsCAFile for SRV (Atlas) URLs — local mongodb:// doesn't use TLS.
-client_kwargs = {}
+client_kwargs = {
+    "serverSelectionTimeoutMS": 10000,
+}
 if mongo_url.startswith("mongodb+srv://") or "tls=true" in mongo_url.lower():
-    client_kwargs["tlsCAFile"] = certifi.where()
+    client_kwargs.update({
+        "tls": True,
+        "tlsCAFile": certifi.where(),
+        "tlsDisableOCSPEndpointCheck": True,
+        "retryWrites": True,
+    })
 
 client = AsyncIOMotorClient(mongo_url, **client_kwargs)
 db = client[os.environ['DB_NAME']]
