@@ -409,6 +409,39 @@ async def public_health(x_cherryhub_api_key: Optional[str] = Header(None, alias=
     return {"ok": True, "service": "luna-cherryhub-bridge", "mode": "read-only"}
 
 
+# ============== Admin: manual poller trigger ==============
+
+@router.post("/admin/sync-now")
+async def admin_sync_now(request: Request):
+    """Force an immediate CherryHub poll (admin-only).
+
+    - No `user_id` query param → syncs every linked user.
+    - `?user_id=XXX` → syncs only that user.
+    Normally APScheduler runs this every 2 minutes automatically.
+    """
+    current_user = await get_authenticated_user(request)
+    if current_user.get("role") not in {"admin", "super_admin"}:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from services.cherryhub_poller import sync_cherryhub_redemptions, _sync_one_user
+
+    user_id_param = request.query_params.get("user_id")
+    if user_id_param:
+        target = await db.users.find_one(
+            {"user_id": user_id_param},
+            {"user_id": 1, "cherryhub_member_key": 1, "last_cherryhub_sync": 1},
+        )
+        if not target:
+            raise HTTPException(status_code=404, detail="user_id not found")
+        if not target.get("cherryhub_member_key"):
+            raise HTTPException(status_code=400, detail="user not linked to CherryHub")
+        counts = await _sync_one_user(target)
+        return {"success": True, "scope": "single_user", "user_id": user_id_param, **counts}
+
+    counts = await sync_cherryhub_redemptions()
+    return {"success": True, "scope": "all_users", **counts}
+
+
 @router.get("/public/balance/{member_key}")
 async def public_balance(
     member_key: str,

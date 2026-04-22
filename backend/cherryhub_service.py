@@ -451,6 +451,41 @@ class CherryHubService:
             logger.error(f"Failed to deduct points from CherryHub: {e}")
             raise
 
+    async def search_points_transactions(
+        self,
+        member_key: Optional[str] = None,
+        transaction_type: Optional[str] = None,   # "Redeem" | "Award"
+        status: str = "Success",
+        state: str = "Completed",
+        after: Optional[str] = None,              # ISO-8601 datetime string
+        limit: int = 200,
+        continuation_token: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Pull PointsTransactions from CherryHub via the search endpoint.
+
+        Returns the raw response: {"_links": {...}, "Results": [...]}
+        """
+        if CHERRYHUB_MOCK_MODE:
+            return {"_links": {}, "Results": [], "mock": True}
+
+        endpoint = f"/{self.business_id}/points-transactions/search"
+        params: Dict[str, Any] = {
+            "pointsTransactionStatus": status,
+            "pointsTransactionState": state,
+            "limit": limit,
+        }
+        if transaction_type:
+            params["pointsTransactionType"] = transaction_type
+        if member_key:
+            composite_id = member_key if member_key.startswith(self.business_id) else f"{self.business_id}.0.{member_key}"
+            params["memberId"] = composite_id
+        if after:
+            params["transactionDateAfter"] = after
+        if continuation_token:
+            params["continuationToken"] = continuation_token
+
+        return await self._make_request("GET", endpoint, params=params)
+
 
 # Global service instance
 cherryhub_service = CherryHubService()

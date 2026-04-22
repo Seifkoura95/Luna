@@ -124,6 +124,20 @@ async def lifespan(app_instance: FastAPI):
         name="New Auction Alerts",
         replace_existing=True
     )
+
+    # Schedule CherryHub points-transaction poller every 2 minutes
+    # Pulls in-store redemptions + SwiftPOS-written awards and mirrors them into Luna's ledger.
+    # No-op when CHERRYHUB_MOCK_MODE=true or credentials missing.
+    from services.cherryhub_poller import sync_cherryhub_redemptions
+    scheduler.add_job(
+        sync_cherryhub_redemptions,
+        IntervalTrigger(minutes=2),
+        id="cherryhub_sync",
+        name="CherryHub Points Transaction Sync",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+    )
     
     # Also run a sync on startup (after 90 seconds to let everything initialize)
     scheduler.add_job(

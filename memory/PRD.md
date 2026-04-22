@@ -707,4 +707,37 @@ Tonight | Venues | Wallet | **Social** | Profile
 
 **For Railway deploy:**
 - Add `CHERRYHUB_CLIENT_ID`, `CHERRYHUB_CLIENT_SECRET`, `CHERRYHUB_BUSINESS_ID`, `CHERRYHUB_INTEGRATION_ID`, `CHERRYHUB_REFRESH_TOKEN`, `CHERRYHUB_API_URL`, `CHERRYHUB_MOCK_MODE=false`, `CHERRYHUB_READ_API_KEY` to Railway env vars
+
+## Latest Update: Feb 22, 2026 — CherryHub Poller + Deep Health Check
+
+**1) Deep health endpoint** (`GET /api/health/deep`)
+- Parallel pings: MongoDB, CherryHub OAuth2, Resend `/domains`
+- Returns per-check `ok`, `latency_ms`, error details
+- Locally: all 3 green. On Railway (mock_mode=false) shows live `expires_in: 3600` from CherryHub
+
+**2) CherryHub → Luna Poller** (`services/cherryhub_poller.py`)
+Per your "read-only both ways" constraint, Luna now auto-mirrors in-store redemptions + SwiftPOS awards from CherryHub into Luna's ledger every 2 minutes.
+
+Implementation:
+- `cherryhub_service.search_points_transactions(...)` — hits `GET /data/v1/{businessId}/points-transactions/search` with `pointsTransactionStatus=Success&pointsTransactionState=Completed&transactionDateAfter={ISO}&limit=200&continuationToken={...}`
+- `sync_cherryhub_redemptions()` — APScheduler job, every 2 min:
+    - iterates every user with `cherryhub_member_key`
+    - pulls new txns since `users.last_cherryhub_sync` (or 30d lookback on first sync)
+    - inserts into `points_transactions` with `source=cherryhub`, `external_id=TransactionId` (idempotent)
+    - updates `users.points_balance` via `$inc`
+    - advances `last_cherryhub_sync` watermark
+    - skips any txn tagged `Request.RequestDetails.origin=luna_app` (prevents double-count when Luna eventually pushes awards back to CH)
+- No-op in mock mode or when credentials missing
+- Pagination via `_links.next.continuationToken`
+- **Point amount extraction:** prefers `Request.PointsByQuantity`, falls back to `PointsByDollarValue × PointsType.PointsToDollarRatio`
+- **Admin trigger:** `POST /api/cherryhub/admin/sync-now` (all users) or `?user_id=XXX` (single user) — requires admin role
+
+**CherryHub OAuth finding:**
+`client_credentials` grant returns 400 — `refresh_token` grant works. Service already has fallback; no code change needed. Long-term: ask CherryHub to enable `client_credentials` so we don't depend on the rotating refresh token.
+
+**Tested:**
+- `POST /admin/sync-now` as admin → `{mock: true, imported: 0}` in mock mode ✓
+- Same as non-admin → 403 ✓
+- Scheduler registered with `max_instances=1` + `coalesce=True` (no overlapping runs)
+
 - Give `CHERRYHUB_READ_API_KEY` to CherryHub so they can poll our public endpoints
