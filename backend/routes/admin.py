@@ -209,6 +209,73 @@ async def seed_data():
     }
 
 
+@router.post("/seed-admin-user")
+async def seed_admin_user(request: Request):
+    """One-time seed of the Luna admin account on a fresh database.
+
+    Protected by a secret header so you can call it once from any browser/curl
+    immediately after switching to a new Mongo cluster. Idempotent: if the
+    user already exists it just returns 'already_exists'.
+
+    Usage:
+        curl -X POST https://.../api/admin/seed-admin-user \
+             -H "X-Seed-Key: {LUNA_HUB_API_KEY value}"
+    """
+    import bcrypt as _bcrypt
+    import os as _os
+
+    provided_key = request.headers.get("X-Seed-Key")
+    required_key = _os.environ.get("LUNA_HUB_API_KEY", "")
+    if not required_key:
+        raise HTTPException(status_code=503, detail="LUNA_HUB_API_KEY not configured on backend")
+    if provided_key != required_key:
+        raise HTTPException(status_code=401, detail="Invalid X-Seed-Key")
+
+    email = "admin@lunagroup.com.au"
+    password = "Trent69!"
+
+    existing = await db.users.find_one({"email": email})
+    if existing:
+        # Make sure role + password match what we expect, repair if drifted
+        updates = {}
+        if existing.get("role") != "admin":
+            updates["role"] = "admin"
+        try:
+            pw_ok = _bcrypt.checkpw(password.encode(), existing["hashed_password"].encode())
+        except Exception:
+            pw_ok = False
+        if not pw_ok:
+            updates["hashed_password"] = _bcrypt.hashpw(password.encode(), _bcrypt.gensalt()).decode()
+        if updates:
+            await db.users.update_one({"user_id": existing["user_id"]}, {"$set": updates})
+            return {"success": True, "status": "repaired", "email": email, "updates": list(updates.keys())}
+        return {"success": True, "status": "already_exists", "email": email}
+
+    user_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    await db.users.insert_one({
+        "user_id": user_id,
+        "email": email,
+        "hashed_password": _bcrypt.hashpw(password.encode(), _bcrypt.gensalt()).decode(),
+        "name": "Luna Admin",
+        "phone": None,
+        "role": "admin",
+        "tier": "gold",
+        "points_balance": 0,
+        "is_email_verified": True,
+        "created_at": now,
+        "created_via": "seed_admin_user",
+    })
+    return {
+        "success": True,
+        "status": "created",
+        "email": email,
+        "user_id": user_id,
+        "note": "Password: Trent69! — change it after first login.",
+    }
+
+
+
 @router.get("/stats")
 async def get_admin_stats(request: Request):
     """Get admin dashboard statistics"""
