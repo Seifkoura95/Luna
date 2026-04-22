@@ -411,6 +411,133 @@ async def public_health(x_cherryhub_api_key: Optional[str] = Header(None, alias=
 
 # ============== Admin: manual poller trigger ==============
 
+@router.get("/admin/sync-stats")
+async def admin_sync_stats(request: Request):
+    """Returns poller stats for the last 24h + most-recent run info.
+
+    Fields:
+      - last_sync_at: most recent `last_cherryhub_sync` across all users (ISO8601)
+      - linked_users: how many users have a CherryHub member_key
+      - synced_last_24h: users whose watermark advanced in last 24h
+      - imported_24h / 7d: count of ledger entries with source=cherryhub in that window
+      - redemptions_24h / awards_24h: breakdown
+      - points_net_24h: sum of amount over last 24h (signed — negative = net outflow)
+      - mock_mode: whether the poller is currently a no-op
+    """
+    current_user = await get_authenticated_user(request)
+    if current_user.get("role") not in {"admin", "super_admin"}:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    now = datetime.now(timezone.utc)
+    day_ago = now - timedelta(days=1)
+    week_ago = now - timedelta(days=7)
+
+    linked_users = await db.users.count_documents({"cherryhub_member_key": {"$nin": [None, ""]}})
+    synced_24h = await db.users.count_documents({"last_cherryhub_sync": {"$gte": day_ago}})
+
+    latest_user = await db.users.find_one(
+        {"last_cherryhub_sync": {"$ne": None}},
+        {"_id": 0, "last_cherryhub_sync": 1},
+        sort=[("last_cherryhub_sync", -1)],
+    )
+    last_sync_at = _iso(latest_user.get("last_cherryhub_sync")) if latest_user else None
+
+    imported_24h = await db.points_transactions.count_documents(
+        {"source": "cherryhub", "synced_at": {"$gte": day_ago}}
+    )
+    imported_7d = await db.points_transactions.count_documents(
+        {"source": "cherryhub", "synced_at": {"$gte": week_ago}}
+    )
+    redemptions_24h = await db.points_transactions.count_documents(
+        {"source": "cherryhub", "type": "cherryhub_redemption", "synced_at": {"$gte": day_ago}}
+    )
+    awards_24h = await db.points_transactions.count_documents(
+        {"source": "cherryhub", "type": "cherryhub_award", "synced_at": {"$gte": day_ago}}
+    )
+
+    pipeline = [
+        {"$match": {"source": "cherryhub", "synced_at": {"$gte": day_ago}}},
+        {"$group": {"_id": None, "net": {"$sum": "$amount"}}},
+    ]
+    net_cursor = db.points_transactions.aggregate(pipeline)
+    net_docs = await net_cursor.to_list(length=1)
+    points_net_24h = int(net_docs[0]["net"]) if net_docs else 0
+
+    recent = await db.points_transactions.find(
+        {"source": "cherryhub"},
+        {"_id": 0, "external_id": 1, "type": 1, "amount": 1, "member_key": 1, "synced_at": 1, "created_at": 1},
+    ).sort("synced_at", -1).limit(5).to_list(length=5)
+    for r in recent:
+        for k in ("synced_at", "created_at"):
+            if isinstance(r.get(k), datetime):
+                r[k] = r[k].isoformat()
+
+    return {
+        "mock_mode": os.environ.get("CHERRYHUB_MOCK_MODE", "false").lower() == "true",
+        "last_sync_at": last_sync_at,
+        "linked_users": linked_users,
+        "synced_last_24h": synced_24h,
+        "imported_24h": imported_24h,
+        "imported_7d": imported_7d,
+        "redemptions_24h": redemptions_24h,
+        "awards_24h": awards_24h,
+        "points_net_24h": points_net_24h,
+        "recent_5": recent,
+        "as_of": now.isoformat(),
+    }
+
+
+@router.post("/admin/test-award")
+async def admin_test_award(request: Request):
+    """Fires a LIVE points-award at CherryHub so you can verify movement in their reports.
+
+    Defaults to +10 points. Use query params to override:
+      ?points=10                    (int, default 10)
+      ?member_key=LUNA-XXXX         (defaults to the calling admin's linked member)
+      ?reason=Luna+Test             (url-encoded reason)
+
+    WARNING: This is a live write to CherryHub. Only use from the admin portal
+    for connectivity testing. Stamps RequestDetails.origin=luna_app so our own
+    poller skips these to avoid double-count.
+    """
+    current_user = await get_authenticated_user(request)
+    if current_user.get("role") not in {"admin", "super_admin"}:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    if CHERRYHUB_MOCK_MODE:
+        raise HTTPException(status_code=503, detail="CHERRYHUB_MOCK_MODE is on — won't fire a test write. Flip it off on Railway to test live.")
+
+    try:
+        points = int(request.query_params.get("points", "10"))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="points must be an integer")
+    if points < 1 or points > 1000:
+        raise HTTPException(status_code=400, detail="points must be 1..1000")
+
+    member_key = request.query_params.get("member_key") or current_user.get("cherryhub_member_key")
+    if not member_key:
+        raise HTTPException(
+            status_code=400,
+            detail="No member_key — pass ?member_key=... or link the admin account to CherryHub first",
+        )
+
+    reason = request.query_params.get("reason") or f"Luna admin test award ({current_user.get('email')})"
+
+    try:
+        result = await cherryhub_service.add_points(member_key=member_key, points=points, reason=reason)
+    except Exception as e:
+        logger.exception("CherryHub test-award failed")
+        raise HTTPException(status_code=502, detail=f"CherryHub write failed: {e}")
+
+    return {
+        "success": True,
+        "member_key": member_key,
+        "points_awarded": points,
+        "reason": reason,
+        "cherryhub_response": result,
+        "next_steps": "Check CherryHub → Reports → Points Transactions. The award should appear within seconds.",
+    }
+
 @router.post("/admin/sync-now")
 async def admin_sync_now(request: Request):
     """Force an immediate CherryHub poll (admin-only).

@@ -409,7 +409,8 @@ class CherryHubService:
         data = {
             "points": points,
             "reason": reason,
-            "source": "LunaGroupApp"
+            "source": "LunaGroupApp",
+            "RequestDetails": {"origin": "luna_app", "reason": reason},
         }
         
         try:
