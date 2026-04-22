@@ -230,9 +230,15 @@ app.add_middleware(
 )
 app.include_router(api_router)
 
-# Serve AI-generated bottle service product photos
+# Serve AI-generated bottle service product photos.
+# Directory is resolved relative to this file so the server works on any host
+# (Emergent pod, Railway container, local dev). Auto-created on boot so a
+# fresh deploy with no pre-existing static assets does not crash.
 from fastapi.staticfiles import StaticFiles
-app.mount("/api/static/bottles", StaticFiles(directory="/app/backend/static/bottles"), name="bottle-photos")
+from pathlib import Path as _Path
+_BOTTLES_DIR = _Path(__file__).resolve().parent / "static" / "bottles"
+_BOTTLES_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/api/static/bottles", StaticFiles(directory=str(_BOTTLES_DIR)), name="bottle-photos")
 
 
 @app.get("/")
