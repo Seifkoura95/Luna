@@ -1,6 +1,31 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Feb 23, 2026 - Session 17 (EAS Build Cache Nuclear Fix)
+
+### IN VERIFICATION: Cache-busting `postinstall` script to kill `expo-barcode-scanner` residue on EAS Build workers
+
+**Why:** EAS iOS builds were failing repeatedly with:
+`'ExpoModulesCore/EXBarcodeScannerInterface.h' file not found`
+even though the package had been removed from `dependencies` + `yarn.lock`, and `expo.autolinking.exclude` + `react-native.config.js` were already blocking it. Diagnosis: EAS remote workers were replaying a cached workspace that still contained the deprecated module folder.
+
+**Changes applied (this session):**
+- Added `"postinstall": "node ./scripts/nuke-barcode-scanner.js"` to `/app/frontend/package.json`.
+- Created `/app/frontend/scripts/nuke-barcode-scanner.js` — walks `node_modules` (depth 6, top-level + nested) after every `yarn install` and physically deletes any `expo-barcode-scanner` directory. Belt-and-suspenders against stale EAS caches and transitive re-installs.
+- Verified: running `yarn` now triggers the postinstall, which reports `[nuke-barcode-scanner] Scanning... Done.` — safe no-op when the module is absent.
+- Verified with `npx @expo/fingerprint fingerprint:generate`: the autolinking manifest contains ZERO references to `expo-barcode-scanner` / `EXBarCodeScanner` / `EXBarcodeScannerInterface`. Only `ExpoCamera` pod is linked.
+- Fingerprint hash WILL change on the next build (new file + modified package.json scripts), invalidating the previous cached failure fingerprint.
+
+**Required user action to verify:**
+Run locally or trigger from Emergent Deploy:
+`eas build --platform ios --profile production --clear-cache`
+The `--clear-cache` flag wipes EAS's remote Pods cache pool, which was the last remaining place the deprecated header could have been lingering.
+
+**NOT CLAIMING FIXED** until user confirms the EAS build archives the IPA successfully (per RULES_FROM_USER.md Rule 1).
+
+---
+
+
 ## Latest Update: Feb 22, 2026 - Session 16 (Home Screen Full Redesign)
 
 ### COMPLETED: Editorial home screen redesign — Live Nation × luxury nightclub
