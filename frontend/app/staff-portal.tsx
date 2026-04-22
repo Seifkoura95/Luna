@@ -10,6 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius } from '../src/theme/colors';
 import { api, apiFetch } from '../src/utils/api';
 import { AppBackground } from '../src/components/AppBackground';
+import { useAuthStore } from '../src/store/authStore';
 
 const isNative = Platform.OS !== 'web';
 
@@ -42,6 +43,18 @@ type PortalTab = 'award' | 'validate' | 'history';
 export default function StaffPortal() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  // Guard: if a regular member lands here (stale nav, deep link, cached route,
+  // wrong redirect), bounce them to the main tabs. Staff roles only.
+  const user = useAuthStore((s) => s.user);
+  useEffect(() => {
+    const role = ((user as any)?.role || '').toLowerCase();
+    const STAFF_ROLES = ['venue_staff', 'venue_manager', 'admin'];
+    if (user && !STAFF_ROLES.includes(role)) {
+      router.replace('/(tabs)');
+    }
+  }, [user, router]);
+
   const [activeTab, setActiveTab] = useState<PortalTab>('award');
   const [activeVenue, setActiveVenue] = useState(VENUES[0]);
 
