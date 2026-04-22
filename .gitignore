@@ -86,3 +86,12 @@ secrets/
 # NOTE on .env files: we keep them tracked so Emergent native deployment can
 # read them at build time. The repo must stay private. Do NOT commit .env.*
 # files for other environments (staging/local) or real third-party secrets.
+-e 
+# Environment and credential files
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials
