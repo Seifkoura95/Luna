@@ -618,6 +618,15 @@ export default function WalletScreen() {
                 <Text style={styles.viewAllRewardsFullText}>My Free Entries</Text>
                 <Icon name="chevron-forward" size={16} color={colors.textMuted} />
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.viewAllRewardsFullBtn}
+                onPress={() => router.push('/cherryhub')}
+                data-testid="wallet-cherryhub-btn"
+              >
+                <Icon name="ribbon" size={20} color={colors.gold} />
+                <Text style={styles.viewAllRewardsFullText}>CherryHub Membership</Text>
+                <Icon name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
             </>
           )}
         </View>

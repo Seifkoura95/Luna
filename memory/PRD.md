@@ -649,3 +649,38 @@ Tonight | Venues | Wallet | **Social** | Profile
 - User: `luna@test.com` / `test123`
 - Admin: `admin@lunagroup.com.au` / `Trent69!`
 - Venue: `venue@eclipse.com` / `venue123`
+
+
+## Latest Update: Feb 22, 2026 — CherryHub Integration Restored
+
+**What was done:**
+- Restored `backend/cherryhub_service.py` (OAuth2 token manager + all CherryHub API methods, recovered from git history)
+- Restored `backend/models/cherryhub.py` (Pydantic request models)
+- Rebuilt `backend/routes/cherryhub.py` with a cleaner read-only contract:
+    - `POST /api/cherryhub/login` — dual-auth login via CherryHub email
+    - `POST /api/cherryhub/link` — link current user to CherryHub member
+    - `POST /api/cherryhub/register` — create new CherryHub member
+    - `GET /api/cherryhub/status` — connection status for current user
+    - `GET /api/cherryhub/points` — display balance (prefers CH, falls back local)
+    - `GET /api/cherryhub/transactions` — local Luna ledger history
+    - `POST /api/cherryhub/wallet-pass` — Apple/Google Wallet digital member card
+- **NEW public read bridge** (how CherryHub pulls Luna balances in-store):
+    - `GET /api/cherryhub/public/health` — auth check
+    - `GET /api/cherryhub/public/balance/{member_key}` — live Luna balance for a member
+    - `GET /api/cherryhub/public/ledger/{member_key}?since=ISO8601` — earn events since timestamp
+    - Guarded by `X-CherryHub-Api-Key` header (value in `backend/.env` as `CHERRYHUB_READ_API_KEY`)
+- Added `CHERRYHUB_*` env vars back to `backend/.env` (credentials, refresh token, mock mode on until Railway)
+- Wired router into `backend/routes/__init__.py` (47 routers loaded)
+- Frontend: new `/app/frontend/app/cherryhub.tsx` screen (link, status, balance, help text)
+- Frontend: added "CherryHub Membership" tile on wallet tab beneath "My Free Entries"
+
+**Testing:**
+- All 7 endpoints tested via curl (auth gates, happy path, 404 unknown member, 400 bad ISO)
+- Verified against existing test user `luna@test.com` (linked to mock member `LUNA-LUNATES`, 81,898 pts)
+
+**Known constraint:**
+- `CHERRYHUB_MOCK_MODE=true` while on Emergent (container DNS can't resolve CherryHub hosts). Flip to `false` on Railway where DNS is unrestricted.
+
+**For Railway deploy:**
+- Add `CHERRYHUB_CLIENT_ID`, `CHERRYHUB_CLIENT_SECRET`, `CHERRYHUB_BUSINESS_ID`, `CHERRYHUB_INTEGRATION_ID`, `CHERRYHUB_REFRESH_TOKEN`, `CHERRYHUB_API_URL`, `CHERRYHUB_MOCK_MODE=false`, `CHERRYHUB_READ_API_KEY` to Railway env vars
+- Give `CHERRYHUB_READ_API_KEY` to CherryHub so they can poll our public endpoints

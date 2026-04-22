@@ -35,3 +35,16 @@
   # db.users.update_one({'email':'...'}, {'$set':{'email_otp_hash': new, 'email_otp_attempts':0}})
   ```
   Then verify with code `123456`.
+
+
+## CherryHub Integration (restored — read-only bridge)
+- OAuth credentials (CHERRYHUB_CLIENT_ID/SECRET/BUSINESS_ID/REFRESH_TOKEN) already set in `/app/backend/.env`
+- Base URL: `https://test.api.cherryhub.com.au` (staging). Switch to `https://api.cherryhub.com.au` for production
+- **Mock mode is ON** (`CHERRYHUB_MOCK_MODE=true`) because container DNS cannot resolve CherryHub hosts. Set to `false` on Railway to hit the real API
+- Shared bridge key for CherryHub → Luna polls (auth via `X-CherryHub-Api-Key` header):
+  `CHERRYHUB_READ_API_KEY=NJW5r0LbnCul3RL4lFARFVtiPDTtoAykVZT5B6h3nj0`
+- Public read endpoints CherryHub hits:
+  - `GET /api/cherryhub/public/health`
+  - `GET /api/cherryhub/public/balance/{member_key}`
+  - `GET /api/cherryhub/public/ledger/{member_key}?since=ISO8601&limit=200`
+- Test user `luna@test.com` is linked to mock member key `LUNA-LUNATES`
