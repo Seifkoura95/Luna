@@ -100,13 +100,16 @@ def is_saturday() -> bool:
 
 
 async def require_staff(request: Request) -> dict:
-    """Verify staff/admin access"""
+    """Verify staff/admin access.
+    Allowed roles match the canonical role set used across the codebase
+    (see /app/backend/routes/venue_admin.py): venue_staff, venue_manager, admin.
+    """
     auth_header = request.headers.get("Authorization")
     if not auth_header:
         raise HTTPException(status_code=401, detail="Not authenticated")
     user_data = get_current_user(auth_header)
     user = await db.users.find_one({"user_id": user_data.get("user_id")})
-    if not user or user.get("role") not in ["admin", "staff", "manager"]:
+    if not user or user.get("role") not in ["admin", "venue_manager", "venue_staff"]:
         raise HTTPException(status_code=403, detail="Staff access required")
     return user
 
@@ -972,8 +975,18 @@ async def validate_reward_qr(request: Request, data: ValidateRewardQRRequest):
     if not redemption:
         raise HTTPException(status_code=404, detail="Invalid QR code — no matching redemption found")
 
-    if redemption.get("status") == "used":
-        raise HTTPException(status_code=400, detail=f"Already redeemed at {redemption.get('used_at_venue', 'unknown')} on {str(redemption.get('used_at', ''))[:10]}")
+    # Treat as already used if EITHER status is "used"/"redeemed" OR used_at is set.
+    # Legacy code paths sometimes set used_at without flipping status, so we
+    # guard against double-redemption by checking both.
+    already_used = (
+        redemption.get("status") in ("used", "redeemed")
+        or redemption.get("used_at") is not None
+    )
+    if already_used:
+        when_raw = redemption.get("used_at") or redemption.get("redeemed_at") or ""
+        when = str(when_raw)[:10] if when_raw else "previously"
+        where = redemption.get("used_at_venue") or "another venue"
+        raise HTTPException(status_code=400, detail=f"Already redeemed at {where} on {when}")
 
     if redemption.get("status") == "expired":
         raise HTTPException(status_code=400, detail="This reward has expired")
