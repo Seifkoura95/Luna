@@ -1,6 +1,29 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Apr 23, 2026 - Session 18 (Nightly Crown — Daily Leaderboard Winner)
+
+### SHIPPED: 50-pt daily prize for whoever sits at #1 at midnight Brisbane
+
+**Feature:** Every night at **12:00 AM Australia/Brisbane (AEST, UTC+10)**, whoever is currently #1 on the all-time points leaderboard is automatically awarded **+50 bonus points**. A gold-accented "Nightly Crown" promo card on the leaderboard screen explains the prize, shows a live countdown to midnight, who's currently on the throne, and last night's winner.
+
+**Backend (all tested — 12/12 pytest pass, prod data cleaned):**
+- `/app/backend/services/leaderboard_winner_job.py` — `award_daily_leaderboard_winner()` (idempotent per Brisbane calendar day; excludes admins and `sample_user_*` seed users; credits points + writes `points_transactions` (source=`daily_leaderboard_winner`) + `leaderboard_winners` (history) + `notifications` + push).
+- `/app/backend/services/scheduled_jobs.py` — APScheduler `CronTrigger(hour=0, minute=0, timezone=ZoneInfo("Australia/Brisbane"))` job `daily_leaderboard_winner`.
+- `GET /api/leaderboard/daily-prize` (public) — returns `{prize_amount, timezone, next_midnight_utc, current_leader, last_winner, recent_winners[7], promo{title, tagline, description}}`.
+- `POST /api/leaderboard/admin/award-now?force=true|false` (admin only) — manual trigger for testing; `force=true` bypasses the once-per-day guard.
+
+**Frontend (`/app/frontend/app/(tabs)/leaderboard.tsx`):**
+- New "Nightly Crown" card above the podium: gold gradient, live `HH:MM:SS` countdown digit boxes, promo copy explaining the 50-pt prize, "On the throne" (live leader) + "Last night's winner" footer. Auto-refreshes the leader 5 s after midnight rolls over.
+- `data-testid`: `nightly-crown-card`, `crown-countdown-0..2`.
+
+**Constants:** `DAILY_PRIZE_POINTS = 50`, timezone `Australia/Brisbane`.
+
+**Test credentials used:** admin@lunagroup.com.au / Trent69! and luna@test.com / test123.
+
+---
+
+
 ## Latest Update: Feb 23, 2026 - Session 17 (EAS Build Cache Nuclear Fix)
 
 ### IN VERIFICATION: Cache-busting `postinstall` script to kill `expo-barcode-scanner` residue on EAS Build workers
