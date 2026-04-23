@@ -521,22 +521,119 @@ async def admin_test_award(request: Request):
             detail="No member_key — pass ?member_key=... or link the admin account to CherryHub first",
         )
 
-    reason = request.query_params.get("reason") or f"Luna admin test award ({current_user.get('email')})"
 
+@router.get("/admin/probe")
+async def admin_probe(request: Request):
+    """Diagnostic probe — fires safe READ calls against CherryHub and reports
+    exactly which endpoints are reachable with our current credentials.
+
+    Admin only. Makes no writes.
+
+    Query params (all optional):
+      ?email=X        test get_member_by_email with this email
+      ?member_key=X   test get_member_by_key with this member_key
+      ?search_after=ISO8601  test points-transactions search
+    """
+    current_user = await get_authenticated_user(request)
+    if current_user.get("role") not in {"admin", "super_admin"}:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    if CHERRYHUB_MOCK_MODE:
+        raise HTTPException(status_code=503, detail="CHERRYHUB_MOCK_MODE is on — probe needs live mode")
+
+    probes: dict = {}
+
+    # 1. OAuth token check
     try:
-        result = await cherryhub_service.add_points(member_key=member_key, points=points, reason=reason)
+        token = await cherryhub_service.get_access_token()
+        probes["oauth"] = {"ok": True, "token_prefix": token[:16] + "...", "expires_cached": True}
     except Exception as e:
-        logger.exception("CherryHub test-award failed")
-        raise HTTPException(status_code=502, detail=f"CherryHub write failed: {e}")
+        probes["oauth"] = {"ok": False, "error": str(e)[:300]}
+        return {"status": "cannot_auth", "probes": probes}
 
+    # 2. Member lookup by email (if provided)
+    email = request.query_params.get("email")
+    if email:
+        try:
+            member = await cherryhub_service.get_member_by_email(email)
+            probes["get_member_by_email"] = {"ok": True, "found": bool(member), "member": _trim(member) if member else None}
+        except Exception as e:
+            probes["get_member_by_email"] = {"ok": False, "error": str(e)[:300]}
+
+    # 3. Member lookup by key (if provided)
+    member_key = request.query_params.get("member_key")
+    if member_key:
+        try:
+            member = await cherryhub_service.get_member_by_key(member_key)
+            probes["get_member_by_key"] = {"ok": True, "found": bool(member), "member": _trim(member) if member else None}
+        except Exception as e:
+            probes["get_member_by_key"] = {"ok": False, "error": str(e)[:300]}
+
+        # 4. Balance for that member
+        try:
+            balance = await cherryhub_service.get_member_points_balance(member_key)
+            probes["get_member_points_balance"] = {"ok": True, "balance": balance}
+        except Exception as e:
+            probes["get_member_points_balance"] = {"ok": False, "error": str(e)[:300]}
+
+    # 5. Points-transactions search (newest 5)
+    since = request.query_params.get("search_after") or "2024-01-01T00:00:00Z"
+    try:
+        resp = await cherryhub_service.search_points_transactions(
+            member_key=member_key,
+            after=since,
+            limit=5,
+        )
+        results = resp.get("Results") or []
+        probes["search_points_transactions"] = {
+            "ok": True,
+            "count_returned": len(results),
+            "has_more": bool((resp.get("_links") or {}).get("next", {}).get("continuationToken")),
+            "sample": [
+                {
+                    "TransactionId": r.get("TransactionId"),
+                    "TransactionType": r.get("TransactionType"),
+                    "TransactionDate": r.get("TransactionDate"),
+                    "Request": _trim(r.get("Request")),
+                }
+                for r in results[:3]
+            ],
+        }
+    except Exception as e:
+        probes["search_points_transactions"] = {"ok": False, "error": str(e)[:400]}
+
+    # 6. Digital member card (Apple Pass format) — only if we have a member_key
+    if member_key:
+        try:
+            card = await cherryhub_service.get_digital_member_card(member_key, "IosPassKit")
+            probes["get_digital_member_card"] = {
+                "ok": True,
+                "keys_returned": list(card.keys()) if isinstance(card, dict) else type(card).__name__,
+            }
+        except Exception as e:
+            probes["get_digital_member_card"] = {"ok": False, "error": str(e)[:300]}
+
+    all_ok = all(p.get("ok") for p in probes.values())
     return {
-        "success": True,
-        "member_key": member_key,
-        "points_awarded": points,
-        "reason": reason,
-        "cherryhub_response": result,
-        "next_steps": "Check CherryHub → Reports → Points Transactions. The award should appear within seconds.",
+        "status": "all_ok" if all_ok else "partial",
+        "business_id": cherryhub_service.business_id,
+        "api_base_url": cherryhub_service.api_base_url,
+        "probes": probes,
     }
+
+
+def _trim(obj, depth=0):
+    """Trim large dicts/lists so the probe response isn't thousands of lines."""
+    if depth > 3:
+        return "..."
+    if isinstance(obj, dict):
+        return {k: _trim(v, depth + 1) for k, v in list(obj.items())[:15]}
+    if isinstance(obj, list):
+        return [_trim(v, depth + 1) for v in obj[:5]]
+    if isinstance(obj, str) and len(obj) > 200:
+        return obj[:200] + "..."
+    return obj
+
 
 @router.post("/admin/sync-now")
 async def admin_sync_now(request: Request):
