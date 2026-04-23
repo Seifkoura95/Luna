@@ -43,6 +43,7 @@ from cherryhub_service import (
     cherryhub_service,
     register_cherryhub_member,
     CHERRYHUB_MOCK_MODE,
+    CHERRYHUB_API_BASE_URL,
     token_manager,
 )
 
