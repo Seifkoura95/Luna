@@ -43,6 +43,7 @@ from cherryhub_service import (
     cherryhub_service,
     register_cherryhub_member,
     CHERRYHUB_MOCK_MODE,
+    token_manager,
 )
 
 router = APIRouter(prefix="/cherryhub", tags=["CherryHub"])
@@ -545,7 +546,7 @@ async def admin_probe(request: Request):
 
     # 1. OAuth token check
     try:
-        token = await cherryhub_service.get_access_token()
+        token = await token_manager.get_access_token()
         probes["oauth"] = {"ok": True, "token_prefix": token[:16] + "...", "expires_cached": True}
     except Exception as e:
         probes["oauth"] = {"ok": False, "error": str(e)[:300]}
