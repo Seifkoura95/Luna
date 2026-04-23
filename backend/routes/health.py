@@ -1,14 +1,18 @@
 """
 Health check endpoints
 
-- GET /api/health       — shallow liveness check (no downstream calls)
-- GET /api/health/deep  — pings MongoDB, CherryHub OAuth, Resend. Use this to
-                          confirm prod is fully wired after each deploy.
+- GET /api/health         — shallow liveness check (no downstream calls)
+- GET /api/health/deep    — pings MongoDB, CherryHub OAuth, Resend. Use this to
+                            confirm prod is fully wired after each deploy.
+- GET /api/health/version — git commit SHA + build/boot time + marker endpoints.
+                            Hit this after every Railway redeploy to confirm
+                            new code is actually live.
 """
 import os
 import time
 import asyncio
 import logging
+import subprocess
 from datetime import datetime, timezone
 
 import aiohttp
@@ -19,6 +23,60 @@ from database import db
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Health"])
+
+# Capture boot time once at import. This tells you when the container started
+# (i.e. when the current deploy went live) regardless of what git thinks.
+_BOOT_TIME_UTC = datetime.now(timezone.utc)
+
+
+def _git_sha() -> dict:
+    """Resolve the currently-deployed git commit.
+
+    Railway injects RAILWAY_GIT_COMMIT_SHA automatically on every deploy — that
+    is the source of truth in production. Locally we fall back to `git rev-parse`.
+    """
+    sha = (
+        os.environ.get("RAILWAY_GIT_COMMIT_SHA")
+        or os.environ.get("GIT_COMMIT_SHA")
+        or os.environ.get("SOURCE_COMMIT")
+        or ""
+    )
+    source = "railway_env" if os.environ.get("RAILWAY_GIT_COMMIT_SHA") else None
+
+    if not sha:
+        try:
+            sha = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"],
+                cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                stderr=subprocess.DEVNULL,
+                timeout=2,
+            ).decode().strip()
+            source = "git_command"
+        except Exception:
+            sha = ""
+
+    short = sha[:7] if sha else None
+
+    commit_message = os.environ.get("RAILWAY_GIT_COMMIT_MESSAGE")
+    if not commit_message and sha:
+        try:
+            commit_message = subprocess.check_output(
+                ["git", "log", "-1", "--pretty=%s", sha],
+                cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                stderr=subprocess.DEVNULL,
+                timeout=2,
+            ).decode().strip()
+        except Exception:
+            commit_message = None
+
+    return {
+        "sha_short": short,
+        "sha_full": sha or None,
+        "source": source or "unknown",
+        "commit_message": (commit_message[:120] if commit_message else None),
+        "branch": os.environ.get("RAILWAY_GIT_BRANCH"),
+        "author": os.environ.get("RAILWAY_GIT_AUTHOR"),
+    }
 
 
 @router.get("/health")
@@ -136,3 +194,79 @@ async def health_deep():
             "resend": resend,
         },
     }
+
+
+
+@router.get("/health/version")
+async def health_version():
+    """Deploy-verification endpoint.
+
+    Returns the git SHA of the currently-running code, boot time, uptime, and
+    a list of **marker endpoints** that were added in this session (session 18).
+    Hit this after every Railway redeploy — if any marker shows `available: false`,
+    the deploy is still stale.
+    """
+    now = datetime.now(timezone.utc)
+    uptime_seconds = int((now - _BOOT_TIME_UTC).total_seconds())
+
+    # Marker endpoints — routes that only exist on "session 18 or later" code.
+    # We resolve by asking FastAPI's own router (via Request is tricky in a GET
+    # handler; simpler to hard-code the list and confirm each one via import).
+    markers = {
+        "safety_admin": _route_exists("/api/admin/safety/summary"),
+        "push_broadcasts_audience_preview": _route_exists("/api/admin/push-broadcasts/audience-preview"),
+        "push_broadcasts_users_search": _route_exists("/api/admin/push-broadcasts/users-search"),
+        "auction_image_upload": _route_exists("/api/venue-admin/auctions/upload-image"),
+        "leaderboard_daily_prize": _route_exists("/api/leaderboard/daily-prize"),
+        "leaderboard_award_now": _route_exists("/api/leaderboard/admin/award-now"),
+        "cherryhub_probe": _route_exists("/api/cherryhub/admin/probe"),
+    }
+
+    def _fmt_uptime(s: int) -> str:
+        d, s = divmod(s, 86400)
+        h, s = divmod(s, 3600)
+        m, s = divmod(s, 60)
+        parts = []
+        if d: parts.append(f"{d}d")
+        if h: parts.append(f"{h}h")
+        if m: parts.append(f"{m}m")
+        parts.append(f"{s}s")
+        return " ".join(parts)
+
+    return {
+        "service": "Luna Group VIP API",
+        "git": _git_sha(),
+        "boot_time_utc": _BOOT_TIME_UTC.isoformat(),
+        "server_time_utc": now.isoformat(),
+        "uptime_seconds": uptime_seconds,
+        "uptime_human": _fmt_uptime(uptime_seconds),
+        "platform": {
+            "environment": os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("ENV") or "local",
+            "deployment_id": os.environ.get("RAILWAY_DEPLOYMENT_ID"),
+            "service_name": os.environ.get("RAILWAY_SERVICE_NAME"),
+            "python_version": os.environ.get("PYTHON_VERSION") or _python_version(),
+        },
+        "markers": markers,
+        "all_markers_available": all(m["available"] for m in markers.values()),
+    }
+
+
+def _python_version() -> str:
+    import sys
+    return f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
+
+def _route_exists(path: str) -> dict:
+    """Return whether a given route path is registered in the running app.
+
+    We reach the FastAPI app via the `server` module's global `app` reference.
+    Done lazily to avoid a circular import at module load.
+    """
+    try:
+        from server import app  # lazy
+        for route in app.routes:
+            if getattr(route, "path", None) == path:
+                return {"available": True, "methods": sorted(list(getattr(route, "methods", []) or []))}
+        return {"available": False, "methods": []}
+    except Exception as e:
+        return {"available": False, "error": str(e)[:100]}
