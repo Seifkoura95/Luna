@@ -743,25 +743,29 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Trending - List style (ranked chart, watermark numbers)
+  // Trending - Glass pill card (matches wallet tile style)
   trendingList: {
     marginTop: spacing.xs,
+    gap: spacing.sm,
   },
   trendingListRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    padding: spacing.md,
     gap: spacing.md,
+    backgroundColor: colors.glass,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.glassBorderSubtle,
   },
   trendingListRank: {
-    width: 34,
-    fontSize: 26,
+    width: 40,
+    fontSize: 24,
     fontWeight: '900',
-    color: 'rgba(255,255,255,0.12)',
-    letterSpacing: -1,
-    textAlign: 'left',
+    color: 'rgba(255,255,255,0.18)',
+    letterSpacing: -0.5,
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
   },
   trendingListImage: {
     width: 60,
