@@ -22,7 +22,8 @@ from routes.points import router as points_router
 from routes.tickets import router as tickets_router
 from routes.friends import router as friends_router
 from routes.notifications import router as notifications_router
-from routes.venue_admin import router as venue_admin_router
+from routes.venue_admin_auctions import router as venue_admin_auctions_router
+from routes.venue_admin_users import router as venue_admin_users_router
 from routes.geofences import router as geofences_router
 from routes.birthday import router as birthday_router
 from routes.leaderboard import router as leaderboard_router
@@ -74,7 +75,8 @@ __all__ = [
     "tickets_router",
     "friends_router",
     "notifications_router",
-    "venue_admin_router",
+    "venue_admin_auctions_router",
+    "venue_admin_users_router",
     "geofences_router",
     "birthday_router",
     "leaderboard_router",
@@ -107,7 +109,8 @@ ALL_ROUTERS = [
     tickets_router,
     friends_router,
     notifications_router,
-    venue_admin_router,
+    venue_admin_auctions_router,
+    venue_admin_users_router,
     geofences_router,
     birthday_router,
     leaderboard_router,

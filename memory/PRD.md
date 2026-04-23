@@ -1,6 +1,30 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Apr 23, 2026 - Session 18 (venue_admin.py refactor + CherryHub status)
+
+### Refactor: `venue_admin.py` (654 lines) → split into two focused modules
+
+- `/app/backend/routes/venue_admin_auctions.py` (370 lines) — auction CRUD + image upload/serve. Tag: `Venue Admin — Auctions`.
+- `/app/backend/routes/venue_admin_users.py` (203 lines) — user list, 360° profile, edit, add points. Tag: `Venue Admin — Users`.
+- Both routers keep the `/api/venue-admin` prefix → **zero URL changes** for mobile app + Lovable components.
+- Shared `_require_venue_role(request, manager_only=False)` helper deduplicates the auth check (was repeated 10× in the old file).
+- Deleted `/app/backend/routes/venue_admin.py`. Updated `routes/__init__.py` to import both new routers.
+- Verified via curl: POST upload-image, POST create auction, PUT update image_url, DELETE, GET users analytics — all 200 OK.
+
+### CherryHub Probe — still blocked on GitHub push
+
+Re-ran probe against Railway: still **HTTP 500** with the `get_access_token` AttributeError. Confirmed Railway is running **stale code** by probing endpoints from recent sessions:
+- ✅ `/api/leaderboard/daily-prize` → 200 (Nightly Crown push reached Railway)
+- ❌ `/api/admin/safety/*` → 404 (session 18 safety routes NOT on Railway)
+- ❌ `/api/admin/push-broadcasts/audience-preview` → 404 (new routes NOT on Railway)
+- ❌ `/api/venue-admin/auctions/upload-image` → 405 (matched as stale `{auction_id}`)
+
+**Action required:** user must click "Save to Github" → wait ~2 min for Railway redeploy → re-run the probe curl documented in test_credentials.md. Until then the CherryHub probe + all other new endpoints shipped this session are not reachable from Lovable / Railway.
+
+---
+
+
 ## Latest Update: Apr 23, 2026 - Session 18 (Push Notifications + Auction Image Upload)
 
 ### Push registration — fixed for production iOS / TestFlight
