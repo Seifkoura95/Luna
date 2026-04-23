@@ -9,12 +9,18 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://luna-production-889c.up.railway.app"
+      }
     },
     "production": {
       "autoIncrement": true,
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://luna-production-889c.up.railway.app"
       }
     }
   },
