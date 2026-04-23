@@ -597,7 +597,22 @@ async def _admin_probe_impl(request: Request):
             probes["get_member_points_balance"] = {"ok": False, "error": str(e)[:300]}
 
     # 5. Points-transactions search (newest 5)
+    #    Run two variants so we can tell apart "endpoint/scope not granted"
+    #    from "specific param rejected".
     since = request.query_params.get("search_after") or "2024-01-01T00:00:00Z"
+
+    # 5a. Minimal call — no date filter, no member filter, smallest limit
+    try:
+        resp_min = await cherryhub_service.search_points_transactions(limit=1)
+        results_min = resp_min.get("Results") or []
+        probes["search_points_transactions_minimal"] = {
+            "ok": True,
+            "count_returned": len(results_min),
+        }
+    except Exception as e:
+        probes["search_points_transactions_minimal"] = {"ok": False, "error": str(e)[:600]}
+
+    # 5b. Full call with the date filter that the poller uses
     try:
         resp = await cherryhub_service.search_points_transactions(
             member_key=member_key,
@@ -620,7 +635,7 @@ async def _admin_probe_impl(request: Request):
             ],
         }
     except Exception as e:
-        probes["search_points_transactions"] = {"ok": False, "error": str(e)[:400]}
+        probes["search_points_transactions"] = {"ok": False, "error": str(e)[:600]}
 
     # 6. Digital member card (Apple Pass format) — only if we have a member_key
     if member_key:

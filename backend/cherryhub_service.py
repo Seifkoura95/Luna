@@ -186,28 +186,38 @@ class CherryHubService:
                         if response.status >= 400:
                             text = await response.text()
                             logger.error(f"CherryHub API error: {response.status} - {text}")
-                            raise Exception(f"CherryHub API error: {response.status}")
+                            # Include a truncated version of CherryHub's error body so
+                            # callers (and the probe) can see WHY it failed.
+                            raise Exception(
+                                f"CherryHub API error: {response.status} — {text[:500]}"
+                            )
                         return await response.json() if response.content_length else {}
                 elif method.upper() == "POST":
                     async with session.post(url, headers=headers, json=data) as response:
                         if response.status >= 400:
                             text = await response.text()
                             logger.error(f"CherryHub API error: {response.status} - {text}")
-                            raise Exception(f"CherryHub API error: {response.status}")
+                            raise Exception(
+                                f"CherryHub API error: {response.status} — {text[:500]}"
+                            )
                         return await response.json() if response.content_length else {}
                 elif method.upper() == "PUT":
                     async with session.put(url, headers=headers, json=data) as response:
                         if response.status >= 400:
                             text = await response.text()
                             logger.error(f"CherryHub API error: {response.status} - {text}")
-                            raise Exception(f"CherryHub API error: {response.status}")
+                            raise Exception(
+                                f"CherryHub API error: {response.status} — {text[:500]}"
+                            )
                         return await response.json() if response.content_length else {}
                 elif method.upper() == "DELETE":
                     async with session.delete(url, headers=headers) as response:
                         if response.status >= 400:
                             text = await response.text()
                             logger.error(f"CherryHub API error: {response.status} - {text}")
-                            raise Exception(f"CherryHub API error: {response.status}")
+                            raise Exception(
+                                f"CherryHub API error: {response.status} — {text[:500]}"
+                            )
                         return await response.json() if response.content_length else {}
                 else:
                     raise ValueError(f"Unsupported HTTP method: {method}")
