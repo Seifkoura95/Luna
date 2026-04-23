@@ -1,6 +1,42 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Apr 23, 2026 - Session 18 (Safety / Silent SOS — Real Dispatch + Lovable Ops View)
+
+### SHIPPED: Silent SOS now actually does something
+
+**What was broken:** `POST /api/safety/silent-alert` was a stub — it ignored the request body (latitude/longitude dropped), sent no notifications, and returned a response shape the mobile app didn't match (the success popup would have shown `undefined`). There was also no way for Luna ops or a venue to view alerts.
+
+**Fixed:**
+- `/app/backend/routes/safety.py::send_silent_alert` now parses `{latitude, longitude, venue_id?, activation_method?, message?}`, stores GPS on the alert, auto-resolves the nearest Luna venue via haversine (≤ 2 km radius), generates a `https://www.google.com/maps/search/?api=1&query=LAT,LNG` link, and dispatches:
+  - Crew members: in-app notification + Expo push
+  - Venue roles (manager/staff) matched to the resolved venue (`venue_id` or `assigned_venue_id`): in-app + push **with the exact GPS coords in the push body**
+  - All admin/super_admin (Luna ops): in-app + push
+  - Emergency contacts: count reported (SMS/Twilio P2 as requested)
+  Returns the `notified` + `location_link` payload the mobile app already expects.
+
+### NEW: Admin/Lovable safety console
+
+- New router `/app/backend/routes/admin_safety.py` mounted at `/api/admin/safety/*`:
+  - `GET /api/admin/safety/alerts?status=active|resolved|all&hours=48&venue_id=...&limit=100` — enriched with user (name, email, phone, picture, tier) + viewer context + counts.
+  - `GET /api/admin/safety/alerts/{id}` — full detail with venue metadata.
+  - `POST /api/admin/safety/alerts/{id}/acknowledge` (body `{note?}`) — staff/admin stamp (with note).
+  - `POST /api/admin/safety/alerts/{id}/resolve` (body `{note?}`) — closes alert, pushes a `safety_alert_resolved` notification to the original user.
+  - `GET /api/admin/safety/summary?hours=24` — dashboard counts + by-venue breakdown + last 5 active.
+- Access model: `admin` / `super_admin` see everything. `venue_manager` / `venue_staff` / `staff` / `manager` are automatically scoped to their own `venue_id` / `assigned_venue_id` — no extra filter work needed in Lovable.
+
+### NEW: Lovable drop-in component
+
+- `/app/LUNA_SAFETY_ALERTS_LOVABLE.tsx` — single-file React/TS component for the Lovable admin portal. Polls `/api/admin/safety/alerts` every 10s, shows live card grid with: status pill (ACTIVE / ACKNOWLEDGED / RESOLVED), user name + phone + tier, venue + nearest distance, 📍 GPS coords + Google Maps link button, notified-roles summary, acknowledgement log, note field, and action buttons (Acknowledge / Mark Resolved / Call user / Open map). Status tabs: Active / Resolved / All.
+- Setup: stores admin JWT at `localStorage.getItem('luna_admin_token')`, uses `VITE_LUNA_API_URL` env (default `https://luna-production-889c.up.railway.app`).
+
+**Deferred (P2):** Twilio SMS dispatch to emergency contacts — user said "we'll do Twilio soon". Backend already has `emergency_contacts_count` on the alert and returns the contact names; plugging in Twilio later is additive.
+
+**Tested locally via curl:** full flow — trigger → list → detail → ack → resolve → summary → non-admin 403. All green. Test DB rows cleaned up.
+
+---
+
+
 ## Latest Update: Apr 23, 2026 - Session 18 (Nightly Crown — Daily Leaderboard Winner)
 
 ### SHIPPED: 50-pt daily prize for whoever sits at #1 at midnight Brisbane
