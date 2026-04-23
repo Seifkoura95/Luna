@@ -601,6 +601,13 @@ async def _admin_probe_impl(request: Request):
     #    from "specific param rejected".
     since = request.query_params.get("search_after") or "2024-01-01T00:00:00Z"
 
+    # Record the exact endpoint + params we're hitting so the response is
+    # self-documenting for a CherryHub support ticket.
+    probes["_endpoint_info"] = {
+        "path": f"/data/v1/{cherryhub_service.business_id}/points-transactions/search",
+        "full_url": f"{CHERRYHUB_API_BASE_URL}/data/v1/{cherryhub_service.business_id}/points-transactions/search",
+    }
+
     # 5a. Minimal call — no date filter, no member filter, smallest limit
     try:
         resp_min = await cherryhub_service.search_points_transactions(limit=1)
