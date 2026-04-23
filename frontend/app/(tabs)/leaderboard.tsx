@@ -47,6 +47,17 @@ interface Strategy {
   highlight_reason?: string;
 }
 
+interface DailyPrize {
+  prize_amount: number;
+  timezone: string;
+  next_midnight_utc: string;
+  next_midnight_local: string;
+  current_leader: { display_name: string; points_balance: number; is_current_user: boolean } | null;
+  last_winner: { display_name: string; day_key: string; amount: number; awarded_at: string; is_current_user: boolean } | null;
+  recent_winners: { display_name: string; day_key: string; amount: number; is_current_user: boolean }[];
+  promo: { title: string; tagline: string; description: string };
+}
+
 export default function LeaderboardPage() {
   const insets = useSafeAreaInsets();
   const { token, user } = useAuthStore();
@@ -62,6 +73,8 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [rankingsPage, setRankingsPage] = useState(0);
+  const [dailyPrize, setDailyPrize] = useState<DailyPrize | null>(null);
+  const [countdown, setCountdown] = useState<string>('--:--:--');
 
   const fetchLeaderboard = useCallback(async () => {
     try {
@@ -85,11 +98,20 @@ export default function LeaderboardPage() {
     }
   }, []);
 
+  const fetchDailyPrize = useCallback(async () => {
+    try {
+      const data: any = await apiFetch('/api/leaderboard/daily-prize');
+      setDailyPrize(data as DailyPrize);
+    } catch (error) {
+      console.error('Error fetching daily prize:', error);
+    }
+  }, []);
+
   const loadData = useCallback(async () => {
     setLoading(true);
-    await Promise.all([fetchLeaderboard(), fetchStrategies()]);
+    await Promise.all([fetchLeaderboard(), fetchStrategies(), fetchDailyPrize()]);
     setLoading(false);
-  }, [fetchLeaderboard, fetchStrategies]);
+  }, [fetchLeaderboard, fetchStrategies, fetchDailyPrize]);
 
   useEffect(() => {
     loadData();
@@ -98,6 +120,34 @@ export default function LeaderboardPage() {
   useEffect(() => {
     fetchLeaderboard();
   }, [period, category]);
+
+  // Live countdown to next midnight (Brisbane) + refetch prize just after midnight
+  useEffect(() => {
+    if (!dailyPrize?.next_midnight_utc) return;
+    const target = new Date(dailyPrize.next_midnight_utc).getTime();
+
+    const tick = () => {
+      const diff = target - Date.now();
+      if (diff <= 0) {
+        setCountdown('00:00:00');
+        // Refetch 5s after midnight so the winner updates
+        setTimeout(() => {
+          fetchDailyPrize();
+          fetchLeaderboard();
+        }, 5000);
+        return;
+      }
+      const totalSec = Math.floor(diff / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      setCountdown(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+    };
+
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [dailyPrize?.next_midnight_utc, fetchDailyPrize, fetchLeaderboard]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -223,6 +273,112 @@ export default function LeaderboardPage() {
           <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 40 }} />
         ) : (
           <>
+            {/* Nightly Crown — Daily Prize Promo */}
+            {dailyPrize && (
+              <View style={styles.crownCardWrap} data-testid="nightly-crown-card">
+                <LinearGradient
+                  colors={['#3A2A05', '#1A1205']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.crownCard}
+                >
+                  <View style={styles.crownGoldLine} />
+
+                  <View style={styles.crownHeaderRow}>
+                    <View style={styles.crownIconCircle}>
+                      <Icon name="trophy" size={22} color="#FFD700" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.crownEyebrow}>NIGHTLY CROWN · DAILY PRIZE</Text>
+                      <Text style={styles.crownTitle}>
+                        Be #1 at midnight, win{' '}
+                        <Text style={styles.crownTitleAccent}>+{dailyPrize.prize_amount} pts</Text>
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Countdown */}
+                  <View style={styles.crownCountdownRow}>
+                    <Text style={styles.crownCountdownLabel}>CROWN LOCKS IN</Text>
+                    <View style={styles.crownCountdownDigits}>
+                      {countdown.split(':').map((part, idx) => (
+                        <React.Fragment key={idx}>
+                          {idx > 0 && <Text style={styles.crownCountdownColon}>:</Text>}
+                          <View style={styles.crownDigitBox}>
+                            <Text style={styles.crownDigitText} data-testid={`crown-countdown-${idx}`}>
+                              {part}
+                            </Text>
+                          </View>
+                        </React.Fragment>
+                      ))}
+                    </View>
+                    <Text style={styles.crownCountdownTz}>12:00 AM · Brisbane (AEST)</Text>
+                  </View>
+
+                  {/* Promo text */}
+                  <Text style={styles.crownDesc}>
+                    Every night at midnight, whoever sits at{' '}
+                    <Text style={styles.crownDescStrong}>#1 on points</Text> is crowned and instantly
+                    awarded <Text style={styles.crownDescStrong}>+{dailyPrize.prize_amount} bonus points</Text>.
+                    Climb the ranks before the clock runs out.
+                  </Text>
+
+                  {/* Current leader / Last winner row */}
+                  <View style={styles.crownFooterRow}>
+                    <View style={styles.crownFooterItem}>
+                      <Text style={styles.crownFooterLabel}>ON THE THRONE</Text>
+                      <View style={styles.crownFooterValueRow}>
+                        <Icon name="flame" size={14} color="#FF6B35" />
+                        <Text
+                          style={[
+                            styles.crownFooterValue,
+                            dailyPrize.current_leader?.is_current_user && { color: colors.accent },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {dailyPrize.current_leader?.is_current_user
+                            ? 'You'
+                            : dailyPrize.current_leader?.display_name || '—'}
+                        </Text>
+                      </View>
+                      {dailyPrize.current_leader && (
+                        <Text style={styles.crownFooterSub}>
+                          {dailyPrize.current_leader.points_balance.toLocaleString()} pts
+                        </Text>
+                      )}
+                    </View>
+
+                    <View style={styles.crownFooterDivider} />
+
+                    <View style={styles.crownFooterItem}>
+                      <Text style={styles.crownFooterLabel}>LAST NIGHT'S WINNER</Text>
+                      {dailyPrize.last_winner ? (
+                        <>
+                          <View style={styles.crownFooterValueRow}>
+                            <Icon name="trophy" size={14} color="#FFD700" />
+                            <Text
+                              style={[
+                                styles.crownFooterValue,
+                                dailyPrize.last_winner.is_current_user && { color: colors.accent },
+                              ]}
+                              numberOfLines={1}
+                            >
+                              {dailyPrize.last_winner.is_current_user
+                                ? 'You'
+                                : dailyPrize.last_winner.display_name}
+                            </Text>
+                          </View>
+                          <Text style={styles.crownFooterSub}>+{dailyPrize.last_winner.amount} pts</Text>
+                        </>
+                      ) : (
+                        <Text style={styles.crownFooterValueMuted}>First crown up for grabs</Text>
+                      )}
+                    </View>
+                  </View>
+                </LinearGradient>
+              </View>
+            )}
+
             {/* Top 3 Podium */}
             {leaders.length >= 3 && (
               <View style={styles.podium}>
@@ -535,6 +691,169 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     marginBottom: spacing.xl,
     paddingHorizontal: spacing.md,
+  },
+  // Nightly Crown card
+  crownCardWrap: {
+    marginBottom: spacing.xl,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#FFD70040',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  crownCard: {
+    padding: spacing.lg,
+    position: 'relative',
+  },
+  crownGoldLine: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: '#FFD700',
+  },
+  crownHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  crownIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFD70018',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFD70055',
+  },
+  crownEyebrow: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 2,
+    color: '#FFD700',
+    marginBottom: 2,
+  },
+  crownTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  crownTitleAccent: {
+    color: '#FFD700',
+  },
+  crownCountdownRow: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#FFD70022',
+    marginBottom: spacing.md,
+  },
+  crownCountdownLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 2,
+    marginBottom: spacing.sm,
+  },
+  crownCountdownDigits: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: spacing.xs,
+  },
+  crownDigitBox: {
+    minWidth: 44,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: radius.sm,
+    backgroundColor: '#FFD70010',
+    borderWidth: 1,
+    borderColor: '#FFD70030',
+    alignItems: 'center',
+  },
+  crownDigitText: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#FFD700',
+    letterSpacing: 1,
+    fontVariant: ['tabular-nums'],
+  },
+  crownCountdownColon: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#FFD70080',
+    marginHorizontal: 2,
+  },
+  crownCountdownTz: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textMuted,
+    letterSpacing: 1,
+    marginTop: 4,
+  },
+  crownDesc: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  crownDescStrong: {
+    color: '#FFD700',
+    fontWeight: '700',
+  },
+  crownFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+  },
+  crownFooterItem: {
+    flex: 1,
+    paddingHorizontal: spacing.xs,
+  },
+  crownFooterDivider: {
+    width: 1,
+    backgroundColor: '#FFD70022',
+    marginHorizontal: spacing.xs,
+  },
+  crownFooterLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  crownFooterValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  crownFooterValue: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    flexShrink: 1,
+  },
+  crownFooterValueMuted: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textMuted,
+    fontStyle: 'italic',
+  },
+  crownFooterSub: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFD700',
+    marginTop: 2,
   },
   podiumItem: {
     alignItems: 'center',

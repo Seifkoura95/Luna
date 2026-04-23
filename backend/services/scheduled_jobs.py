@@ -15,7 +15,14 @@ from database import db
 from services.churn_service import churn_service
 from services.notification_ws_manager import notification_ws_manager
 from services.ai_service import luna_ai
+from services.leaderboard_winner_job import award_daily_leaderboard_winner
 from routes.shared import send_push_notification_to_token
+
+try:
+    from zoneinfo import ZoneInfo
+    BRISBANE_TZ = ZoneInfo("Australia/Brisbane")
+except Exception:  # pragma: no cover
+    BRISBANE_TZ = None
 
 logger = logging.getLogger(__name__)
 
@@ -87,10 +94,39 @@ class ScheduledJobsManager:
             name="Birthday Reminders",
             replace_existing=True
         )
+
+        # Daily Leaderboard Winner - midnight Australia/Brisbane (UTC+10, no DST)
+        # Awards 50 pts to whoever is #1 on the points leaderboard when midnight strikes.
+        self.scheduler.add_job(
+            self.run_daily_leaderboard_winner,
+            CronTrigger(hour=0, minute=0, timezone=BRISBANE_TZ) if BRISBANE_TZ else CronTrigger(hour=14, minute=0),
+            id="daily_leaderboard_winner",
+            name="Daily Leaderboard Winner (Nightly Crown)",
+            replace_existing=True,
+        )
         
         self.scheduler.start()
         self.is_running = True
         logger.info("Scheduled jobs manager started")
+
+    async def run_daily_leaderboard_winner(self):
+        """Award 50 pts to the current #1 at midnight Brisbane time."""
+        logger.info("Running daily leaderboard winner job (Nightly Crown)...")
+        try:
+            result = await award_daily_leaderboard_winner()
+            logger.info("Daily leaderboard winner result: %s", result)
+            return result
+        except Exception as e:
+            logger.error("Daily leaderboard winner job failed: %s", e)
+            try:
+                await db.scheduled_job_runs.insert_one({
+                    "job_name": "daily_leaderboard_winner",
+                    "completed_at": datetime.now(timezone.utc),
+                    "status": "failed",
+                    "error": str(e),
+                })
+            except Exception:
+                pass
     
     def stop(self):
         """Stop the scheduler."""

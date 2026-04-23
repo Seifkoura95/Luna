@@ -1,8 +1,9 @@
 """
 Leaderboard Routes - Rankings, stats, and point-earning strategies
 """
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Request
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from typing import Optional, List
 import logging
 
@@ -11,6 +12,9 @@ from utils.auth import get_current_user
 
 router = APIRouter(prefix="/leaderboard", tags=["leaderboard"])
 logger = logging.getLogger(__name__)
+
+BRISBANE_TZ = ZoneInfo("Australia/Brisbane")
+DAILY_PRIZE_POINTS = 50
 
 
 # Point-earning strategies and tips
@@ -375,6 +379,137 @@ async def get_top_earners_this_week(authorization: str = Header(None)):
     
     return {"top_earners": top_earners, "period": "This Week"}
 
+
+
+@router.get("/daily-prize")
+async def get_daily_prize_info(authorization: str = Header(None)):
+    """
+    Get info about the Nightly Crown daily prize:
+    - Prize amount & timezone
+    - Current #1 (live leader) so users can see who's in pole position
+    - Countdown target: next midnight (Australia/Brisbane) in UTC ISO
+    - Last night's winner (if any)
+    - Recent winners (last 7)
+    """
+    # Auth is optional here so the card can show even without a session,
+    # but we still call get_current_user to stay consistent with other routes.
+    try:
+        user = get_current_user(authorization)
+        current_user_id = user.get("user_id") if user else None
+    except HTTPException:
+        current_user_id = None
+
+    # Next midnight (Brisbane)
+    now_brisbane = datetime.now(BRISBANE_TZ)
+    next_midnight_brisbane = (now_brisbane + timedelta(days=1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    next_midnight_utc = next_midnight_brisbane.astimezone(timezone.utc)
+
+    # Current leader (who would win if midnight struck now)
+    leader_pipeline = [
+        {
+            "$match": {
+                "role": {"$ne": "admin"},
+                "points_balance": {"$gt": 0},
+                "user_id": {"$not": {"$regex": "^sample_user_"}},
+            }
+        },
+        {"$sort": {"points_balance": -1}},
+        {"$limit": 1},
+        {
+            "$project": {
+                "_id": 0,
+                "user_id": 1,
+                "name": 1,
+                "points_balance": 1,
+            }
+        },
+    ]
+    leader_list = await db.users.aggregate(leader_pipeline).to_list(1)
+    current_leader = None
+    if leader_list:
+        l = leader_list[0]
+        name = l.get("name") or "Anonymous"
+        parts = name.split()
+        display_name = f"{parts[0]} {parts[-1][0]}." if len(parts) > 1 else name
+        current_leader = {
+            "display_name": display_name,
+            "points_balance": l.get("points_balance", 0),
+            "is_current_user": l.get("user_id") == current_user_id,
+        }
+
+    # Last winner
+    last_winner_doc = await db.leaderboard_winners.find_one(
+        {"skipped": {"$ne": True}, "user_id": {"$ne": None}},
+        {"_id": 0},
+        sort=[("awarded_at", -1)],
+    )
+    last_winner = None
+    if last_winner_doc:
+        awarded_at = last_winner_doc.get("awarded_at")
+        if isinstance(awarded_at, datetime):
+            awarded_at_iso = (
+                awarded_at.replace(tzinfo=timezone.utc) if awarded_at.tzinfo is None else awarded_at
+            ).isoformat()
+        else:
+            awarded_at_iso = None
+        last_winner = {
+            "display_name": last_winner_doc.get("display_name"),
+            "day_key": last_winner_doc.get("day_key"),
+            "amount": last_winner_doc.get("amount", DAILY_PRIZE_POINTS),
+            "awarded_at": awarded_at_iso,
+            "is_current_user": last_winner_doc.get("user_id") == current_user_id,
+        }
+
+    # Last 7 winners (for a small hall-of-fame list if the FE wants)
+    recent_cursor = db.leaderboard_winners.find(
+        {"skipped": {"$ne": True}, "user_id": {"$ne": None}},
+        {"_id": 0, "day_key": 1, "display_name": 1, "amount": 1, "user_id": 1},
+    ).sort("awarded_at", -1).limit(7)
+    recent_winners_raw = await recent_cursor.to_list(7)
+    recent_winners = [
+        {
+            "display_name": w.get("display_name"),
+            "day_key": w.get("day_key"),
+            "amount": w.get("amount", DAILY_PRIZE_POINTS),
+            "is_current_user": w.get("user_id") == current_user_id,
+        }
+        for w in recent_winners_raw
+    ]
+
+    return {
+        "prize_amount": DAILY_PRIZE_POINTS,
+        "timezone": "Australia/Brisbane",
+        "next_midnight_utc": next_midnight_utc.isoformat(),
+        "next_midnight_local": next_midnight_brisbane.isoformat(),
+        "current_leader": current_leader,
+        "last_winner": last_winner,
+        "recent_winners": recent_winners,
+        "promo": {
+            "title": "Nightly Crown",
+            "tagline": f"Be #1 at midnight, win {DAILY_PRIZE_POINTS} points.",
+            "description": (
+                f"Every night at 12:00 AM (Brisbane), whoever sits at #1 on the all-time "
+                f"points leaderboard is crowned and instantly awarded {DAILY_PRIZE_POINTS} bonus points. "
+                "Climb the ranks before midnight to claim the crown."
+            ),
+        },
+    }
+
+
+@router.post("/admin/award-now")
+async def admin_trigger_daily_award(request: Request, force: bool = False):
+    """Admin-only: manually trigger the Nightly Crown award (for testing).
+
+    - `force=true` bypasses the once-per-day idempotency guard.
+    """
+    from routes.admin import require_admin  # lazy import to avoid cycles
+    from services.leaderboard_winner_job import award_daily_leaderboard_winner
+
+    await require_admin(request)
+    result = await award_daily_leaderboard_winner(force=force)
+    return result
 
 
 @router.post("/seed-sample-users")

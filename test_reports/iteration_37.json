@@ -1,0 +1,35 @@
+{
+  "summary": "Backend testing complete for Nightly Crown (daily leaderboard winner) feature. 12/12 pytest tests passed against local backend with full cleanup of prod side-effects verified. All specified requirements met: daily-prize shape/promo/next_midnight, admin force-award, idempotency per Brisbane day, +50 points credited, points_transactions ledger entry, leaderboard_winners doc, last_winner populated, non-admin forbidden, admin/sample_user exclusion, and Brisbane UTC+10 next-midnight math.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_nightly_crown.py",
+    "/app/test_reports/pytest/iter37_nightly_crown.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "leaderboard_winner_job._get_current_leader excludes admin + sample_user_ correctly; matches /daily-prize current_leader pipeline (DRY: could be extracted to one shared helper).",
+    "Idempotency guard uses day_key = Brisbane (now - 1s).strftime; at exactly 00:00 local this keys to the day that just ended — correct. Same key used in ledger, winner doc, and scheduler, so admin/award-now collisions with scheduled run are prevented.",
+    "/api/leaderboard/admin/award-now uses require_admin (JWT role admin/staff/manager) or X-Luna-Hub-Key; consistent with other admin routes. Non-admin returns 403, no auth returns 401 — verified.",
+    "next_midnight_utc is computed from datetime.now(BRISBANE_TZ).replace(...)+1 day, then converted to UTC — correct Brisbane UTC+10 math (no DST). Verified programmatically (utcoffset == +10h, local hour/min/sec == 00:00:00, local.date() > today).",
+    "Minor: awarded_at stored as naive datetime.now(timezone.utc) (tz-aware) in leaderboard_winners, but daily-prize endpoint handles both via isinstance + tzinfo check — OK.",
+    "Minor: `HEAD /api/leaderboard/daily-prize` returns 405 (FastAPI default). Harmless for clients but worth noting if any CDN probe expects HEAD."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_nightly_crown.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "skipped"},
+  "test_credentials": "admin@lunagroup.com.au / Trent69! and luna@test.com / test123 — both verified working",
+  "seed_data_creation": "None — read-only tests that roll back their own side-effects (winner doc, ledger tx, notification, scheduled_job_runs entry, and the +50 on points_balance/total_points_earned).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "test_nightly_crown.py hits localhost:8001. It captures the pre-award balance, force-awards, checks all side-effects via both API and Mongo, then rolls back -50 and deletes the winner doc / ledger tx / notification / scheduled_job_runs entry for today's Brisbane day_key. Cleanup was re-verified externally: zero leftover winners/txs for today's day_key after the run. Luna's balance is preserved. If re-running the same day, the scheduler's real job will still skip due to existing winner doc (if any) — tests force-insert then clean up, so production idempotency is untouched.",
+  "rca of the issue": "N/A — no bugs found. Feature works as specified."
+}
