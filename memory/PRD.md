@@ -1,6 +1,22 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Apr 23, 2026 - Session 18 (Deploy-verification endpoint + CherryHub probe diagnostic wrapper)
+
+### ✅ Railway deploy is now current
+After the user pushed to GitHub:
+- `/api/health/version` on Railway returns `sha_short=3a860da`, `all_markers_available=true`, environment=production, python=3.12.7, deployment_id=`470c9ed1-e77a-4810-ba33-376c6ac1f2f1`. Uptime 2m 43s confirms fresh container boot.
+
+### 🔴 CherryHub probe — still 500 on Railway, NOT the `get_access_token` bug
+Ran the probe against Railway with a valid admin token; response is bare text `"Internal Server Error"` (not JSON). That means an exception is bubbling out **BEFORE** any of the `try/except` blocks in `_admin_probe_impl` catch it — likely during env/config evaluation or auth resolution on Railway (python 3.12 vs local 3.11, or a differently-configured CHERRYHUB env var).
+
+**Wrapped probe with a diagnostic try/except** in `/app/backend/routes/cherryhub.py` that returns the error type + message + last 20 lines of traceback as JSON (`status: "probe_crashed"`). Preserves HTTPException passthrough so 403/503 guards still work. Locally still returns 503 MOCK_MODE as expected.
+
+**Action:** after the user's NEXT "Save to Github" push, re-run the probe — the response will now include the actual exception so we can fix the root cause.
+
+---
+
+
 ## Latest Update: Apr 23, 2026 - Session 18 (venue_admin.py refactor + CherryHub status)
 
 ### Refactor: `venue_admin.py` (654 lines) → split into two focused modules

@@ -535,6 +535,24 @@ async def admin_probe(request: Request):
       ?member_key=X   test get_member_by_key with this member_key
       ?search_after=ISO8601  test points-transactions search
     """
+    # Diagnostic wrapper — catches ANY exception (including import/env errors)
+    # and returns it as JSON so Railway 500s surface a real traceback.
+    import traceback as _tb
+    try:
+        return await _admin_probe_impl(request)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("admin_probe failed")
+        return {
+            "status": "probe_crashed",
+            "error_type": type(e).__name__,
+            "error": str(e)[:500],
+            "traceback": _tb.format_exc().splitlines()[-20:],
+        }
+
+
+async def _admin_probe_impl(request: Request):
     current_user = await get_authenticated_user(request)
     if current_user.get("role") not in {"admin", "super_admin"}:
         raise HTTPException(status_code=403, detail="Admin access required")
