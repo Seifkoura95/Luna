@@ -636,7 +636,7 @@ async def _admin_probe_impl(request: Request):
     return {
         "status": "all_ok" if all_ok else "partial",
         "business_id": cherryhub_service.business_id,
-        "api_base_url": cherryhub_service.api_base_url,
+        "api_base_url": CHERRYHUB_API_BASE_URL,
         "probes": probes,
     }
 
