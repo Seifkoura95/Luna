@@ -1,0 +1,38 @@
+{
+  "summary": "Tested push broadcasts (audience-preview, users-search, CRUD, send-test, scheduled dispatcher) and venue-admin auction image upload/serve. 20/21 pytest tests passed. Found one real bug in /audience-preview for the `users:<ids>` audience pattern.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "GET /api/admin/push-broadcasts/audience-preview?audience=users:<id>",
+        "issue": "Dict-merge bug: `base_query = {**base_query, 'user_id': {'$not': {'$regex': '^sample_user_'}}}` on line 284 CLOBBERS the `user_id: {'$in': [...]}` filter that was set on line 282 for the `users:` branch — both use the same top-level `user_id` key, so the $in is lost. Result: returns count of ALL non-sample users (63 in prod DB) instead of only the requested IDs. Reproduced with a single user_id (luna): returned user_count=63 instead of 1.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_push_broadcasts_and_auction_images.py",
+    "/app/test_reports/pytest/iter38_push_and_auction.xml"
+  ],
+  "action_items": [
+    "Fix audience-preview `users:` branch (push_broadcasts.py ~line 280-284): merge the sample-user exclusion with $and, not via dict-override. Recommended: `base_query = {'$and': [base_query, {'user_id': {'$not': {'$regex': '^sample_user_'}}}]}` — OR special-case the `users:` branch to pre-filter the id list. Same fix pattern should be applied so that audience=users:<id> returns user_count matching those IDs (max 50) as required."
+  ],
+  "critical_code_review_comments": [
+    "push_broadcasts.py line 284: dict spread with duplicate key silently drops the prior filter — this is the root cause of the users: audience bug. The `user:` branch escapes because it uses `$or` (different top-level key). Subtle bug, easy to miss.",
+    "push_broadcasts.py: `_resolve_audience` and `audience_preview` duplicate almost identical audience->query logic. Extract a shared helper `_build_audience_query(audience)` returning a dict, then audience_preview can add the sample-user exclusion via `$and`. Reduces drift risk.",
+    "venue_admin.py upload_auction_image: uses `getattr(file, 'content_type', None)` — if client sends a file with no Content-Type the mime_type becomes None and triggers 'Unsupported image type: None' with a confusing message. Consider sniffing via file signature (python-magic or header bytes) as a fallback.",
+    "push_broadcast_dispatcher.py: `return_document=True` on `find_one_and_update` — for PyMongo motor this should be `ReturnDocument.AFTER` or boolean True is fine in motor 3.x but verify compatibility. Currently works (dispatcher test passed).",
+    "push_broadcasts.py: POST with audience='user:<email>' correctly stores the literal string (no normalization) — confirmed. But there's no audience-string validation on create/update; a typo like `tier:platinum` silently resolves to base_query matching nobody. Consider validating audience format at create-time.",
+    "venue_admin.py serve_auction_image: path traversal guard covers `/`, `..`, and leading `.`, but does NOT guard against backslash (`\\`) on Windows-style inputs or NUL bytes. Harmless on Linux FS but tighten for defence-in-depth.",
+    "File size: venue_admin.py is 654 lines — approaching the 700 line refactor threshold. Consider splitting auction routes vs user-analytics routes into separate modules."
+  ],
+  "updated_files": ["/app/backend/tests/test_push_broadcasts_and_auction_images.py"],
+  "success_rate": {"backend": "95.2% (20/21)", "frontend": "N/A (skipped per request)"},
+  "test_credentials": "admin@lunagroup.com.au / Trent69! and luna@test.com / test123 — both worked.",
+  "seed_data_creation": "None. All test artifacts (4 broadcasts, 1 scheduled-sent broadcast, 1 user_notification row, 1 auction, 3 uploaded image files) were deleted via the autouse cleanup fixture. Verified empty via direct Mongo query post-run.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run `pytest /app/backend/tests/test_push_broadcasts_and_auction_images.py -v` to regression. The single failing test (`test_preview_users_list`) will pass once the dict-merge bug on push_broadcasts.py line 284 is fixed. All other flows — audience-preview (all/user:/tier:), users-search, literal audience storage on create, send-test (admin-only, does not flip status), scheduled dispatcher (marks sent + creates user_notifications), multipart + base64 image upload, MIME rejection, path traversal guard, non-admin denial, PUT-only-image-url field preservation — are all verified green.",
+  "rca of the issue": "BUG: GET /api/admin/push-broadcasts/audience-preview?audience=users:<uuid> returns user_count equal to total non-sample users instead of the filtered count. ROOT CAUSE: In /app/backend/routes/push_broadcasts.py around line 280-284, the `users:` branch sets `base_query = {'user_id': {'$in': ids}}` (line 282), then the next statement (line 284) does `base_query = {**base_query, 'user_id': {'$not': {'$regex': '^sample_user_'}}}`. Because both dict literals use the same key `user_id`, the spread-merge keeps only the SECOND value — the $in list is silently dropped. REPRODUCTION: `curl -H 'Authorization: Bearer <admin>' '<base>/api/admin/push-broadcasts/audience-preview?audience=users:<luna_user_id>'` returns user_count=63 when only 1 was expected. MITIGATION: Replace line 284 with `base_query = {'$and': [base_query, {'user_id': {'$not': {'$regex': '^sample_user_'}}}]}` so both filters are ANDed; or exclude sample users only for `all`/`subscribers`/`tier:`/`venue:` branches (the `users:` and `user:` branches cannot accidentally target sample users anyway since the admin passed explicit IDs). The `user:` branch works by accident because it uses `$or` (a different top-level key), so the merge doesn't collide."
+}

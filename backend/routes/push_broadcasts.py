@@ -68,7 +68,16 @@ async def _require_admin(request: Request) -> dict:
 
 
 async def _resolve_audience(audience: str) -> List[dict]:
-    """Resolve audience string to list of users with push tokens."""
+    """Resolve audience string to list of users with push tokens.
+
+    Supported patterns:
+      - `all` — everyone with at least one token
+      - `subscribers` — silver/gold tiers
+      - `tier:<name>` — lunar|eclipse|aurora (mapped) or bronze|silver|gold
+      - `venue:<venue_id>` — favourited OR visited that venue
+      - `user:<email_or_user_id>` — single user (email match first, then user_id)
+      - `users:<id1,id2,id3>` — comma-separated user_ids (max 50)
+    """
     base_query = {"push_tokens": {"$exists": True, "$ne": []}}
 
     if audience == "all":
@@ -85,11 +94,19 @@ async def _resolve_audience(audience: str) -> List[dict]:
             {"preferred_venues": venue_id},
             {"visited_venues": venue_id},
         ]}
+    elif audience.startswith("user:"):
+        ident = audience.split(":", 1)[1].strip()
+        # Match by email OR user_id
+        query = {**base_query, "$or": [{"email": ident}, {"user_id": ident}]}
+    elif audience.startswith("users:"):
+        raw_ids = audience.split(":", 1)[1]
+        ids = [i.strip() for i in raw_ids.split(",") if i.strip()][:50]
+        query = {**base_query, "user_id": {"$in": ids}}
     else:
         query = base_query
 
     users = await db.users.find(
-        query, {"_id": 0, "user_id": 1, "push_tokens": 1, "push_token": 1}
+        query, {"_id": 0, "user_id": 1, "push_tokens": 1, "push_token": 1, "name": 1, "email": 1}
     ).to_list(10000)
 
     return users
@@ -231,6 +248,84 @@ async def list_broadcasts(
     return {"broadcasts": broadcasts, "total": total}
 
 
+# ── Audience preview + user search (for Lovable UI) ──────────────────────────
+# NOTE: These static paths must come BEFORE `/{broadcast_id}` so FastAPI doesn't
+# match "audience-preview" or "users-search" as a broadcast ID.
+
+@router.get("/audience-preview")
+async def audience_preview(request: Request, audience: str = "all"):
+    """Preview how many users an audience string will reach — before sending.
+
+    Returns `{user_count, with_push_token_count, sample_names}`.
+    The `user_count` is total users that match the audience filter; the
+    `with_push_token_count` is the subset actually reachable via push.
+    """
+    await _require_admin(request)
+
+    # Same query logic as _resolve_audience but WITHOUT the mandatory push_token filter
+    base_query: dict = {}
+    if audience == "all":
+        base_query = {}
+    elif audience == "subscribers":
+        base_query = {"tier": {"$in": ["silver", "gold"]}}
+    elif audience.startswith("tier:"):
+        tier_name = audience.split(":", 1)[1].strip().lower()
+        base_query = {"tier": TIER_MAP.get(tier_name, tier_name)}
+    elif audience.startswith("venue:"):
+        vid = audience.split(":", 1)[1].strip()
+        base_query = {"$or": [{"preferred_venues": vid}, {"visited_venues": vid}]}
+    elif audience.startswith("user:"):
+        ident = audience.split(":", 1)[1].strip()
+        base_query = {"$or": [{"email": ident}, {"user_id": ident}]}
+    elif audience.startswith("users:"):
+        ids = [i.strip() for i in audience.split(":", 1)[1].split(",") if i.strip()][:50]
+        base_query = {"user_id": {"$in": ids}}
+
+    base_query = {**base_query, "user_id": {"$not": {"$regex": "^sample_user_"}}}
+
+    total = await db.users.count_documents(base_query)
+    with_tokens = await db.users.count_documents(
+        {**base_query, "push_tokens": {"$exists": True, "$ne": []}}
+    )
+    sample_docs = await db.users.find(
+        {**base_query, "push_tokens": {"$exists": True, "$ne": []}},
+        {"_id": 0, "name": 1, "email": 1},
+    ).limit(5).to_list(5)
+
+    return {
+        "audience": audience,
+        "user_count": total,
+        "with_push_token_count": with_tokens,
+        "sample_names": [(d.get("name") or d.get("email") or "anon") for d in sample_docs],
+    }
+
+
+@router.get("/users-search")
+async def users_search(request: Request, q: str = "", limit: int = 20):
+    """Typeahead search for the individual-user audience picker.
+
+    Matches name / email / phone (case-insensitive). Only returns users who
+    have at least one push token so ops don't pick unreachable users.
+    """
+    await _require_admin(request)
+    q = (q or "").strip()
+    if len(q) < 2:
+        return {"users": []}
+
+    limit = max(1, min(limit, 50))
+    import re
+    pattern = re.compile(re.escape(q), re.IGNORECASE)
+    query = {
+        "push_tokens": {"$exists": True, "$ne": []},
+        "$or": [{"name": pattern}, {"email": pattern}, {"phone": pattern}],
+    }
+    docs = await db.users.find(
+        query,
+        {"_id": 0, "user_id": 1, "name": 1, "email": 1, "phone": 1, "picture": 1, "tier": 1},
+    ).limit(limit).to_list(limit)
+    return {"users": docs, "query": q}
+
+
 @router.get("/{broadcast_id}")
 async def get_broadcast(request: Request, broadcast_id: str):
     """Get a single broadcast by ID."""
@@ -332,6 +427,40 @@ async def send_broadcast(request: Request, broadcast_id: str):
 
     updated = await db.push_broadcasts.find_one({"id": broadcast_id}, {"_id": 0})
     return updated
+
+
+# ── Send-test endpoint (admin-only preview to own device) ───────────────────
+
+@router.post("/{broadcast_id}/test")
+async def send_test_broadcast(request: Request, broadcast_id: str):
+    """Send this broadcast to the calling admin's own device(s) only.
+
+    Does NOT mark the broadcast as sent. Perfect for previewing copy + deep-link
+    behaviour before dispatching to the full audience.
+    """
+    admin_user = await _require_admin(request)
+
+    bc = await db.push_broadcasts.find_one({"id": broadcast_id})
+    if not bc:
+        raise HTTPException(status_code=404, detail="Broadcast not found")
+
+    tokens = list(admin_user.get("push_tokens") or [])
+    if admin_user.get("push_token") and admin_user["push_token"] not in tokens:
+        tokens.append(admin_user["push_token"])
+
+    if not tokens:
+        raise HTTPException(
+            status_code=400,
+            detail="Your admin account has no push token registered — install the mobile app + log in to test.",
+        )
+
+    sent = await _send_expo_push(
+        tokens,
+        f"[TEST] {bc['title']}",
+        bc["body"],
+        {"type": "broadcast_test", "broadcast_id": broadcast_id, "deep_link": bc.get("deep_link", "home")},
+    )
+    return {"success": True, "tokens_used": len(tokens), "tokens_accepted_by_expo": sent}
 
 
 # ── Engagement Tracking (called by mobile app) ───────────────────────────────

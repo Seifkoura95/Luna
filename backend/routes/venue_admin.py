@@ -3,9 +3,12 @@ Venue Portal Management API endpoints
 Full auction CRUD and comprehensive user analytics for venue dashboard
 """
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import FileResponse
 from typing import Optional, List
 import uuid
+import base64
 import logging
+from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel
 
@@ -16,6 +19,16 @@ from luna_venues_config import LUNA_VENUES
 
 router = APIRouter(prefix="/venue-admin", tags=["Venue Admin"])
 logger = logging.getLogger(__name__)
+
+
+AUCTION_IMAGE_DIR = Path(__file__).parent.parent / "uploads" / "auctions"
+AUCTION_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+ALLOWED_AUCTION_MIME = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+}
+MAX_AUCTION_IMAGE_BYTES = 8 * 1024 * 1024  # 8 MB
 
 
 # ====== AUCTION MANAGEMENT MODELS ======
@@ -49,6 +62,108 @@ class UpdateAuctionRequest(BaseModel):
 
 
 # ====== AUCTION CRUD ENDPOINTS ======
+
+
+@router.post("/auctions/upload-image")
+async def upload_auction_image(request: Request):
+    """Upload an image for an auction.
+
+    Accepts:
+      - `multipart/form-data` with field name `file` (recommended from Lovable)
+      - `application/json` with `{"image": "data:image/...;base64,..."}`
+
+    Returns: `{"image_url": "https://<api>/api/venue-admin/auctions/image/<id>"}`
+    which is the value you should store on the auction's `image_url` field
+    (either by passing it to `POST /api/venue-admin/auctions` on create or to
+    `PUT /api/venue-admin/auctions/{id}` on edit).
+    """
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user or user.get("role") not in ["venue_staff", "venue_manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    content_type = request.headers.get("content-type", "")
+
+    image_bytes: Optional[bytes] = None
+    mime_type: Optional[str] = None
+
+    if "multipart/form-data" in content_type:
+        form = await request.form()
+        file = form.get("file") or form.get("image")
+        if not file:
+            raise HTTPException(status_code=400, detail="No file uploaded (field name must be 'file')")
+        mime_type = getattr(file, "content_type", None)
+        image_bytes = await file.read()
+    elif "application/json" in content_type:
+        try:
+            body = await request.json()
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid JSON body")
+        raw = body.get("image") or body.get("data_url")
+        if not raw:
+            raise HTTPException(status_code=400, detail="Missing 'image' field (base64 or data URL)")
+        if raw.startswith("data:"):
+            header, encoded = raw.split(",", 1)
+            mime_type = header.split(":")[1].split(";")[0]
+        else:
+            encoded = raw
+            mime_type = body.get("mime_type") or "image/jpeg"
+        try:
+            image_bytes = base64.b64decode(encoded)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid base64 payload")
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Content-Type must be multipart/form-data or application/json",
+        )
+
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="Empty image payload")
+    if mime_type not in ALLOWED_AUCTION_MIME:
+        raise HTTPException(status_code=400, detail=f"Unsupported image type: {mime_type}. Use JPG, PNG or WebP.")
+    if len(image_bytes) > MAX_AUCTION_IMAGE_BYTES:
+        raise HTTPException(status_code=400, detail="Image too large. Max 8 MB.")
+
+    image_id = uuid.uuid4().hex[:16]
+    ext = ALLOWED_AUCTION_MIME[mime_type]
+    filename = f"{image_id}{ext}"
+    filepath = AUCTION_IMAGE_DIR / filename
+    with open(filepath, "wb") as f:
+        f.write(image_bytes)
+
+    import os
+    base_url = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
+    relative_path = f"/api/venue-admin/auctions/image/{filename}"
+    public_url = f"{base_url}{relative_path}" if base_url else relative_path
+
+    return {
+        "image_id": image_id,
+        "filename": filename,
+        "image_url": public_url,
+        "relative_url": relative_path,
+        "size_bytes": len(image_bytes),
+        "mime_type": mime_type,
+        "uploaded_by": user.get("user_id"),
+    }
+
+
+@router.get("/auctions/image/{filename}")
+async def serve_auction_image(filename: str):
+    """Serve an uploaded auction image. Public (no auth) so the mobile app + Lovable preview can render it."""
+    # Basic path traversal guard
+    if "/" in filename or ".." in filename or filename.startswith("."):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    filepath = AUCTION_IMAGE_DIR / filename
+    if not filepath.exists() or not filepath.is_file():
+        raise HTTPException(status_code=404, detail="Image not found")
+    ext = filepath.suffix.lower()
+    media_type = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}.get(
+        ext.lstrip("."), "application/octet-stream"
+    )
+    return FileResponse(str(filepath), media_type=media_type)
+
 
 @router.get("/auctions")
 async def get_all_auctions(

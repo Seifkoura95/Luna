@@ -16,6 +16,7 @@ from services.churn_service import churn_service
 from services.notification_ws_manager import notification_ws_manager
 from services.ai_service import luna_ai
 from services.leaderboard_winner_job import award_daily_leaderboard_winner
+from services.push_broadcast_dispatcher import dispatch_due_push_broadcasts
 from routes.shared import send_push_notification_to_token
 
 try:
@@ -104,6 +105,15 @@ class ScheduledJobsManager:
             name="Daily Leaderboard Winner (Nightly Crown)",
             replace_existing=True,
         )
+
+        # Scheduled push broadcasts — check every minute
+        self.scheduler.add_job(
+            self.run_push_broadcast_dispatcher,
+            CronTrigger(second=0),  # Every minute at :00
+            id="push_broadcast_dispatcher",
+            name="Scheduled Push Broadcasts Dispatcher",
+            replace_existing=True,
+        )
         
         self.scheduler.start()
         self.is_running = True
@@ -127,6 +137,15 @@ class ScheduledJobsManager:
                 })
             except Exception:
                 pass
+
+    async def run_push_broadcast_dispatcher(self):
+        """Fire any scheduled push broadcasts whose time has come."""
+        try:
+            summary = await dispatch_due_push_broadcasts()
+            if summary.get("fired"):
+                logger.info("Push broadcast dispatcher: %s", summary)
+        except Exception as e:
+            logger.error("Push broadcast dispatcher failed: %s", e)
     
     def stop(self):
         """Stop the scheduler."""

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { api } from '../utils/api';
 
@@ -138,9 +139,22 @@ async function registerForPushNotificationsAsync(): Promise<RegistrationResult> 
     }
     
     try {
-      // Get Expo project ID from environment or use a fallback
-      const projectId = process.env.EXPO_PUBLIC_PROJECT_ID;
-      
+      // Resolve the EAS project ID with a safe fallback chain:
+      //   1. EXPO_PUBLIC_PROJECT_ID (if set in .env)
+      //   2. Constants.expoConfig.extra.eas.projectId (from app.json — set to "70fc7d51-...")
+      //   3. Constants.easConfig.projectId (EAS runtime config in standalone builds)
+      const projectId =
+        process.env.EXPO_PUBLIC_PROJECT_ID ||
+        (Constants?.expoConfig?.extra as any)?.eas?.projectId ||
+        (Constants as any)?.easConfig?.projectId;
+
+      if (!projectId) {
+        console.warn(
+          '📱 No EAS projectId found — push token will be sandbox only (Expo Go). ' +
+            'Set extra.eas.projectId in app.json for real push in production builds.',
+        );
+      }
+
       const tokenData = await Notifications.getExpoPushTokenAsync({
         projectId: projectId,
       });
