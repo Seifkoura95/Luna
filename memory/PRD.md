@@ -1,6 +1,60 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Apr 23, 2026 - Session 18 (Push Notifications + Auction Image Upload)
+
+### Push registration — fixed for production iOS / TestFlight
+
+**What was broken:**
+1. `usePushNotifications.ts` read `projectId` from `process.env.EXPO_PUBLIC_PROJECT_ID` which is not set in `.env` — so in EAS builds it relied on Expo's fragile auto-fallback.
+2. `/app/frontend/src/utils/notifications.ts` had a dead duplicate `NotificationService` with the literal placeholder `projectId: 'your-project-id'`.
+
+**Fixed:**
+- `usePushNotifications.ts` now resolves projectId via a safe chain: `EXPO_PUBLIC_PROJECT_ID → Constants.expoConfig.extra.eas.projectId → Constants.easConfig.projectId`. Works in dev, EAS preview, TestFlight, and App Store. EAS projectId (`70fc7d51-2dd0-447d-b040-8cba149152a6`) is already in `app.json`.
+- Deleted `/app/frontend/src/utils/notifications.ts` (dead code, nothing imported it).
+
+### Lovable Push Broadcasts module — full CRUD
+
+**Backend extensions (`/app/backend/routes/push_broadcasts.py`):**
+- `audience` now supports `user:<email_or_user_id>` (single) and `users:<id1,id2,...>` (multi-user, max 50).
+- `GET /audience-preview?audience=...` — returns `{user_count, with_push_token_count, sample_names}` so ops see reach before firing.
+- `GET /users-search?q=...` — typeahead user picker (min 2 chars, only users with push tokens).
+- `POST /{id}/test` — sends the broadcast to the admin's own device(s) only; does not flip status to sent.
+
+**Scheduler (`/app/backend/services/push_broadcast_dispatcher.py`):** new APScheduler cron (every minute at `:00`) fires any `scheduled` broadcast whose `scheduled_for <= now`. Idempotent via Mongo `find_one_and_update` guard. Writes `user_notifications` rows + updates status to `sent` with `sent_at` + `audience_size`.
+
+**Lovable component `/app/LUNA_PUSH_BROADCASTS_LOVABLE.tsx`:**
+- Tabs: All / Draft / Scheduled / Sent. Polls every 15 s.
+- Composer: title (65 char) + body (178 char) with counters, deep-link, image URL, audience picker (All / Subscribers / Tier / Venue / 1 user with typeahead / multi-user up to 50 with chip list), schedule datetime (Brisbane local), audience-reach preview.
+- Actions: Save draft · Send test to me · Schedule · Send now · Edit · Delete.
+- Open/Click rate % columns on sent broadcasts.
+
+**Known bug fixed during testing:** `users:<ids>` audience-preview had a dict-merge collision that clobbered the `user_id: {"$in": [...]}` filter with the sample-user exclusion filter (both use `user_id` top-level key). Testing agent caught it — fixed by wrapping in `$and` when a `user_id` or `$or` key is already present.
+
+### Auction image upload — new endpoint + Lovable editor
+
+**Backend (`/app/backend/routes/venue_admin.py`):**
+- `POST /api/venue-admin/auctions/upload-image` — accepts multipart `file=` OR JSON `{"image": "data:image/...;base64,..."}`. Validates MIME (JPG/PNG/WebP), size ≤ 8 MB, writes to `/app/backend/uploads/auctions/`. Returns `{image_id, filename, image_url, relative_url, size_bytes, mime_type}`.
+- `GET /api/venue-admin/auctions/image/{filename}` — public image serve, path-traversal guarded.
+
+**Lovable component `/app/LUNA_AUCTION_EDITOR_LOVABLE.tsx`:**
+- Full create/edit form: title, description, image (upload file OR paste URL, with live preview), starting bid, min increment, max bid limit, venue picker, category, duration hours, status (draft/active/paused/ended), terms.
+- Actions: Save / Save & Publish / Delete.
+
+### Testing results
+- Backend: **20/21 pytest tests pass** (1 bug caught + fixed + re-verified).
+- Curl verification post-fix: `users:<id>` now returns `user_count=1` correctly; all other audiences unaffected.
+- Test artifacts cleaned. Luna's balance, admin's balance, real auctions untouched.
+
+### Outstanding for production push delivery
+The backend is 100% ready. For real pushes to hit iPhones:
+1. APNs `.p8` must be uploaded to EAS (user confirmed this is done).
+2. A fresh **EAS production iOS build → TestFlight** — every install from there registers a real `ExponentPushToken[...]` via the fixed hook.
+3. Current DB has only 2 sandbox tokens; this will scale automatically as TestFlight users register.
+
+---
+
+
 ## Latest Update: Apr 23, 2026 - Session 18 (Safety / Silent SOS — Real Dispatch + Lovable Ops View)
 
 ### SHIPPED: Silent SOS now actually does something

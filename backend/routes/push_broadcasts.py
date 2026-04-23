@@ -281,7 +281,13 @@ async def audience_preview(request: Request, audience: str = "all"):
         ids = [i.strip() for i in audience.split(":", 1)[1].split(",") if i.strip()][:50]
         base_query = {"user_id": {"$in": ids}}
 
-    base_query = {**base_query, "user_id": {"$not": {"$regex": "^sample_user_"}}}
+    # Exclude sample seed users from preview count.
+    # Use $and so we don't clobber a pre-existing `user_id` key (e.g. from the `users:` branch).
+    sample_exclusion = {"user_id": {"$not": {"$regex": "^sample_user_"}}}
+    if "user_id" in base_query or "$or" in base_query or not base_query:
+        base_query = {"$and": [base_query, sample_exclusion]} if base_query else sample_exclusion
+    else:
+        base_query = {**base_query, **sample_exclusion}
 
     total = await db.users.count_documents(base_query)
     with_tokens = await db.users.count_documents(
