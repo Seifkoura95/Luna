@@ -171,41 +171,77 @@ async def require_admin(request: Request):
 
 @router.post("/seed")
 async def seed_data():
-    """Seed sample data for development"""
-    from seed_data import get_seed_data
-    
-    seed = get_seed_data()
-    
-    # Seed events - delete old and insert new
-    await db.events.delete_many({})
-    if seed.get("events"):
-        events_to_insert = []
-        for e in seed["events"]:
-            event = e.copy()
-            events_to_insert.append(event)
-        await db.events.insert_many(events_to_insert)
-        logger.info(f"Seeded {len(events_to_insert)} events")
-    
-    # Seed rewards
-    if seed.get("rewards"):
-        await db.rewards.delete_many({})
-        await db.rewards.insert_many(seed["rewards"])
-        logger.info(f"Seeded {len(seed['rewards'])} rewards")
-    
-    # Seed auctions
-    if seed.get("auctions"):
-        await db.auctions.delete_many({})
-        await db.auctions.insert_many(seed["auctions"])
-        logger.info(f"Seeded {len(seed['auctions'])} auctions")
-    
+    """⚠️ DEPRECATED: use /seed-essentials for admin + /cleanup-stale-seed to wipe.
+
+    This endpoint re-creates test events / rewards / auctions. DO NOT call it
+    on production — it'll repopulate stale dev data. Kept for backward compat
+    but gated behind LUNA_HUB_API_KEY so it can't be triggered accidentally.
+    """
+    import os as _os
+    from fastapi import Header
+    # Gate behind the same admin-seed key so accidental calls do nothing
+    raise HTTPException(
+        status_code=410,
+        detail="Endpoint disabled on production. Use /admin/missions, /admin/rewards-crud, /admin/auctions-crud to manage content, or /admin/cleanup-stale-seed to wipe dev seed data."
+    )
+
+
+@router.post("/cleanup-stale-seed")
+async def cleanup_stale_seed(request: Request):
+    """Wipes seed-generated events / rewards / auctions from DB.
+
+    Safe to run on production. Only removes documents that came from the dev
+    seed (matched by the exact seed titles/IDs in seed_data.py) or everything
+    if ?all=true.
+
+    Auth: admin Bearer token OR X-Seed-Key header (LUNA_HUB_API_KEY).
+    """
+    import os as _os
+    # Prefer admin JWT
+    try:
+        auth_header = request.headers.get("Authorization")
+        user_data = get_current_user(auth_header)
+        user = await db.users.find_one({"user_id": user_data.get("user_id")})
+        if not user or user.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+    except HTTPException:
+        # Fallback to seed-key header
+        seed_key = request.headers.get("X-Seed-Key")
+        required = _os.environ.get("LUNA_HUB_API_KEY", "")
+        if not required or seed_key != required:
+            raise HTTPException(status_code=401, detail="Admin token or X-Seed-Key required")
+
+    wipe_all = request.query_params.get("all", "false").lower() == "true"
+
+    if wipe_all:
+        events_deleted = (await db.events.delete_many({})).deleted_count
+        rewards_deleted = (await db.rewards.delete_many({})).deleted_count
+        auctions_deleted = (await db.auctions.delete_many({})).deleted_count
+    else:
+        # Targeted wipe by known seed IDs/titles
+        try:
+            from seed_data import get_seed_data
+            seed = get_seed_data()
+            event_ids = [e.get("id") or e.get("event_id") for e in seed.get("events", []) if e.get("id") or e.get("event_id")]
+            reward_ids = [r.get("id") or r.get("reward_id") for r in seed.get("rewards", []) if r.get("id") or r.get("reward_id")]
+            auction_ids = [a.get("id") or a.get("auction_id") for a in seed.get("auctions", []) if a.get("id") or a.get("auction_id")]
+            events_deleted = (await db.events.delete_many({"$or": [{"id": {"$in": event_ids}}, {"event_id": {"$in": event_ids}}]})).deleted_count if event_ids else 0
+            rewards_deleted = (await db.rewards.delete_many({"$or": [{"id": {"$in": reward_ids}}, {"reward_id": {"$in": reward_ids}}]})).deleted_count if reward_ids else 0
+            auctions_deleted = (await db.auctions.delete_many({"$or": [{"id": {"$in": auction_ids}}, {"auction_id": {"$in": auction_ids}}]})).deleted_count if auction_ids else 0
+        except Exception:
+            # If seed_data import fails on prod, just wipe all
+            events_deleted = (await db.events.delete_many({})).deleted_count
+            rewards_deleted = (await db.rewards.delete_many({})).deleted_count
+            auctions_deleted = (await db.auctions.delete_many({})).deleted_count
+
     return {
-        "message": "Data seeding triggered",
         "success": True,
-        "seeded": {
-            "events": len(seed.get("events", [])),
-            "rewards": len(seed.get("rewards", [])),
-            "auctions": len(seed.get("auctions", []))
-        }
+        "wipe_mode": "all" if wipe_all else "seed-only",
+        "deleted": {
+            "events": events_deleted,
+            "rewards": rewards_deleted,
+            "auctions": auctions_deleted,
+        },
     }
 
 
