@@ -597,30 +597,6 @@ export default function ProfileScreen() {
           <SectionTitle 
             title="Quick Actions" 
           />
-          
-          {/* Primary CTAs - Full width */}
-          <View style={styles.primaryCtaRow}>
-            <TouchableOpacity
-              style={styles.primaryCta}
-              onPress={handleGetQR}
-              activeOpacity={0.85}
-              data-testid="membership-card-cta"
-            >
-              <LinearGradient
-                colors={[colors.accent, colors.accentDark]}
-                style={styles.primaryCtaGradient}
-              >
-                <View style={styles.primaryCtaIcon}>
-                  <Icon name="card" size={24} color={colors.textPrimary} />
-                </View>
-                <View style={styles.primaryCtaText}>
-                  <Text style={styles.primaryCtaTitle}>Membership Card</Text>
-                  <Text style={styles.primaryCtaSubtitle}>Digital ID</Text>
-                </View>
-                <Icon name="chevron-forward" size={20} color={colors.textPrimary} />
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
 
           {/* 3-Column Grid for secondary actions */}
           <View style={styles.actionsGrid3Col}>
