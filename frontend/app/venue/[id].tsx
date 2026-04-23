@@ -152,9 +152,9 @@ export default function VenueDetailScreen() {
     setShowBookingModal(true);
   };
 
-  // Animated header opacity
+  // Animated header opacity (clamp to avoid non-monotonic inputRange on SSR/small screens)
   const headerOpacity = scrollY.interpolate({
-    inputRange: [0, HEADER_HEIGHT - 100],
+    inputRange: [0, Math.max(1, HEADER_HEIGHT - 100)],
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
