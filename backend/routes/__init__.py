@@ -38,6 +38,7 @@ from routes.scheduled_jobs import router as scheduled_jobs_router
 from routes.crews import router as crews_router
 from routes.safety import router as safety_router
 from routes.admin_safety import router as admin_safety_router
+from routes.admin_swiftpos import router as admin_swiftpos_router
 from routes.location import router as location_router
 from routes.promo import router as promo_router
 from routes.vouchers import router as vouchers_router
@@ -125,6 +126,7 @@ ALL_ROUTERS = [
     crews_router,
     safety_router,
     admin_safety_router,
+    admin_swiftpos_router,
     location_router,
     promo_router,
     vouchers_router,

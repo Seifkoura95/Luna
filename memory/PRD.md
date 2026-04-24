@@ -953,3 +953,20 @@ Implementation:
 - Scheduler registered with `max_instances=1` + `coalesce=True` (no overlapping runs)
 
 - Give `CHERRYHUB_READ_API_KEY` to CherryHub so they can poll our public endpoints
+
+## Latest Update: Apr 24, 2026 — SwiftPOS Reporting Lovable Component
+
+**New backend routes** (`routes/admin_swiftpos.py`) gated by existing `require_admin` (JWT admin/staff/manager OR `X-Luna-Hub-Key`):
+- `GET  /api/admin/swiftpos/summary?range=24h|7d|30d|all` — KPIs: mock_mode, credentials_configured, users (total/linked/ready/pending/unlinked), transactions (total/dispatched/pending/failed + all-time pending), points (total_awarded / dispatched / dollar value).
+- `GET  /api/admin/swiftpos/transactions?status=dispatched|pending|failed&event_type=&user_id=&range=&limit=&skip=` — paginated ledger (max 200), newest first, enriched with user name/email/member_key.
+- `GET  /api/admin/swiftpos/users?link_status=linked|unlinked|pending&q=&limit=&skip=` — paginated user roster with link state, member_key, swiftpos_customer_id, mirrored balance, last refresh.
+- `GET  /api/admin/swiftpos/config` — redacted credentials + endpoint paths + full PLU catalog (mission + reward PLUs with points-per-unit precomputed).
+- `POST /api/admin/swiftpos/retry/:tx_id` — manually re-dispatch a single pending/failed tx (resolves PLU, resubmits, updates ledger flags).
+- `POST /api/admin/swiftpos/retry-pending?limit=25` — bulk retry oldest N pending dispatches (bounded per call).
+
+**Dropin Lovable component** (`/app/LUNA_SWIFTPOS_REPORTING_LOVABLE.tsx`):
+- 4 tabs: Summary (KPI cards + Retry All), Transactions (filters by range/status/event, inline Retry per row, pagination), Users (link status filter + search + balance), Config/PLU (redacted creds + full PLU table).
+- Reuses the same `localStorage.getItem('luna_admin_token')` JWT pattern as LunaSafetyAlerts / PushBroadcasts, same inline-style dark theme.
+- Verified all 6 endpoints return 200 with real prod data (103 users, 5 linked, 7 transactions, mock_mode=true, creds not configured).
+
+**Still blocked on:** SwiftPOS live credentials (Customer ref, Client ID, Clerk ID) to flip `SWIFTPOS_MOCK_MODE=false`.
