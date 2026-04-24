@@ -228,6 +228,12 @@ async def link_cherryhub_account(request: Request, body: CherryHubLinkRequest):
 
         if member:
             member_key = member.get("memberKey", member.get("id"))
+            swiftpos_cid = (
+                member.get("customerId")
+                or member.get("CustomerId")
+                or member.get("SwiftPosCustomerId")
+                or member.get("externalCustomerId")
+            )
             await db.users.update_one(
                 {"user_id": current_user["user_id"]},
                 {"$set": {
@@ -235,11 +241,13 @@ async def link_cherryhub_account(request: Request, body: CherryHubLinkRequest):
                     "cherryhub_email": lookup_email,
                     "cherryhub_linked_at": datetime.now(timezone.utc),
                     "cherryhub_status": "active",
+                    **({"swiftpos_customer_id": swiftpos_cid} if swiftpos_cid else {}),
                 }},
             )
             return {
                 "success": True,
                 "member_key": member_key,
+                "swiftpos_customer_id": swiftpos_cid,
                 "message": "CherryHub account linked successfully",
                 "existing_account": True,
                 "mock": CHERRYHUB_MOCK_MODE,
@@ -258,6 +266,11 @@ async def link_cherryhub_account(request: Request, body: CherryHubLinkRequest):
                 marketing_opt_in=True,
             )
             member_key = result.get("memberKey")
+            # Note: SwiftPOS customer ID won't be available immediately after
+            # CherryHub creates a new member — the CherryHub↔SwiftPOS
+            # auto-create + manual link by staff happens asynchronously.
+            # The scheduled job in services/cherryhub_poller.py (or a future
+            # backfill endpoint) should pick up the customer_id once staff links it.
             await db.users.update_one(
                 {"user_id": current_user["user_id"]},
                 {"$set": {
@@ -265,13 +278,15 @@ async def link_cherryhub_account(request: Request, body: CherryHubLinkRequest):
                     "cherryhub_email": lookup_email,
                     "cherryhub_linked_at": datetime.now(timezone.utc),
                     "cherryhub_status": "active",
+                    "swiftpos_link_pending": True,
                 }},
             )
             return {
                 "success": True,
                 "member_key": member_key,
-                "message": "New CherryHub account created and linked",
+                "message": "New CherryHub account created. Luna staff will link it to SwiftPOS so points start flowing.",
                 "new_account": True,
+                "swiftpos_link_pending": True,
                 "mock": result.get("mock", CHERRYHUB_MOCK_MODE),
             }
 

@@ -114,11 +114,20 @@ async def claim_mission_reward(request: Request, mission_id: str):
         raise HTTPException(status_code=403, detail="This account type cannot earn mission points")
     
     points_reward = mission.get("points_reward", 0)
-    await db.users.update_one(
-        {"user_id": current_user["user_id"]},
-        {"$inc": {"points_balance": points_reward}}
+
+    # Dispatch via the unified points service — pushes to SwiftPOS (if linked +
+    # mapped), falls back to local Mongo counter otherwise. The mission_id on
+    # the mission record (e.g. "luna_explorer") must match the PLU map key in
+    # config/swiftpos_plu_map.py. If not, points_override keeps legacy math.
+    from services.points_service import award_points as _award_points
+    award_result = await _award_points(
+        user_id=current_user["user_id"],
+        event_type="mission",
+        event_key=mission_id,
+        points_override=points_reward,
+        reason=f"Completed mission: {mission.get('name', 'Unknown')}",
     )
-    
+
     await db.mission_progress.update_one(
         {"user_id": current_user["user_id"], "mission_id": mission_id},
         {"$set": {
@@ -126,22 +135,12 @@ async def claim_mission_reward(request: Request, mission_id: str):
             "claimed_at": datetime.now(timezone.utc)
         }}
     )
-    
-    await db.points_transactions.insert_one({
-        "id": str(uuid.uuid4()),
-        "user_id": current_user["user_id"],
-        "amount": points_reward,
-        "type": "mission_reward",
-        "description": f"Completed mission: {mission.get('name', 'Unknown')}",
-        "mission_id": mission_id,
-        "created_at": datetime.now(timezone.utc)
-    })
-    
-    user = await db.users.find_one({"user_id": current_user["user_id"]})
-    
+
     return {
         "success": True,
-        "message": f"Claimed {points_reward} points!",
-        "points_awarded": points_reward,
-        "new_balance": user["points_balance"]
+        "message": f"Claimed {award_result['points_awarded']} points!",
+        "points_awarded": award_result["points_awarded"],
+        "new_balance": award_result["new_balance"],
+        "dispatched_to_swiftpos": award_result["dispatched_to_swiftpos"],
+        "pending_swiftpos_dispatch": award_result.get("pending_swiftpos_dispatch", False),
     }

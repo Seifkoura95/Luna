@@ -181,3 +181,54 @@ async def simulate_purchase(request: Request, amount: float, venue_id: Optional[
         "new_balance": user.get("points_balance", 0),
         **points_result
     }
+
+
+# ────── SwiftPOS-backed endpoints (new in session 18) ──────
+
+from services.points_service import refresh_balance_for_user
+from services.swiftpos_service import swiftpos_service
+
+
+@router.get("/my-balance")
+async def my_balance(request: Request):
+    """Refresh the user's balance from CherryHub (real-time SwiftPOS pull).
+    Used by the mobile wallet screen's pull-to-refresh + foreground sync."""
+    current_user = get_current_user(request.headers.get("authorization"))
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Auth required")
+    return await refresh_balance_for_user(current_user["user_id"])
+
+
+@router.get("/status")
+async def points_status(request: Request):
+    """Is this user linked to CherryHub? Any pending SwiftPOS dispatches?"""
+    current_user = get_current_user(request.headers.get("authorization"))
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Auth required")
+
+    user = await db.users.find_one(
+        {"user_id": current_user["user_id"]},
+        {"_id": 0, "cherryhub_member_key": 1, "swiftpos_customer_id": 1,
+         "points_balance": 1, "points_balance_refreshed_at": 1},
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    pending_count = await db.points_transactions.count_documents({
+        "user_id": current_user["user_id"],
+        "pending_swiftpos_dispatch": True,
+    })
+
+    return {
+        "linked": bool(user.get("cherryhub_member_key")),
+        "member_key": user.get("cherryhub_member_key"),
+        "swiftpos_customer_id": user.get("swiftpos_customer_id"),
+        "local_balance": user.get("points_balance", 0),
+        "last_refreshed_at": (
+            user["points_balance_refreshed_at"].isoformat()
+            if user.get("points_balance_refreshed_at") else None
+        ),
+        "pending_swiftpos_dispatches": pending_count,
+        "swiftpos_mock_mode": swiftpos_service.is_mock,
+    }
+

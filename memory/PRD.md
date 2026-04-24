@@ -1,6 +1,34 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Apr 23, 2026 - Session 18 (SwiftPOS integration — Phase 1 foundations)
+
+### Architecture shift acknowledged
+CherryHub is NOT source of truth. The new model is:
+```
+SwiftPOS (source of truth) → CherryHub reads real-time on demand → App reads via CherryHub
+```
+Confirmed by CherryHub: `GET /{businessId}/members/{memberId}/points` is both "trigger" and "read" in one call (real-time SwiftPOS pull, no persistence on their side).
+
+### Built this session
+- **`services/swiftpos_service.py`** — async SwiftPOS client with token caching + 401 refresh. Mock mode default on (`SWIFTPOS_MOCK_MODE=true`). Configurable endpoint paths via env (`SWIFTPOS_AUTH_PATH`, `SWIFTPOS_ORDERS_PATH`) so we can swap paths without redeployment once Swagger confirms them. Env creds partially populated (Integrator name + Key), still need 3 customer creds (Customer Ref, Client ID, Clerk ID/password).
+- **`services/swiftpos_plu_map.py`** — PLU mapping Trent supplied: 5 missions (100251-110255) + 10 rewards (100256-100265). Value: 10 points = $0.25. Auto-calc `points_for_plu(unit_price, multiplier)`.
+- **`services/points_service.py`** — orchestrator. `award_points()` pushes SwiftPOS → refreshes via CherryHub → falls back to local Mongo if user not linked or SwiftPOS mock mode. `refresh_balance_for_user()` for pull-to-refresh. Feature flag `POINTS_LEGACY_DIRECT_MONGO=true` keeps the old direct-Mongo flow until SwiftPOS is live.
+- **New endpoints** `/api/points/my-balance` (pull-to-refresh from CherryHub→SwiftPOS) and `/api/points/status` (linked? any pending dispatches? mock mode?).
+- **`routes/cherryhub.py::link`** enhanced — now picks up SwiftPOS `customerId` (multiple possible field names) from CherryHub response on link, stores on user. New-account flow sets `swiftpos_link_pending=true` so the app UI can show a "Staff will link your POS account soon" banner until Trent's team finishes the CherryHub↔SwiftPOS manual link in the CherryHub portal.
+- **`routes/missions.py`** — mission claim endpoint refactored to call `award_points()` instead of direct Mongo inc. Verified end-to-end via direct call (award_points for `luna_explorer` → PLU 100251 → 750 pts → fallback to Mongo in mock mode → `new_balance: 82648`).
+
+### Not yet refactored to award_points (Phase 1 follow-up)
+The other 8 points-award call-sites still use direct Mongo `$inc`: `loyalty.py:78,160`, `bookings.py:224,411,457`, `birthday.py:233`, `auth.py:49`, `leaderboard.py` (Nightly Crown). Will batch-migrate in Phase 2 once SwiftPOS creds arrive + mock→live is verified via mission flow first.
+
+### Still blocked on (user-side action)
+- 🔴 3 SwiftPOS customer creds (Customer Ref, Client ID, Clerk ID) from Trent or SwiftPOS support
+- 🔴 Confirm Luna's SwiftPOS install is v10.58+ (required per SwiftPOS docs)
+- 🔴 Once creds arrive: flip `SWIFTPOS_MOCK_MODE=false` + `POINTS_LEGACY_DIRECT_MONGO=false` → run `luna_explorer` mission claim → verify points appear in SwiftPOS + CherryHub balance updates
+
+---
+
+
 ## Latest Update: Apr 23, 2026 - Session 18 (Deploy-verification endpoint + CherryHub probe diagnostic wrapper)
 
 ### ✅ Railway deploy is now current
