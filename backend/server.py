@@ -125,19 +125,27 @@ async def lifespan(app_instance: FastAPI):
         replace_existing=True
     )
 
-    # Schedule CherryHub points-transaction poller every 2 minutes
-    # Pulls in-store redemptions + SwiftPOS-written awards and mirrors them into Luna's ledger.
-    # No-op when CHERRYHUB_MOCK_MODE=true or credentials missing.
-    from services.cherryhub_poller import sync_cherryhub_redemptions
-    scheduler.add_job(
-        sync_cherryhub_redemptions,
-        IntervalTrigger(minutes=2),
-        id="cherryhub_sync",
-        name="CherryHub Points Transaction Sync",
-        replace_existing=True,
-        max_instances=1,
-        coalesce=True,
-    )
+    # CherryHub points-transaction poller — PAUSED (Apr 2026, Session 18)
+    # Architecture changed: SwiftPOS is now source of truth. CherryHub reads SwiftPOS
+    # real-time via GET /members/{key}/points. The app pulls via /api/points/my-balance.
+    # No need to poll every 2 min — it was also blowing up on CherryHub's
+    # `points-transactions/search` 500 Unexpected bug. Re-enable by setting
+    # CHERRYHUB_POLLER_ENABLED=true in env if you ever need the old behaviour.
+    import os as _os
+    if _os.environ.get("CHERRYHUB_POLLER_ENABLED", "false").lower() in {"1", "true", "yes"}:
+        from services.cherryhub_poller import sync_cherryhub_redemptions
+        scheduler.add_job(
+            sync_cherryhub_redemptions,
+            IntervalTrigger(minutes=2),
+            id="cherryhub_sync",
+            name="CherryHub Points Transaction Sync",
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+        )
+        logging.info("CherryHub poller ENABLED via CHERRYHUB_POLLER_ENABLED flag")
+    else:
+        logging.info("CherryHub poller DISABLED (Session 18 — app reads on-demand via /api/points/my-balance)")
     
     # Also run a sync on startup (after 90 seconds to let everything initialize)
     scheduler.add_job(

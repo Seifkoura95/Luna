@@ -124,31 +124,33 @@ async def award_daily_leaderboard_winner(force: bool = False) -> dict:
     parts = name.split()
     display_name = f"{parts[0]} {parts[-1][0]}." if len(parts) > 1 else name
 
-    # 1) Credit the points
-    await db.users.update_one(
-        {"user_id": user_id},
-        {
-            "$inc": {
-                "points_balance": DAILY_PRIZE_POINTS,
-                "total_points_earned": DAILY_PRIZE_POINTS,
-            }
-        },
-    )
-
-    # 2) Ledger entry
+    # 1) Credit the points via unified points service (SwiftPOS-aware + Mongo mirror)
+    from services.points_service import award_points as _award_points
     tx_id = f"tx_{uuid.uuid4().hex[:10]}"
-    await db.points_transactions.insert_one(
-        {
+    try:
+        _r = await _award_points(
+            user_id=user_id,
+            event_type="nightly_crown",
+            points_override=DAILY_PRIZE_POINTS,
+            reason=f"Nightly Crown – #1 on {day_key}",
+        )
+        tx_id = _r.get("transaction_id", tx_id)
+    except Exception as e:
+        logger.warning("Nightly Crown award_points failed, falling back to direct Mongo: %s", e)
+        await db.users.update_one(
+            {"user_id": user_id},
+            {"$inc": {"points_balance": DAILY_PRIZE_POINTS, "total_points_earned": DAILY_PRIZE_POINTS}},
+        )
+        await db.points_transactions.insert_one({
             "id": tx_id,
             "user_id": user_id,
             "amount": DAILY_PRIZE_POINTS,
             "type": "leaderboard_award",
             "source": PRIZE_SOURCE,
-            "reason": f"Nightly Crown – #1 on {day_key}",
+            "reason": f"Nightly Crown – #1 on {day_key} (fallback)",
             "day_key": day_key,
             "created_at": now_utc.isoformat(),
-        }
-    )
+        })
 
     # 3) Winner history
     winner_doc = {

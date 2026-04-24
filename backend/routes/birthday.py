@@ -226,22 +226,15 @@ async def claim_birthday_reward(reward_id: str, authorization: str = Header(None
     
     await db.birthday_rewards.insert_one(claim_record)
     
-    # If it's bonus points, add them immediately
+    # If it's bonus points, dispatch via unified points service
     if reward["type"] == "points":
-        await db.users.update_one(
-            {"user_id": user_id},
-            {"$inc": {"points_balance": reward["value"]}}
+        from services.points_service import award_points as _award_points
+        await _award_points(
+            user_id=user_id,
+            event_type="birthday",
+            points_override=reward["value"],
+            reason=f"Birthday bonus: {reward['name']}",
         )
-        
-        # Log the transaction
-        await db.points_transactions.insert_one({
-            "id": str(uuid.uuid4()),
-            "user_id": user_id,
-            "amount": reward["value"],
-            "type": "birthday_bonus",
-            "description": f"Birthday bonus: {reward['name']}",
-            "created_at": datetime.now(timezone.utc)
-        })
     
     # For entry and drink rewards, add to wallet as a ticket/pass
     if reward["type"] in ["entry", "drink"]:

@@ -1,6 +1,37 @@
 # Luna Group VIP App - Product Requirements Document
 
 
+## Latest Update: Apr 24, 2026 - Session 18 (Phase 2 + 4 — migrate all points call-sites + pause CherryHub poller)
+
+### Migrated to `points_service.award_points()` (7 call-sites)
+All backwards-compatible via `POINTS_LEGACY_DIRECT_MONGO=true` / `SWIFTPOS_MOCK_MODE=true` flags:
+- `routes/missions.py` — mission claim (Phase 1)
+- `routes/bookings.py` × 3 — bottle service order, reservation confirm, guestlist arrival
+- `routes/loyalty.py` × 2 — `/points/award` (member self-award) + `/staff/award`
+- `routes/birthday.py` — birthday bonus points
+- `routes/auth.py` — referral bonus
+- `services/leaderboard_winner_job.py` — Nightly Crown (+50 pts at midnight Brisbane)
+
+Left unchanged: `loyalty.py::redeem_points` (reward redemption). This is a negative flow that should push POSITIVE PLU prices to SwiftPOS so the POS deducts points. Needs a small design conversation with the user before migrating (which of the reward PLUs are "redeemable" vs "staff-gift"?). Flagged for Phase 3.
+
+### Phase 4 — CherryHub 2-min poller DISABLED
+`server.py` no longer registers `sync_cherryhub_redemptions` with the scheduler unless `CHERRYHUB_POLLER_ENABLED=true` is set in env. The whole point of the poller was to pull SwiftPOS-awarded transactions into Luna's ledger — but with the new on-demand model (`GET /api/points/my-balance` → CherryHub → SwiftPOS real-time), we don't need to poll. Also unblocks us from CherryHub's 500 "Unexpected" bug on `points-transactions/search` since we no longer depend on it.
+
+### Verified
+- ✅ All 4 event types (`mission`, `birthday`, `referral`, `nightly_crown`) dispatch correctly via `award_points()`
+- ✅ PLU resolution working (luna_loyalist → 100253)
+- ✅ `POST /api/leaderboard/admin/award-now?force=true` still succeeds (uses new service)
+- ✅ Backend clean reload after every edit
+- ✅ Test data cleaned, Luna's balance restored to 81,898
+
+### Still pending
+- 🔴 3 SwiftPOS customer creds → flip `SWIFTPOS_MOCK_MODE=false` + `POINTS_LEGACY_DIRECT_MONGO=false` → test full live loop
+- 🟠 Phase 3: mobile app onboarding UI for "Link your CherryHub account" + pull-to-refresh on wallet
+- 🟠 Reward redemption flow (positive PLU price) — design conversation needed
+
+---
+
+
 ## Latest Update: Apr 23, 2026 - Session 18 (SwiftPOS integration — Phase 1 foundations)
 
 ### Architecture shift acknowledged

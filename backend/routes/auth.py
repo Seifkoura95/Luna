@@ -43,10 +43,13 @@ async def complete_referral(referred_user_id: str):
         }}
     )
     
-    # Award points to referrer
-    await db.users.update_one(
-        {"user_id": referral["referrer_user_id"]},
-        {"$inc": {"points_balance": REFERRAL_POINTS_REWARD}}
+    # Award points to referrer via unified points service
+    from services.points_service import award_points as _award_points
+    await _award_points(
+        user_id=referral["referrer_user_id"],
+        event_type="referral",
+        points_override=REFERRAL_POINTS_REWARD,
+        reason=f"Referral bonus: {referral.get('referred_email') or 'new member joined'}",
     )
     
     # Create notification for referrer

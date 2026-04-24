@@ -87,13 +87,17 @@ async def award_points(request: Request, body: AwardPointsRequest):
     bonus_points = int(base_points * (multiplier - 1))
     total_points = base_points + bonus_points
     
-    # Update balance
-    await db.users.update_one(
-        {"user_id": target_id},
-        {"$inc": {"points_balance": total_points}}
+    # Dispatch via unified points service (SwiftPOS-aware)
+    from services.points_service import award_points as _award_points
+    _r = await _award_points(
+        user_id=target_id,
+        event_type="manual",
+        points_override=total_points,
+        reason=body.description or f"Awarded {total_points} pts (${body.amount_spent} @ {multiplier}x)",
+        venue_id=body.venue_id,
     )
-    
-    # Log transaction
+
+    # Log loyalty-specific fields (preserves tier/multiplier breakdown)
     txn = {
         "id": str(uuid.uuid4())[:8],
         "user_id": target_id,
@@ -108,13 +112,12 @@ async def award_points(request: Request, body: AwardPointsRequest):
         "category": body.category,
         "description": body.description,
         "awarded_by": current["user_id"],
+        "points_transaction_id": _r["transaction_id"],
+        "dispatched_to_swiftpos": _r["dispatched_to_swiftpos"],
         "created_at": datetime.now(timezone.utc),
     }
     await db.loyalty_transactions.insert_one(txn)
-    
-    # Get new balance
-    user = await db.users.find_one({"user_id": target_id}, {"_id": 0, "points_balance": 1})
-    
+
     return {
         "success": True,
         "base_points": base_points,
@@ -122,7 +125,8 @@ async def award_points(request: Request, body: AwardPointsRequest):
         "total_points": total_points,
         "multiplier": multiplier,
         "tier_id": tier_id,
-        "new_balance": user.get("points_balance", 0) if user else total_points,
+        "new_balance": _r["new_balance"],
+        "dispatched_to_swiftpos": _r["dispatched_to_swiftpos"],
     }
 
 
@@ -173,11 +177,16 @@ async def staff_award_points(request: Request, body: StaffAwardRequest):
     bonus_points = int(base_points * (multiplier - 1))
     total_points = base_points + bonus_points
     
-    await db.users.update_one(
-        {"user_id": body.member_user_id},
-        {"$inc": {"points_balance": total_points}}
+    # Dispatch via unified points service (SwiftPOS-aware)
+    from services.points_service import award_points as _award_points
+    _r = await _award_points(
+        user_id=body.member_user_id,
+        event_type="manual",
+        points_override=total_points,
+        reason=body.description or f"Staff-awarded {total_points} pts (${body.amount_spent} @ {multiplier}x)",
+        venue_id=body.venue_id,
     )
-    
+
     await db.loyalty_transactions.insert_one({
         "id": str(uuid.uuid4())[:8],
         "user_id": body.member_user_id,
@@ -193,6 +202,8 @@ async def staff_award_points(request: Request, body: StaffAwardRequest):
         "description": body.description,
         "awarded_by": staff["user_id"],
         "source": "staff_portal",
+        "points_transaction_id": _r["transaction_id"],
+        "dispatched_to_swiftpos": _r["dispatched_to_swiftpos"],
         "created_at": datetime.now(timezone.utc),
     })
     

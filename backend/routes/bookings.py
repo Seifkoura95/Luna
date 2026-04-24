@@ -219,10 +219,15 @@ async def create_bottle_preorder(request: Request, body: BottlePreOrderCreate):
         )
         from utils.points_guard import can_earn_points
         if await can_earn_points(user["user_id"]):
-            await db.users.update_one(
-                {"user_id": user["user_id"]},
-                {"$inc": {"points_balance": points_earned}},
+            from services.points_service import award_points as _award_points
+            _r = await _award_points(
+                user_id=user["user_id"],
+                event_type="booking",
+                points_override=points_earned,
+                reason=f"Bottle service order at {venue['name']}",
+                venue_id=venue.get("id"),
             )
+            points_earned = _r["points_awarded"]
         else:
             points_earned = 0
         return {
@@ -406,10 +411,15 @@ async def create_booking(request: Request, booking: BookingRequest):
 
     from utils.points_guard import can_earn_points
     if await can_earn_points(current_user["user_id"]):
-        await db.users.update_one(
-            {"user_id": current_user["user_id"]},
-            {"$inc": {"points_balance": booking_record["points_earned"]}},
+        from services.points_service import award_points as _award_points
+        _r = await _award_points(
+            user_id=current_user["user_id"],
+            event_type="booking",
+            points_override=booking_record["points_earned"],
+            reason=f"Reservation at {venue['name']}",
+            venue_id=venue.get("id"),
         )
+        booking_record["points_earned"] = _r["points_awarded"]
     else:
         booking_record["points_earned"] = 0
 
@@ -452,10 +462,15 @@ async def add_to_guestlist(request: Request, guestlist: GuestlistRequest):
 
     from utils.points_guard import can_earn_points
     if await can_earn_points(current_user["user_id"]):
-        await db.users.update_one(
-            {"user_id": current_user["user_id"]},
-            {"$inc": {"points_balance": guestlist_record["points_earned"]}},
+        from services.points_service import award_points as _award_points
+        _r = await _award_points(
+            user_id=current_user["user_id"],
+            event_type="guestlist",
+            points_override=guestlist_record["points_earned"],
+            reason=f"Guestlist at {venue['name']}{' (VIP booth)' if guestlist.vip_booth else ''}",
+            venue_id=venue.get("id"),
         )
+        guestlist_record["points_earned"] = _r["points_awarded"]
     else:
         guestlist_record["points_earned"] = 0
 
