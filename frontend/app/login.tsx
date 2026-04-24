@@ -195,6 +195,14 @@ export default function LoginScreen() {
             Alert.alert('🎉 Welcome Bonus!', result.referral_bonus);
           }, 500);
         }
+
+        // Route new users through the CherryHub link step before dropping them
+        // into the app. Points from in-venue purchases won't land without this.
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        router.replace('/cherryhub?from=signup');
+        return;
       }
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

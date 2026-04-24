@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
 
 const colors = {
@@ -39,6 +39,8 @@ interface PointsResp {
 
 export default function CherryHubScreen() {
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const fromSignup = from === 'signup';
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const BACKEND = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -77,8 +79,20 @@ export default function CherryHubScreen() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        Alert.alert('Linked', `CherryHub account linked\nMember key: ${data.member_key}`);
-        await fetchData();
+        const msg = data.new_account
+          ? `New CherryHub account created. In-venue points will start earning as soon as Luna staff finishes setting up your POS profile.`
+          : `Your CherryHub account is now linked.\nMember key: ${data.member_key}`;
+        Alert.alert('You\'re all set', msg, [{
+          text: fromSignup ? 'Continue to app' : 'Done',
+          onPress: () => {
+            if (fromSignup) {
+              router.replace('/(tabs)');
+            } else {
+              fetchData();
+            }
+          },
+        }]);
+        if (!fromSignup) await fetchData();
       } else {
         Alert.alert('Link failed', data.detail || 'Could not link CherryHub account');
       }
@@ -87,6 +101,17 @@ export default function CherryHubScreen() {
     } finally {
       setLinking(false);
     }
+  };
+
+  const handleSkip = () => {
+    Alert.alert(
+      'Skip loyalty linking?',
+      'You can link anytime in Wallet. Without a CherryHub link, in-venue purchases won\'t earn points on this account.',
+      [
+        { text: 'Go back', style: 'cancel' },
+        { text: 'Skip for now', style: 'destructive', onPress: () => router.replace('/(tabs)') },
+      ],
+    );
   };
 
   if (loading) {
@@ -105,14 +130,20 @@ export default function CherryHubScreen() {
       contentContainerStyle={{ padding: 20, paddingTop: 60 }}
       refreshControl={<RefreshControl refreshing={false} onRefresh={fetchData} tintColor={colors.gold} />}
     >
-      <TouchableOpacity onPress={() => router.back()} style={styles.back} data-testid="cherryhub-back">
-        <Icon name="chevron-back" size={24} color={colors.text} />
-        <Text style={styles.backText}>Back</Text>
-      </TouchableOpacity>
+      {!fromSignup && (
+        <TouchableOpacity onPress={() => router.back()} style={styles.back} data-testid="cherryhub-back">
+          <Icon name="chevron-back" size={24} color={colors.text} />
+          <Text style={styles.backText}>Back</Text>
+        </TouchableOpacity>
+      )}
 
-      <Text style={styles.title}>CherryHub Membership</Text>
+      <Text style={styles.title}>
+        {fromSignup ? 'One last step' : 'CherryHub Membership'}
+      </Text>
       <Text style={styles.subtitle}>
-        Your in-store loyalty profile. Points earned in the app are mirrored to your CherryHub member card.
+        {fromSignup
+          ? 'Link your Luna account to CherryHub so every drink, booth, and cover charge at the bar earns you points automatically.'
+          : 'Your CherryHub card is the bridge between the app and our POS system. Points earned in-venue land on this card instantly.'}
       </Text>
 
       <View style={styles.card} data-testid="cherryhub-status-card">
@@ -172,39 +203,67 @@ export default function CherryHubScreen() {
       )}
 
       {!linked ? (
-        <TouchableOpacity
-          style={styles.linkBtn}
-          onPress={handleLink}
-          disabled={linking}
-          data-testid="cherryhub-link-btn"
-        >
-          <LinearGradient colors={[colors.cherry, '#9C1029']} style={styles.linkBtnInner}>
-            {linking ? (
-              <ActivityIndicator color={colors.text} />
-            ) : (
-              <>
-                <Icon name="link" size={18} color={colors.text} />
-                <Text style={styles.linkBtnText}>Link CherryHub Account</Text>
-              </>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity
+            style={styles.linkBtn}
+            onPress={handleLink}
+            disabled={linking}
+            data-testid="cherryhub-link-btn"
+          >
+            <LinearGradient colors={[colors.cherry, '#9C1029']} style={styles.linkBtnInner}>
+              {linking ? (
+                <ActivityIndicator color={colors.text} />
+              ) : (
+                <>
+                  <Icon name="link" size={18} color={colors.text} />
+                  <Text style={styles.linkBtnText}>
+                    {fromSignup ? 'Link or create CherryHub account' : 'Link CherryHub Account'}
+                  </Text>
+                </>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+          {fromSignup && (
+            <TouchableOpacity
+              onPress={handleSkip}
+              disabled={linking}
+              style={styles.skipBtn}
+              data-testid="cherryhub-skip-btn"
+            >
+              <Text style={styles.skipText}>Skip for now</Text>
+            </TouchableOpacity>
+          )}
+        </>
       ) : (
-        <Text style={styles.footerHint}>
-          Your CherryHub member card is active. In-store staff can look you up with your member key above.
-        </Text>
+        <>
+          <Text style={styles.footerHint}>
+            Your CherryHub member card is active. Show the QR code at the bar — staff will scan it and your points will update in real time.
+          </Text>
+          {fromSignup && (
+            <TouchableOpacity
+              style={styles.linkBtn}
+              onPress={() => router.replace('/(tabs)')}
+              data-testid="cherryhub-continue-btn"
+            >
+              <LinearGradient colors={[colors.cherry, '#9C1029']} style={styles.linkBtnInner}>
+                <Icon name="arrow-forward" size={18} color={colors.text} />
+                <Text style={styles.linkBtnText}>Continue to app</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+        </>
       )}
 
       <View style={styles.helpBlock}>
         <Text style={styles.helpTitle}>How it works</Text>
         <Text style={styles.helpText}>
-          • Points you earn in the Luna app (bookings, missions, auctions, birthday bonuses) live in Luna.
+          • Every in-venue purchase on SwiftPOS earns points automatically — show your CherryHub QR at the bar when you pay.
         </Text>
         <Text style={styles.helpText}>
-          • When you tap your card in-store, CherryHub pulls your live Luna balance.
+          • Missions and in-app rewards also push through as POS transactions so they count the same way.
         </Text>
         <Text style={styles.helpText}>
-          • In-store redemptions logged in CherryHub are mirrored back into Luna so your balance stays accurate everywhere.
+          • Pull down on the wallet screen to force a live balance refresh from the POS system.
         </Text>
       </View>
     </ScrollView>
@@ -248,7 +307,9 @@ const styles = StyleSheet.create({
     gap: 10, paddingVertical: 16,
   },
   linkBtnText: { color: colors.text, fontSize: 16, fontWeight: '600' },
-  footerHint: { color: colors.textMuted, fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 8 },
+  skipBtn: { marginTop: 14, alignSelf: 'center', padding: 10 },
+  skipText: { color: colors.textMuted, fontSize: 14, textDecorationLine: 'underline' },
+  footerHint: { color: colors.textMuted, fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 8, marginBottom: 16 },
   helpBlock: { marginTop: 28, padding: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 12 },
   helpTitle: { color: colors.text, fontSize: 14, fontWeight: '700', marginBottom: 10 },
   helpText: { color: colors.textMuted, fontSize: 13, lineHeight: 20, marginBottom: 6 },

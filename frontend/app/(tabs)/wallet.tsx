@@ -144,6 +144,9 @@ export default function WalletScreen() {
   // Points & Subscription state
   const [pointsData, setPointsData] = useState<any>(null);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  // CherryHub link + live-refresh state (Session 18)
+  const [pointsStatus, setPointsStatus] = useState<any>(null);
+  const [liveBalance, setLiveBalance] = useState<number | null>(null);
   // Leaderboard state
   const [leaderboardData, setLeaderboardData] = useState<any>(null);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
@@ -175,12 +178,13 @@ export default function WalletScreen() {
     }
     
     try {
-      const [ticketsData, eventsData, pointsRes, subRes, entryRes] = await Promise.all([
+      const [ticketsData, eventsData, pointsRes, subRes, entryRes, statusRes] = await Promise.all([
         api.getTickets().catch(() => null),
         api.getEvents(),
         api.getPointsBalance().catch(() => null),
         api.getMySubscription().catch(() => null),
         api.getMyEntryTickets().catch(() => null),
+        api.getPointsStatus().catch(() => null),
       ]);
       // Show only active + scheduled in the wallet preview (user wants actionable tickets)
       const visible = (entryRes?.tickets || []).filter((t: any) =>
@@ -198,6 +202,18 @@ export default function WalletScreen() {
       setEvents(eventsData || []);
       setPointsData(pointsRes);
       setSubscriptionData(subRes);
+      setPointsStatus(statusRes);
+
+      // On pull-to-refresh AND if the user is linked to CherryHub, force a
+      // real-time refresh from SwiftPOS via CherryHub. Non-blocking — we just
+      // update the live balance once it comes back.
+      if (forceRefresh && statusRes?.linked) {
+        api.refreshMyBalance()
+          .then((r) => {
+            if (r?.success && typeof r.balance === 'number') setLiveBalance(r.balance);
+          })
+          .catch(() => { /* silent */ });
+      }
       
       // Fetch leaderboard data
       let leaderboard: any[] = [];
@@ -434,6 +450,73 @@ export default function WalletScreen() {
           description="Your tickets, passes & rewards"
           showPoints={false} 
         />
+
+        {/* Link-CherryHub banner — shown only if user is NOT linked to CherryHub yet.
+            In-venue points (POS purchases) won't land on this account until linked. */}
+        {pointsStatus && !pointsStatus.linked && (
+          <TouchableOpacity
+            data-testid="wallet-link-cherryhub-banner"
+            onPress={() => router.push('/cherryhub')}
+            activeOpacity={0.85}
+            style={{
+              marginHorizontal: 16,
+              marginBottom: 14,
+              borderRadius: 14,
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: '#D4163D66',
+            }}
+          >
+            <LinearGradient
+              colors={['#2a0b14', '#140608']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+            >
+              <View style={{
+                width: 36, height: 36, borderRadius: 18,
+                backgroundColor: '#D4163D22', borderWidth: 1, borderColor: '#D4163D66',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Icon name="card" size={18} color="#D4163D" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>
+                  Link your loyalty card
+                </Text>
+                <Text style={{ color: '#9CA3AF', fontSize: 11, marginTop: 2, lineHeight: 15 }}>
+                  Every in-venue purchase earns points — but only when your account is linked. Takes 5 seconds.
+                </Text>
+              </View>
+              <Icon name="chevron-forward" size={18} color="#D4163D" />
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+
+        {/* Pending SwiftPOS dispatches banner — shown when the user has points
+            earned in-app but not yet synced to SwiftPOS (e.g. linked-pending) */}
+        {pointsStatus?.linked && pointsStatus?.pending_swiftpos_dispatches > 0 && (
+          <View
+            data-testid="wallet-pending-dispatch-banner"
+            style={{
+              marginHorizontal: 16,
+              marginBottom: 14,
+              padding: 12,
+              borderRadius: 12,
+              backgroundColor: '#1a1606',
+              borderWidth: 1,
+              borderColor: '#D4AF3740',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <Icon name="time-outline" size={16} color="#D4AF37" />
+            <Text style={{ color: '#9CA3AF', fontSize: 11, flex: 1, lineHeight: 15 }}>
+              {pointsStatus.pending_swiftpos_dispatches} reward{pointsStatus.pending_swiftpos_dispatches === 1 ? '' : 's'} waiting to sync to POS. They'll appear in-venue once staff finishes linking.
+            </Text>
+          </View>
+        )}
 
         {/* Leaderboard Section - Fun Scoreboard Style */}
         <View style={styles.leaderboardSection}>

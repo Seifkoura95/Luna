@@ -562,6 +562,29 @@ export const api = {
       recent_transactions: any[];
       points_per_dollar: number;
     }>('/api/points/balance'),
+
+  // New in Session 18: force-refresh balance from CherryHub (→ real-time SwiftPOS read)
+  refreshMyBalance: () =>
+    apiFetch<{
+      success: boolean;
+      balance?: number;
+      reason?: string;
+      message?: string;
+      local_balance?: number;
+      refreshed_at?: string;
+      source?: string;
+    }>('/api/points/my-balance'),
+
+  getPointsStatus: () =>
+    apiFetch<{
+      linked: boolean;
+      member_key?: string;
+      swiftpos_customer_id?: string;
+      local_balance: number;
+      last_refreshed_at?: string;
+      pending_swiftpos_dispatches: number;
+      swiftpos_mock_mode: boolean;
+    }>('/api/points/status'),
   
   getPointsHistory: (limit: number = 50) =>
     apiFetch<{
