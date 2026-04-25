@@ -1000,3 +1000,40 @@ Covers:
 - Regenerator script: `/app/tools/generate_api_master.py` (re-run any time code changes)
 
 **Use case:** Paste into Lovable / a partner dev / CherryHub / SwiftPOS contractors so they have one authoritative reference to integrate against.
+
+## Latest Update (cont'd): Apr 25, 2026 — Stripe Webhook Pipeline + Lovable Payments Diagnostics
+
+**Critical bug fix:** Stripe webhook route was incorrectly declared as `/api/webhook/stripe` AND wrapped by the `/api` parent prefix, resulting in URL `/api/api/webhook/stripe`. Any Stripe webhook configured at the documented URL would have silently 404'd. Fixed → now correctly at `/api/webhook/stripe`.
+
+**New backend routes** (`routes/admin_payments.py`):
+- `GET /api/admin/payments/health` — Stripe pipeline KPI dashboard (mode, key/secret config status, 24h/7d transaction stats, webhook events received, failure counts, last success/failure)
+- `GET /api/admin/payments/webhook-failures?limit=&skip=` — paginated failure log
+- `POST /api/admin/payments/simulate-webhook?event_type=&session_id=` — fires synthetic webhook through the handler (creates self-cleaning `is_simulation=true` row if no session_id given)
+- `POST /api/admin/payments/cleanup-simulations` — tears down test rows
+
+**Webhook failure alerter** (`routes/webhook.py`):
+- Every exception persists to `payment_webhook_failures` (timestamp, reason, signature prefix, body excerpt)
+- 2+ failures in 5-min rolling window → email alert to all admins via Resend
+- 30-min cooldown atomic per `alert_state` collection (prevents alert storms)
+- **Verified live:** forced 3 failures → 1 alert email delivered to admin@lunagroup.com.au, 3rd failure correctly suppressed.
+
+**New Lovable component** (`/app/LUNA_PAYMENTS_DIAGNOSTICS_LOVABLE.tsx`, 320 lines):
+- Live status pills: stripe mode, API key configured, webhook secret configured, 24h failure count
+- KPI cards: 24h tx total/paid/pending, 7d tx, 24h webhook events, 24h/7d failures
+- Endpoint URL card with redacted creds + last success/failure events
+- Synthetic webhook simulator (event type dropdown + optional session_id input + Fire button)
+- Cleanup-simulations button
+- Failures table at bottom with auto-load
+
+**Master Lovable prompt updated** (`/app/LUNA_LOVABLE_MASTER_PROMPT.md` → 3,762 lines, 148 KB):
+- Now 6 components total (added Payments)
+- Sidebar, App.tsx routes, verification checklist all updated
+- Single paste-ready document for Lovable AI
+
+**SwiftPOS / launch-blocker status:** Still waiting on Customer Ref / Client ID / Clerk ID / Clerk Password.
+
+**Action items for user:**
+- Add to Railway env: `STRIPE_WEBHOOK_SECRET=whsec_...`, `QR_SECRET=<32-char random>`, `SWIFTPOS_INTEGRATOR_KEY` (copy from local .env), `SWIFTPOS_INTEGRATOR_NAME`, `SWIFTPOS_MOCK_MODE=true`, `POINTS_LEGACY_DIRECT_MONGO=true`, `EVENTFINDA_USERNAME/PASSWORD`, `PUBLIC_BASE_URL`
+- Remove from Railway: `VITE_LUNA_API_URL` (frontend env, not backend)
+- Configure Stripe webhook in dashboard pointing at `/api/webhook/stripe` (not `/api/api/webhook/stripe`)
+- Rotate exposed keys: JWT_SECRET, MongoDB password, Resend, Stripe live key, CherryHub refresh token, Google service account, LUNA_HUB_API_KEY
