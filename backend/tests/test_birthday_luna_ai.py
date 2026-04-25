@@ -9,7 +9,7 @@ import requests
 import os
 from datetime import datetime, timedelta
 
-BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://birthday-rewards-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://luna-mobile-stage.preview.emergentagent.com')
 
 # Test credentials from previous test reports
 TEST_USER_EMAIL = "luna@test.com"

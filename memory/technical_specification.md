@@ -1943,7 +1943,7 @@ The API uses Expo's push notification service for real-time alerts.
 
 ### Base API URL
 ```
-Production: https://birthday-rewards-1.preview.emergentagent.com/api
+Production: https://luna-mobile-stage.preview.emergentagent.com/api
 ```
 
 ### Required Environment Variables

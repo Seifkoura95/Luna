@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://birthday-rewards-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://luna-mobile-stage.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "luna@test.com"
@@ -102,7 +102,7 @@ class TestGiftCardCheckout:
         response = requests.post(
             f"{BASE_URL}/api/payments/gift-card/checkout",
             headers={"Authorization": f"Bearer {auth_token}"},
-            json={"amount": 25, "origin_url": "https://birthday-rewards-1.preview.emergentagent.com"}
+            json={"amount": 25, "origin_url": "https://luna-mobile-stage.preview.emergentagent.com"}
         )
         assert response.status_code == 200
         data = response.json()

@@ -17,7 +17,7 @@ import requests
 
 BASE_URL = os.environ.get(
     "EXPO_PUBLIC_BACKEND_URL",
-    "https://birthday-rewards-1.preview.emergentagent.com",
+    "https://luna-mobile-stage.preview.emergentagent.com",
 ).rstrip("/")
 
 HUB_KEY = "luna_hub_live_682fbaaa19a6a4594f58618b803531ee6fad8016"

@@ -640,7 +640,7 @@ async def generate_google_wallet_link(request: Request):
             "reviewStatus": "UNDER_REVIEW",
             "programName": "LUNA",
             "programLogo": {
-                "sourceUri": {"uri": "https://birthday-rewards-1.preview.emergentagent.com/api/loyalty/member-card/qr.png"},
+                "sourceUri": {"uri": "https://luna-mobile-stage.preview.emergentagent.com/api/loyalty/member-card/qr.png"},
                 "contentDescription": {"defaultValue": {"language": "en-AU", "value": "Luna Group"}}
             },
             "hexBackgroundColor": "#0C0C18",
@@ -674,7 +674,7 @@ async def generate_google_wallet_link(request: Request):
         claims = {
             "iss": sa_info["client_email"],
             "aud": "google",
-            "origins": ["https://birthday-rewards-1.preview.emergentagent.com"],
+            "origins": ["https://luna-mobile-stage.preview.emergentagent.com"],
             "typ": "savetowallet",
             "payload": {
                 "loyaltyClasses": [loyalty_class],

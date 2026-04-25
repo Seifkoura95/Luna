@@ -17,7 +17,7 @@ import time
 import pytest
 import requests
 
-BASE_URL = os.environ.get("EXPO_PUBLIC_BACKEND_URL", "https://birthday-rewards-1.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("EXPO_PUBLIC_BACKEND_URL", "https://luna-mobile-stage.preview.emergentagent.com").rstrip("/")
 API = f"{BASE_URL}/api"
 
 DEV_EMAIL = "luna@test.com"
@@ -72,7 +72,7 @@ def new_user(s):
 
 def _h(token):
     return {"Authorization": f"Bearer {token}", "Content-Type": "application/json",
-            "origin": "https://birthday-rewards-1.preview.emergentagent.com"}
+            "origin": "https://luna-mobile-stage.preview.emergentagent.com"}
 
 
 # ── P0: Paid subscription for NEW user must require Stripe ──────────────────

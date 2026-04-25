@@ -3,7 +3,7 @@ Luna Group VIP role system + admin user CRUD + points gifting + free-entry ticke
 gifting + staff QR validation + earn-guard regression.
 
 Iteration 35 — incremental addition on top of iteration 34 (Lovable Hub CRUD).
-External preview URL: https://birthday-rewards-1.preview.emergentagent.com
+External preview URL: https://luna-mobile-stage.preview.emergentagent.com
 """
 import os
 import time
@@ -14,7 +14,7 @@ from datetime import datetime, timezone, timedelta
 
 BASE_URL = os.environ.get(
     "EXPO_PUBLIC_BACKEND_URL",
-    "https://birthday-rewards-1.preview.emergentagent.com",
+    "https://luna-mobile-stage.preview.emergentagent.com",
 ).rstrip("/")
 
 HUB_KEY = "luna_hub_live_682fbaaa19a6a4594f58618b803531ee6fad8016"

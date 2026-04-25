@@ -87,7 +87,7 @@ class TestPaymentsCheckout:
             headers={"Authorization": f"Bearer {auth_token}"},
             json={
                 "package_id": "points_500",
-                "origin_url": "https://birthday-rewards-1.preview.emergentagent.com"
+                "origin_url": "https://luna-mobile-stage.preview.emergentagent.com"
             }
         )
         
@@ -142,7 +142,7 @@ class TestPaymentStatus:
             headers={"Authorization": f"Bearer {auth_token}"},
             json={
                 "package_id": "points_500",
-                "origin_url": "https://birthday-rewards-1.preview.emergentagent.com"
+                "origin_url": "https://luna-mobile-stage.preview.emergentagent.com"
             }
         )
         if response.status_code == 200:

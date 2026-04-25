@@ -18,7 +18,7 @@ import os
 import uuid
 from datetime import datetime
 
-BASE_URL = os.environ.get("EXPO_PUBLIC_BACKEND_URL", "https://birthday-rewards-1.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("EXPO_PUBLIC_BACKEND_URL", "https://luna-mobile-stage.preview.emergentagent.com").rstrip("/")
 
 # Test credentials from test_credentials.md
 ADMIN_EMAIL = "admin@lunagroup.com.au"

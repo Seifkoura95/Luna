@@ -21,7 +21,7 @@
 
 ## ⚠️ ONE CRITICAL BLOCKER YOU MUST DECIDE ON
 
-**`EXPO_PUBLIC_BACKEND_URL` is currently set to `https://birthday-rewards-1.preview.emergentagent.com`** — this is the Emergent **preview** environment. A production iOS app CANNOT ship pointing at a preview URL because:
+**`EXPO_PUBLIC_BACKEND_URL` is currently set to `https://luna-mobile-stage.preview.emergentagent.com`** — this is the Emergent **preview** environment. A production iOS app CANNOT ship pointing at a preview URL because:
 
 1. Preview URLs can be recycled/shut down
 2. Apple reviewers will reject if the backend becomes unreachable

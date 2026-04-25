@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 import { setToken, setUser } from '../utils/auth';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://birthday-rewards-1.preview.emergentagent.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://luna-mobile-stage.preview.emergentagent.com/api';
 
 interface LoginProps {
   onLogin: () => void;

@@ -11,7 +11,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://birthday-rewards-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://luna-mobile-stage.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "luna@test.com"
@@ -54,7 +54,7 @@ class TestSendGiftCardAPI:
             headers={"Authorization": f"Bearer {auth_token}"},
             json={
                 "amount": 25,
-                "origin_url": "https://birthday-rewards-1.preview.emergentagent.com",
+                "origin_url": "https://luna-mobile-stage.preview.emergentagent.com",
                 "recipient_email": "newfriend@example.com",
                 "sender_message": "Happy Birthday!"
             }
@@ -78,7 +78,7 @@ class TestSendGiftCardAPI:
             headers={"Authorization": f"Bearer {auth_token}"},
             json={
                 "amount": 50,
-                "origin_url": "https://birthday-rewards-1.preview.emergentagent.com",
+                "origin_url": "https://luna-mobile-stage.preview.emergentagent.com",
                 "recipient_email": "friend2@example.com"
             }
         )

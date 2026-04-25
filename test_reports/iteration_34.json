@@ -30,5 +30,5 @@
   "retest_needed": false,
   "main_agent_can_self_test": true,
   "context_for_next_testing_agent": "All 31 tests in /app/backend/tests/test_luna_hub_admin_crud.py pass. The file is idempotent — session fixture cleans up. If a future session leaves milestones_custom populated, run: for mid in vip_status luna_elite supernova newbie rising_star legend; do curl -X DELETE -H 'X-Luna-Hub-Key: luna_hub_live_...' $BASE/api/admin/milestones/$mid; done. Eclipse is the only venue with a full bottle catalog (20 items). Public endpoints /api/missions and /api/rewards return 200 (not auth-protected).",
-  "rca of the issue": "No bugs found — all 31 acceptance checks (6 public-config + auth, 2 app-config PUT, 6 milestones CRUD, 5 bottle overrides, 6 venue overrides, 4 admin regression, 4 public regression) passed on first run against the live preview URL https://birthday-rewards-1.preview.emergentagent.com."
+  "rca of the issue": "No bugs found — all 31 acceptance checks (6 public-config + auth, 2 app-config PUT, 6 milestones CRUD, 5 bottle overrides, 6 venue overrides, 4 admin regression, 4 public regression) passed on first run against the live preview URL https://luna-mobile-stage.preview.emergentagent.com."
 }
