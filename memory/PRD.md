@@ -970,3 +970,18 @@ Implementation:
 - Verified all 6 endpoints return 200 with real prod data (103 users, 5 linked, 7 transactions, mock_mode=true, creds not configured).
 
 **Still blocked on:** SwiftPOS live credentials (Customer ref, Client ID, Clerk ID) to flip `SWIFTPOS_MOCK_MODE=false`.
+
+## Latest Update: Apr 25, 2026 — Lovable Admin Portal Master Prompt
+
+**New file:** `/app/LUNA_LOVABLE_MASTER_PROMPT.md` (3,349 lines, 130 KB)
+
+Consolidates all 5 Lovable admin components into a single paste-ready Markdown document:
+- CherryHubAdmin (273 lines) — poller stats + force sync + test award
+- LunaSafetyAlerts (567 lines) — SOS alerts triage
+- LunaPushBroadcasts (770 lines) — push notifications CRUD + scheduling
+- LunaAuctionEditor (514 lines) — auction create/edit + image upload
+- LunaSwiftPOSReporting (785 lines) — SwiftPOS pipeline monitoring (4 tabs + retry)
+
+Plus: setup instructions, `.env` contract, auth pattern, suggested sidebar, login page, and App.tsx router wiring. All 9 canonical Luna venues baked in. User can paste entire document into Lovable AI to generate the full portal in one shot.
+
+**Original 5 separate .tsx files remain in place at /app/ for reference / granular edits.**
