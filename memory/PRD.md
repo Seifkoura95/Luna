@@ -985,3 +985,18 @@ Consolidates all 5 Lovable admin components into a single paste-ready Markdown d
 Plus: setup instructions, `.env` contract, auth pattern, suggested sidebar, login page, and App.tsx router wiring. All 9 canonical Luna venues baked in. User can paste entire document into Lovable AI to generate the full portal in one shot.
 
 **Original 5 separate .tsx files remain in place at /app/ for reference / granular edits.**
+
+## Latest Update (cont'd): Apr 25, 2026 — Master API Reference
+
+**New file:** `/app/LUNA_API_MASTER_REFERENCE.md` (4,556 lines, 125 KB)
+
+Auto-generated from live FastAPI `/openapi.json` — single comprehensive source of truth for every API the Luna backend exposes. Replaces the stale `LUNA_API_SPECIFICATION.md` (Feb 2025).
+
+Covers:
+- **404 endpoints** across **51 tags** — every route on prod today (auth, venues, events, missions, rewards, points, bookings, subs, referrals, tickets, birthday, boosts, milestones, stories, social, crews, friends, auctions, leaderboard, campaigns, promo, vouchers, photos, notifications, push broadcasts, location, geofences, safety, luna loyalty, cherryhub, perks, payments, AI, churn, scheduled jobs, webhooks, venue admin auctions/users/dashboard, global admin, admin safety, admin swiftpos)
+- **109 data models** — top 40 fully tabulated with field name / type / required / notes
+- Auth model, role matrix, response conventions, error shape, feature flags
+- Tag-level blurbs explaining each domain in context
+- Regenerator script: `/app/tools/generate_api_master.py` (re-run any time code changes)
+
+**Use case:** Paste into Lovable / a partner dev / CherryHub / SwiftPOS contractors so they have one authoritative reference to integrate against.
