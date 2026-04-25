@@ -36,6 +36,7 @@ You are building the **Luna Group admin portal** — an internal tool for Luna's
    | `/broadcasts` | `LunaPushBroadcasts` | Push notifications CRUD |
    | `/auctions/new` & `/auctions/:id` | `LunaAuctionEditor` | Auction create / edit |
    | `/swiftpos` | `LunaSwiftPOSReporting` | SwiftPOS integration health |
+   | `/payments` | `LunaPaymentsDiagnostics` | Stripe webhook health + simulator |
 
 4. **Navigation shell** — create a simple left-rail sidebar with these 5 links + a sign-out button. No fancy framework required.
 
