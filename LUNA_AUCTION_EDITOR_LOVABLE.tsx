@@ -35,9 +35,13 @@ const API_BASE =
 const LUNA_VENUES = [
   { id: "eclipse", label: "Eclipse" },
   { id: "after_dark", label: "After Dark" },
-  { id: "lola_lo", label: "Lola Lo" },
-  { id: "mr_percivals", label: "Mr Percival's" },
-  { id: "lucky_fox", label: "Lucky Fox" },
+  { id: "su_casa_brisbane", label: "Su Casa Brisbane" },
+  { id: "su_casa_gold_coast", label: "Su Casa Gold Coast" },
+  { id: "juju", label: "JuJu Mermaid Beach" },
+  { id: "night_market", label: "Night Market" },
+  { id: "ember_and_ash", label: "Ember & Ash" },
+  { id: "pump", label: "Pump" },
+  { id: "mamacita", label: "Mamacita" },
 ];
 
 const AUCTION_CATEGORIES = [
