@@ -309,6 +309,33 @@ The portal recognises **5 QR prefixes**. Match the prefix to know what's about t
 3. If yes → confirm with member, end of dispute.
 4. If no → ask manager to check **Lovable Payment Diagnostics** (`/api/admin/payments/health`) and **SwiftPOS Reporting** (`/api/admin/swiftpos/summary`) — could be a webhook delay (max 5 min in normal operation).
 
+### 7.5 Missions & Milestones (NEW — April 2026)
+
+The app now has **two ways** for members to earn bonus points on top of regular spend:
+
+**Missions** — short-term goals (daily/weekly/special). Examples:
+- *"Spend $200 on drinks at Eclipse this weekend"* → 600 bonus pts
+- *"Visit 3 Luna venues this month"* → 750 bonus pts
+- *"Refer a friend"* → 1,000 bonus pts when they sign up
+- *"Share a story to Instagram"* → 50 pts
+
+**Milestones** — lifetime achievements unlocked by total points. Examples:
+- *Rising Star* (500 pts) → 5 free drink QRs
+- *VIP Status* (1,000 pts) → 10 drinks + 4 free entries
+- *Legend* (25,000 pts) → 3-month Gold + booth + bottle + 50 drinks + 10 giftable entries
+
+**What staff need to know:**
+
+1. **Missions auto-progress.** Every time you Quick-Award points in the Staff Portal, the system automatically checks if that purchase satisfies any of the member's active missions and advances them. **You don't do anything extra** — just award normally.
+
+2. **Members may ask: *"did this count toward my mission?"*** Answer: yes, automatically. They can verify by opening Profile → Missions in the app — the progress bar updates within seconds.
+
+3. **Mission completion notifications** fire as a push notification ("Mission complete! +600 pts"). Members must tap **Claim** in-app to actually receive the points. Not your responsibility — but if they ask why their balance hasn't jumped, point them to Profile → Missions.
+
+4. **Milestone QRs are real and single-use.** When a member hits a milestone (e.g. 1,000 pts → VIP Status), they tap Claim in-app and receive multiple `LUNA-TKT-…` QR codes (one per reward). These are **HMAC-signed** by the server — a forged QR will fail validation. After scanning, the QR is destroyed; it cannot be reused.
+
+5. **Manager-only:** the Lovable admin portal now has a **"Test trigger"** button next to every mission. Managers can fire a synthetic event against their own account to verify a mission is wired correctly before going live. Activity timeline shows every progression event with the staff member who awarded the points. Ask your manager for a walkthrough if you want to see it.
+
 ---
 
 ## 8. TIER SYSTEM & SUBSCRIPTIONS

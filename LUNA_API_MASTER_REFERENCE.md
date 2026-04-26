@@ -1,6 +1,6 @@
 # Luna Group VIP API — Master Reference
 
-**Generated:** 2026-04-25 · **Endpoints:** 404 · **Tags:** 51 · **Schemas:** 109
+**Generated:** 2026-04-26 · **Endpoints:** 414 · **Tags:** 52 · **Schemas:** 110
 
 **Production base URL:** `https://luna-production-889c.up.railway.app/api`  
 **Local dev base URL:** `http://localhost:8001/api`  
@@ -98,10 +98,11 @@ Standard HTTP codes: `400` validation, `401` no/bad auth, `403` wrong role, `404
 - [Venue Admin — Auctions](#venue-admin-auctions) — 9 endpoints
 - [Venue Admin — Users](#venue-admin-users) — 4 endpoints
 - [Venue Dashboard](#venue-dashboard) — 8 endpoints
-- [admin](#admin) — 58 endpoints
+- [admin](#admin) — 64 endpoints
 - [admin-safety](#admin-safety) — 5 endpoints
 - [admin-swiftpos](#admin-swiftpos) — 6 endpoints
 - [Misc](#misc) — 3 endpoints
+- [admin-payments](#admin-payments) — 4 endpoints
 - [Data models (schemas)](#data-models-schemas)
 
 ---
@@ -521,7 +522,12 @@ Get missions with user progress
   - `422` → `HTTPValidationError` — Validation Error
 
 ### `POST /api/missions/progress` — Update Mission Progress
-Update progress on a mission
+DEPRECATED for end-users — admin-only.
+
+Real progress is now driven server-side via services.mission_events when
+verified actions happen (purchase, RSVP, bid, share, etc.). This endpoint
+is kept ONLY for admin testing / manual corrections, and rejects any
+non-admin caller.
 
 **Request body:**
 - Body (required): `application/json` → `MissionProgressRequest`
@@ -3406,8 +3412,8 @@ _Inbound webhooks (Stripe)._
 
 **Auth:** Not required.
 
-### `POST /api/api/webhook/stripe` — Stripe Webhook
-Handle Stripe webhook events
+### `POST /api/webhook/stripe` — Stripe Webhook
+Handle Stripe webhook events.
 
 **Responses:**
   - `200` →  — Successful Response
@@ -3732,11 +3738,34 @@ List milestones. Reads from db.milestones_custom, falls back to code defaults.
 **Responses:**
   - `200` →  — Successful Response
 
+### `GET /api/admin/mission-event-types` — List Mission Event Types
+Return supported mission event_type values + their filter schema, so the
+Lovable form can render a proper dropdown + dynamic filter inputs.
+
+**Responses:**
+  - `200` →  — Successful Response
+
 ### `GET /api/admin/missions` — List Missions
 List all missions (admin view)
 
 **Responses:**
   - `200` →  — Successful Response
+
+### `GET /api/admin/missions/activity` — Mission Activity Feed
+Activity timeline of mission progress events. Reads `mission_progress`
+sorted by updated_at desc. Supports filtering for the Lovable diagnostic
+panel (filter by user, mission, event_type, or only-completed).
+
+**Parameters:**
+- `user_id` (query, string/null, optional)
+- `mission_id` (query, string/null, optional)
+- `event_type` (query, string/null, optional)
+- `only_completed` (query, boolean, optional) — default `False`
+- `limit` (query, integer, optional) — default `100`
+
+**Responses:**
+  - `200` →  — Successful Response
+  - `422` → `HTTPValidationError` — Validation Error
 
 ### `GET /api/admin/push-messages` — List Push Messages
 List all custom venue push messages (from DB). Falls back to code defaults if empty.
@@ -3768,6 +3797,20 @@ List users with optional search (matches email or name, case-insensitive) and ro
 - `role` (query, string/null, optional)
 - `limit` (query, integer, optional) — default `50`
 - `skip` (query, integer, optional) — default `0`
+
+**Responses:**
+  - `200` →  — Successful Response
+  - `422` → `HTTPValidationError` — Validation Error
+
+### `GET /api/admin/users/push-coverage` — Push Token Coverage
+Diagnostic for the Lovable Push Coverage panel.
+
+Returns total user count, count of users with a registered push_token,
+coverage % (registered/total), and the most-recent N registrations so the
+admin can verify the EAS-rebuild rollout is reaching real devices.
+
+**Parameters:**
+- `limit` (query, integer, optional) — default `25`
 
 **Responses:**
   - `200` →  — Successful Response
@@ -3881,11 +3924,37 @@ Create/override a milestone. If it's the first write, seeds the collection with 
   - `200` →  — Successful Response
   - `422` → `HTTPValidationError` — Validation Error
 
+### `POST /api/admin/milestones/{milestone_id}/rewards` — Add Milestone Reward
+Append a single reward to a milestone (granular Lovable editor support).
+
+**Parameters:**
+- `milestone_id` (path, string, required)
+
+**Request body:**
+- Body (required): `application/json` → `MilestoneRewardItem`
+
+**Responses:**
+  - `200` →  — Successful Response
+  - `422` → `HTTPValidationError` — Validation Error
+
 ### `POST /api/admin/missions` — Create Mission
 Create a new mission
 
 **Request body:**
 - Body (required): `application/json` → `MissionCreate`
+
+**Responses:**
+  - `200` →  — Successful Response
+  - `422` → `HTTPValidationError` — Validation Error
+
+### `POST /api/admin/missions/test-fire` — Test Fire Mission Event
+Manually emit a mission event (admin-only) so Lovable can offer a
+"Test trigger" button next to a mission. Returns the list of missions
+that were progressed/completed by the synthetic event, plus the active
+progress doc for each so the dashboard can show the result.
+
+**Request body:**
+- Body (required): `application/json` → `MissionTestFireRequest`
 
 **Responses:**
   - `200` →  — Successful Response
@@ -4210,6 +4279,17 @@ Delete a milestone from the custom overrides.
   - `200` →  — Successful Response
   - `422` → `HTTPValidationError` — Validation Error
 
+### `DELETE /api/admin/milestones/{milestone_id}/rewards/{reward_id}` — Remove Milestone Reward
+Remove one reward from a milestone.
+
+**Parameters:**
+- `milestone_id` (path, string, required)
+- `reward_id` (path, string, required)
+
+**Responses:**
+  - `200` →  — Successful Response
+  - `422` → `HTTPValidationError` — Validation Error
+
 ### `DELETE /api/admin/missions/{mission_id}` — Delete Mission
 Delete a mission
 
@@ -4418,9 +4498,59 @@ Serve venue portal static files with SPA fallback
 
 ---
 
+## admin-payments
+
+**Auth:** Bearer JWT with role ∈ {admin, staff, manager} OR `X-Luna-Hub-Key` header (admin routes only).
+
+### `GET /api/admin/payments/health` — Payments Health
+Top-line health of the Stripe webhook pipeline.
+
+**Responses:**
+  - `200` →  — Successful Response
+
+### `GET /api/admin/payments/webhook-failures` — Webhook Failures
+Recent failed webhook deliveries — populated by webhook.py exception handler.
+
+**Parameters:**
+- `limit` (query, integer, optional) — default `50`
+- `skip` (query, integer, optional) — default `0`
+
+**Responses:**
+  - `200` →  — Successful Response
+  - `422` → `HTTPValidationError` — Validation Error
+
+### `POST /api/admin/payments/cleanup-simulations` — Cleanup Simulations
+Delete all `is_simulation=true` transactions created by /simulate-webhook.
+
+**Responses:**
+  - `200` →  — Successful Response
+
+### `POST /api/admin/payments/simulate-webhook` — Simulate Webhook
+Fire a synthetic webhook through our own handler.
+
+This bypasses Stripe entirely — useful for verifying that:
+  1. Auth + routing works
+  2. The Mongo update path runs cleanly
+  3. Downstream side-effects (booking confirmation, ticket issuance, subscription
+     activation) trigger as expected
+
+It does NOT verify Stripe signature signing — for that, use Stripe's
+"Send test webhook" button on the dashboard, which your live webhook URL will receive
+via signed HMAC and our handler will validate normally.
+
+**Parameters:**
+- `event_type` (query, string, optional) — default `checkout.session.completed`
+- `session_id` (query, string/null, optional) — If set, must match an existing payment_transactions row. If omitted a synthetic test session is created and torn down.
+
+**Responses:**
+  - `200` →  — Successful Response
+  - `422` → `HTTPValidationError` — Validation Error
+
+---
+
 ## Data models (schemas)
 
-_109 Pydantic models, auto-generated by FastAPI. Only the most-used are expanded — use `/openapi.json` for the full surface._
+_110 Pydantic models, auto-generated by FastAPI. Only the most-used are expanded — use `/openapi.json` for the full surface._
 
 ### `RegisterRequest`
 
