@@ -1299,6 +1299,43 @@ async def remove_milestone_reward(request: Request, milestone_id: str, reward_id
     return {"success": True, "message": f"Reward {reward_id} removed"}
 
 
+@router.get("/users/push-coverage")
+async def push_token_coverage(request: Request, limit: int = 25):
+    """
+    Diagnostic for the Lovable Push Coverage panel.
+
+    Returns total user count, count of users with a registered push_token,
+    coverage % (registered/total), and the most-recent N registrations so the
+    admin can verify the EAS-rebuild rollout is reaching real devices.
+    """
+    await require_admin(request)
+    limit = min(max(limit, 1), 200)
+
+    total = await db.users.count_documents({})
+    registered = await db.users.count_documents(
+        {"push_token": {"$exists": True, "$nin": [None, ""]}}
+    )
+
+    rows = await db.users.find(
+        {"push_token": {"$exists": True, "$nin": [None, ""]}},
+        {
+            "_id": 0, "user_id": 1, "email": 1, "name": 1,
+            "push_token": 1, "push_device_type": 1, "push_token_updated_at": 1,
+        },
+    ).sort("push_token_updated_at", -1).limit(limit).to_list(limit)
+
+    for r in rows:
+        t = r.pop("push_token", "") or ""
+        r["push_token_prefix"] = (t[:25] + "…") if t else None
+
+    return {
+        "total_users": total,
+        "registered_users": registered,
+        "coverage_pct": round((registered / total) * 100, 1) if total else 0,
+        "recent_registrations": rows,
+    }
+
+
 # ====== BOTTLE IMAGE OVERRIDES ======
 # Collection: db.bottle_overrides  — { bottle_id, image_url, updated_at }
 # The bottle menu endpoint (routes/bookings.py) merges these overrides when serving menus.
