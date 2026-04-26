@@ -274,7 +274,7 @@ add_text(s, "Facilitator Deck · 2-hour module", 0.7, 4.4, 12, 0.5,
          size=18, color=SOFT, align=PP_ALIGN.LEFT)
 add_text(s, "BRISBANE  ·  GOLD COAST", 0.7, 6.4, 12, 0.4,
          size=12, color=MUTED, align=PP_ALIGN.LEFT)
-add_text(s, "v1.0 · Feb 2026", 0.7, 6.8, 12, 0.4,
+add_text(s, "v1.1 · Apr 2026", 0.7, 6.8, 12, 0.4,
          size=10, color=MUTED, align=PP_ALIGN.LEFT)
 
 # ---------- Slide 2: Agenda ----------
@@ -553,6 +553,20 @@ add_bullets(s, [
     "Total earn multiplier = base tier × subscription bonus × active boost",
 ], 0.7, 2.2, 12, 5, size=18)
 footer_band(s, "Module 6 · Subs")
+
+# ── Missions & Milestones (April 2026 update) ────────────────────────
+s = add_blank_slide(); fill_bg(s, NAVY)
+header_band(s, "MODULE 6.5 · NEW", "Missions & Milestones — what changed")
+add_bullets(s, [
+    "MISSIONS auto-progress every time you Quick-Award. No extra steps.",
+    "Members see live progress in Profile → Missions",
+    "Mission complete? — push fires; member taps Claim to bank the points",
+    "MILESTONES are lifetime tiers — Newbie · Rising Star · VIP Status · Luna Elite · Supernova · Legend",
+    "Hitting a milestone unlocks signed LUNA-TKT- QRs (single-use, can't be forged)",
+    "Manager-only: Lovable now has a 'Test trigger' button + activity timeline",
+    "Common Q: \"did this count toward my mission?\" — Answer: yes, automatically",
+], 0.7, 2.2, 12, 5, size=17)
+footer_band(s, "Module 6.5 · Missions")
 
 # ---------- Module 7 — Safety ----------
 divider(7, "Safety / SOS\nWorkflow")
