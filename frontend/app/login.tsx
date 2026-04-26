@@ -496,22 +496,6 @@ export default function LoginScreen() {
                   </TouchableOpacity>
                 )}
 
-                {/* Perks Teaser */}
-                <View style={styles.perksTeaser}>
-                  <View style={styles.perkItem}>
-                    <View style={[styles.perkDot, { backgroundColor: '#D4AF5A' }]} />
-                    <Text style={styles.perkText}>Earn points at every venue</Text>
-                  </View>
-                  <View style={styles.perkItem}>
-                    <View style={[styles.perkDot, { backgroundColor: '#2563EB' }]} />
-                    <Text style={styles.perkText}>VIP tables, bottles, free entry</Text>
-                  </View>
-                  <View style={styles.perkItem}>
-                    <View style={[styles.perkDot, { backgroundColor: '#8B5CF6' }]} />
-                    <Text style={styles.perkText}>Plan nights with your crew</Text>
-                  </View>
-                </View>
-
                 {/* Footer Links */}
                 <View style={styles.footer}>
                   <Text style={styles.footerText}>
@@ -853,35 +837,13 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
   },
   footerText: {
     fontSize: 10,
     color: colors.textTertiary,
     textAlign: 'center',
     lineHeight: 16,
-  },
-  // Perks Teaser
-  perksTeaser: {
-    marginTop: spacing.lg,
-    gap: 10,
-    paddingHorizontal: 4,
-  },
-  perkItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  perkDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  perkText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: 'rgba(240, 240, 248, 0.50)',
-    letterSpacing: 0.3,
   },
   // Forgot Password Styles
   forgotPasswordLink: {
