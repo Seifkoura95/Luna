@@ -934,6 +934,32 @@ async def quick_award_points(request: Request, data: QuickAwardRequest):
 
     updated = await db.users.find_one({"user_id": data.user_id}, {"_id": 0, "points_balance": 1})
 
+    # Fire mission events server-side (verified spend → can't be cheated by client)
+    try:
+        from services.mission_events import emit_mission_event
+        await emit_mission_event(
+            user_id=data.user_id,
+            event_type="purchase_amount",
+            increment=int(data.amount_spent),
+            venue_id=data.venue_id,
+            category=data.category,
+        )
+        await emit_mission_event(
+            user_id=data.user_id,
+            event_type="purchase_count",
+            increment=1,
+            venue_id=data.venue_id,
+            category=data.category,
+        )
+        await emit_mission_event(
+            user_id=data.user_id,
+            event_type="venue_visit",
+            increment=1,
+            venue_id=data.venue_id,
+        )
+    except Exception:
+        logger.exception("mission_events emit failed (non-fatal)")
+
     return {
         "success": True,
         "transaction_id": txn_id,

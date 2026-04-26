@@ -261,7 +261,21 @@ async def rsvp_to_event(event_id: str, rsvp: EventRSVP, request: Request):
         "created_at": datetime.now(timezone.utc)
     }
     await db.rsvps.insert_one(rsvp_doc)
-    
+
+    # Mission events: event_rsvp (server-verified — RSVP doc just inserted)
+    if rsvp.status in ("going", "maybe", "yes"):
+        try:
+            event_doc = await db.events.find_one({"id": event_id}, {"_id": 0, "venue_id": 1})
+            from services.mission_events import emit_mission_event
+            await emit_mission_event(
+                user_id=current_user["user_id"],
+                event_type="event_rsvp",
+                increment=1,
+                venue_id=(event_doc or {}).get("venue_id"),
+            )
+        except Exception:
+            pass
+
     return {"message": "RSVP recorded", "status": rsvp.status}
 
 

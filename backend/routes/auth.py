@@ -66,7 +66,19 @@ async def complete_referral(referred_user_id: str):
     )
     
     logger.info(f"Referral completed: {referral['referrer_user_id']} earned {REFERRAL_POINTS_REWARD} points")
-    
+
+    # Mission events: referral_signup (server-verified — referral status just
+    # flipped to "completed" above). Fires for the REFERRER, not the new user.
+    try:
+        from services.mission_events import emit_mission_event
+        await emit_mission_event(
+            user_id=referral["referrer_user_id"],
+            event_type="referral_signup",
+            increment=1,
+        )
+    except Exception:
+        pass
+
     return referral
 
 

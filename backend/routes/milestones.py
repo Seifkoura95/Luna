@@ -201,7 +201,12 @@ async def claim_milestone(request: Request, milestone_id: str):
     auth = request.headers.get("authorization")
     current = get_current_user(auth)
 
-    milestone = next((m for m in MILESTONES if m["id"] == milestone_id), None)
+    # Prefer custom milestones (Lovable-managed) over the legacy hardcoded list
+    custom = await db.milestones_custom.find_one({"id": milestone_id}, {"_id": 0})
+    if custom:
+        milestone = custom
+    else:
+        milestone = next((m for m in MILESTONES if m["id"] == milestone_id), None)
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
 

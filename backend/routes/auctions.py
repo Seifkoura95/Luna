@@ -303,7 +303,19 @@ async def place_bid(request: Request, bid_request: PlaceBidRequest):
     
     # Notify watchlist users about bidding activity
     asyncio.create_task(notify_watchlist_users(bid_request.auction_id, final_bid_amount, final_winner_name))
-    
+
+    # Mission events: auction_bid (server-verified — bid was just persisted)
+    try:
+        from services.mission_events import emit_mission_event
+        await emit_mission_event(
+            user_id=user["user_id"],
+            event_type="auction_bid",
+            increment=1,
+            venue_id=auction.get("venue_id"),
+        )
+    except Exception:
+        pass
+
     updated_auction = await db.auctions.find_one({"id": bid_request.auction_id})
     
     return {

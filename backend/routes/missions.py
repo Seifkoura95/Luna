@@ -48,42 +48,61 @@ async def get_missions(request: Request, venue_id: Optional[str] = None):
 
 @router.post("/progress")
 async def update_mission_progress(request: Request, progress_req: MissionProgressRequest):
-    """Update progress on a mission"""
+    """
+    DEPRECATED for end-users — admin-only.
+
+    Real progress is now driven server-side via services.mission_events when
+    verified actions happen (purchase, RSVP, bid, share, etc.). This endpoint
+    is kept ONLY for admin testing / manual corrections, and rejects any
+    non-admin caller.
+    """
     auth_header = request.headers.get("authorization")
     current_user = get_current_user(auth_header)
-    
+
+    user_doc = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user_doc or user_doc.get("role") not in ("admin", "staff"):
+        raise HTTPException(
+            status_code=403,
+            detail="Mission progress is now server-driven. This endpoint is admin-only.",
+        )
+
+    target_user_id = progress_req.user_id or current_user["user_id"]
+
     mission = await db.missions.find_one({"id": progress_req.mission_id})
     if not mission:
         raise HTTPException(status_code=404, detail="Mission not found")
-    
+
     user_progress = await db.mission_progress.find_one({
-        "user_id": current_user["user_id"],
+        "user_id": target_user_id,
         "mission_id": progress_req.mission_id
     })
-    
+
     if user_progress and user_progress.get("completed"):
         return {"message": "Mission already completed", "progress": user_progress}
-    
+
     new_progress = (user_progress.get("progress", 0) if user_progress else 0) + progress_req.progress_increment
-    completed = new_progress >= mission.get("target", 1)
-    
+    target = mission.get("target") or mission.get("requirement_value") or mission.get("target_value") or 1
+    completed = new_progress >= target
+
     await db.mission_progress.update_one(
-        {"user_id": current_user["user_id"], "mission_id": progress_req.mission_id},
+        {"user_id": target_user_id, "mission_id": progress_req.mission_id},
         {"$set": {
-            "user_id": current_user["user_id"],
+            "user_id": target_user_id,
             "mission_id": progress_req.mission_id,
             "progress": new_progress,
             "completed": completed,
             "claimed": False,
-            "updated_at": datetime.now(timezone.utc)
+            "updated_at": datetime.now(timezone.utc),
+            "admin_override": True,
+            "admin_override_by": current_user["user_id"],
         }},
         upsert=True
     )
-    
+
     return {
-        "message": "Progress updated",
+        "message": "Progress updated (admin override)",
         "progress": new_progress,
-        "target": mission.get("target", 1),
+        "target": target,
         "completed": completed
     }
 

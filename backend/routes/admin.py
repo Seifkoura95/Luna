@@ -25,12 +25,18 @@ class MissionCreate(BaseModel):
     points_reward: Optional[int] = None  # Lovable sends 'points_reward'
     icon: str = "trophy"
     color: Optional[str] = None
-    type: str = "daily"  # daily, weekly, special
+    type: str = "daily"  # daily, weekly, special — cosmetic only
     venue_id: Optional[str] = None
     target_value: Optional[int] = None
     requirement_value: Optional[int] = None  # Lovable sends 'requirement_value'
     is_active: bool = True
     status: Optional[str] = None
+    # ── Trigger system (server-side auto-progress) ────────────────────────
+    # event_type must be one of services.mission_events.SUPPORTED_EVENT_TYPES
+    # event_filter is an optional dict of { field: required_value } — e.g.
+    #   { "venue_id": "eclipse", "category": "drinks" }
+    event_type: Optional[str] = None
+    event_filter: Optional[dict] = None
 
 class MissionUpdate(BaseModel):
     title: Optional[str] = None
@@ -46,6 +52,8 @@ class MissionUpdate(BaseModel):
     requirement_value: Optional[int] = None
     is_active: Optional[bool] = None
     status: Optional[str] = None
+    event_type: Optional[str] = None
+    event_filter: Optional[dict] = None
 
 class RewardCreate(BaseModel):
     name: str
@@ -357,6 +365,17 @@ async def create_mission(request: Request, mission: MissionCreate):
     points = mission.points if mission.points is not None else (mission.points_reward or 0)
     target = mission.target_value if mission.target_value is not None else (mission.requirement_value or 1)
     
+    # Validate event_type against the supported set (so Lovable can't register a
+    # mission with a trigger no server-side hook exists for).
+    event_type = mission.event_type
+    if event_type:
+        from services.mission_events import SUPPORTED_EVENT_TYPES
+        if event_type not in SUPPORTED_EVENT_TYPES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported event_type '{event_type}'. Allowed: {sorted(SUPPORTED_EVENT_TYPES)}",
+            )
+
     mission_data = {
         "id": f"mission_{uuid.uuid4().hex[:8]}",
         "title": title,
@@ -373,6 +392,8 @@ async def create_mission(request: Request, mission: MissionCreate):
         "target": target,
         "is_active": mission.is_active,
         "status": mission.status or ("active" if mission.is_active else "inactive"),
+        "event_type": event_type,
+        "event_filter": mission.event_filter or {},
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -389,6 +410,14 @@ async def update_mission(request: Request, mission_id: str, mission: MissionUpda
     update_data = {k: v for k, v in mission.dict().items() if v is not None}
     if "title" in update_data:
         update_data["name"] = update_data["title"]  # Keep name in sync
+    # Validate event_type if it's being changed
+    if "event_type" in update_data and update_data["event_type"]:
+        from services.mission_events import SUPPORTED_EVENT_TYPES
+        if update_data["event_type"] not in SUPPORTED_EVENT_TYPES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported event_type '{update_data['event_type']}'. Allowed: {sorted(SUPPORTED_EVENT_TYPES)}",
+            )
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
     result = await db.missions.update_one({"id": mission_id}, {"$set": update_data})
@@ -410,6 +439,27 @@ async def delete_mission(request: Request, mission_id: str):
         raise HTTPException(status_code=404, detail="Mission not found")
     
     return {"success": True, "message": f"Mission {mission_id} deleted"}
+
+
+# ====== MISSION EVENT-TYPES (helper for Lovable form dropdown) ======
+
+@router.get("/mission-event-types")
+async def list_mission_event_types(request: Request):
+    """Return supported mission event_type values + their filter schema, so the
+    Lovable form can render a proper dropdown + dynamic filter inputs."""
+    await require_admin(request)
+    return {
+        "event_types": [
+            {"value": "venue_visit",      "label": "Venue Visit",        "filters": ["venue_id"], "increment_unit": "visits"},
+            {"value": "purchase_amount",  "label": "Total $ Spent",      "filters": ["venue_id", "category"], "increment_unit": "dollars"},
+            {"value": "purchase_count",   "label": "Number of Purchases","filters": ["venue_id", "category"], "increment_unit": "purchases"},
+            {"value": "social_share",     "label": "Story Share",        "filters": ["platform"], "increment_unit": "shares"},
+            {"value": "referral_signup",  "label": "Referral Signup",    "filters": [], "increment_unit": "referrals"},
+            {"value": "event_rsvp",       "label": "Event RSVP",         "filters": ["venue_id"], "increment_unit": "rsvps"},
+            {"value": "auction_bid",      "label": "Auction Bid",        "filters": ["venue_id"], "increment_unit": "bids"},
+            {"value": "consecutive_days", "label": "Consecutive Days",   "filters": [], "increment_unit": "days"},
+        ]
+    }
 
 
 # ====== REWARDS CRUD ======
@@ -1040,6 +1090,45 @@ async def delete_milestone(request: Request, milestone_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Milestone not found")
     return {"success": True, "message": f"Milestone {milestone_id} deleted"}
+
+
+@router.post("/milestones/{milestone_id}/rewards")
+async def add_milestone_reward(request: Request, milestone_id: str, reward: MilestoneRewardItem):
+    """Append a single reward to a milestone (granular Lovable editor support)."""
+    await require_admin(request)
+    ms = await db.milestones_custom.find_one({"id": milestone_id})
+    if not ms:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+    new_reward = {
+        "id": reward.id or f"{milestone_id}_r{len(ms.get('rewards', []))+1}",
+        "type": reward.type,
+        "label": reward.label,
+        "description": reward.description,
+    }
+    await db.milestones_custom.update_one(
+        {"id": milestone_id},
+        {
+            "$push": {"rewards": new_reward},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()},
+        },
+    )
+    return {"success": True, "reward": new_reward}
+
+
+@router.delete("/milestones/{milestone_id}/rewards/{reward_id}")
+async def remove_milestone_reward(request: Request, milestone_id: str, reward_id: str):
+    """Remove one reward from a milestone."""
+    await require_admin(request)
+    result = await db.milestones_custom.update_one(
+        {"id": milestone_id},
+        {
+            "$pull": {"rewards": {"id": reward_id}},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()},
+        },
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+    return {"success": True, "message": f"Reward {reward_id} removed"}
 
 
 # ====== BOTTLE IMAGE OVERRIDES ======

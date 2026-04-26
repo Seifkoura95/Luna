@@ -168,7 +168,22 @@ async def share_story(request: Request, body: ShareStoryRequest):
     
     # Generate share URL based on platform
     share_data = generate_share_data(story, body.platform)
-    
+
+    # Mission events: social_share is the only client-driven event we accept,
+    # protected by the per-platform per-story uniqueness already enforced
+    # above (history is appended; spamming the same platform still increments
+    # progress but the points-per-share guard caps the abuse surface).
+    try:
+        from services.mission_events import emit_mission_event
+        await emit_mission_event(
+            user_id=user["user_id"],
+            event_type="social_share",
+            increment=1,
+            platform=body.platform,
+        )
+    except Exception:
+        pass
+
     return {
         "success": True,
         "points_earned": points_per_share,
