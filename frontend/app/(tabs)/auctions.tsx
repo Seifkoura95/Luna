@@ -265,6 +265,17 @@ export default function AuctionsScreen() {
     }
   };
 
+  // Self-contained pill colours — solid backgrounds with white text so they
+  // stay readable on any auction background image (light or dark).
+  const getStatusPillColors = (status: string) => {
+    switch (status) {
+      case 'active':   return { bg: 'rgba(16, 185, 129, 0.95)', dot: '#FFFFFF', text: '#FFFFFF' };   // emerald
+      case 'upcoming': return { bg: 'rgba(37, 99, 235, 0.95)',  dot: '#FFFFFF', text: '#FFFFFF' };   // blue
+      case 'ended':
+      default:         return { bg: 'rgba(31, 41, 55, 0.92)',   dot: '#9CA3AF', text: '#FFFFFF' };   // neutral slate
+    }
+  };
+
   // Derive the effective status from end_time so the UI never shows
   // "ACTIVE/LIVE" and "ENDED" at the same time. The backend's scheduler
   // may not have swept a just-expired auction yet, so we trust the clock.
@@ -328,14 +339,19 @@ export default function AuctionsScreen() {
         >
           {/* Badge Row */}
           <View style={styles.badgeRow}>
-            {/* Status Badge */}
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(effectiveStatus) + '30' }]}>
-              <View style={[styles.statusDot, { backgroundColor: getStatusColor(effectiveStatus) }]} />
-              <Text style={[styles.statusText, { color: getStatusColor(effectiveStatus) }]}>
-                {statusLabel}
-              </Text>
-            </View>
-            
+            {/* Status Badge — solid bg, white text, always readable on any image */}
+            {(() => {
+              const c = getStatusPillColors(effectiveStatus);
+              return (
+                <View style={[styles.statusBadge, { backgroundColor: c.bg }]}>
+                  <View style={[styles.statusDot, { backgroundColor: c.dot }]} />
+                  <Text style={[styles.statusText, { color: c.text }]}>
+                    {statusLabel}
+                  </Text>
+                </View>
+              );
+            })()}
+
             {/* Hot Badge */}
             {isHot && isActive && (
               <View style={styles.hotBadge}>
@@ -348,7 +364,7 @@ export default function AuctionsScreen() {
           {/* Timer — only shown while auction is still live */}
           {isActive && (
             <View style={styles.timerBadge}>
-              <Icon name="time" size={14} color={colors.accent} />
+              <Icon name="time" size={14} color="#FFFFFF" />
               <Text style={styles.timerText}>{timeLeft[auction.id] || 'Loading...'}</Text>
             </View>
           )}
@@ -812,6 +828,12 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: radius.sm,
     gap: 6,
+    // Drop-shadow so pill lifts off any background image
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
+    elevation: 3,
   },
   statusDot: {
     width: 6,
@@ -830,18 +852,23 @@ const styles = StyleSheet.create({
     right: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.glass,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
     borderRadius: radius.md,
     gap: 6,
     borderWidth: 0.5,
-    borderColor: colors.glassBorder,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.35,
+    shadowRadius: 3,
+    elevation: 3,
   },
   timerText: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.accentVibrant,
+    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   auctionContent: {

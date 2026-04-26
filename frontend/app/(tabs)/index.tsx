@@ -276,7 +276,17 @@ export default function HomeScreen() {
         {/* Logo & Status */}
         <Animated.View entering={FadeIn.duration(500)} style={styles.header}>
           <Image source={{ uri: LUNA_LOGO }} style={styles.logo} contentFit="contain" />
-          
+
+          {/* Blue accent divider under logo (matches PageHeader on every other screen) */}
+          <View style={styles.accentContainer}>
+            <LinearGradient
+              colors={['transparent', colors.accent, 'transparent']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.accentLine}
+            />
+          </View>
+
           <View style={styles.statusRow}>
             {isOpen() ? (
               <View style={styles.liveStatus}>
@@ -519,6 +529,16 @@ const styles = StyleSheet.create({
     width: 260,
     height: 75,
     marginBottom: 10,
+  },
+  accentContainer: {
+    marginTop: spacing.sm,
+    width: 100,
+    alignItems: 'center',
+  },
+  accentLine: {
+    width: '100%',
+    height: 2,
+    borderRadius: 1,
   },
   statusRow: {
     alignItems: 'center',
