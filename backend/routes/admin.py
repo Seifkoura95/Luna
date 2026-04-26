@@ -462,6 +462,174 @@ async def list_mission_event_types(request: Request):
     }
 
 
+# ====== MISSION TEST-FIRE (Lovable "Test trigger" button) ======
+
+class MissionTestFireRequest(BaseModel):
+    user_id: Optional[str] = None  # if omitted, fire against the calling admin
+    event_type: str
+    increment: int = 1
+    venue_id: Optional[str] = None
+    category: Optional[str] = None
+    platform: Optional[str] = None
+
+
+@router.post("/missions/test-fire")
+async def test_fire_mission_event(request: Request, body: MissionTestFireRequest):
+    """
+    Manually emit a mission event (admin-only) so Lovable can offer a
+    "Test trigger" button next to a mission. Returns the list of missions
+    that were progressed/completed by the synthetic event, plus the active
+    progress doc for each so the dashboard can show the result.
+    """
+    auth_header = request.headers.get("authorization")
+    current_user = get_current_user(auth_header)
+    user_doc = await db.users.find_one({"user_id": current_user["user_id"]})
+    if not user_doc or user_doc.get("role") not in ("admin", "staff"):
+        raise HTTPException(status_code=403, detail="Admin only")
+
+    from services.mission_events import emit_mission_event, SUPPORTED_EVENT_TYPES
+    if body.event_type not in SUPPORTED_EVENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported event_type. Allowed: {sorted(SUPPORTED_EVENT_TYPES)}",
+        )
+
+    target_user_id = body.user_id or current_user["user_id"]
+
+    payload = {}
+    if body.venue_id:
+        payload["venue_id"] = body.venue_id
+    if body.category:
+        payload["category"] = body.category
+    if body.platform:
+        payload["platform"] = body.platform
+
+    completed = await emit_mission_event(
+        user_id=target_user_id,
+        event_type=body.event_type,
+        increment=body.increment,
+        **payload,
+    )
+
+    # Surface progress for ALL missions matching this event_type so the admin
+    # can see exactly what the synthetic event did.
+    matched = await db.missions.find(
+        {"is_active": True, "event_type": body.event_type},
+        {"_id": 0, "id": 1, "title": 1, "name": 1, "event_type": 1, "event_filter": 1,
+         "target": 1, "target_value": 1, "requirement_value": 1},
+    ).to_list(50)
+
+    progress_rows = []
+    for m in matched:
+        p = await db.mission_progress.find_one(
+            {"user_id": target_user_id, "mission_id": m["id"]},
+            {"_id": 0, "progress": 1, "completed": 1, "claimed": 1, "last_event": 1},
+        )
+        progress_rows.append({
+            "mission_id": m["id"],
+            "title": m.get("title") or m.get("name"),
+            "event_filter": m.get("event_filter") or {},
+            "target": m.get("target") or m.get("requirement_value") or m.get("target_value") or 1,
+            "progress": (p or {}).get("progress", 0),
+            "completed": (p or {}).get("completed", False),
+            "claimed": (p or {}).get("claimed", False),
+        })
+
+    return {
+        "success": True,
+        "fired_event": {
+            "event_type": body.event_type,
+            "increment": body.increment,
+            "user_id": target_user_id,
+            "payload": payload,
+        },
+        "newly_completed": [m["id"] for m in completed],
+        "progress": progress_rows,
+    }
+
+
+# ====== MISSION ACTIVITY TIMELINE (admin diagnostic feed) ======
+
+@router.get("/missions/activity")
+async def mission_activity_feed(
+    request: Request,
+    user_id: Optional[str] = None,
+    mission_id: Optional[str] = None,
+    event_type: Optional[str] = None,
+    only_completed: bool = False,
+    limit: int = 100,
+):
+    """
+    Activity timeline of mission progress events. Reads `mission_progress`
+    sorted by updated_at desc. Supports filtering for the Lovable diagnostic
+    panel (filter by user, mission, event_type, or only-completed).
+    """
+    await require_admin(request)
+    limit = min(max(limit, 1), 500)
+
+    query: dict = {}
+    if user_id:
+        query["user_id"] = user_id
+    if mission_id:
+        query["mission_id"] = mission_id
+    if event_type:
+        query["last_event.event_type"] = event_type
+    if only_completed:
+        query["completed"] = True
+
+    rows = await db.mission_progress.find(query, {"_id": 0}) \
+        .sort("updated_at", -1).to_list(limit)
+
+    # Hydrate with mission title + user email for readability
+    user_ids = list({r["user_id"] for r in rows})
+    mission_ids = list({r["mission_id"] for r in rows})
+
+    users = {
+        u["user_id"]: u
+        for u in await db.users.find(
+            {"user_id": {"$in": user_ids}},
+            {"_id": 0, "user_id": 1, "email": 1, "name": 1},
+        ).to_list(len(user_ids) or 1)
+    }
+    missions = {
+        m["id"]: m
+        for m in await db.missions.find(
+            {"id": {"$in": mission_ids}},
+            {"_id": 0, "id": 1, "title": 1, "name": 1, "event_type": 1,
+             "target": 1, "target_value": 1, "requirement_value": 1},
+        ).to_list(len(mission_ids) or 1)
+    }
+
+    out = []
+    for r in rows:
+        u = users.get(r["user_id"]) or {}
+        m = missions.get(r["mission_id"]) or {}
+        last_evt = r.get("last_event") or {}
+        out.append({
+            "user_id": r["user_id"],
+            "user_email": u.get("email"),
+            "user_name": u.get("name"),
+            "mission_id": r["mission_id"],
+            "mission_title": m.get("title") or m.get("name"),
+            "event_type": last_evt.get("event_type") or m.get("event_type"),
+            "event_payload": last_evt.get("payload") or {},
+            "progress": r.get("progress", 0),
+            "target": (
+                m.get("target")
+                or m.get("requirement_value")
+                or m.get("target_value")
+                or 1
+            ),
+            "completed": r.get("completed", False),
+            "claimed": r.get("claimed", False),
+            "completed_at": r.get("completed_at"),
+            "updated_at": r.get("updated_at"),
+            "admin_override": r.get("admin_override", False),
+        })
+
+    return {"activity": out, "total": len(out), "limit": limit}
+
+
 # ====== REWARDS CRUD ======
 
 @router.get("/rewards")
