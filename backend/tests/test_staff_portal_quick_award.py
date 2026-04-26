@@ -182,8 +182,8 @@ class TestQuickAward:
         assert "tier" in data
         assert "new_balance" in data
         
-        # Verify points calculation (1 point per $1 base)
-        assert data["base_points"] == int(test_amount)
+        # Verify points calculation (10 points per $1 base — POINTS_PER_DOLLAR)
+        assert data["base_points"] == int(test_amount * 10)
         assert data["total_points"] >= data["base_points"]  # With multiplier
         
         # Verify balance increased

@@ -274,7 +274,7 @@ add_text(s, "Facilitator Deck · 2-hour module", 0.7, 4.4, 12, 0.5,
          size=18, color=SOFT, align=PP_ALIGN.LEFT)
 add_text(s, "BRISBANE  ·  GOLD COAST", 0.7, 6.4, 12, 0.4,
          size=12, color=MUTED, align=PP_ALIGN.LEFT)
-add_text(s, "v1.1 · Apr 2026", 0.7, 6.8, 12, 0.4,
+add_text(s, "v1.2 · Apr 2026", 0.7, 6.8, 12, 0.4,
          size=10, color=MUTED, align=PP_ALIGN.LEFT)
 
 # ---------- Slide 2: Agenda ----------
@@ -434,18 +434,37 @@ divider(4, "Staff Portal\nAward · Validate · History")
 
 # Slide: Award flow
 s = add_blank_slide(); fill_bg(s, NAVY)
-header_band(s, "MODULE 4 · TAB 1", "Award Points — 8 step flow")
+header_band(s, "MODULE 4 · TAB 1", "Award Points — only when SwiftPOS can't")
 add_bullets(s, [
     "1. Confirm the correct venue is selected (top of screen)",
     "2. Find the member: search OR scan their Member Card",
     "3. Member profile loads (tier · balance · today)",
     "4. Enter dollar amount spent (max $50,000 / txn)",
     "5. Pick category: Drinks · Food · Entry · Booth · Bottles · Other",
-    "6. (Optional) Enter receipt reference for reconciliation",
-    "7. Tap Award Points",
-    "8. Read confirmation: points awarded, new balance, tier change",
+    "6. ALWAYS enter the receipt reference — anti-double-credit guard",
+    "7. Tap Award Points  →  $1 = 10 pts × tier multiplier",
+    "8. 409 \"already awarded\"?  →  it's already in SwiftPOS — leave it",
 ], 0.7, 2.1, 12, 5, size=17)
 footer_band(s, "Module 4 · Award")
+
+# NEW slide — When to use vs not use Quick Award (architectural)
+s = add_blank_slide(); fill_bg(s, NAVY)
+header_band(s, "MODULE 4 · IMPORTANT", "Quick Award is an EXCEPTION tool")
+add_text(s, "Use Quick Award only when SwiftPOS can't capture the sale.",
+         0.7, 2.1, 12, 0.5, size=15, color=GOLD, bold=True)
+add_bullets(s, [
+    "DO  →  Cash-only / pop-up / off-system events",
+    "DO  →  SwiftPOS outage / network down (note receipt, enter when back)",
+    "DO  →  Split bills — only for the portion that didn't go through POS",
+    "DO  →  Manager Gift Points — comps, hospitality, artist drinks",
+    "",
+    "DO NOT  →  Sale that already went through SwiftPOS (= double credit)",
+    "DO NOT  →  Member 'forgot to give number' on a SwiftPOS docket",
+    "             (manager attaches member to existing receipt instead)",
+    "",
+    "Receipt-ref guard returns 409 if the same receipt is awarded twice.",
+], 0.7, 2.7, 12, 5, size=14)
+footer_band(s, "Module 4 · Quick-Award rules")
 
 # Slide: Validate flow
 s = add_blank_slide(); fill_bg(s, NAVY)

@@ -197,12 +197,13 @@ Used after any in-venue purchase that wasn't run through SwiftPOS directly (e.g.
 7. Tap **Award Points**.
 8. Confirmation card shows: points awarded, new balance, tier change (if any).
 
-**Rule of thumb (default):**
-- Bronze: 1 point per $1
-- Silver: 1.25 points per $1
-- Gold: 1.5 points per $1
-- Legend: 2 points per $1
-*(Actual multiplier is calculated server-side from the user's tier + active subscription + active boosts.)*
+**Earn rate (default):**
+- Base: **$1 = 10 points**, redeemed at **10 points = $0.25** (≈25% loyalty back-rate before multipliers)
+- Bronze: 1.0× (base 10 pts/$1)
+- Silver: 1.25× (12.5 pts/$1)
+- Gold: 1.5× (15 pts/$1)
+- Legend: 2.0× (20 pts/$1)
+*(Final multiplier is calculated server-side from the user's tier + active subscription + active boosts.)*
 
 ### 4.3 Gift Points (Manager-only override)
 For comps / artist hospitality / VIP gestures that bypass the earn-guard.
@@ -289,9 +290,29 @@ The portal recognises **5 QR prefixes**. Match the prefix to know what's about t
 ## 7. LOYALTY POINTS RULES
 
 ### 7.1 Earning
-- 1 dollar = ~1 point (modified by tier + subscription + boost).
-- Awarded via SwiftPOS (automatic) **or** Staff Portal Quick Award.
+- **$1 spent = 10 points** (base rate, before any multiplier).
+- Points redeem at **10 points = $0.25** in the Rewards Shop (~25% loyalty back-rate before multipliers).
+- Awarded automatically when a sale rings through **SwiftPOS** — *this is the primary path*. SwiftPOS is the source of truth and the app's balance refreshes from SwiftPOS via CherryHub on every load.
+- Awarded **manually via Staff Portal Quick Award** *only when SwiftPOS can't capture the sale* — see §7.1a.
 - App-only earns (missions, story shares, referrals) flow back to SwiftPOS as **negative-value transactions** so SwiftPOS stays the single ledger.
+
+#### 7.1a When to use Quick Award (and when NOT to)
+
+> ⚠️ **Quick Award is an exception tool, not a primary earn path.** Misuse = double-credit.
+
+| Scenario | Use Quick Award? | Why |
+|---|---|---|
+| Normal bar / door / booth sale rung through SwiftPOS | ❌ NO | SwiftPOS will award automatically — manual award would double-credit. |
+| Member forgot to give their member number, but the sale is in SwiftPOS | ❌ NO | A manager attaches the member to the existing SwiftPOS docket — see §7.4. |
+| **Cash-only / external pop-up / off-system event** | ✅ YES | The sale never reaches SwiftPOS, so the app needs a manual record. |
+| **Split bill** where only part went through SwiftPOS | ✅ YES — for the portion that didn't | Use the receipt ref of the part that's missing. |
+| **Comp / hospitality** (artist drinks, manager comp) | ✅ Manager → Gift Points | Bypasses earn-guard and is fully audited. |
+| **SwiftPOS outage / network down** | ✅ YES | Capture the receipt number on paper, then enter into Quick Award once SwiftPOS is back so the manager can reconcile. |
+
+#### 7.1b Built-in safety guards
+- **Receipt-ref de-dupe (409)** — if you enter the same `receipt_ref` twice for the same venue, the system refuses with: *"Receipt X already awarded (Y pts on …)"*. This stops accidental double-tap **and** stops you awarding manually on a SwiftPOS docket that the poller will later auto-import.
+- **$50,000 single-transaction limit** — prevents fat-finger errors.
+- **Full audit trail** — your staff name + ID is stored on every Quick Award row in `staff_transactions`. Managers see this in History.
 
 ### 7.2 Spending
 - Members redeem in the Rewards Shop, Bottle Service, Auctions, or events.

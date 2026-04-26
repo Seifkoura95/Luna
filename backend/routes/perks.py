@@ -877,13 +877,39 @@ async def quick_award_points(request: Request, data: QuickAwardRequest):
         raise HTTPException(status_code=404, detail="Member not found")
 
     # Calculate points with tier multiplier
+    # Loyalty rate: 10 points per $1 spent. With redemptions valued at
+    # $0.25 per 10 points, this gives a base 25% loyalty back-rate before
+    # any tier or subscription multiplier. The 10-pts/$1 ratio is shared
+    # across the codebase via config.POINTS_PER_DOLLAR.
+    from config import POINTS_PER_DOLLAR
+
     tier_id = member.get("tier", "bronze").lower()
     tier = SUBSCRIPTION_TIERS.get(tier_id, SUBSCRIPTION_TIERS.get("bronze", {}))
     multiplier = tier.get("points_multiplier", 1.0)
 
-    base_points = int(data.amount_spent)  # 1 point per $1
+    base_points = int(data.amount_spent * POINTS_PER_DOLLAR)
     bonus_points = int(base_points * (multiplier - 1))
     total_points = base_points + bonus_points
+
+    # ── DUPLICATE-AWARD GUARD ──
+    # If a receipt_ref is supplied, refuse to award against the same docket
+    # twice. This is the main defence against staff double-tap *and* against
+    # awarding manually for a sale that the SwiftPOS poller will later import
+    # automatically.
+    if data.receipt_ref:
+        already = await db.staff_transactions.find_one(
+            {"receipt_ref": data.receipt_ref, "venue_id": data.venue_id},
+            {"_id": 0, "id": 1, "total_points": 1, "created_at": 1},
+        )
+        if already:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Receipt {data.receipt_ref} already awarded "
+                    f"({already.get('total_points')} pts on {already.get('created_at')}). "
+                    "If this is a real duplicate sale, ask a manager to use Gift Points instead."
+                ),
+            )
 
     # Credit points
     await db.users.update_one(

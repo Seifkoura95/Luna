@@ -2,6 +2,27 @@
 
 > Append-only log of shipped work. PRD.md = static product spec; ROADMAP.md = forward backlog.
 
+## 2026-04-26 (later) — Quick-Award fix + Architectural clarification
+
+### Bug fix
+- **Quick Award was using 1 pt/$1 instead of 10 pts/$1.**
+  Fixed `/app/backend/routes/perks.py` to use the project-wide `config.POINTS_PER_DOLLAR` constant (= 10), aligning Quick Award with subscriptions.py + payments.py which were already correct.
+- Updated unit test `test_staff_portal_quick_award.py` expectation: `base_points == int(amount * 10)`.
+
+### Anti-double-credit guard (NEW)
+- `POST /api/perks/quick-award` now returns **409 Conflict** if a `(receipt_ref, venue_id)` pair already exists in `staff_transactions`.
+- Defends against:
+  - Staff double-tap on the same docket
+  - Awarding a SwiftPOS docket manually that the SwiftPOS poller will later auto-import (= double-credit)
+
+### SOP / Deck v1.2 — architectural clarification
+- §7.1 corrected: `$1 = 10 points · 10 points = $0.25 redemption · ~25% loyalty back-rate before multipliers`.
+- New §7.1a "When to use Quick Award (and when NOT to)" with 6-row decision table.
+- New §7.1b "Built-in safety guards" documents the 409 de-dup + $50K cap + audit trail.
+- Earn-rate row in §4.2 corrected to `Bronze 1.0× = 10 pts/$1`, `Legend 2.0× = 20 pts/$1`.
+- New deck slide: **"Quick Award is an EXCEPTION tool"** with DO / DO NOT lists.
+- Title slide bumped to v1.2.
+
 ## 2026-04-26 — Session: Missions trigger system + Push-token fix
 
 ### Mission Trigger System (server-side, anti-cheat)
