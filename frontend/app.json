@@ -2,7 +2,7 @@
   "expo": {
     "name": "Luna Group",
     "slug": "luna-group",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "lunagroup",
@@ -125,6 +125,12 @@
           "photosPermission": "Luna accesses your photo library so you can share memories from Luna Group venues.",
           "cameraPermission": "Luna uses your camera to let you share photos from venues with your crew and scan QR codes at the door.",
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "Luna uses this permission to personalise event recommendations and measure which events you enjoy most. We do not share your data with third-party advertisers."
         }
       ],
       "@react-native-community/datetimepicker",

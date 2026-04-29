@@ -24,6 +24,7 @@ import * as Haptics from 'expo-haptics';
 import { AppBackground } from '../src/components/AppBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Modal } from 'react-native';
+import { requestTrackingPermission } from '../src/utils/tracking';
 
 
 const { width, height } = Dimensions.get('window');
@@ -160,6 +161,12 @@ export default function LoginScreen() {
         const result = await api.login(email, password);
         useAuthStore.getState().login(result.user, result.token);
 
+        // Apple §5.1.2(i): ATT prompt must be shown on iOS before we begin
+        // tracking. Fired here — post successful login, before navigation —
+        // so the modal lands on top of the first real app screen. Safe no-op
+        // on Android / web. Never throws.
+        await requestTrackingPermission();
+
         // Role-based routing: staff/manager/admin go to the in-app Venue Portal.
         // Role is the SINGLE source of truth — do not trust legacy boolean flags
         // like `is_venue_staff`, which can be stale/missing and caused a
@@ -176,6 +183,9 @@ export default function LoginScreen() {
       } else {
         const result = await api.register(email, password, name, referralCode || undefined, dobIso);
         useAuthStore.getState().login(result.user, result.token);
+
+        // Apple §5.1.2(i) — same reason as login path above.
+        await requestTrackingPermission();
 
         // NEW: 6-digit email OTP flow. If the backend asks for verification,
         // route to the dedicated OTP screen instead of dropping straight into
@@ -499,7 +509,24 @@ export default function LoginScreen() {
                 {/* Footer Links */}
                 <View style={styles.footer}>
                   <Text style={styles.footerText}>
-                    By continuing, you agree to Luna Group's{'\n'}Terms & Privacy Policy
+                    By continuing, you agree to Luna Group's{'\n'}
+                    <Text
+                      style={styles.footerLink}
+                      onPress={() => router.push('/terms-of-service')}
+                      accessibilityRole="link"
+                      data-testid="login-terms-link"
+                    >
+                      Terms of Service
+                    </Text>
+                    <Text style={styles.footerText}>  and  </Text>
+                    <Text
+                      style={styles.footerLink}
+                      onPress={() => router.push('/privacy-policy')}
+                      accessibilityRole="link"
+                      data-testid="login-privacy-link"
+                    >
+                      Privacy Policy
+                    </Text>
                   </Text>
                 </View>
               </View>
@@ -844,6 +871,12 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     textAlign: 'center',
     lineHeight: 16,
+  },
+  footerLink: {
+    fontSize: 10,
+    color: colors.accent,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   // Forgot Password Styles
   forgotPasswordLink: {

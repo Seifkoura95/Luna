@@ -5,7 +5,13 @@
 - Password: `test123`
 - Role: `user`
 - ~20,099 points, Supernova tier, already email_verified
-- ⚠️ Also used as the **App Store Reviewer demo account**
+
+## App Store Reviewer demo account (create on prod before resubmitting)
+- Email: `review@lunagroup.com.au`
+- Password: `AppleReview2026!`
+- Role: `user`
+- Must be manually flipped to `email_verified: true` in Atlas so the ATT prompt flow isn't interrupted by the OTP screen.
+- Used in `/app/APPLE_RESUBMISSION_APR2026.md` — keep the password in sync with the Review Notes.
 
 ## Admin (full access — mobile + admin portal)
 - Email: `admin@lunagroup.com.au`

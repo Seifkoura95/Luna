@@ -173,9 +173,20 @@ async function registerForPushNotificationsAsync(): Promise<RegistrationResult> 
       );
     }
 
-    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-    token = tokenData.data;
-    console.log('📱 Got Expo push token');
+    // Timeout guard — on iOS 26 the Expo push-token service can intermittently
+    // hang without resolving when APNs is slow. Without this race, the JS
+    // thread may appear frozen to Apple's reviewer immediately after login.
+    // 8 s is plenty for a successful token fetch in normal conditions.
+    const tokenPromise = Notifications.getExpoPushTokenAsync({ projectId });
+    const timeoutPromise = new Promise<null>((resolve) =>
+      setTimeout(() => {
+        console.warn('📱 Push-token fetch timed out after 8s — continuing without push');
+        resolve(null);
+      }, 8000),
+    );
+    const tokenData = (await Promise.race([tokenPromise, timeoutPromise])) as any;
+    token = tokenData?.data ?? null;
+    if (token) console.log('📱 Got Expo push token');
   } catch (error) {
     console.error('📱 Error getting push token:', error);
   }

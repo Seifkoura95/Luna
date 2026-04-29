@@ -97,12 +97,21 @@ export default function HomeScreen() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Timeout helper — Apple App-Review on iOS 26.4 reported the app
+      // "becomes unresponsive after login". Without per-call timeouts, a
+      // single slow endpoint can keep the Home tab's loader spinning and
+      // make the app appear frozen. Cap the whole parallel fetch at 12 s;
+      // individual endpoints that exceed that resolve as `null` and the
+      // UI renders the fallback empty state.
+      const withTimeout = <T,>(p: Promise<T>, ms = 8000, fallback: any = null): Promise<T> =>
+        Promise.race([p, new Promise<T>((resolve) => setTimeout(() => resolve(fallback as T), ms))]);
+
       // Fetch events feed from Eventfinda (real-time data)
       const [eventsFeed, venuesData, auctionsData, cfg] = await Promise.all([
-        api.getEventsFeed(30),
-        api.getVenues(),
-        api.getAuctions(undefined, 'active'),
-        api.getPublicConfig().catch(() => null),
+        withTimeout(api.getEventsFeed(30), 10000, { tonight: [], upcoming: [], featured: [] }),
+        withTimeout(api.getVenues(), 10000, []),
+        withTimeout(api.getAuctions(undefined, 'active'), 10000, []),
+        withTimeout(api.getPublicConfig().catch(() => null), 6000, null),
       ]);
 
       if (cfg) setPublicConfig(cfg);
